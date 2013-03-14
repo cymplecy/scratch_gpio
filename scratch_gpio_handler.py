@@ -1,24 +1,6 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from scratch_handler by Thomas Preston
-# Version 5dev 11Aug08 Much better looping supplied by Stein @soilandreyes
-# and someone else @MCrRaspJam who've name I've forgotton!
-# Version 6dev - Moved Allon/AllOff to be processed before single pins :)
-# Vesion 7dev - start to tidy up changes
-# Vesion 8dev - use gpio-output system and broadcast allon, 1on system
-# V0.1 - change to 6 out 2 in and sanitise the code
-# V0.2a - use global variable to trace Scratch disconnect
-# V0.3a -   Change to Broadcom GPIO numbering for variables
-#           Handle pin broadcasts correctly
-# V0.4 - add in more gpio name variants that it can handle
-# V0.5 - Use Pinon/off as well as high low and also gpio variables can
-#       use high/low on/off as well
-# V0.7 - Add in MotorA and MotorB (pin11 and 12) PWM control.
-# V0.8b - Add in all pins and try to make in/out configurable and fix input bug
-# v0.9c Ultrasonic and better handling of motor variable values
-# v1.0  Tidy up Ultrasonic
-# V1.1 Change to using distance for ultrasonic
-# V1.2 Changes to handle pin configuration
-# V1.3 Adding comments and defaulting sonar to pulse on pin23, listen on pin7 
+# This coe now hosted on Github thanks to Ben Nuttall
 
 
 from array import *
@@ -42,10 +24,10 @@ def isNumeric(s):
     except ValueError:
         return False
 
-def parse_data(dataraw,search_string):
+
+def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
-
 
 
 '''
@@ -57,17 +39,17 @@ root.withdraw()
 
 PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
-#HOST = askstring('Scratch Connector', 'IP:')
+#  HOST = askstring('Scratch Connector', 'IP:')
 BUFFER_SIZE = 240 #used to be 100
 SOCKET_TIMEOUT = 1
 
-#Map gpio to real connector P1 Pins
-PIN_NUM = array('i',[11,12,13,15,16,18,22,7,3,5,8,10,24,26,19,21,23])
-#GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
-PIN_USE = array('i',[1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,1,1])
+#  Map gpio to real connector P1 Pins
+PIN_NUM = array('i',[11, 12, 13, 15, 16, 18, 22, 7, 3, 5, 8, 10, 24, 26, 19, 21, 23])
+#  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
+PIN_USE = array('i',[1,  1,  1,  1,  1,  1,  0,  0, 0, 0, 0, 0,  0,  0,  0,  1,  1])
 PINS = len(PIN_NUM)
-sonar_listen_pin=7
-sonar_pulse_pin=23
+sonar_listen_pin = 7
+sonar_pulse_pin = 23
 
 #Procedure to set pin mode for each pin
 def SetPinMode():
