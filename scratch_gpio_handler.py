@@ -2,7 +2,7 @@
 # This code is derived from scratch_handler by Thomas Preston
 # This coe now hosted on Github thanks to Ben Nuttall
 # Last change experiment adding in pyzPWM for PWM on All Pins
-# Pulse is command name to use for PWM on any pin
+# power is command name to use for PWM on any pin
 
 
 from array import *
@@ -402,10 +402,10 @@ class ScratchListener(threading.Thread):
                         if (PIN_USE[i] == 1):
                             self.physical_pin_update(i,1)
 
-                    if  'pulse' + str(physical_pin) in dataraw:
+                    if  'power' + str(physical_pin) in dataraw:
                         print dataraw
-                        outputall_pos = dataraw.find('pulse' + str(physical_pin))
-                        sensor_value = dataraw[(outputall_pos+1+len('pulse' + str(physical_pin))):].split()
+                        outputall_pos = dataraw.find('power' + str(physical_pin))
+                        sensor_value = dataraw[(outputall_pos+1+len('power' + str(physical_pin))):].split()
                         print 'pulse', str(physical_pin) , sensor_value[0]
 
                         if isNumeric(sensor_value[0]):
@@ -587,6 +587,10 @@ def cleanup_threads(threads):
 
     for thread in threads:
         thread.join()
+
+    for i in range(PINS):
+        if PWM_OUT[i] != None:
+            PWM_OUT[i].stop()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
