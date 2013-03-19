@@ -1,6 +1,8 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from scratch_handler by Thomas Preston
 # This coe now hosted on Github thanks to Ben Nuttall
+# Last change experiment adding in pyzPWM for PWM on All Pins
+# Pulse is command name to use for PWM on any pin
 
 
 from array import *
@@ -29,6 +31,86 @@ def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
 
+class PiZyPwm(threading.Thread):
+
+  def __init__(self, frequency, gpioPin, gpioScheme):
+     """
+Init the PiZyPwm instance. Expected parameters are :
+- frequency : the frequency in Hz for the PWM pattern. A correct value may be 100.
+- gpioPin : the pin number which will act as PWM ouput
+- gpioScheme : the GPIO naming scheme (see RPi.GPIO documentation)
+"""
+     self.baseTime = 1.0 / frequency
+     self.maxCycle = 100.0
+     self.sliceTime = self.baseTime / self.maxCycle
+     self.gpioPin = gpioPin
+     self.terminated = False
+     self.toTerminate = False
+     GPIO.setmode(gpioScheme)
+
+
+  def start(self, dutyCycle):
+    """
+Start PWM output. Expected parameter is :
+- dutyCycle : percentage of a single pattern to set HIGH output on the GPIO pin
+Example : with a frequency of 1 Hz, and a duty cycle set to 25, GPIO pin will
+stay HIGH for 1*(25/100) seconds on HIGH output, and 1*(75/100) seconds on LOW output.
+"""
+    self.dutyCycle = dutyCycle
+    GPIO.setup(self.gpioPin, GPIO.OUT)
+    self.thread = threading.Thread(None, self.run, None, (), {})
+    self.thread.start()
+
+
+  def run(self):
+    """
+Run the PWM pattern into a background thread. This function should not be called outside of this class.
+"""
+    while self.toTerminate == False:
+      if self.dutyCycle > 0:
+        GPIO.output(self.gpioPin, GPIO.HIGH)
+        time.sleep(self.dutyCycle * self.sliceTime)
+      
+      if self.dutyCycle < self.maxCycle:
+        GPIO.output(self.gpioPin, GPIO.LOW)
+        time.sleep((self.maxCycle - self.dutyCycle) * self.sliceTime)
+
+    self.terminated = True
+
+
+  def changeDutyCycle(self, dutyCycle):
+    """
+Change the duration of HIGH output of the pattern. Expected parameter is :
+- dutyCycle : percentage of a single pattern to set HIGH output on the GPIO pin
+Example : with a frequency of 1 Hz, and a duty cycle set to 25, GPIO pin will
+stay HIGH for 1*(25/100) seconds on HIGH output, and 1*(75/100) seconds on LOW output.
+"""
+    self.dutyCycle = dutyCycle
+
+
+  def changeFrequency(self, frequency):
+    """
+Change the frequency of the PWM pattern. Expected parameter is :
+- frequency : the frequency in Hz for the PWM pattern. A correct value may be 100.
+Example : with a frequency of 1 Hz, and a duty cycle set to 25, GPIO pin will
+stay HIGH for 1*(25/100) seconds on HIGH output, and 1*(75/100) seconds on LOW output.
+"""
+    self.baseTime = 1.0 / frequency
+    self.sliceTime = self.baseTime / self.maxCycle
+
+
+  def stop(self):
+    """
+Stops PWM output.
+"""
+    self.toTerminate = True
+    while self.terminated == False:
+      # Just wait
+      time.sleep(0.01)
+  
+    GPIO.output(self.gpioPin, GPIO.LOW)
+    GPIO.setup(self.gpioPin, GPIO.IN)
+
 
 '''
 from Tkinter import Tk
@@ -51,6 +133,10 @@ PINS = len(PIN_NUM)
 sonar_listen_pin = 7
 sonar_pulse_pin = 23
 
+PINS = len(PIN_NUM)
+PWM_OUT = [None] * PINS
+
+
 #Procedure to set pin mode for each pin
 def SetPinMode():
     for i in range(PINS):
@@ -64,6 +150,10 @@ def SetPinMode():
 SetPinMode()
 
 GPIO.setup(sonar_pulse_pin,GPIO.OUT)
+
+
+
+
 
 
 
@@ -182,7 +272,7 @@ class ScratchListener(threading.Thread):
             GPIO.output(PIN_NUM[pin_index], value)
 
     def run(self):
-        global cycle_trace,motorA,motorB
+        global cycle_trace
         #This is main listening routine
         while not self.stopped():
             try:
@@ -236,24 +326,96 @@ class ScratchListener(threading.Thread):
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
                     if 'pin' + str(physical_pin) + '" 1' in dataraw:
+                        if (PIN_USE[i] == 0):
+                            PIN_USE[i] = 1
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , ' used as out'
+                        if (PIN_USE[i] == 2):
+                            PIN_USE[i] = 1
+                            PWM_OUT[i].stop()
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , '  used as out'
                         if (PIN_USE[i] == 1):
                             self.physical_pin_update(i,1)
                     if  'pin' + str(physical_pin) + '" 0' in dataraw:
+                        if (PIN_USE[i] == 0):
+                            PIN_USE[i] = 1
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , ' used as out'
+                        if (PIN_USE[i] == 2):
+                            PIN_USE[i] = 1
+                            PWM_OUT[i].stop()
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , '  used as out'
                         if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,0)
+                            self.physical_pin_update(i,1)
                     if  'pin' + str(physical_pin) + '" "on' in dataraw:
+                        print 'pin13 addressed'
+                        print dataraw
+                        if (PIN_USE[i] == 0):
+                            PIN_USE[i] = 1
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , ' used as out'
+                        if (PIN_USE[i] == 2):
+                            PIN_USE[i] = 1
+                            PWM_OUT[i].stop()
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , '  used as out'
                         if (PIN_USE[i] == 1):
                             self.physical_pin_update(i,1)
                     if  'pin' + str(physical_pin) + '" "off' in dataraw:
+                        print 'pin13 addressed'
+                        print dataraw
+                        if (PIN_USE[i] == 0):
+                            PIN_USE[i] = 1
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , ' used as out'
+                        if (PIN_USE[i] == 2):
+                            PIN_USE[i] = 1
+                            PWM_OUT[i].stop()
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , '  used as out'
                         if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,0)
+                            self.physical_pin_update(i,1)
                     if  'pin' + str(physical_pin) + '" "high' in dataraw:
+                        if (PIN_USE[i] == 0):
+                            PIN_USE[i] = 1
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , ' used as out'
+                        if (PIN_USE[i] == 2):
+                            PIN_USE[i] = 1
+                            PWM_OUT[i].stop()
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , '  used as out'
                         if (PIN_USE[i] == 1):
                             self.physical_pin_update(i,1)
                     if  'pin' + str(physical_pin) + '" "low' in dataraw:
+                        if (PIN_USE[i] == 0):
+                            PIN_USE[i] = 1
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , ' used as out'
+                        if (PIN_USE[i] == 2):
+                            PIN_USE[i] = 1
+                            PWM_OUT[i].stop()
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , '  used as out'
                         if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,0)
-                        
+                            self.physical_pin_update(i,1)
+
+                    if  'pulse' + str(physical_pin) in dataraw:
+                        print dataraw
+                        outputall_pos = dataraw.find('pulse' + str(physical_pin))
+                        sensor_value = dataraw[(outputall_pos+1+len('pulse' + str(physical_pin))):].split()
+                        print 'pulse', str(physical_pin) , sensor_value[0]
+
+                        if isNumeric(sensor_value[0]):
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                            else:
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                    
                 #Use bit pattern to control ports
                 if 'pinpattern' in dataraw:
                     #print 'Found pinpattern'
@@ -274,24 +436,39 @@ class ScratchListener(threading.Thread):
                                 self.physical_pin_update(i,1)
                             j = j + 1
 
-                #Check for motor commands
-                if 'motora' in dataraw:
-                    outputall_pos = dataraw.find('motora')
-                    sensor_value = dataraw[(outputall_pos+7):].split()
-##                    print
-##                    print "sensor_value" , sensor_value[0]
-##                    print
+
                     
-                    if isNumeric(sensor_value[0]):
-                        motorA = max(0,min(100,int(sensor_value[0])))
-                    
+                if  'motora' in dataraw:
+                    for i in range(PINS):
+                        if PIN_NUM[i] == 11:
+                            print dataraw
+                            outputall_pos = dataraw.find('motora')
+                            sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
+                            print 'motorb', sensor_value[0]
+
+                            if isNumeric(sensor_value[0]):
+                                if PIN_USE[i] != 2:
+                                    PIN_USE[i] = 2
+                                    PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                    PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                else:
+                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+
                 if  'motorb' in dataraw:
-                    outputall_pos = dataraw.find('motorb')
-                    sensor_value = dataraw[(outputall_pos+7):].split()
-                    if isNumeric(sensor_value[0]):
-                        motorB = max(0,min(100,int(sensor_value[0])))
-                    #print "motorB" , motorB
-        
+                    for i in range(PINS):
+                        if PIN_NUM[i] == 12:
+                            print dataraw
+                            outputall_pos = dataraw.find('motorb')
+                            sensor_value = dataraw[(outputall_pos+1+len('motorb')):].split()
+                            print 'motorb', sensor_value[0]
+
+                            if isNumeric(sensor_value[0]):
+                                if PIN_USE[i] != 2:
+                                    PIN_USE[i] = 2
+                                    PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                    PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                else:
+                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
 
                             
             if 'broadcast' in dataraw:
@@ -308,14 +485,31 @@ class ScratchListener(threading.Thread):
                     #check_broadcast = str(i) + 'on'
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
-                    if 'pin' + str(physical_pin)+'high' in dataraw:
-                        self.physical_pin_update(i,1)
-                    if 'pin' + str(physical_pin)+'low' in dataraw:
-                        self.physical_pin_update(i,0)
-                    if 'pin' + str(physical_pin)+'on' in dataraw:
-                        self.physical_pin_update(i,1)
-                    if 'pin' + str(physical_pin)+'off' in dataraw:
-                        self.physical_pin_update(i,0)
+                    if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
+                        if (PIN_USE[i] == 0):
+                            PIN_USE[i] = 1
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , ' used as out'
+                        if (PIN_USE[i] == 2):
+                            PIN_USE[i] = 1
+                            PWM_OUT[i].stop()
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , '  used as out'
+                        if (PIN_USE[i] == 1):
+                            self.physical_pin_update(i,1)
+
+                    if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
+                        if (PIN_USE[i] == 0):
+                            PIN_USE[i] = 1
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , ' used as out'
+                        if (PIN_USE[i] == 2):
+                            PIN_USE[i] = 1
+                            PWM_OUT[i].stop()
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+                            print 'pin' , PIN_NUM[i] , '  used as out'
+                        if (PIN_USE[i] == 1):
+                            self.physical_pin_update(i,0)
 
                 if 'sonar' in dataraw:
                     # setup a array to hold 3 values and then do 3 distance calcs and store them
@@ -401,10 +595,7 @@ if __name__ == '__main__':
         host = DEFAULT_HOST
 
 cycle_trace = 'start'
-motorA = 0;
-motorB = 0;
-motor_timing = array('i',[0,0,100])
-motor_order = array('i',[0,1])
+
 while True:
 
     if (cycle_trace == 'disconnected'):
@@ -430,41 +621,8 @@ while True:
 
     # wait for ctrl+c
     try:
-        #just pause
-        #print "motorA val:" , motorA
-
-        if ((motorA > 0) or (motorB > 0)):
-            if (motorA > motorB):
-                motor_order[0]=0
-                motor_order[1]=1
-                #time before motorB goes off
-                motor_timing[0]=motorB
-                motor_timing[1]=motorA-motorB
-                motor_timing[2]=100-motorA
-            else:
-                motor_order[0]=1
-                motor_order[1]=0
-                #time before motorA goes off
-                motor_timing[0]=motorA
-                motor_timing[1]=motorB-motorA
-                motor_timing[2]=100-motorB
-
-
-            #print 't0 t1 t2', motor_timing[0], motor_timing[1] , motor_timing[2]                
-            #print 'pin: ' , GPIO_PINS[0]
-            GPIO.output(PIN_NUM[motor_order[0]], 1)
-            if (motor_timing[0] > 0 ):
-                #print 'pin: ' , PIN_NUM[motor_order[1]]
-                GPIO.output(PIN_NUM[motor_order[1]], 1)
-                time.sleep(motor_timing[0]/10000.0)
-            if (motor_timing[0] > 0 ):
-                GPIO.output(PIN_NUM[motor_order[1]], 0)
-            time.sleep(motor_timing[1]/10000.0)
-            GPIO.output(PIN_NUM[motor_order[0]], 0)
-            time.sleep(motor_timing[2]/10000.0)            
-        else:
-            time.sleep(0.1)
+        time.sleep(0.1)
     except KeyboardInterrupt:
-        cleanup_threads((listener,sender))
+        cleanup_threads((listener,sender,))
         sys.exit()
 
