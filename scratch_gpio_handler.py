@@ -128,7 +128,7 @@ SOCKET_TIMEOUT = 1
 #  Map gpio to real connector P1 Pins
 PIN_NUM = array('i',[11, 12, 13, 15, 16, 18, 22, 7, 3, 5, 8, 10, 24, 26, 19, 21, 23])
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
-PIN_USE = array('i',[1,  1,  1,  1,  1,  1,  0,  0, 0, 0, 0, 0,  0,  0,  0,  1,  1])
+PIN_USE = array('i',[0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0,  1])
 PINS = len(PIN_NUM)
 sonar_listen_pin = 7
 sonar_pulse_pin = 23
