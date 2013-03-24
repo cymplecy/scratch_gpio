@@ -130,8 +130,7 @@ PIN_NUM = array('i',[11, 12, 13, 15, 16, 18, 22, 7, 3, 5, 8, 10, 24, 26, 19, 21,
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
 PIN_USE = array('i',[0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0,  1])
 PINS = len(PIN_NUM)
-sonar_listen_pin = 7
-sonar_pulse_pin = 23
+
 
 PINS = len(PIN_NUM)
 PWM_OUT = [None] * PINS
@@ -149,6 +148,8 @@ def SetPinMode():
 
 SetPinMode()
 
+sonar_listen_pin = 7
+sonar_pulse_pin = 23
 GPIO.setup(sonar_pulse_pin,GPIO.OUT)
 
 
@@ -411,38 +412,49 @@ class ScratchListener(threading.Thread):
                         print dataraw
                         self.physical_pin_update(i,0)
 
-                if 'sonar' in dataraw:
-                    # setup a array to hold 3 values and then do 3 distance calcs and store them
-                    distarray = array('i',[0,0,0])
-                    for k in range(3):
-                        #print "sonar pulse" , physical_pin
-                        GPIO.output(sonar_pulse_pin, True)   # Send Pulse pin(23) high
-                        time.sleep(0.00001)     #  wait
-                        GPIO.output(sonar_pulse_pin, False)  #  bring it back low - pulse over.
-                        t0=dt.datetime.now() # rememeber current time
-                        t1=t0
-                        # This while loop waits for input pin (7) to be low but with a 0.1sec timeout 
-                        while ((GPIO.input(sonar_listen_pin)==False) and ((t1-t0).microseconds < 100000)):
+                    if ('sonar' + str(physical_pin)) in dataraw:
+                        ti = dt.datetime.now()
+                        # setup a array to hold 3 values and then do 3 distance calcs and store them
+                        #print 'sonar started'
+                        distarray = array('i',[0,0,0])
+                        for k in range(3):
+                            #print "sonar pulse" , k
+                            GPIO.setup(physical_pin,GPIO.OUT)
+                            GPIO.output(physical_pin, True)   # Send Pulse pin(23) high
+                            time.sleep(0.00001)     #  wait
+                            GPIO.output(physical_pin, False)  #  bring it back low - pulse over.
+                            t0=dt.datetime.now() # remember current time
+                            GPIO.setup(physical_pin,GPIO.IN)
+                            t1=t0
+                            # This while loop waits for input pin (7) to be low but with a 0.1sec timeout 
+                            while ((GPIO.input(physical_pin)==0) and ((t1-t0).microseconds < 100000)):
+                                t1=dt.datetime.now()
                             t1=dt.datetime.now()
-                        t1=dt.datetime.now()
-                        t2=t1
-                        #  This while loops waits for input pin to go high to indicate ulse detection
-                        #  with 0.1 sec timeout
-                        while ((GPIO.input(sonar_listen_pin)==True) and ((t2-t1).microseconds < 100000)):
+                            #print 'low' , (t1-t0).microseconds
+                            t2=t1
+                            #  This while loops waits for input pin to go high to indicate ulse detection
+                            #  with 0.1 sec timeout
+                            while ((GPIO.input(physical_pin)==1) and ((t2-t1).microseconds < 100000)):
+                                t2=dt.datetime.now()
                             t2=dt.datetime.now()
-                        t2=dt.datetime.now()
-                        t3=(t2-t1).microseconds  # t2 contains time taken for pulse to return
-                        #print "t3 in secs" , float(t3/1000000.0)
-                        distance=t3/58  # calc distance in cm
-                        distarray[k]=distance
-                    distance = sorted(distarray)[1] # sort the array and pick middle value as best distance
-                    # only update Scratch values if distance is < 500cm
-                    if (distance < 500):# and (distance > 4):
-                        #print'Distance:',distance,'cm'
-                        sensor_name = "sonar" 
-                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                        #print 'sending: %s' % bcast_str
-                        self.send_scratch_command(bcast_str)
+                            #print 'high' , (t2-t1).microseconds
+                            t3=(t2-t1).microseconds  # t2 contains time taken for pulse to return
+                            #print "total time in secs" , (t3-t1).microseconds
+                            distance=t3*343/2/10000  # calc distance in cm
+                            distarray[k]=distance
+                        distance = sorted(distarray)[1] # sort the array and pick middle value as best distance
+                        tf = dt.datetime.now()
+                        #print "pulse time" , distance*58
+                        #print "total time in microsecs" , (tf-ti).microseconds                    
+                        # only update Scratch values if distance is < 500cm
+                        if (distance < 300):# and (distance > 4):
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'sonar' + str(physical_pin)
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)
+
+
 
                                 
                 if ('config' in dataraw):
