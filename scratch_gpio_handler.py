@@ -267,6 +267,15 @@ class ScratchListener(threading.Thread):
         return self._stop.isSet()
 
     def physical_pin_update(self, pin_index, value):
+        if (PIN_USE[pin_index] == 0):
+            PIN_USE[pin_index] = 1
+            GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
+            print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from input'
+        if (PIN_USE[pin_index] == 2):
+            PIN_USE[pin_index] = 1
+            PWM_OUT[pin_index].stop()
+            GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
+            print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from PWM'
         if (PIN_USE[pin_index] == 1):
             #print 'setting gpio %d (physical pin %d) to %d' % (GPIO_NUM[pin_index],PIN_NUM[pin_index],value)
             GPIO.output(PIN_NUM[pin_index], value)
@@ -325,88 +334,18 @@ class ScratchListener(threading.Thread):
                     #check_broadcast = str(i) + 'on'
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
-                    if 'pin' + str(physical_pin) + '" 1' in dataraw:
-                        if (PIN_USE[i] == 0):
-                            PIN_USE[i] = 1
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , ' used as out'
-                        if (PIN_USE[i] == 2):
-                            PIN_USE[i] = 1
-                            PWM_OUT[i].stop()
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , '  used as out'
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                    if  'pin' + str(physical_pin) + '" 0' in dataraw:
-                        if (PIN_USE[i] == 0):
-                            PIN_USE[i] = 1
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , ' used as out'
-                        if (PIN_USE[i] == 2):
-                            PIN_USE[i] = 1
-                            PWM_OUT[i].stop()
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , '  used as out'
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                    if  'pin' + str(physical_pin) + '" "on' in dataraw:
-                        print 'pin13 addressed'
-                        print dataraw
-                        if (PIN_USE[i] == 0):
-                            PIN_USE[i] = 1
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , ' used as out'
-                        if (PIN_USE[i] == 2):
-                            PIN_USE[i] = 1
-                            PWM_OUT[i].stop()
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , '  used as out'
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                    if  'pin' + str(physical_pin) + '" "off' in dataraw:
-                        print 'pin13 addressed'
-                        print dataraw
-                        if (PIN_USE[i] == 0):
-                            PIN_USE[i] = 1
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , ' used as out'
-                        if (PIN_USE[i] == 2):
-                            PIN_USE[i] = 1
-                            PWM_OUT[i].stop()
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , '  used as out'
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                    if  'pin' + str(physical_pin) + '" "high' in dataraw:
-                        if (PIN_USE[i] == 0):
-                            PIN_USE[i] = 1
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , ' used as out'
-                        if (PIN_USE[i] == 2):
-                            PIN_USE[i] = 1
-                            PWM_OUT[i].stop()
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , '  used as out'
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                    if  'pin' + str(physical_pin) + '" "low' in dataraw:
-                        if (PIN_USE[i] == 0):
-                            PIN_USE[i] = 1
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , ' used as out'
-                        if (PIN_USE[i] == 2):
-                            PIN_USE[i] = 1
-                            PWM_OUT[i].stop()
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , '  used as out'
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-
+                    pin_string = 'pin' + str(physical_pin)
+                    if ((pin_string + '" 1' in dataraw) or (pin_string + '" "on' in dataraw) or (pin_string + '" "high' )):
+                        print "variable detect" , dataraw
+                        self.physical_pin_update(i,1)
+                    if  ((pin_string + '" 0' in dataraw) or (pin_string + '" "off' in dataraw) or (pin_string + '" "low' )):
+                        print "variable detect" , dataraw
+                        self.physical_pin_update(i,0)
+                    #check for power variable commands
                     if  'power' + str(physical_pin) in dataraw:
-                        print dataraw
                         outputall_pos = dataraw.find('power' + str(physical_pin))
                         sensor_value = dataraw[(outputall_pos+1+len('power' + str(physical_pin))):].split()
-                        print 'pulse', str(physical_pin) , sensor_value[0]
+                        print 'power', str(physical_pin) , sensor_value[0]
 
                         if isNumeric(sensor_value[0]):
                             if PIN_USE[i] != 2:
@@ -416,35 +355,14 @@ class ScratchListener(threading.Thread):
                             else:
                                 PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
                     
-                #Use bit pattern to control ports
-                if 'pinpattern' in dataraw:
-                    #print 'Found pinpattern'
-                    num_of_bits = PINS
-                    outputall_pos = dataraw.find('pinpattern')
-                    sensor_value = dataraw[(outputall_pos+12):].split()
-                    #print sensor_value[0]
-                    bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-num_of_bits:]
-                    #print 'bit_pattern %s' % bit_pattern
-                    j = 0
-                    for i in range(PINS):
-                    #bit_state = ((2**i) & sensor_value) >> i
-                    #print 'dummy pin %d state %d' % (i, bit_state)
-                        if (PIN_USE[i] == 1):
-                            if bit_pattern[-(j+1)] == '0':
-                                self.physical_pin_update(i,0)
-                            else:
-                                self.physical_pin_update(i,1)
-                            j = j + 1
-
-
-                    
+                   
                 if  'motora' in dataraw:
                     for i in range(PINS):
                         if PIN_NUM[i] == 11:
                             print dataraw
                             outputall_pos = dataraw.find('motora')
                             sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
-                            print 'motorb', sensor_value[0]
+                            print 'motora', sensor_value[0]
 
                             if isNumeric(sensor_value[0]):
                                 if PIN_USE[i] != 2:
@@ -486,30 +404,12 @@ class ScratchListener(threading.Thread):
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
                     if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
-                        if (PIN_USE[i] == 0):
-                            PIN_USE[i] = 1
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , ' used as out'
-                        if (PIN_USE[i] == 2):
-                            PIN_USE[i] = 1
-                            PWM_OUT[i].stop()
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , '  used as out'
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
+                        print dataraw
+                        self.physical_pin_update(i,1)
 
                     if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
-                        if (PIN_USE[i] == 0):
-                            PIN_USE[i] = 1
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , ' used as out'
-                        if (PIN_USE[i] == 2):
-                            PIN_USE[i] = 1
-                            PWM_OUT[i].stop()
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-                            print 'pin' , PIN_NUM[i] , '  used as out'
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,0)
+                        print dataraw
+                        self.physical_pin_update(i,0)
 
                 if 'sonar' in dataraw:
                     # setup a array to hold 3 values and then do 3 distance calcs and store them
@@ -543,7 +443,7 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
-                         
+
                                 
                 if ('config' in dataraw):
                     for i in range(PINS):
