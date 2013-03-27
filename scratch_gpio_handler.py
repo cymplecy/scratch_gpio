@@ -18,6 +18,9 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 GPIO.cleanup()
 
+STEPPERA=0
+STEPPERB=1
+
 
 def isNumeric(s):
     try:
@@ -30,6 +33,81 @@ def isNumeric(s):
 def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
+
+
+#----------------------------- STEPPER CONTROL --------------
+class StepperControl(threading.Thread):
+    def __init__(self,stepper_num,step_delay):
+        self.stepper_num = stepper_num # find which stepper a or b
+        self.step_delay = step_delay
+        self.terminated = False
+        self.toTerminate = False
+        threading.Thread.__init__(self)
+        self._stop = threading.Event()
+
+    def start(self, dutyCycle):
+        """
+        Start PWM output. Expected parameter is :
+        - dutyCycle : percentage of a single pattern to set HIGH output on the GPIO pin
+        Example : with a frequency of 1 Hz, and a duty cycle set to 25, GPIO pin will
+        stay HIGH for 1*(25/100) seconds on HIGH output, and 1*(75/100) seconds on LOW output.
+        """
+        self.thread = threading.Thread(None, self.run, None, (), {})
+        self.thread.start()
+
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()
+
+    def physical_pin_update(self, pin_index, value):
+        if (PIN_USE[pin_index] == 0):
+            PIN_USE[pin_index] = 1
+            GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
+            print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from input'
+        if (PIN_USE[pin_index] == 2):
+            PIN_USE[pin_index] = 1
+            PWM_OUT[pin_index].stop()
+            GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
+            print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from PWM'
+        if (PIN_USE[pin_index] == 1):
+            print 'setting gpio %d (physical pin %d) to %d' % (GPIO_NUM[pin_index],PIN_NUM[pin_index],value)
+            GPIO.output(PIN_NUM[pin_index], value)
+
+
+    def step_coarse(self,a,b,c,d,delay):
+        self.physical_pin_update(a,1,False)
+        self.physical_pin_update(d,0,False)
+        time.sleep(delay)
+
+        self.physical_pin_update(b,1,False)
+        self.physical_pin_update(a,0,False)
+        time.sleep(delay)
+        
+        self.physical_pin_update(c,1,False)
+        self.physical_pin_update(b,0,False)
+        time.sleep(delay)
+        
+        self.physical_pin_update(d,1,False)
+        self.physical_pin_update(c,0,False)
+        time.sleep(delay)
+
+    def run(self):
+        #time.sleep(2) # just wait till board likely to be up and running
+        if self.stepper_num == 1:
+            while not self.stopped():
+                local_stepper_value=stepper_value[self.stepper_num] # get stepper value in case its changed during this thread
+                if local_stepper_value != 0: #if stepper_value non-zero
+                    if local_stepper_value > 0: # if positive value
+                        self.step_coarse(PIN_NUM_LOOKUP[16],PIN_NUM_LOOKUP[18],PIN_NUM_LOOKUP[22],PIN_NUM_LOOKUP[7],step_delay) #step forward
+                    else:
+                        self.step_coarse(PIN_NUM_LOOKUP[7],PIN_NUM_LOOKUP[22],PIN_NUM_LOOKUP[18],PIN_NUM_LOOKUP[16],step_delay) #step forward
+                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
+                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
+                else:
+                    time.sleep(1) # sleep if stepper value is zero
+    ####### end of Stepper Class
 
 class PiZyPwm(threading.Thread):
 
@@ -130,9 +208,9 @@ PIN_NUM = array('i',[11, 12, 13, 15, 16, 18, 22, 7, 3, 5, 8, 10, 24, 26, 19, 21,
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
 PIN_USE = array('i',[0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0,  1])
 PINS = len(PIN_NUM)
+PIN_NUM_LOOKUP=[int] * 27
 
 
-PINS = len(PIN_NUM)
 PWM_OUT = [None] * PINS
 
 
@@ -145,6 +223,7 @@ def SetPinMode():
         else:
             GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP)
             print 'pin' , PIN_NUM[i] , ' in'
+        PIN_NUM_LOOKUP[PIN_NUM[i]] = i
 
 SetPinMode()
 
@@ -304,30 +383,12 @@ class ScratchListener(threading.Thread):
 
             if 'sensor-update' in dataraw:
                 #gloablly set all ports
-                if 'allpins" 1' in dataraw:
-                    for i in range(PINS):
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                if 'allpins" 0' in dataraw:
-                    for i in range(PINS):
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,0)
-                if 'allpins" "on' in dataraw:
-                    for i in range(PINS):
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                if 'allpins" "off' in dataraw:
-                    for i in range(PINS):
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,0)
-                if 'allpins" "high' in dataraw:
-                    for i in range(PINS):
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                if 'allpins" "low' in dataraw:
-                    for i in range(PINS):
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,0)
+                if (('allpins" 1' in dataraw) or ('allpins" "on' in dataraw) or ('allpins" "high' in dataraw)):
+                    for i in range(PINS): 
+                        self.physical_pin_update(i,1)
+                if (('allpins" 0' in dataraw) or ('allpins" "off' in dataraw) or ('allpins" "low' in dataraw)):
+                    for i in range(PINS): 
+                        self.physical_pin_update(i,0)
                 
                 
                 #check for individual port commands
@@ -342,11 +403,29 @@ class ScratchListener(threading.Thread):
                     if  ((pin_string + '" 0' in dataraw) or (pin_string + '" "off' in dataraw) or (pin_string + '" "low' )):
                         print "variable detect" , dataraw
                         self.physical_pin_update(i,0)
+
+
+##                    if  'stepperb' in dataraw:
+##                        for i in range(PINS):
+##                             #print dataraw
+##                            outputall_pos = dataraw.find('stepperb')
+##                            sensor_value = dataraw[(outputall_pos+1+len('stepperb')):].split()
+##                            #print 'motora', sensor_value[0]
+##
+##                            if isNumeric(sensor_value[0]):
+##                                if PIN_USE[i] != 2:
+##                                    PIN_USE[i] = 2
+##                                    PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+##                                    PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+##                                else:
+##                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+
+
                     #check for power variable commands
                     if  'power' + str(physical_pin) in dataraw:
                         outputall_pos = dataraw.find('power' + str(physical_pin))
                         sensor_value = dataraw[(outputall_pos+1+len('power' + str(physical_pin))):].split()
-                        print 'power', str(physical_pin) , sensor_value[0]
+                        #print 'power', str(physical_pin) , sensor_value[0]
 
                         if isNumeric(sensor_value[0]):
                             if PIN_USE[i] != 2:
@@ -355,15 +434,28 @@ class ScratchListener(threading.Thread):
                                 PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
                             else:
                                 PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                    if  'motor' + str(physical_pin) in dataraw:
+                        outputall_pos = dataraw.find('motor' + str(physical_pin))
+                        sensor_value = dataraw[(outputall_pos+1+len('motor' + str(physical_pin))):].split()
+                        #print 'motor', str(physical_pin) , sensor_value[0]
+
+                        if isNumeric(sensor_value[0]):
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                            else:
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+
                     
                    
                 if  'motora' in dataraw:
                     for i in range(PINS):
                         if PIN_NUM[i] == 11:
-                            print dataraw
+                            #print dataraw
                             outputall_pos = dataraw.find('motora')
                             sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
-                            print 'motora', sensor_value[0]
+                            #print 'motora', sensor_value[0]
 
                             if isNumeric(sensor_value[0]):
                                 if PIN_USE[i] != 2:
@@ -376,10 +468,10 @@ class ScratchListener(threading.Thread):
                 if  'motorb' in dataraw:
                     for i in range(PINS):
                         if PIN_NUM[i] == 12:
-                            print dataraw
+                            #print dataraw
                             outputall_pos = dataraw.find('motorb')
                             sensor_value = dataraw[(outputall_pos+1+len('motorb')):].split()
-                            print 'motorb', sensor_value[0]
+                            #print 'motorb', sensor_value[0]
 
                             if isNumeric(sensor_value[0]):
                                 if PIN_USE[i] != 2:
@@ -400,16 +492,17 @@ class ScratchListener(threading.Thread):
                     for i in range(PINS):
                         if (PIN_USE[i] == 1):
                             self.physical_pin_update(i,0)
+                #check pins
                 for i in range(PINS):
                     #check_broadcast = str(i) + 'on'
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
                     if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
-                        print dataraw
+                        #print dataraw
                         self.physical_pin_update(i,1)
 
                     if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
-                        print dataraw
+                        #print dataraw
                         self.physical_pin_update(i,0)
 
                     if ('sonar' + str(physical_pin)) in dataraw:
@@ -456,6 +549,9 @@ class ScratchListener(threading.Thread):
 
 
 
+                #end of broadcast check
+
+
                                 
                 if ('config' in dataraw):
                     for i in range(PINS):
@@ -471,7 +567,7 @@ class ScratchListener(threading.Thread):
                 
 
             if 'stop handler' in dataraw:
-                cleanup_threads((listener, sender))
+                cleanup_threads((listener, sender))#,stepperb))
                 sys.exit()
 
             #else:
@@ -504,6 +600,9 @@ def cleanup_threads(threads):
         if PWM_OUT[i] != None:
             PWM_OUT[i].stop()
 
+#    if stepperb != None:
+#       stepperb.stop()
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         host = sys.argv[1]
@@ -511,6 +610,9 @@ if __name__ == '__main__':
         host = DEFAULT_HOST
 
 cycle_trace = 'start'
+
+stepperb_value=0
+step_delay = 0.005 # delay used between steps in stepper motor functions
 
 while True:
 
@@ -527,6 +629,7 @@ while True:
         print 'Connected!'
         the_socket.settimeout(SOCKET_TIMEOUT)
         listener = ScratchListener(the_socket)
+#        stepperb = StepperControl(STEPPERB,step_delay)
 ##        data = the_socket.recv(BUFFER_SIZE)
 ##        print "Discard 1st data buffer" , data[4:].lower()
         sender = ScratchSender(the_socket)
@@ -534,11 +637,13 @@ while True:
         print "Running...."
         listener.start()
         sender.start()
+#        stepperb.start()
+
 
     # wait for ctrl+c
     try:
         time.sleep(0.1)
     except KeyboardInterrupt:
-        cleanup_threads((listener,sender,))
+        cleanup_threads((listener,sender))#stepperb))
         sys.exit()
 
