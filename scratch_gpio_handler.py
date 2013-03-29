@@ -20,7 +20,7 @@ GPIO.cleanup()
 
 STEPPERA=0
 STEPPERB=1
-
+stepperInUse = array('b',[False,False])
 
 def isNumeric(s):
     try:
@@ -55,6 +55,8 @@ class StepperControl(threading.Thread):
         """
         self.thread = threading.Thread(None, self.run, None, (), {})
         self.thread.start()
+
+
 
     def stop(self):
         self._stop.set()
@@ -99,7 +101,25 @@ class StepperControl(threading.Thread):
 
     def run(self):
         #time.sleep(2) # just wait till board likely to be up and running
-        if self.stepper_num == 1:
+        if self.stepper_num == 0:
+            print "A Thread running"
+            while not self.stopped():
+
+                local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
+                if local_stepper_value != 0: #if stepper_value non-zero
+                    currentStepDelay = step_delay * 100 / abs(local_stepper_value)
+                    
+                    if local_stepper_value > 0: # if positive value
+                        self.step_coarse(PIN_NUM_LOOKUP[11],PIN_NUM_LOOKUP[12],PIN_NUM_LOOKUP[13],PIN_NUM_LOOKUP[15],currentStepDelay) #step forward
+                    else:
+                        self.step_coarse(PIN_NUM_LOOKUP[15],PIN_NUM_LOOKUP[13],PIN_NUM_LOOKUP[12],PIN_NUM_LOOKUP[11],currentStepDelay) #step forward
+##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
+##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
+                else:
+                    time.sleep(1) # sleep if stepper value is zero
+
+        elif self.stepper_num == 1:
+            print "B Thread running"
             while not self.stopped():
                 local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
                 if local_stepper_value != 0: #if stepper_value non-zero
@@ -114,7 +134,7 @@ class StepperControl(threading.Thread):
                 else:
                     time.sleep(1) # sleep if stepper value is zero
     ####### end of Stepper Class
-
+                    
 class PiZyPwm(threading.Thread):
 
   def __init__(self, frequency, gpioPin, gpioScheme):
@@ -397,15 +417,15 @@ class ScratchListener(threading.Thread):
                     for i in range(PINS): 
                         self.physical_pin_update(i,0)
 
-                if  'stepperb' in dataraw:
-                    #print dataraw
-                    outputall_pos = dataraw.find('stepperb')
-                    sensor_value = dataraw[(outputall_pos+1+len('stepperb')):].split()
-                    #print 'stepperb', sensor_value[0]
-
-                    if isNumeric(sensor_value[0]):
-                        print "send change to stepperB" , sensor_value[0]
-                        stepperb.changeSpeed(max(-100,min(100,int(sensor_value[0]))))
+##                if  'stepperb' in dataraw:
+##                    #print dataraw
+##                    outputall_pos = dataraw.find('stepperb')
+##                    sensor_value = dataraw[(outputall_pos+1+len('stepperb')):].split()
+##                    #print 'stepperb', sensor_value[0]
+##
+##                    if isNumeric(sensor_value[0]):
+##                        print "send change to stepperB" , sensor_value[0]
+##                        stepperb.changeSpeed(max(-100,min(100,int(sensor_value[0]))))
 
                 
                 
@@ -454,38 +474,59 @@ class ScratchListener(threading.Thread):
                     
                    
                 if  'motora' in dataraw:
-                    for i in range(PINS):
-                        if PIN_NUM[i] == 11:
-                            #print dataraw
-                            outputall_pos = dataraw.find('motora')
-                            sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
-                            #print 'motora', sensor_value[0]
+                    if (steppera.stopped() == False):
+                        outputall_pos = dataraw.find('motora')
+                        sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
+                        #print 'steppera', sensor_value[0]
 
-                            if isNumeric(sensor_value[0]):
-                                if PIN_USE[i] != 2:
-                                    PIN_USE[i] = 2
-                                    PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                    PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
-                                else:
-                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                        if isNumeric(sensor_value[0]):
+                            print "send change to motora as a stepper" , sensor_value[0]
+                            steppera.changeSpeed(max(-100,min(100,int(sensor_value[0]))))
+                        
+                    else:
+                        for i in range(PINS):
+                            if PIN_NUM[i] == 11:
+                                #print dataraw
+                                outputall_pos = dataraw.find('motora')
+                                sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
+                                #print 'motorb', sensor_value[0]
+
+                                if isNumeric(sensor_value[0]):
+                                    if PIN_USE[i] != 2:
+                                        PIN_USE[i] = 2
+                                        PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                        PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                    else:
+                                        PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
 
                 if  'motorb' in dataraw:
-                    for i in range(PINS):
-                        if PIN_NUM[i] == 12:
-                            #print dataraw
-                            outputall_pos = dataraw.find('motorb')
-                            sensor_value = dataraw[(outputall_pos+1+len('motorb')):].split()
-                            #print 'motorb', sensor_value[0]
+                    if (stepperb.stopped() == False):
+                        outputall_pos = dataraw.find('motorb')
+                        sensor_value = dataraw[(outputall_pos+1+len('motorb')):].split()
+                        #print 'stepperb', sensor_value[0]
 
-                            if isNumeric(sensor_value[0]):
-                                if PIN_USE[i] != 2:
-                                    PIN_USE[i] = 2
-                                    PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                    PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
-                                else:
-                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                        if isNumeric(sensor_value[0]):
+                            print "send change to motorb as a stepper" , sensor_value[0]
+                            stepperb.changeSpeed(max(-100,min(100,int(sensor_value[0]))))
+                        
+                    else:
+                        for i in range(PINS):
+                            if PIN_NUM[i] == 12:
+                                #print dataraw
+                                outputall_pos = dataraw.find('motorb')
+                                sensor_value = dataraw[(outputall_pos+1+len('motorb')):].split()
+                                #print 'motorb', sensor_value[0]
 
-                            
+                                if isNumeric(sensor_value[0]):
+                                    if PIN_USE[i] != 2:
+                                        PIN_USE[i] = 2
+                                        PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                        PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                    else:
+                                        PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+
+
+                           
             if 'broadcast' in dataraw:
                 #print 'received broadcast: %s' % data
                 if (('allon' in dataraw) or ('allhigh' in dataraw)):
@@ -567,7 +608,21 @@ class ScratchListener(threading.Thread):
                         if 'config' + str(physical_pin)+'in' in dataraw:
                             PIN_USE[i] = 0
                     SetPinMode()
+
+                if ('steppera' in dataraw):
+                    if (stepperInUse[STEPPERA] == False):
+                        steppera.start()
+                        stepperInUse[STEPPERA] = True
+
+                if ('stepperb' in dataraw):
+                    if (stepperInUse[STEPPERB] == False):
+                        stepperb.start()
+                        stepperInUse[STEPPERB] = True
+
+
                     
+
+
                 
 
             if 'stop handler' in dataraw:
@@ -604,8 +659,13 @@ def cleanup_threads(threads):
         if PWM_OUT[i] != None:
             PWM_OUT[i].stop()
 
-    if stepperb != None:
-        stepperb.stop()
+    if (stepperInUse[STEPPERA] == True):
+        if (steppera.stopped() == False):
+            steppera.stop()
+
+    if (stepperInUse[STEPPERB] == True):
+        if (stepperb.stopped() == False):
+            stepperb.stop()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -633,7 +693,10 @@ while True:
         print 'Connected!'
         the_socket.settimeout(SOCKET_TIMEOUT)
         listener = ScratchListener(the_socket)
+        steppera = StepperControl(STEPPERA,step_delay)
         stepperb = StepperControl(STEPPERB,step_delay)
+
+
 ##        data = the_socket.recv(BUFFER_SIZE)
 ##        print "Discard 1st data buffer" , data[4:].lower()
         sender = ScratchSender(the_socket)
@@ -641,7 +704,7 @@ while True:
         print "Running...."
         listener.start()
         sender.start()
-        stepperb.start()
+##        stepperb.start()
 
 
     # wait for ctrl+c
