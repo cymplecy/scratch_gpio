@@ -21,6 +21,7 @@ GPIO.cleanup()
 STEPPERA=0
 STEPPERB=1
 stepperInUse = array('b',[False,False])
+step_delay = 0.0022 # delay used between steps in stepper motor functions
 
 def isNumeric(s):
     try:
@@ -41,6 +42,7 @@ class StepperControl(threading.Thread):
         self.stepper_num = stepper_num # find which stepper a or b
         self.step_delay = step_delay
         self.stepperSpeed = 0
+        self.steps = 2123456789
         self.terminated = False
         self.toTerminate = False
         threading.Thread.__init__(self)
@@ -64,8 +66,9 @@ class StepperControl(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-    def changeSpeed(self, stepperSpeed):
-        self.stepperSpeed = stepperSpeed
+    def changeSpeed(self, stepperSpeed,steps):
+        self.stepperSpeed = int(stepperSpeed)
+        self.steps = int(steps)
 
     def physical_pin_update(self, pin_index, value):
         if (PIN_USE[pin_index] == 0):
@@ -102,24 +105,28 @@ class StepperControl(threading.Thread):
     def run(self):
         #time.sleep(2) # just wait till board likely to be up and running
         if self.stepper_num == 0:
-            print "A Thread running"
+            #print "StepperA Thread running"
             while not self.stopped():
 
-                local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
-                if local_stepper_value != 0: #if stepper_value non-zero
-                    currentStepDelay = step_delay * 100 / abs(local_stepper_value)
-                    
-                    if local_stepper_value > 0: # if positive value
-                        self.step_coarse(PIN_NUM_LOOKUP[11],PIN_NUM_LOOKUP[12],PIN_NUM_LOOKUP[13],PIN_NUM_LOOKUP[15],currentStepDelay) #step forward
+                if (self.steps > 0):
+                    self.steps = self.steps - 1
+                    local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
+                    if local_stepper_value != 0: #if stepper_value non-zero
+                        currentStepDelay = step_delay * 100 / abs(local_stepper_value)
+                        
+                        if local_stepper_value > 0: # if positive value
+                            self.step_coarse(PIN_NUM_LOOKUP[11],PIN_NUM_LOOKUP[12],PIN_NUM_LOOKUP[13],PIN_NUM_LOOKUP[15],currentStepDelay) #step forward
+                        else:
+                            self.step_coarse(PIN_NUM_LOOKUP[15],PIN_NUM_LOOKUP[13],PIN_NUM_LOOKUP[12],PIN_NUM_LOOKUP[11],currentStepDelay) #step forward
+    ##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
+    ##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
                     else:
-                        self.step_coarse(PIN_NUM_LOOKUP[15],PIN_NUM_LOOKUP[13],PIN_NUM_LOOKUP[12],PIN_NUM_LOOKUP[11],currentStepDelay) #step forward
-##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
-##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
+                        time.sleep(0.1) # sleep if stepper value is zero
                 else:
-                    time.sleep(1) # sleep if stepper value is zero
+                    time.sleep(0.1) # sleep if stepper value is zero
 
         elif self.stepper_num == 1:
-            print "B Thread running"
+            #print "StepperB Thread running"
             while not self.stopped():
                 local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
                 if local_stepper_value != 0: #if stepper_value non-zero
@@ -132,7 +139,7 @@ class StepperControl(threading.Thread):
 ##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
 ##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
                 else:
-                    time.sleep(1) # sleep if stepper value is zero
+                    time.sleep(0.1) # sleep if stepper value is zero
     ####### end of Stepper Class
                     
 class PiZyPwm(threading.Thread):
@@ -386,6 +393,23 @@ class ScratchListener(threading.Thread):
             #print 'setting gpio %d (physical pin %d) to %d' % (GPIO_NUM[pin_index],PIN_NUM[pin_index],value)
             GPIO.output(PIN_NUM[pin_index], value)
 
+    def step_coarse(self,a,b,c,d,delay):
+        self.physical_pin_update(a,1)
+        self.physical_pin_update(d,0)
+        time.sleep(delay)
+
+        self.physical_pin_update(b,1)
+        self.physical_pin_update(a,0)
+        time.sleep(delay)
+        
+        self.physical_pin_update(c,1)
+        self.physical_pin_update(b,0)
+        time.sleep(delay)
+        
+        self.physical_pin_update(d,1)
+        self.physical_pin_update(c,0)
+        time.sleep(delay)
+
     def run(self):
         global cycle_trace
         #This is main listening routine
@@ -480,8 +504,8 @@ class ScratchListener(threading.Thread):
                         #print 'steppera', sensor_value[0]
 
                         if isNumeric(sensor_value[0]):
-                            print "send change to motora as a stepper" , sensor_value[0]
-                            steppera.changeSpeed(max(-100,min(100,int(sensor_value[0]))))
+                            #print "send change to motora as a stepper" , sensor_value[0]
+                            steppera.changeSpeed(max(-100,min(100,int(float(sensor_value[0])))),100)
                         
                     else:
                         for i in range(PINS):
@@ -497,7 +521,7 @@ class ScratchListener(threading.Thread):
                                         PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
                                         PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
                                     else:
-                                        PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                                        PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
 
                 if  'motorb' in dataraw:
                     if (stepperb.stopped() == False):
@@ -506,8 +530,13 @@ class ScratchListener(threading.Thread):
                         #print 'stepperb', sensor_value[0]
 
                         if isNumeric(sensor_value[0]):
-                            print "send change to motorb as a stepper" , sensor_value[0]
-                            stepperb.changeSpeed(max(-100,min(100,int(sensor_value[0]))))
+
+                            #print "send change to motorb as a stepper" , sensor_value[0]
+                            #print type(sensor_value[0])
+                            #print "***"+sensor_value[0]+"***"
+                            #print type(float(sensor_value[0]))
+                            #print float(sensor_value[0])
+                            stepperb.changeSpeed(max(-100,min(100,int(float(sensor_value[0])))),100)
                         
                     else:
                         for i in range(PINS):
@@ -523,7 +552,19 @@ class ScratchListener(threading.Thread):
                                         PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
                                         PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
                                     else:
-                                        PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                                        PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
+
+                if  'turna' in dataraw:
+                    if (steppera.stopped() == False):
+                        outputall_pos = dataraw.find('turna')
+                        sensor_value = dataraw[(outputall_pos+1+len('turna')):].split()
+                        print 'turna', sensor_value[0]
+
+                        if isNumeric(sensor_value[0]):
+                            #print "send change to motora as a stepper" , sensor_value[0]
+                            steppera.changeSpeed(max(-100,min(100,int(float(sensor_value[0])))),100)
+                        
+                    
 
 
                            
@@ -676,7 +717,7 @@ if __name__ == '__main__':
 cycle_trace = 'start'
 
 stepperb_value=0
-step_delay = 0.0025 # delay used between steps in stepper motor functions
+
 
 while True:
 
