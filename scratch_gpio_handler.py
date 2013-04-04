@@ -60,7 +60,7 @@ def parse_data(dataraw, search_string):
 class StepperControl(threading.Thread):
     def __init__(self,stepper_num,step_delay):
         self.stepper_num = stepper_num # find which stepper a or b
-        self.step_delay = step_delay
+        #self.step_delay = step_delay
         self.stepperSpeed = 0
         self.steps = 2123456789
         self.terminated = False
@@ -106,21 +106,50 @@ class StepperControl(threading.Thread):
 
 
     def step_coarse(self,a,b,c,d,delay):
+        self.step_fine(a,b,c,d,delay)
+        
+##        self.physical_pin_update(a,1)
+##        self.physical_pin_update(d,0)
+##        time.sleep(delay)
+##
+##        self.physical_pin_update(b,1)
+##        self.physical_pin_update(a,0)
+##        time.sleep(delay)
+##        
+##        self.physical_pin_update(c,1)
+##        self.physical_pin_update(b,0)
+##        time.sleep(delay)
+##        
+##        self.physical_pin_update(d,1)
+##        self.physical_pin_update(c,0)
+##        time.sleep(delay)
+
+    def step_fine(self,a,b,c,d,delay):
+        self.physical_pin_update(d,0) 
         self.physical_pin_update(a,1)
-        self.physical_pin_update(d,0)
         time.sleep(delay)
 
         self.physical_pin_update(b,1)
+        time.sleep(delay)
+
         self.physical_pin_update(a,0)
         time.sleep(delay)
         
         self.physical_pin_update(c,1)
+        time.sleep(delay)
+
         self.physical_pin_update(b,0)
         time.sleep(delay)
-        
+
         self.physical_pin_update(d,1)
+        time.sleep(delay)
+
         self.physical_pin_update(c,0)
         time.sleep(delay)
+        
+        self.physical_pin_update(a,1)
+        time.sleep(delay)
+
 
     def run(self):
         #time.sleep(2) # just wait till board likely to be up and running
@@ -154,6 +183,7 @@ class StepperControl(threading.Thread):
                     local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
                     if local_stepper_value != 0: #if stepper_value non-zero
                         currentStepDelay = step_delay * 100 / abs(local_stepper_value)
+                        #print step_delay
                         
                         if local_stepper_value > 0: # if positive value
                             self.step_coarse(PIN_NUM_LOOKUP[16],PIN_NUM_LOOKUP[18],PIN_NUM_LOOKUP[22],PIN_NUM_LOOKUP[7],currentStepDelay) #step forward
@@ -423,7 +453,7 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep
+        global cycle_trace,turnAStep,turnBStep,step_delay
         #This is main listening routine
         while not self.stopped():
             try:
@@ -443,6 +473,7 @@ class ScratchListener(threading.Thread):
                 #print "No data received: socket timeout"
                 continue
 
+            #Listen for Variable changes
             if 'sensor-update' in dataraw:
                 #print "sensor-update rcvd" , dataraw
                 #gloablly set all ports
@@ -580,8 +611,8 @@ class ScratchListener(threading.Thread):
                             
                 if  'turnb' in dataraw:
                     if (stepperb.stopped() == False):
-                        outputall_pos = dataraw.find('turnb')
-                        sensor_value = dataraw[(outputall_pos+1+len('turnb')):].split()
+                        #outputall_pos = dataraw.find('turnb')
+                        sensor_value = dataraw[(dataraw.find('turnb')+1+len('turnb')):].split()
                         print 'turnb variable', sensor_value[0]
 
                         if isNumeric(sensor_value[0]):
@@ -591,8 +622,32 @@ class ScratchListener(threading.Thread):
                             turnBStep = int(float(sensor_value[0]))
                             print "turnbstep" , turnBStep
 
+                if  'stepdelay' in dataraw:
+                    sensor_value = dataraw[(dataraw.find('stepdelay')+1+len('stepdelay')):].split()
+                    print 'delay variable', sensor_value[0]
+                    if isNumeric(sensor_value[0]):
+                        step_delay = float(sensor_value[0])
 
-
+                if  'positiona' in dataraw:
+                    print "posa" , dataraw
+                    if (steppera.stopped() == False):
+                        outputall_pos = dataraw.find('positiona')
+                        sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
+                        if isNumeric(sensor_value[0]):
+                            steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
+                            turnAStep = int(float(sensor_value[0]))
+                                            
+                if  'positionb' in dataraw:
+                    print "posb"
+                    if (stepperb.stopped() == False):
+                        outputall_pos = dataraw.find('positionb')
+                        sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
+                        print "sensor" , sensor_value[0]
+                        if isNumeric(sensor_value[0]):
+                            print "change pos" , sensor_value[0]
+                            stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
+                            turnBStep = int(float(sensor_value[0]))
+                        
                            
             if 'broadcast' in dataraw:
                 print 'received broadcast: %s' % data
@@ -680,11 +735,13 @@ class ScratchListener(threading.Thread):
                     if (stepperInUse[STEPPERA] == False):
                         steppera.start()
                         stepperInUse[STEPPERA] = True
+                        turnAStep = 0
 
                 if ('stepperb' in dataraw):
                     if (stepperInUse[STEPPERB] == False):
                         stepperb.start()
                         stepperInUse[STEPPERB] = True
+                        turnBStep = 0
 
                 if  'turnago' in dataraw:
                     #print "turna broadcast"
