@@ -22,9 +22,11 @@ GPIO.cleanup()
 STEPPERA=0
 STEPPERB=1
 stepperInUse = array('b',[False,False])
-step_delay = 0.002 # delay used between steps in stepper motor functions
+step_delay = 0.003 # delay used between steps in stepper motor functions
 turnAStep = 0
 turnBStep = 0
+stepMode = ['1Coil','2Coil','HalfStep']
+stepType = 1
 
 PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
@@ -106,49 +108,78 @@ class StepperControl(threading.Thread):
 
 
     def step_coarse(self,a,b,c,d,delay):
-        self.step_fine(a,b,c,d,delay)
-        
-##        self.physical_pin_update(a,1)
-##        self.physical_pin_update(d,0)
-##        time.sleep(delay)
-##
-##        self.physical_pin_update(b,1)
-##        self.physical_pin_update(a,0)
-##        time.sleep(delay)
-##        
-##        self.physical_pin_update(c,1)
-##        self.physical_pin_update(b,0)
-##        time.sleep(delay)
-##        
-##        self.physical_pin_update(d,1)
-##        self.physical_pin_update(c,0)
-##        time.sleep(delay)
+        global stepType
+        lstepMode = stepMode[stepType]
+        #print stepMode[stepType]
+        if lstepMode == '1Coil':
+            self.physical_pin_update(d,0)
+            self.physical_pin_update(a,1)
+            time.sleep(delay)
 
-    def step_fine(self,a,b,c,d,delay):
-        self.physical_pin_update(d,0) 
-        self.physical_pin_update(a,1)
-        time.sleep(delay)
+            self.physical_pin_update(a,0)
+            self.physical_pin_update(b,1)
+            time.sleep(delay)
+            
+            self.physical_pin_update(b,0)
+            self.physical_pin_update(c,1)
+            time.sleep(delay)
+            
+            self.physical_pin_update(c,0)
+            self.physical_pin_update(d,1)
+            time.sleep(delay)
+            
+        elif lstepMode == '2Coil':
+            self.physical_pin_update(d,0)
+            self.physical_pin_update(c,0)
+            self.physical_pin_update(a,1)
+            self.physical_pin_update(b,1)
+            time.sleep(delay)
 
-        self.physical_pin_update(b,1)
-        time.sleep(delay)
+            self.physical_pin_update(a,0)
+            self.physical_pin_update(d,0)
+            self.physical_pin_update(b,1)
+            self.physical_pin_update(c,1)
+            time.sleep(delay)
+            
+            self.physical_pin_update(a,0)
+            self.physical_pin_update(b,0)
+            self.physical_pin_update(c,1)
+            self.physical_pin_update(d,1)
+            time.sleep(delay)
+            
+            self.physical_pin_update(b,0)
+            self.physical_pin_update(c,0)
+            self.physical_pin_update(d,1)
+            self.physical_pin_update(a,1)
+            time.sleep(delay)
+            
+        elif lstepMode == 'HalfStep':
+            self.physical_pin_update(d,0) 
+            self.physical_pin_update(a,1)
+            time.sleep(delay)
 
-        self.physical_pin_update(a,0)
-        time.sleep(delay)
-        
-        self.physical_pin_update(c,1)
-        time.sleep(delay)
 
-        self.physical_pin_update(b,0)
-        time.sleep(delay)
+            self.physical_pin_update(b,1)
+            time.sleep(delay)
 
-        self.physical_pin_update(d,1)
-        time.sleep(delay)
+            self.physical_pin_update(a,0)
+            time.sleep(delay)
+            
+            self.physical_pin_update(c,1)
+            time.sleep(delay)
 
-        self.physical_pin_update(c,0)
-        time.sleep(delay)
-        
-        self.physical_pin_update(a,1)
-        time.sleep(delay)
+            self.physical_pin_update(b,0)
+            time.sleep(delay)
+
+            self.physical_pin_update(d,1)
+            time.sleep(delay)
+
+            self.physical_pin_update(c,0)
+            time.sleep(delay)
+            
+            self.physical_pin_update(a,1)
+            time.sleep(delay)
+
 
 
     def run(self):
@@ -453,7 +484,7 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,step_delay
+        global cycle_trace,turnAStep,turnBStep,step_delay,stepType
         #This is main listening routine
         while not self.stopped():
             try:
@@ -634,8 +665,11 @@ class ScratchListener(threading.Thread):
                         outputall_pos = dataraw.find('positiona')
                         sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
                         if isNumeric(sensor_value[0]):
-                            steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
-                            turnAStep = int(float(sensor_value[0]))
+                            if int(float(sensor_value[0])) != 0:
+                                steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
+                                turnAStep = int(float(sensor_value[0]))
+                            else:
+                                turnAStep = 0
                                             
                 if  'positionb' in dataraw:
                     print "posb"
@@ -644,11 +678,14 @@ class ScratchListener(threading.Thread):
                         sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
                         print "sensor" , sensor_value[0]
                         if isNumeric(sensor_value[0]):
-                            print "change pos" , sensor_value[0]
-                            stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
-                            turnBStep = int(float(sensor_value[0]))
+                            if int(float(sensor_value[0])) != 0:
+                                print "change pos" , sensor_value[0]
+                                stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
+                                turnBStep = int(float(sensor_value[0]))
+                            else:
+                                turnBStep = 0
                         
-                           
+
             if 'broadcast' in dataraw:
                 print 'received broadcast: %s' % data
                 if (('allon' in dataraw) or ('allhigh' in dataraw)):
@@ -760,8 +797,20 @@ class ScratchListener(threading.Thread):
                             print "lets turnb" , turnBStep
                             stepperb.changeSpeed(int(100 * sign(float(turnBStep))),abs(int(float(turnBStep))))
 
+                if  '1coil' in dataraw:
+                    print "1coil broadcast"
+                    stepType = 0
+                    print "step mode" ,stepMode[stepType]
 
+                if  '2coil' in dataraw:
+                    print "1coil broadcast"
+                    stepType = 1
+                    print "step mode" ,stepMode[stepType]
                     
+                if  'halfstep' in dataraw:
+                    print "1coil broadcast"
+                    stepType = 2
+                    print "step mode" ,stepMode[stepType]
 
 
                 
