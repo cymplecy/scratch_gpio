@@ -533,11 +533,12 @@ class ScratchListener(threading.Thread):
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
                     pin_string = 'pin' + str(physical_pin)
-                    if ((pin_string + '" 1' in dataraw) or (pin_string + '" "on' in dataraw) or (pin_string + '" "high' )):
-                        #print "variable detect" , dataraw
+                    #print "pin string" , pin_string
+                    if (((pin_string + '" 1' )in dataraw) or ((pin_string + '" "on') in dataraw) or ((pin_string + '" "high') in dataraw )):
+                        #print "variable detect 1/on/high" , dataraw
                         self.physical_pin_update(i,1)
-                    if  ((pin_string + '" 0' in dataraw) or (pin_string + '" "off' in dataraw) or (pin_string + '" "low' )):
-                        #print "variable detect" , dataraw
+                    if  (((pin_string + '" 0') in dataraw) or ((pin_string + '" "off') in dataraw) or ((pin_string + '" "low') in dataraw )):
+                        #print "variable detect 0/off/low" , dataraw
                         self.physical_pin_update(i,0)
 
 
@@ -687,7 +688,7 @@ class ScratchListener(threading.Thread):
                         
 
             if 'broadcast' in dataraw:
-                print 'received broadcast: %s' % data
+                #print 'received broadcast: %s' % data
                 if (('allon' in dataraw) or ('allhigh' in dataraw)):
                     for i in range(PINS):
                         if (PIN_USE[i] == 1):
@@ -702,11 +703,11 @@ class ScratchListener(threading.Thread):
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
                     if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
-                        #print dataraw
+                        print dataraw
                         self.physical_pin_update(i,1)
 
                     if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
-                        #print dataraw
+                        print dataraw
                         self.physical_pin_update(i,0)
 
                     if ('sonar' + str(physical_pin)) in dataraw:
