@@ -688,7 +688,7 @@ class ScratchListener(threading.Thread):
                         
 
             if 'broadcast' in dataraw:
-                #print 'received broadcast: %s' % data
+                print 'received broadcast: %s' % data
                 if (('allon' in dataraw) or ('allhigh' in dataraw)):
                     for i in range(PINS):
                         if (PIN_USE[i] == 1):
