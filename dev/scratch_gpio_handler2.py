@@ -23,8 +23,8 @@ STEPPERA=0
 STEPPERB=1
 stepperInUse = array('b',[False,False])
 step_delay = 0.003 # delay used between steps in stepper motor functions
-turnAStep = 0
-turnBStep = 0
+turnAStep = -1234567
+turnBStep = -1234567
 stepMode = ['1Coil','2Coil','HalfStep']
 stepType = 1
 
@@ -644,30 +644,66 @@ class ScratchListener(threading.Thread):
                         step_delay = float(sensor_value[0])
 
                 if  'turna' in dataraw:
-                    print "turna" , dataraw
+                    #print "turna" , dataraw
                     if (steppera.stopped() == False):
                         outputall_pos = dataraw.find('turna')
                         sensor_value = dataraw[(outputall_pos+1+len('turna')):].split()
                         if isNumeric(sensor_value[0]):
                             #if int(float(sensor_value[0])) != 0:
+                            if turnAStep == -1234567:
+                                turnAStep = int(float(sensor_value[0]))
                             steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
                             turnAStep = int(float(sensor_value[0]))
                             #else:
                             #    turnAStep = 0
                                             
                 if  'turnb' in dataraw:
-                    print "turnb"
+                    #print "turnb"
                     if (stepperb.stopped() == False):
                         outputall_pos = dataraw.find('turnb')
                         sensor_value = dataraw[(outputall_pos+1+len('turnb')):].split()
-                        print "sensor" , sensor_value[0]
+                        #print "sensor" , sensor_value[0]
                         if isNumeric(sensor_value[0]):
                             #if int(float(sensor_value[0])) != 0:
-                            print "change pos" , sensor_value[0]
+                            if turnBStep == -1234567:
+                                turnBStep = int(float(sensor_value[0]))
+                            #print "change turnb" , sensor_value[0]
                             stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
                             turnBStep = int(float(sensor_value[0]))
                             #else:
                             #    turnBStep = 0
+
+                if  'positiona' in dataraw:
+                    #print "positiona" , dataraw
+                    if (steppera.stopped() == False):
+                        outputall_pos = dataraw.find('positiona')
+                        sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
+                        if isNumeric(sensor_value[0]):
+                            #if int(float(sensor_value[0])) != 0:s
+                            if turnAStep == -1234567:
+                                turnAStep = int(float(sensor_value[0]))
+                            steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
+                            turnAStep = int(float(sensor_value[0]))
+                            #else:
+                            #    turnAStep = 0
+                                            
+                if  'positionb' in dataraw:
+                    #print "positionb" , dataraw
+                    if (stepperb.stopped() == False):
+                        outputall_pos = dataraw.find('positionb')
+                        sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
+                        #print "sensor" , sensor_value[0]
+                        if isNumeric(sensor_value[0]):
+                            #if int(float(sensor_value[0])) != 0:
+                            if turnBStep == -1234567:
+                                turnBStep = int(float(sensor_value[0]))
+                                print "TurnBStep Set to" , turnBStep
+                            print "change posb" , sensor_value[0]
+                            stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
+                            turnBStep = int(float(sensor_value[0]))
+                            #else:
+                            #    turnBStep = 0
+
                         
 
             if 'broadcast' in dataraw:
