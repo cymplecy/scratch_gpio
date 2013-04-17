@@ -36,7 +36,7 @@ SOCKET_TIMEOUT = 1
 
 PIN_NUM = array('i',[11, 12, 13, 15, 16, 18, 22, 7, 3, 5, 8, 10, 24, 26, 19, 21, 23])
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
-PIN_USE = array('i',[0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0,  1])
+PIN_USE = array('i',[0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0,  0])
 PINS = len(PIN_NUM)
 PIN_NUM_LOOKUP=[int] * 27
 
@@ -60,23 +60,18 @@ def parse_data(dataraw, search_string):
 
 #----------------------------- STEPPER CONTROL --------------
 class StepperControl(threading.Thread):
-    def __init__(self,stepper_num,step_delay):
-        self.stepper_num = stepper_num # find which stepper a or b
+    def __init__(self,pinA,pinB,pinC,pinD,step_delay):
+        #self.stepper_num = stepper_num # find which stepper a or b
         #self.step_delay = step_delay
-        self.stepperSpeed = 0
-        self.steps = 2123456789
+        self.stepperSpeed = 0 #stepp speed dset to 0 when thread created
+        self.steps = 2123456789 # default to psuedo infinte number of turns
         self.terminated = False
         self.toTerminate = False
         threading.Thread.__init__(self)
         self._stop = threading.Event()
+        self.pins = array("i",[PIN_NUM_LOOKUP[pinA],PIN_NUM_LOOKUP[pinB],PIN_NUM_LOOKUP[pinC],PIN_NUM_LOOKUP[pinD]])
 
     def start(self):
-        """
-        Start PWM output. Expected parameter is :
-        - dutyCycle : percentage of a single pattern to set HIGH output on the GPIO pin
-        Example : with a frequency of 1 Hz, and a duty cycle set to 25, GPIO pin will
-        stay HIGH for 1*(25/100) seconds on HIGH output, and 1*(75/100) seconds on LOW output.
-        """
         self.thread = threading.Thread(None, self.run, None, (), {})
         self.thread.start()
 
@@ -180,52 +175,40 @@ class StepperControl(threading.Thread):
             self.physical_pin_update(a,1)
             time.sleep(delay)
 
+    def pause(self):
+        self.physical_pin_update(self.pins[0],0)
+        self.physical_pin_update(self.pins[1],0)
+        self.physical_pin_update(self.pins[2],0)
+        self.physical_pin_update(self.pins[3],0)
+
+
 
 
     def run(self):
         #time.sleep(2) # just wait till board likely to be up and running
-        if self.stepper_num == 0:
-            #print "StepperA Thread running"
-            while not self.stopped():
+        while not self.stopped():
+            #print self.pins[0],self.pins[1],self.pins[2],self.pins[3]
 
-                if (self.steps > 0):
-                    self.steps = self.steps - 1
-                    local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
-                    if local_stepper_value != 0: #if stepper_value non-zero
-                        currentStepDelay = step_delay * 100 / abs(local_stepper_value)
-                        
-                        if local_stepper_value > 0: # if positive value
-                            self.step_coarse(PIN_NUM_LOOKUP[11],PIN_NUM_LOOKUP[12],PIN_NUM_LOOKUP[13],PIN_NUM_LOOKUP[15],currentStepDelay) #step forward
-                        else:
-                            self.step_coarse(PIN_NUM_LOOKUP[15],PIN_NUM_LOOKUP[13],PIN_NUM_LOOKUP[12],PIN_NUM_LOOKUP[11],currentStepDelay) #step forward
-    ##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
-    ##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
+            if (self.steps > 0):
+                self.steps = self.steps - 1
+                local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
+                if local_stepper_value != 0: #if stepper_value non-zero
+                    currentStepDelay = step_delay * 100 / abs(local_stepper_value)
+                    
+                    if local_stepper_value > 0: # if positive value
+                        self.step_coarse(self.pins[0],self.pins[1],self.pins[2],self.pins[3],currentStepDelay) #step forward
                     else:
-                        time.sleep(0.1) # sleep if stepper value is zero
+                        self.step_coarse(self.pins[3],self.pins[2],self.pins[1],self.pins[0],currentStepDelay) #step forward
+##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
+##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
                 else:
+                    self.pause()
                     time.sleep(0.1) # sleep if stepper value is zero
+            else:
+                self.pause()
+                time.sleep(0.1) # sleep if stepper value is zero
 
-        elif self.stepper_num == 1:
-            #print "StepperB Thread running"
-            while not self.stopped():
-
-                if (self.steps > 0):
-                    self.steps = self.steps - 1
-                    local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
-                    if local_stepper_value != 0: #if stepper_value non-zero
-                        currentStepDelay = step_delay * 100 / abs(local_stepper_value)
-                        #print step_delay
-                        
-                        if local_stepper_value > 0: # if positive value
-                            self.step_coarse(PIN_NUM_LOOKUP[16],PIN_NUM_LOOKUP[18],PIN_NUM_LOOKUP[22],PIN_NUM_LOOKUP[7],currentStepDelay) #step forward
-                        else:
-                            self.step_coarse(PIN_NUM_LOOKUP[7],PIN_NUM_LOOKUP[22],PIN_NUM_LOOKUP[18],PIN_NUM_LOOKUP[16],currentStepDelay) #step forward
-    ##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
-    ##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
-                    else:
-                        time.sleep(0.1) # sleep if stepper value is zero
-                else:
-                    time.sleep(0.1) # sleep if stepper value is zero
+        self.pause()
 
     ####### end of Stepper Class
                     
@@ -629,30 +612,30 @@ class ScratchListener(threading.Thread):
                                     else:
                                         PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
 
-                if  'turna' in dataraw:
-                    if (steppera.stopped() == False):
-                        outputall_pos = dataraw.find('turna')
-                        sensor_value = dataraw[(outputall_pos+1+len('turna')):].split()
-                        print 'turna variable', sensor_value[0]
-
-                        if isNumeric(sensor_value[0]):
-                            #print "send change to motora as a stepper" , sensor_value[0]
-                            #print "sign" , sign(float(sensor_value[0]))
-                            #steppera.changeSpeed(int(100 * sign(float(sensor_value[0]))),int(float(sensor_value[0])))
-                            turnAStep = int(float(sensor_value[0]))
-                            
-                if  'turnb' in dataraw:
-                    if (stepperb.stopped() == False):
-                        #outputall_pos = dataraw.find('turnb')
-                        sensor_value = dataraw[(dataraw.find('turnb')+1+len('turnb')):].split()
-                        print 'turnb variable', sensor_value[0]
-
-                        if isNumeric(sensor_value[0]):
-                            #print "send change to motora as a stepper" , sensor_value[0]
-                            #print "sign" , sign(float(sensor_value[0]))
-                            #steppera.changeSpeed(int(100 * sign(float(sensor_value[0]))),int(float(sensor_value[0])))
-                            turnBStep = int(float(sensor_value[0]))
-                            print "turnbstep" , turnBStep
+##                if  'turna' in dataraw:
+##                    if (steppera.stopped() == False):
+##                        outputall_pos = dataraw.find('turna')
+##                        sensor_value = dataraw[(outputall_pos+1+len('turna')):].split()
+##                        print 'turna variable', sensor_value[0]
+##
+##                        if isNumeric(sensor_value[0]):
+##                            #print "send change to motora as a stepper" , sensor_value[0]
+##                            #print "sign" , sign(float(sensor_value[0]))
+##                            #steppera.changeSpeed(int(100 * sign(float(sensor_value[0]))),int(float(sensor_value[0])))
+##                            turnAStep = int(float(sensor_value[0]))
+##                            
+##                if  'turnb' in dataraw:
+##                    if (stepperb.stopped() == False):
+##                        #outputall_pos = dataraw.find('turnb')
+##                        sensor_value = dataraw[(dataraw.find('turnb')+1+len('turnb')):].split()
+##                        print 'turnb variable', sensor_value[0]
+##
+##                        if isNumeric(sensor_value[0]):
+##                            #print "send change to motora as a stepper" , sensor_value[0]
+##                            #print "sign" , sign(float(sensor_value[0]))
+##                            #steppera.changeSpeed(int(100 * sign(float(sensor_value[0]))),int(float(sensor_value[0])))
+##                            turnBStep = int(float(sensor_value[0]))
+##                            print "turnbstep" , turnBStep
 
                 if  'stepdelay' in dataraw:
                     sensor_value = dataraw[(dataraw.find('stepdelay')+1+len('stepdelay')):].split()
@@ -660,35 +643,35 @@ class ScratchListener(threading.Thread):
                     if isNumeric(sensor_value[0]):
                         step_delay = float(sensor_value[0])
 
-                if  'positiona' in dataraw:
-                    print "posa" , dataraw
+                if  'turna' in dataraw:
+                    print "turna" , dataraw
                     if (steppera.stopped() == False):
-                        outputall_pos = dataraw.find('positiona')
-                        sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
+                        outputall_pos = dataraw.find('turna')
+                        sensor_value = dataraw[(outputall_pos+1+len('turna')):].split()
                         if isNumeric(sensor_value[0]):
-                            if int(float(sensor_value[0])) != 0:
-                                steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
-                                turnAStep = int(float(sensor_value[0]))
-                            else:
-                                turnAStep = 0
+                            #if int(float(sensor_value[0])) != 0:
+                            steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
+                            turnAStep = int(float(sensor_value[0]))
+                            #else:
+                            #    turnAStep = 0
                                             
-                if  'positionb' in dataraw:
-                    print "posb"
+                if  'turnb' in dataraw:
+                    print "turnb"
                     if (stepperb.stopped() == False):
-                        outputall_pos = dataraw.find('positionb')
-                        sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
+                        outputall_pos = dataraw.find('turnb')
+                        sensor_value = dataraw[(outputall_pos+1+len('turnb')):].split()
                         print "sensor" , sensor_value[0]
                         if isNumeric(sensor_value[0]):
-                            if int(float(sensor_value[0])) != 0:
-                                print "change pos" , sensor_value[0]
-                                stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
-                                turnBStep = int(float(sensor_value[0]))
-                            else:
-                                turnBStep = 0
+                            #if int(float(sensor_value[0])) != 0:
+                            print "change pos" , sensor_value[0]
+                            stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
+                            turnBStep = int(float(sensor_value[0]))
+                            #else:
+                            #    turnBStep = 0
                         
 
             if 'broadcast' in dataraw:
-                print 'received broadcast: %s' % data
+                #print 'received broadcast: %s' % data
                 if (('allon' in dataraw) or ('allhigh' in dataraw)):
                     for i in range(PINS):
                         if (PIN_USE[i] == 1):
@@ -703,14 +686,15 @@ class ScratchListener(threading.Thread):
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
                     if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
-                        print dataraw
+                        #print dataraw
                         self.physical_pin_update(i,1)
 
                     if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
-                        print dataraw
+                        #print dataraw
                         self.physical_pin_update(i,0)
 
                     if ('sonar' + str(physical_pin)) in dataraw:
+                        PIN_USE[i] = 1
                         ti = dt.datetime.now()
                         # setup a array to hold 3 values and then do 3 distance calcs and store them
                         #print 'sonar started'
@@ -724,15 +708,17 @@ class ScratchListener(threading.Thread):
                             t0=dt.datetime.now() # remember current time
                             GPIO.setup(physical_pin,GPIO.IN)
                             t1=t0
-                            # This while loop waits for input pin (7) to be low but with a 0.1sec timeout 
-                            while ((GPIO.input(physical_pin)==0) and ((t1-t0).microseconds < 100000)):
+                            # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
+                            while ((GPIO.input(physical_pin)==0) and ((t1-t0).microseconds < 40000)):
+                                #time.sleep(0.00001)
                                 t1=dt.datetime.now()
                             t1=dt.datetime.now()
                             #print 'low' , (t1-t0).microseconds
                             t2=t1
-                            #  This while loops waits for input pin to go high to indicate ulse detection
-                            #  with 0.1 sec timeout
-                            while ((GPIO.input(physical_pin)==1) and ((t2-t1).microseconds < 100000)):
+                            #  This while loops waits for input pin to go high to indicate pulse detection
+                            #  with 0.04 sec timeout
+                            while ((GPIO.input(physical_pin)==1) and ((t2-t1).microseconds < 40000)):
+                                #time.sleep(0.00001)
                                 t2=dt.datetime.now()
                             t2=dt.datetime.now()
                             #print 'high' , (t2-t1).microseconds
@@ -781,22 +767,22 @@ class ScratchListener(threading.Thread):
                         stepperInUse[STEPPERB] = True
                         turnBStep = 0
 
-                if  'turnago' in dataraw:
-                    #print "turna broadcast"
-                    if (steppera.stopped() == False):
-                        #print "stepper tru"
-                        if isNumeric(turnAStep):
-                            #print "lets turn" , turnAStep
-                            steppera.changeSpeed(int(100 * sign(float(turnAStep))),int(float(turnAStep)))
-
-
-                if  'turnbgo' in dataraw:
-                    print "turnb broadcast"
-                    if (stepperb.stopped() == False):
-                        print "stepperb tru"
-                        if isNumeric(turnBStep):
-                            print "lets turnb" , turnBStep
-                            stepperb.changeSpeed(int(100 * sign(float(turnBStep))),abs(int(float(turnBStep))))
+##                if  'turnago' in dataraw:
+##                    #print "turna broadcast"
+##                    if (steppera.stopped() == False):
+##                        #print "stepper tru"
+##                        if isNumeric(turnAStep):
+##                            #print "lets turn" , turnAStep
+##                            steppera.changeSpeed(int(100 * sign(float(turnAStep))),int(float(turnAStep)))
+##
+##
+##                if  'turnbgo' in dataraw:
+##                    print "turnb broadcast"
+##                    if (stepperb.stopped() == False):
+##                        print "stepperb tru"
+##                        if isNumeric(turnBStep):
+##                            print "lets turnb" , turnBStep
+##                            stepperb.changeSpeed(int(100 * sign(float(turnBStep))),abs(int(float(turnBStep))))
 
                 if  '1coil' in dataraw:
                     print "1coil broadcast"
@@ -884,8 +870,8 @@ while True:
         print 'Connected!'
         the_socket.settimeout(SOCKET_TIMEOUT)
         listener = ScratchListener(the_socket)
-        steppera = StepperControl(STEPPERA,step_delay)
-        stepperb = StepperControl(STEPPERB,step_delay)
+        steppera = StepperControl(11,12,13,15,step_delay)
+        stepperb = StepperControl(16,18,22,7,step_delay)
 
 
 ##        data = the_socket.recv(BUFFER_SIZE)
