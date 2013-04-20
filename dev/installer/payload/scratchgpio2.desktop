@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Exec=./simplesi_scratch_handler/scratch_gpio2.sh
+Icon=scratch
+Terminal=false
+Name=ScratchGPIO2
+Comment= Programming system and content development tool
+Categories=Application;Education;Development;
+MimeType=application/x-scratch-project
