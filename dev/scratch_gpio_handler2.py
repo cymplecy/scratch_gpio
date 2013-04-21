@@ -34,9 +34,9 @@ BUFFER_SIZE = 240 #used to be 100
 SOCKET_TIMEOUT = 1
 
 
-PIN_NUM = array('i',[11, 12, 13, 15, 16, 18, 22, 7, 3, 5, 8, 10, 24, 26, 19, 21, 23])
+PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
+PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
-PIN_USE = array('i',[0,  0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0,  0,  0,  0,  0,  0])
 PINS = len(PIN_NUM)
 PIN_NUM_LOOKUP=[int] * 27
 
@@ -787,11 +787,17 @@ class ScratchListener(threading.Thread):
                         #check_broadcast = str(i) + 'on'
                         #print check_broadcast
                         physical_pin = PIN_NUM[i]
-                        if 'config' + str(physical_pin)+'out' in dataraw:
-                            PIN_USE[i] = 1
-                        if 'config' + str(physical_pin)+'in' in dataraw:
-                            PIN_USE[i] = 0
-                    SetPinMode()
+                        if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
+                            if PIN_USE[i] == 0:                           # check to see if it is an input at moment
+                                GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
+                                print 'pin' , PIN_NUM[i] , ' out'
+                                PIN_USE[i] = 1
+                        if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
+                            if PIN_USE[i] != 0:                                         # check to see if it not an input already
+                                GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
+                                print 'pin' , PIN_NUM[i] , ' in'
+                                PIN_USE[i] = 0
+
 
                 if ('steppera' in dataraw) or ('turna' in dataraw):
                     if (stepperInUse[STEPPERA] == False):
