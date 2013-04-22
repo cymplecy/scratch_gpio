@@ -1,8 +1,8 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from scratch_handler by Thomas Preston
 # This coe now hosted on Github thanks to Ben Nuttall
-# Last change experiment adding in pyzPWM for PWM on All Pins
-# power is command name to use for PWM on any pin
+# Version 2
+
 
 
 from array import *
