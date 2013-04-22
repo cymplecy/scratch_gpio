@@ -2,6 +2,7 @@
 # This code is derived from scratch_handler by Thomas Preston
 # This coe now hosted on Github thanks to Ben Nuttall
 # Version 2
+# 13Apr 22:20  Pinpattern restored
 
 
 
@@ -525,6 +526,27 @@ class ScratchListener(threading.Thread):
                         self.physical_pin_update(i,0)
 
 
+                #Use bit pattern to control ports
+                if 'pinpattern' in dataraw:
+                    #print 'Found pinpattern'
+                    num_of_bits = PINS
+                    outputall_pos = dataraw.find('pinpattern')
+                    sensor_value = dataraw[(outputall_pos+12):].split()
+                    #print sensor_value[0]
+                    bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-num_of_bits:]
+                    #print 'bit_pattern %s' % bit_pattern
+                    j = 0
+                    for i in range(PINS):
+                    #bit_state = ((2**i) & sensor_value) >> i
+                    #print 'dummy pin %d state %d' % (i, bit_state)
+                        if (PIN_USE[i] == 1):
+                            if bit_pattern[-(j+1)] == '0':
+                                self.physical_pin_update(i,0)
+                            else:
+                                self.physical_pin_update(i,1)
+                            j = j + 1
+
+
 
 
                     #check for power variable commands
@@ -777,6 +799,28 @@ class ScratchListener(threading.Thread):
                             self.send_scratch_command(bcast_str)
 
 
+                if 'pinpattern' in dataraw:
+                    #print 'Found pinpattern broadcast'
+                    #print dataraw
+                    num_of_bits = PINS
+                    outputall_pos = dataraw.find('pinpattern')
+                    sensor_value = dataraw[(outputall_pos+10):].split()
+                    sensor_value[0] = sensor_value[0][:-1]                    
+                    print sensor_value[0]
+                    bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-num_of_bits:]
+                    #print 'bit_pattern %s' % bit_pattern
+                    j = 0
+                    for i in range(PINS):
+                    #bit_state = ((2**i) & sensor_value) >> i
+                    #print 'dummy pin %d state %d' % (i, bit_state)
+                        if (PIN_USE[i] == 1):
+                            if bit_pattern[-(j+1)] == '0':
+                                self.physical_pin_update(i,0)
+                            else:
+                                self.physical_pin_update(i,1)
+                            j = j + 1
+
+ 
 
 
 
