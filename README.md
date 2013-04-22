@@ -1,7 +1,7 @@
 # Scratch GPIO Handler for Raspberry Pi
 
 This is the source of a Raspberry Pi GPIO handler for Scratch
-The code is being activley developed and so should be considered un-stable and only used for testings purposes.
+This code is Version 2 of the software and is being activley developed and so should be considered un-stable and only used for testings purposes.
 
 Having said that, I only commit chamges if I think they work
 
