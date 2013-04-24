@@ -22,6 +22,14 @@ GPIO.cleanup()
 #Set some constants and initialise arrays
 STEPPERA=0
 STEPPERB=1
+
+ADDON = ['LadderBoard'] #define addons
+NUMOF_ADDON = len(ADDON) # find number of addons
+ADDON_PRESENT = [int] * NUMOF_ADDON # create an enabled/disabled array
+for i in range(NUMOF_ADDON): # set all addons to diabled
+    ADDON_PRESENT[i] = 0
+    ADDON[i] = ADDON[i].lower()
+    
 stepperInUse = array('b',[False,False])
 step_delay = 0.003 # delay used between steps in stepper motor functions
 turnAStep = 0
@@ -315,11 +323,8 @@ def SetPinMode():
             print 'pin' , PIN_NUM[i] , ' in'
         PIN_NUM_LOOKUP[PIN_NUM[i]] = i
 
-SetPinMode()
 
-sonar_listen_pin = 7
-sonar_pulse_pin = 23
-GPIO.setup(sonar_pulse_pin,GPIO.OUT)
+
 
 
 
@@ -732,6 +737,20 @@ class ScratchListener(threading.Thread):
 
             if 'broadcast' in dataraw:
                 #print 'received broadcast' , dataraw
+
+                for i in range(NUMOF_ADDON):
+                    if ADDON[i] in dataraw:
+                        ADDON_PRESENT[i] = 1
+                        if ADDON[i] == "ladderboard":
+                            PIN_USE[6] = 1
+                            PIN_USE[7] = 1
+                            PIN_USE[8] = 1
+                            PIN_USE[9] = 1
+                            SetPinMode()
+   
+
+
+                
                 if (('allon' in dataraw) or ('allhigh' in dataraw)):
                     for i in range(PINS):
                         if (PIN_USE[i] == 1):
@@ -740,6 +759,8 @@ class ScratchListener(threading.Thread):
                     for i in range(PINS):
                         if (PIN_USE[i] == 1):
                             self.physical_pin_update(i,0)
+
+            
                 #check pins
                 for i in range(PINS):
                     #check_broadcast = str(i) + 'on'
@@ -757,7 +778,7 @@ class ScratchListener(threading.Thread):
                         PIN_USE[i] = 1
                         ti = dt.datetime.now()
                         # setup a array to hold 3 values and then do 3 distance calcs and store them
-                        #print 'sonar started'
+                        print 'sonar started'
                         distarray = array('i',[0,0,0])
                         for k in range(3):
                             #print "sonar pulse" , k
@@ -941,6 +962,7 @@ if __name__ == '__main__':
 cycle_trace = 'start'
 
 stepperb_value=0
+SetPinMode()
 
 
 while True:
