@@ -406,7 +406,13 @@ class ScratchSender(threading.Thread):
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         #self.send_scratch_command(bcast_str)
-        sensor_name = "pin" + str(PIN_NUM[pin_index])
+        if ADDON_PRESENT[0] == 1:
+            #do ladderboard stuff
+            switch_array = array('i',[3,4,2,1])
+            #switch_lookup = array('i',[24,26,19,21])
+            sensor_name = "switch" + str(switch_array[pin_index-10])
+        else:
+            sensor_name = "pin" + str(PIN_NUM[pin_index])
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
@@ -505,20 +511,20 @@ class ScratchListener(threading.Thread):
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
                 #print "sensor-update rcvd" , dataraw
-                #gloablly set all ports
-                if (('allpins" 1' in dataraw) or ('allpins" "on' in dataraw) or ('allpins" "high' in dataraw)):
-                    for i in range(PINS): 
-                        self.physical_pin_update(i,1)
-                if (('allpins" 0' in dataraw) or ('allpins" "off' in dataraw) or ('allpins" "low' in dataraw)):
-                    for i in range(PINS): 
-                        self.physical_pin_update(i,0)
-
               
                 if ADDON_PRESENT[0] == 1:
                     #do ladderboard stuff
+
+                    if (('allleds" 1' in dataraw) or ('allleds" "on' in dataraw) or ('allleds" "high' in dataraw)):
+                        for i in range(0, 10): # limit pins to first 10
+                            self.physical_pin_update(i,1)
+                    if (('allleds" 0' in dataraw) or ('allleds" "off' in dataraw) or ('allleds" "low' in dataraw)):
+                        for i in range(0, 10): # limit pins to first 10
+                            self.physical_pin_update(i,0)
+                    
                     for i in range(0, 10): # limit pins to first 10
                         physical_pin = PIN_NUM[i]
-                        pin_string = 'pin' + str(i + 1)
+                        pin_string = 'led' + str(i + 1)
                         #print "pin string" , pin_string
                         if (((pin_string + '" 1' )in dataraw) or ((pin_string + '" "on') in dataraw) or ((pin_string + '" "high') in dataraw )):
                             #print "variable detect 1/on/high" , dataraw
@@ -542,6 +548,14 @@ class ScratchListener(threading.Thread):
                                     PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
                                     
                 else:   #normal variable processing with no add on board
+                    #gloablly set all ports
+                    if (('allpins" 1' in dataraw) or ('allpins" "on' in dataraw) or ('allpins" "high' in dataraw)):
+                        for i in range(PINS): 
+                            self.physical_pin_update(i,1)
+                    if (('allpins" 0' in dataraw) or ('allpins" "off' in dataraw) or ('allpins" "low' in dataraw)):
+                        for i in range(PINS): 
+                            self.physical_pin_update(i,0)
+                    
                     #check for individual pin on off commands
                     for i in range(PINS):
                         #check_broadcast = str(i) + 'on'
@@ -605,12 +619,7 @@ class ScratchListener(threading.Thread):
                                 self.physical_pin_update(i,1)
                             j = j + 1
 
-
-
-
-
-                    
-                   
+                                       
                 if  'motora' in dataraw:
                     if (steppera.stopped() == False):
                         outputall_pos = dataraw.find('motora')
@@ -713,7 +722,7 @@ class ScratchListener(threading.Thread):
                         
 
             if 'broadcast' in dataraw:
-                #print 'received broadcast' , dataraw
+                print 'received broadcast' , dataraw
 
                 for i in range(NUMOF_ADDON):
                     if ADDON[i] in dataraw:
@@ -724,34 +733,50 @@ class ScratchListener(threading.Thread):
                             for k in range(10,14):
                                 PIN_USE[k] = 0
                             SetPinMode()
+
+                            for k in range(1,5):
+                                sensor_name = 'switch' + str(k)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, 1)
+                                print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)
+
    
 
+                if ADDON_PRESENT[0] == 1: # Gordon's Ladder Board
 
-                
-                if (('allon' in dataraw) or ('allhigh' in dataraw)):
-                    for i in range(PINS):
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,1)
-                if (('alloff' in dataraw) or ('alllow' in dataraw)):
-                    for i in range(PINS):
-                        if (PIN_USE[i] == 1):
-                            self.physical_pin_update(i,0)
-
-                if ADDON_PRESENT[0] == 1:
-                    #do ladderboard stuff
+                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
+                        for i in range(0, 10):
+                            if (PIN_USE[i] <> 0):
+                                self.physical_pin_update(i,1)
+                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
+                        for i in range(0, 10):
+                            if (PIN_USE[i] <> 0):
+                                self.physical_pin_update(i,0)
+                                
+                        #do ladderboard stuff
                     for i in range(0, 10):
                         #print i
                         physical_pin = PIN_NUM[i]
                         #print "pin" + str(i + 1) + "high"
-                        if (('pin' + str(i + 1)+'high' in dataraw) or ('pin' + str(i + 1)+'on' in dataraw)):
+                        if (('led' + str(i + 1)+'high' in dataraw) or ('led' + str(i + 1)+'on' in dataraw)):
                             #print dataraw
                             self.physical_pin_update(i,1)
 
-                        if (('pin' + str(i + 1)+'low' in dataraw) or ('pin' + str(i + 1)+'off' in dataraw)):
+                        if (('led' + str(i + 1)+'low' in dataraw) or ('led' + str(i + 1)+'off' in dataraw)):
                             #print dataraw
                             self.physical_pin_update(i,0)
 
                 else:
+
+                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
+                        for i in range(PINS):
+                            if (PIN_USE[i] <> 0):
+                                self.physical_pin_update(i,1)
+                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
+                        for i in range(PINS):
+                            if (PIN_USE[i] <> 0):
+                                self.physical_pin_update(i,0)
+                                
                     #check pins
                     for i in range(PINS):
                         #check_broadcast = str(i) + 'on'
@@ -769,7 +794,7 @@ class ScratchListener(threading.Thread):
                             PIN_USE[i] = 1
                             ti = dt.datetime.now()
                             # setup a array to hold 3 values and then do 3 distance calcs and store them
-                            print 'sonar started'
+                            #print 'sonar started'
                             distarray = array('i',[0,0,0])
                             for k in range(3):
                                 #print "sonar pulse" , k
