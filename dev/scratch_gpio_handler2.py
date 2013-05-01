@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.1dev 30Apr13
+# Version 2.11dev 1May13
 
 
 
@@ -21,6 +21,7 @@ GPIO.cleanup()
 #Set some constants and initialise arrays
 STEPPERA=0
 STEPPERB=1
+INVERT = False
 
 ADDON = ['LadderBoard'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
@@ -448,6 +449,9 @@ class ScratchListener(threading.Thread):
         return self._stop.isSet()
 
     def physical_pin_update(self, pin_index, value):
+        if INVERT == True:
+            if PIN_USE[pin_index] == 1:
+                value = abs(value - 1)
         if (PIN_USE[pin_index] == 0):
             PIN_USE[pin_index] = 1
             GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
@@ -479,14 +483,14 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,step_delay,stepType
+        global cycle_trace,turnAStep,turnBStep,step_delay,stepType,INVERT
 
-        firstRun = True
+        firstRun = False #Used for testing in overcoming Scratch "bug/feature"
         #This is main listening routine
         while not self.stopped():
             try:
-                data = self.scratch_socket.recv(BUFFER_SIZE)
-                dataraw = data[4:].lower()
+                data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
+                dataraw = data[4:].lower() # convert all to lowercase
                 #print 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -501,10 +505,34 @@ class ScratchListener(threading.Thread):
                 #print "No data received: socket timeout"
                 continue
             
+            #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if firstRun == True:
                 if 'sensor-update' in dataraw:
                     dataraw = ''
                     firstRun = False
+
+            #If outputs need globally inverting (7 segment common anode needs it)
+            if ('invert' in dataraw):
+                INVERT = True
+                
+            #Change pins from input to output if more needed
+            if ('config' in dataraw):
+                for i in range(PINS):
+                    #check_broadcast = str(i) + 'on'
+                    #print check_broadcast
+                    physical_pin = PIN_NUM[i]
+                    if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
+                        if PIN_USE[i] == 0:                           # check to see if it is an input at moment
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
+                            print 'pin' , PIN_NUM[i] , ' out'
+                            PIN_USE[i] = 1
+                    if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
+                        if PIN_USE[i] != 0:                                         # check to see if it not an input already
+                            GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
+                            print 'pin' , PIN_NUM[i] , ' in'
+                            PIN_USE[i] = 0
+
+
 
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
@@ -865,22 +893,6 @@ class ScratchListener(threading.Thread):
 
 
                                 
-                if ('config' in dataraw):
-                    for i in range(PINS):
-                        #check_broadcast = str(i) + 'on'
-                        #print check_broadcast
-                        physical_pin = PIN_NUM[i]
-                        if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
-                            if PIN_USE[i] == 0:                           # check to see if it is an input at moment
-                                GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
-                                print 'pin' , PIN_NUM[i] , ' out'
-                                PIN_USE[i] = 1
-                        if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
-                            if PIN_USE[i] != 0:                                         # check to see if it not an input already
-                                GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
-                                print 'pin' , PIN_NUM[i] , ' in'
-                                PIN_USE[i] = 0
-
 
                 if ('steppera' in dataraw) or ('turna' in dataraw):
                     if (stepperInUse[STEPPERA] == False):
