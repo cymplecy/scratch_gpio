@@ -1,8 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
-# This code is derived from scratch_handler by Thomas Preston
-# This coe now hosted on Github thanks to Ben Nuttall
-# Version 2
-# 13Apr 22:20  Pinpattern restored
+# This code is derived from Pi-Face scratch_handler by Thomas Preston
+# This code now hosted on Github thanks to Ben Nuttall
+# Version 2.1dev 30Apr13
 
 
 
@@ -85,7 +84,6 @@ class StepperControl(threading.Thread):
     def start(self):
         self.thread = threading.Thread(None, self.run, None, (), {})
         self.thread.start()
-
 
 
     def stop(self):
@@ -489,7 +487,7 @@ class ScratchListener(threading.Thread):
             try:
                 data = self.scratch_socket.recv(BUFFER_SIZE)
                 dataraw = data[4:].lower()
-                #print 'Length: %d, Data: %s' % (len(dataraw), dataraw)
+                #print 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
                     #This is probably due to client disconnecting
@@ -621,7 +619,10 @@ class ScratchListener(threading.Thread):
 
                                        
                 if  'motora' in dataraw:
-                    if (steppera.stopped() == False):
+                    #print "MotorA Received"
+                    #print "stepper status" , stepperInUse[STEPPERA]
+                    if (stepperInUse[STEPPERA] == True):
+                        #print "Stepper A in operation"
                         outputall_pos = dataraw.find('motora')
                         sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
                         #print 'steppera', sensor_value[0]
@@ -633,6 +634,7 @@ class ScratchListener(threading.Thread):
                     else:
                         for i in range(PINS):
                             if PIN_NUM[i] == 11:
+                                #print "Mapping MotorA to Pin11"
                                 #print dataraw
                                 outputall_pos = dataraw.find('motora')
                                 sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
@@ -647,7 +649,7 @@ class ScratchListener(threading.Thread):
                                         PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
 
                 if  'motorb' in dataraw:
-                    if (stepperb.stopped() == False):
+                    if (stepperInUse[STEPPERB] == True):
                         outputall_pos = dataraw.find('motorb')
                         sensor_value = dataraw[(outputall_pos+1+len('motorb')):].split()
                         #print 'stepperb', sensor_value[0]
@@ -722,7 +724,7 @@ class ScratchListener(threading.Thread):
                         
 
             if 'broadcast' in dataraw:
-                print 'received broadcast' , dataraw
+                #print 'broadcast in data:' , dataraw
 
                 for i in range(NUMOF_ADDON):
                     if ADDON[i] in dataraw:
