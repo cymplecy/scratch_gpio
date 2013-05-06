@@ -21,6 +21,7 @@ GPIO.cleanup()
 #Set some constants and initialise arrays
 STEPPERA=0
 STEPPERB=1
+STEPPERC=2
 INVERT = False
 
 ADDON = ['LadderBoard'] #define addons
@@ -30,10 +31,11 @@ for i in range(NUMOF_ADDON): # set all addons to diabled
     ADDON_PRESENT[i] = 0
     ADDON[i] = ADDON[i].lower()
     
-stepperInUse = array('b',[False,False])
+stepperInUse = array('b',[False,False,False])
 step_delay = 0.003 # delay used between steps in stepper motor functions
 turnAStep = 0
 turnBStep = 0
+turnCStep = 0
 stepMode = ['1Coil','2Coil','HalfStep']
 stepType = 1
 
@@ -483,9 +485,9 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,step_delay,stepType,INVERT
+        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT
 
-        firstRun = False #Used for testing in overcoming Scratch "bug/feature"
+        firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         #This is main listening routine
         while not self.stopped():
             try:
@@ -508,6 +510,7 @@ class ScratchListener(threading.Thread):
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if firstRun == True:
                 if 'sensor-update' in dataraw:
+                    print "this data ignored" , dataraw
                     dataraw = ''
                     firstRun = False
 
@@ -536,7 +539,7 @@ class ScratchListener(threading.Thread):
 
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
-                #print "sensor-update rcvd" , dataraw
+                print "sensor-update rcvd" , dataraw
               
                 if ADDON_PRESENT[0] == 1:
                     #do ladderboard stuff
@@ -707,6 +710,37 @@ class ScratchListener(threading.Thread):
                                     else:
                                         PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
 
+                if  'motorc' in dataraw:
+                    if (stepperInUse[STEPPERC] == True):
+                        outputall_pos = dataraw.find('motorc')
+                        sensor_value = dataraw[(outputall_pos+1+len('motorc')):].split()
+                        print 'stepperc', sensor_value[0]
+
+                        if isNumeric(sensor_value[0]):
+
+                            #print "send change to motorb as a stepper" , sensor_value[0]
+                            #print type(sensor_value[0])
+                            #print "***"+sensor_value[0]+"***"
+                            #print type(float(sensor_value[0]))
+                            #print float(sensor_value[0])
+                            stepperc.changeSpeed(max(-100,min(100,int(float(sensor_value[0])))),2123456789)
+                        
+                    else:
+                        for i in range(PINS):
+                            if PIN_NUM[i] == 13:
+                                #print dataraw
+                                outputall_pos = dataraw.find('motorc')
+                                sensor_value = dataraw[(outputall_pos+1+len('motorc')):].split()
+                                #print 'motorb', sensor_value[0]
+
+                                if isNumeric(sensor_value[0]):
+                                    if PIN_USE[i] != 2:
+                                        PIN_USE[i] = 2
+                                        PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                        PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                    else:
+                                        PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
+
 
 
                 if  'stepdelay' in dataraw:
@@ -748,6 +782,25 @@ class ScratchListener(threading.Thread):
                                 turnBStep = int(float(sensor_value[0]))
                                 #else:
                                 #    turnBStep = 0
+
+                if  'positionc' in dataraw:
+                    print "positionc" , dataraw
+                    if (stepperc.stopped() == False):
+                        outputall_pos = dataraw.find('positionc')
+                        sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
+                        print "sensor" , sensor_value[0]
+                        if isNumeric(sensor_value[0]):
+                            #if int(float(sensor_value[0])) != 0:
+                            if 'stepperc' in dataraw:
+                                turnCStep = int(float(sensor_value[0]))
+                                #print "stepperb found"
+                            else:
+                                #print "change posb" , sensor_value[0]
+                                stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
+                                turnCStep = int(float(sensor_value[0]))
+                                #else:
+                                #    turnBStep = 0
+
 
                         
 
@@ -905,6 +958,12 @@ class ScratchListener(threading.Thread):
                         stepperb.start()
                         stepperInUse[STEPPERB] = True
                         turnBStep = 0
+                        
+                if ('stepperc' in dataraw):
+                    if (stepperInUse[STEPPERC] == False):
+                        stepperc.start()
+                        stepperInUse[STEPPERC] = True
+                        turnCStep = 0 #reset turn variale
 
 
                 if  '1coil' in dataraw:
@@ -966,6 +1025,10 @@ def cleanup_threads(threads):
     if (stepperInUse[STEPPERB] == True):
         if (stepperb.stopped() == False):
             stepperb.stop()
+            
+    if (stepperInUse[STEPPERC] == True):
+        if (stepperc.stopped() == False):
+            stepperc.stop()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -975,7 +1038,7 @@ if __name__ == '__main__':
 
 cycle_trace = 'start'
 
-stepperb_value=0
+
 SetPinMode()
 
 
@@ -996,6 +1059,7 @@ while True:
         listener = ScratchListener(the_socket)
         steppera = StepperControl(11,12,13,15,step_delay)
         stepperb = StepperControl(16,18,22,7,step_delay)
+        stepperc = StepperControl(24,26,19,21,step_delay)
 
 
 ##        data = the_socket.recv(BUFFER_SIZE)
