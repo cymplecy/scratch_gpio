@@ -1,8 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
-# This code is derived from scratch_handler by Thomas Preston
-# This coe now hosted on Github thanks to Ben Nuttall
-# Version 2
-# 13Apr 22:20  Pinpattern restored
+# This code is derived from Pi-Face scratch_handler by Thomas Preston
+# This code now hosted on Github thanks to Ben Nuttall
+# Version 2.11dev 1May13
 
 
 
@@ -22,6 +21,8 @@ GPIO.cleanup()
 #Set some constants and initialise arrays
 STEPPERA=0
 STEPPERB=1
+STEPPERC=2
+INVERT = False
 
 ADDON = ['LadderBoard'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
@@ -30,10 +31,11 @@ for i in range(NUMOF_ADDON): # set all addons to diabled
     ADDON_PRESENT[i] = 0
     ADDON[i] = ADDON[i].lower()
     
-stepperInUse = array('b',[False,False])
+stepperInUse = array('b',[False,False,False])
 step_delay = 0.003 # delay used between steps in stepper motor functions
 turnAStep = 0
 turnBStep = 0
+turnCStep = 0
 stepMode = ['1Coil','2Coil','HalfStep']
 stepType = 1
 
@@ -85,7 +87,6 @@ class StepperControl(threading.Thread):
     def start(self):
         self.thread = threading.Thread(None, self.run, None, (), {})
         self.thread.start()
-
 
 
     def stop(self):
@@ -450,6 +451,9 @@ class ScratchListener(threading.Thread):
         return self._stop.isSet()
 
     def physical_pin_update(self, pin_index, value):
+        if INVERT == True:
+            if PIN_USE[pin_index] == 1:
+                value = abs(value - 1)
         if (PIN_USE[pin_index] == 0):
             PIN_USE[pin_index] = 1
             GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
@@ -481,15 +485,15 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,step_delay,stepType
+        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT
 
-        firstRun = True
+        firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         #This is main listening routine
         while not self.stopped():
             try:
-                data = self.scratch_socket.recv(BUFFER_SIZE)
-                dataraw = data[4:].lower()
-                #print 'Length: %d, Data: %s' % (len(dataraw), dataraw)
+                data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
+                dataraw = data[4:].lower() # convert all to lowercase
+                #print 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
                     #This is probably due to client disconnecting
@@ -503,14 +507,39 @@ class ScratchListener(threading.Thread):
                 #print "No data received: socket timeout"
                 continue
             
+            #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if firstRun == True:
                 if 'sensor-update' in dataraw:
+                    print "this data ignored" , dataraw
                     dataraw = ''
                     firstRun = False
 
+            #If outputs need globally inverting (7 segment common anode needs it)
+            if ('invert' in dataraw):
+                INVERT = True
+                
+            #Change pins from input to output if more needed
+            if ('config' in dataraw):
+                for i in range(PINS):
+                    #check_broadcast = str(i) + 'on'
+                    #print check_broadcast
+                    physical_pin = PIN_NUM[i]
+                    if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
+                        if PIN_USE[i] == 0:                           # check to see if it is an input at moment
+                            GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
+                            print 'pin' , PIN_NUM[i] , ' out'
+                            PIN_USE[i] = 1
+                    if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
+                        if PIN_USE[i] != 0:                                         # check to see if it not an input already
+                            GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
+                            print 'pin' , PIN_NUM[i] , ' in'
+                            PIN_USE[i] = 0
+
+
+
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
-                #print "sensor-update rcvd" , dataraw
+                print "sensor-update rcvd" , dataraw
               
                 if ADDON_PRESENT[0] == 1:
                     #do ladderboard stuff
@@ -621,7 +650,10 @@ class ScratchListener(threading.Thread):
 
                                        
                 if  'motora' in dataraw:
-                    if (steppera.stopped() == False):
+                    #print "MotorA Received"
+                    #print "stepper status" , stepperInUse[STEPPERA]
+                    if (stepperInUse[STEPPERA] == True):
+                        #print "Stepper A in operation"
                         outputall_pos = dataraw.find('motora')
                         sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
                         #print 'steppera', sensor_value[0]
@@ -633,6 +665,7 @@ class ScratchListener(threading.Thread):
                     else:
                         for i in range(PINS):
                             if PIN_NUM[i] == 11:
+                                #print "Mapping MotorA to Pin11"
                                 #print dataraw
                                 outputall_pos = dataraw.find('motora')
                                 sensor_value = dataraw[(outputall_pos+1+len('motora')):].split()
@@ -647,7 +680,7 @@ class ScratchListener(threading.Thread):
                                         PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
 
                 if  'motorb' in dataraw:
-                    if (stepperb.stopped() == False):
+                    if (stepperInUse[STEPPERB] == True):
                         outputall_pos = dataraw.find('motorb')
                         sensor_value = dataraw[(outputall_pos+1+len('motorb')):].split()
                         #print 'stepperb', sensor_value[0]
@@ -667,6 +700,37 @@ class ScratchListener(threading.Thread):
                                 #print dataraw
                                 outputall_pos = dataraw.find('motorb')
                                 sensor_value = dataraw[(outputall_pos+1+len('motorb')):].split()
+                                #print 'motorb', sensor_value[0]
+
+                                if isNumeric(sensor_value[0]):
+                                    if PIN_USE[i] != 2:
+                                        PIN_USE[i] = 2
+                                        PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                        PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                    else:
+                                        PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
+
+                if  'motorc' in dataraw:
+                    if (stepperInUse[STEPPERC] == True):
+                        outputall_pos = dataraw.find('motorc')
+                        sensor_value = dataraw[(outputall_pos+1+len('motorc')):].split()
+                        print 'stepperc', sensor_value[0]
+
+                        if isNumeric(sensor_value[0]):
+
+                            #print "send change to motorb as a stepper" , sensor_value[0]
+                            #print type(sensor_value[0])
+                            #print "***"+sensor_value[0]+"***"
+                            #print type(float(sensor_value[0]))
+                            #print float(sensor_value[0])
+                            stepperc.changeSpeed(max(-100,min(100,int(float(sensor_value[0])))),2123456789)
+                        
+                    else:
+                        for i in range(PINS):
+                            if PIN_NUM[i] == 13:
+                                #print dataraw
+                                outputall_pos = dataraw.find('motorc')
+                                sensor_value = dataraw[(outputall_pos+1+len('motorc')):].split()
                                 #print 'motorb', sensor_value[0]
 
                                 if isNumeric(sensor_value[0]):
@@ -719,10 +783,29 @@ class ScratchListener(threading.Thread):
                                 #else:
                                 #    turnBStep = 0
 
+                if  'positionc' in dataraw:
+                    print "positionc" , dataraw
+                    if (stepperc.stopped() == False):
+                        outputall_pos = dataraw.find('positionc')
+                        sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
+                        print "sensor" , sensor_value[0]
+                        if isNumeric(sensor_value[0]):
+                            #if int(float(sensor_value[0])) != 0:
+                            if 'stepperc' in dataraw:
+                                turnCStep = int(float(sensor_value[0]))
+                                #print "stepperb found"
+                            else:
+                                #print "change posb" , sensor_value[0]
+                                stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
+                                turnCStep = int(float(sensor_value[0]))
+                                #else:
+                                #    turnBStep = 0
+
+
                         
 
             if 'broadcast' in dataraw:
-                print 'received broadcast' , dataraw
+                #print 'broadcast in data:' , dataraw
 
                 for i in range(NUMOF_ADDON):
                     if ADDON[i] in dataraw:
@@ -863,22 +946,6 @@ class ScratchListener(threading.Thread):
 
 
                                 
-                if ('config' in dataraw):
-                    for i in range(PINS):
-                        #check_broadcast = str(i) + 'on'
-                        #print check_broadcast
-                        physical_pin = PIN_NUM[i]
-                        if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
-                            if PIN_USE[i] == 0:                           # check to see if it is an input at moment
-                                GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
-                                print 'pin' , PIN_NUM[i] , ' out'
-                                PIN_USE[i] = 1
-                        if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
-                            if PIN_USE[i] != 0:                                         # check to see if it not an input already
-                                GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
-                                print 'pin' , PIN_NUM[i] , ' in'
-                                PIN_USE[i] = 0
-
 
                 if ('steppera' in dataraw) or ('turna' in dataraw):
                     if (stepperInUse[STEPPERA] == False):
@@ -891,6 +958,12 @@ class ScratchListener(threading.Thread):
                         stepperb.start()
                         stepperInUse[STEPPERB] = True
                         turnBStep = 0
+                        
+                if ('stepperc' in dataraw):
+                    if (stepperInUse[STEPPERC] == False):
+                        stepperc.start()
+                        stepperInUse[STEPPERC] = True
+                        turnCStep = 0 #reset turn variale
 
 
                 if  '1coil' in dataraw:
@@ -952,6 +1025,10 @@ def cleanup_threads(threads):
     if (stepperInUse[STEPPERB] == True):
         if (stepperb.stopped() == False):
             stepperb.stop()
+            
+    if (stepperInUse[STEPPERC] == True):
+        if (stepperc.stopped() == False):
+            stepperc.stop()
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -961,7 +1038,7 @@ if __name__ == '__main__':
 
 cycle_trace = 'start'
 
-stepperb_value=0
+
 SetPinMode()
 
 
@@ -982,6 +1059,7 @@ while True:
         listener = ScratchListener(the_socket)
         steppera = StepperControl(11,12,13,15,step_delay)
         stepperb = StepperControl(16,18,22,7,step_delay)
+        stepperc = StepperControl(24,26,19,21,step_delay)
 
 
 ##        data = the_socket.recv(BUFFER_SIZE)
