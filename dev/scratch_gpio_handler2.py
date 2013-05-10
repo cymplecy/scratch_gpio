@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.11dev 1May13
+# Version 2.14dev 9May13
 
 
 
@@ -22,6 +22,7 @@ GPIO.cleanup()
 STEPPERA=0
 STEPPERB=1
 STEPPERC=2
+stepperInUse = array('b',[False,False,False])
 INVERT = False
 
 ADDON = ['LadderBoard'] #define addons
@@ -31,7 +32,6 @@ for i in range(NUMOF_ADDON): # set all addons to diabled
     ADDON_PRESENT[i] = 0
     ADDON[i] = ADDON[i].lower()
     
-stepperInUse = array('b',[False,False,False])
 step_delay = 0.003 # delay used between steps in stepper motor functions
 turnAStep = 0
 turnBStep = 0
@@ -487,7 +487,7 @@ class ScratchListener(threading.Thread):
     def run(self):
         global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT
 
-        firstRun = True #Used for testing in overcoming Scratch "bug/feature"
+        firstRun = False #Used for testing in overcoming Scratch "bug/feature"
         #This is main listening routine
         while not self.stopped():
             try:
@@ -752,7 +752,7 @@ class ScratchListener(threading.Thread):
 
                 if  'positiona' in dataraw:
                     #print "positiona" , dataraw
-                    if (steppera.stopped() == False):
+                    if (stepperInUse[STEPPERA] == True):
                         outputall_pos = dataraw.find('positiona')
                         sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
                         if isNumeric(sensor_value[0]):
@@ -767,7 +767,7 @@ class ScratchListener(threading.Thread):
                                             
                 if  'positionb' in dataraw:
                     #print "positionb" , dataraw
-                    if (stepperb.stopped() == False):
+                    if (stepperInUse[STEPPERB] == True):
                         outputall_pos = dataraw.find('positionb')
                         sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
                         #print "sensor" , sensor_value[0]
@@ -785,7 +785,7 @@ class ScratchListener(threading.Thread):
 
                 if  'positionc' in dataraw:
                     print "positionc" , dataraw
-                    if (stepperc.stopped() == False):
+                    if (stepperInUse[STEPPERC] == True):
                         outputall_pos = dataraw.find('positionc')
                         sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
                         print "sensor" , sensor_value[0]
