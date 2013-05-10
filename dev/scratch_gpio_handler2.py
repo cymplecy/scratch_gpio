@@ -392,6 +392,12 @@ class ScratchSender(threading.Thread):
                     break
 
             last_bit_pattern = pin_bit_pattern
+
+            sensor_name = "turninga"
+            value = 100.0
+            bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
+            print 'sending: %s' % bcast_str
+            self.send_scratch_command(bcast_str)
             
 
     def broadcast_changed_pins(self, changed_pin_map, pin_value_map):
@@ -952,18 +958,25 @@ class ScratchListener(threading.Thread):
                         steppera.start()
                         stepperInUse[STEPPERA] = True
                         turnAStep = 0
+                    else:
+                        steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                        
 
                 if ('stepperb' in dataraw):
                     if (stepperInUse[STEPPERB] == False):
                         stepperb.start()
                         stepperInUse[STEPPERB] = True
                         turnBStep = 0
+                    else:
+                        stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
                         
                 if ('stepperc' in dataraw):
                     if (stepperInUse[STEPPERC] == False):
                         stepperc.start()
                         stepperInUse[STEPPERC] = True
                         turnCStep = 0 #reset turn variale
+                    else:
+                        stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
 
 
                 if  '1coil' in dataraw:
