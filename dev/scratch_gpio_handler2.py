@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.14dev 9May13
+# Version 2.2dev 7Jun13
 
 
 
@@ -24,6 +24,7 @@ STEPPERB=1
 STEPPERC=2
 stepperInUse = array('b',[False,False,False])
 INVERT = False
+BIG_NUM = 2123456789
 
 ADDON = ['LadderBoard'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
@@ -77,12 +78,14 @@ class StepperControl(threading.Thread):
         #self.stepper_num = stepper_num # find which stepper a or b
         #self.step_delay = step_delay
         self.stepperSpeed = 0 #stepp speed dset to 0 when thread created
-        self.steps = 2123456789 # default to psuedo infinte number of turns
+        self.steps = BIG_NUM # default to psuedo infinte number of turns
         self.terminated = False
         self.toTerminate = False
         threading.Thread.__init__(self)
         self._stop = threading.Event()
         self.pins = array("i",[PIN_NUM_LOOKUP[pinA],PIN_NUM_LOOKUP[pinB],PIN_NUM_LOOKUP[pinC],PIN_NUM_LOOKUP[pinD]])
+        self.slow_start = self.steps
+        self.steps_start = self.steps
 
     def start(self):
         self.thread = threading.Thread(None, self.run, None, (), {})
@@ -90,14 +93,21 @@ class StepperControl(threading.Thread):
 
 
     def stop(self):
-        self._stop.set()
+        self.toTerminate = True
+        while self.terminated == False:
+        # Just wait
+            time.sleep(0.01)
 
-    def stopped(self):
-        return self._stop.isSet()
 
     def changeSpeed(self, stepperSpeed,steps):
         self.stepperSpeed = int(stepperSpeed)
         self.steps = int(steps)
+        self.steps_start = self.steps
+        self.slow_start = int(max(1,int(float(self.steps)*0.8)))
+        if self.steps > (BIG_NUM / 2):
+            self.slow_start = self.steps - 128
+            
+
 
     def physical_pin_update(self, pin_index, value):
         if (PIN_USE[pin_index] == 0):
@@ -140,23 +150,18 @@ class StepperControl(threading.Thread):
             self.physical_pin_update(c,0)
             self.physical_pin_update(a,1)
             self.physical_pin_update(b,1)
+
             time.sleep(delay)
 
             self.physical_pin_update(a,0)
-            self.physical_pin_update(d,0)
-            self.physical_pin_update(b,1)
             self.physical_pin_update(c,1)
             time.sleep(delay)
             
-            self.physical_pin_update(a,0)
             self.physical_pin_update(b,0)
-            self.physical_pin_update(c,1)
             self.physical_pin_update(d,1)
             time.sleep(delay)
             
-            self.physical_pin_update(b,0)
             self.physical_pin_update(c,0)
-            self.physical_pin_update(d,1)
             self.physical_pin_update(a,1)
             time.sleep(delay)
             
@@ -197,8 +202,10 @@ class StepperControl(threading.Thread):
 
 
     def run(self):
+
+
         #time.sleep(2) # just wait till board likely to be up and running
-        while not self.stopped():
+        while self.toTerminate == False:
             #print self.pins[0],self.pins[1],self.pins[2],self.pins[3]
 
             if (self.steps > 0):
@@ -206,7 +213,12 @@ class StepperControl(threading.Thread):
                 local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
                 if local_stepper_value != 0: #if stepper_value non-zero
                     currentStepDelay = step_delay * 100 / abs(local_stepper_value)
-                    
+                    if self.steps < (self.steps_start - self.slow_start) :
+                        currentStepDelay = currentStepDelay *  (1.5 - (((self.steps) / float(self.steps_start - self.slow_start)))/2.0)
+                        #print 2.0 - ((self.steps) / float(self.steps_start - self.slow_start))
+                    if (self.slow_start < self.steps):
+                        #print 2.0 - ((self.steps_start - self.steps) / float(self.steps_start - self.slow_start))
+                        currentStepDelay = currentStepDelay * (1.5 - (((self.steps_start - self.steps) / float(self.steps_start - self.slow_start)))/2.0)
                     if local_stepper_value > 0: # if positive value
                         self.step_coarse(self.pins[0],self.pins[1],self.pins[2],self.pins[3],currentStepDelay) #step forward
                     else:
@@ -220,8 +232,7 @@ class StepperControl(threading.Thread):
                 self.pause()
                 time.sleep(0.1) # sleep if stepper value is zero
 
-        self.pause()
-
+        self.terminated = True
     ####### end of Stepper Class
                     
 class PiZyPwm(threading.Thread):
@@ -393,11 +404,11 @@ class ScratchSender(threading.Thread):
 
             last_bit_pattern = pin_bit_pattern
 
-            sensor_name = "turninga"
-            value = 100.0
-            bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
-            print 'sending: %s' % bcast_str
-            self.send_scratch_command(bcast_str)
+##            sensor_name = "turninga"
+##            value = 100.0
+##            bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
+##            print 'sending: %s' % bcast_str
+##            self.send_scratch_command(bcast_str)
             
 
     def broadcast_changed_pins(self, changed_pin_map, pin_value_map):
@@ -491,7 +502,7 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT
+        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT,steppera,stepperb,stepperc
 
         firstRun = False #Used for testing in overcoming Scratch "bug/feature"
         #This is main listening routine
@@ -679,6 +690,7 @@ class ScratchListener(threading.Thread):
 
                                 if isNumeric(sensor_value[0]):
                                     if PIN_USE[i] != 2:
+                                        print "setting pin", PIN_NUM[i] , "to PWM" 
                                         PIN_USE[i] = 2
                                         PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
                                         PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
@@ -710,6 +722,7 @@ class ScratchListener(threading.Thread):
 
                                 if isNumeric(sensor_value[0]):
                                     if PIN_USE[i] != 2:
+                                        print "setting pin", PIN_NUM[i] , "to PWM" 
                                         PIN_USE[i] = 2
                                         PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
                                         PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
@@ -741,6 +754,7 @@ class ScratchListener(threading.Thread):
 
                                 if isNumeric(sensor_value[0]):
                                     if PIN_USE[i] != 2:
+                                        print "setting pin", PIN_NUM[i] , "to PWM" 
                                         PIN_USE[i] = 2
                                         PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
                                         PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
@@ -811,7 +825,7 @@ class ScratchListener(threading.Thread):
                         
 
             if 'broadcast' in dataraw:
-                #print 'broadcast in data:' , dataraw
+                print 'broadcast in data:' , dataraw
 
                 for i in range(NUMOF_ADDON):
                     if ADDON[i] in dataraw:
@@ -880,19 +894,22 @@ class ScratchListener(threading.Thread):
                             self.physical_pin_update(i,0)
 
                         if ('sonar' + str(physical_pin)) in dataraw:
-                            PIN_USE[i] = 1
                             ti = dt.datetime.now()
                             # setup a array to hold 3 values and then do 3 distance calcs and store them
                             #print 'sonar started'
-                            distarray = array('i',[0,0,0])
-                            for k in range(3):
+                            distarray = array('i',[0,0,0,0,0])
+                            ts=dt.datetime.now()
+                            for k in range(5):
                                 #print "sonar pulse" , k
-                                GPIO.setup(physical_pin,GPIO.OUT)
-                                GPIO.output(physical_pin, True)   # Send Pulse pin(23) high
+                                #GPIO.setup(physical_pin,GPIO.OUT)
+                                #print physical_pin , i
+                                self.physical_pin_update(i,1)   # Send Pulse high
                                 time.sleep(0.00001)     #  wait
-                                GPIO.output(physical_pin, False)  #  bring it back low - pulse over.
+                                self.physical_pin_update(i,0)  #  bring it back low - pulse over.
                                 t0=dt.datetime.now() # remember current time
                                 GPIO.setup(physical_pin,GPIO.IN)
+                                PIN_USE[i] = 0
+                                
                                 t1=t0
                                 # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
                                 while ((GPIO.input(physical_pin)==0) and ((t1-t0).microseconds < 40000)):
@@ -909,20 +926,28 @@ class ScratchListener(threading.Thread):
                                 t2=dt.datetime.now()
                                 #print 'high' , (t2-t1).microseconds
                                 t3=(t2-t1).microseconds  # t2 contains time taken for pulse to return
-                                #print "total time in secs" , (t3-t1).microseconds
+                                #print "total time in secs" , t3
                                 distance=t3*343/2/10000  # calc distance in cm
                                 distarray[k]=distance
-                            distance = sorted(distarray)[1] # sort the array and pick middle value as best distance
-                            tf = dt.datetime.now()
+                            tf = (dt.datetime.now()-ts).microseconds
+                            distance = sorted(distarray)[3] # sort the array and pick middle value as best distance
+                            
+                            print "total time " , tf
+                            for k in range(5):
+                                print distarray[k]
                             #print "pulse time" , distance*58
                             #print "total time in microsecs" , (tf-ti).microseconds                    
                             # only update Scratch values if distance is < 500cm
-                            if (distance < 300):# and (distance > 4):
-                                #print'Distance:',distance,'cm'
-                                sensor_name = 'sonar' + str(physical_pin)
-                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                                #print 'sending: %s' % bcast_str
-                                self.send_scratch_command(bcast_str)
+                            if (distance > 400):
+                                distance = 401
+                            if (distance < 3):
+                                distance = 2
+
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'sonar' + str(physical_pin)
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)
                     #end of normal pin checking
 
                 if 'pinpattern' in dataraw:
@@ -955,6 +980,8 @@ class ScratchListener(threading.Thread):
 
                 if ('steppera' in dataraw) or ('turna' in dataraw):
                     if (stepperInUse[STEPPERA] == False):
+                        print "StepperA Stasrting"
+                        steppera = StepperControl(11,12,13,15,step_delay)
                         steppera.start()
                         stepperInUse[STEPPERA] = True
                         turnAStep = 0
@@ -964,6 +991,8 @@ class ScratchListener(threading.Thread):
 
                 if ('stepperb' in dataraw):
                     if (stepperInUse[STEPPERB] == False):
+                        print "StepperB Stasrting"
+                        stepperb = StepperControl(16,18,22,7,step_delay)
                         stepperb.start()
                         stepperInUse[STEPPERB] = True
                         turnBStep = 0
@@ -972,6 +1001,8 @@ class ScratchListener(threading.Thread):
                         
                 if ('stepperc' in dataraw):
                     if (stepperInUse[STEPPERC] == False):
+                        print "StepperC Stasrting"
+                        stepperc = StepperControl(24,26,19,21,step_delay)
                         stepperc.start()
                         stepperInUse[STEPPERC] = True
                         turnCStep = 0 #reset turn variale
@@ -1028,20 +1059,25 @@ def cleanup_threads(threads):
         thread.join()
 
     for i in range(PINS):
-        if PWM_OUT[i] != None:
+        if PIN_USE[i] == 2:
+            print "Stopping ", PIN_NUM[i]
             PWM_OUT[i].stop()
+            print "Stopped ", PIN_NUM[i]
 
     if (stepperInUse[STEPPERA] == True):
-        if (steppera.stopped() == False):
-            steppera.stop()
-
+        print "stopping stepperA"
+        steppera.stop()
+        print "stepperA stopped"
+        
     if (stepperInUse[STEPPERB] == True):
-        if (stepperb.stopped() == False):
-            stepperb.stop()
+        print "stopping stepperB"
+        stepperb.stop()
+        print "stepperB stopped"
             
     if (stepperInUse[STEPPERC] == True):
-        if (stepperc.stopped() == False):
-            stepperc.stop()
+        print "stopping stepperC"
+        stepperc.stop()
+        print "stepperC stopped"
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -1070,9 +1106,9 @@ while True:
         print 'Connected!'
         the_socket.settimeout(SOCKET_TIMEOUT)
         listener = ScratchListener(the_socket)
-        steppera = StepperControl(11,12,13,15,step_delay)
-        stepperb = StepperControl(16,18,22,7,step_delay)
-        stepperc = StepperControl(24,26,19,21,step_delay)
+#        steppera = StepperControl(11,12,13,15,step_delay)
+#        stepperb = StepperControl(16,18,22,7,step_delay)
+#        stepperc = StepperControl(24,26,19,21,step_delay)
 
 
 ##        data = the_socket.recv(BUFFER_SIZE)
