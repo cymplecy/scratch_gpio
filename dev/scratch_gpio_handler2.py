@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.2dev 7Jun13
+# Version 2.21dev 8Jun13
 
 
 
@@ -38,7 +38,9 @@ turnAStep = 0
 turnBStep = 0
 turnCStep = 0
 stepMode = ['1Coil','2Coil','HalfStep']
-stepType = 1
+stepType = 2
+if stepType == 2:
+    step_delay = 0.0015 # delay used between steps in stepper motor functions
 
 
 
@@ -86,6 +88,8 @@ class StepperControl(threading.Thread):
         self.pins = array("i",[PIN_NUM_LOOKUP[pinA],PIN_NUM_LOOKUP[pinB],PIN_NUM_LOOKUP[pinC],PIN_NUM_LOOKUP[pinD]])
         self.slow_start = self.steps
         self.steps_start = self.steps
+        self.paused = False
+        self.pause_start_time = dt.datetime.now()
 
     def start(self):
         self.thread = threading.Thread(None, self.run, None, (), {})
@@ -133,16 +137,19 @@ class StepperControl(threading.Thread):
             self.physical_pin_update(a,1)
             time.sleep(delay)
 
-            self.physical_pin_update(a,0)
+            
             self.physical_pin_update(b,1)
+            self.physical_pin_update(a,0)
             time.sleep(delay)
             
-            self.physical_pin_update(b,0)
+            
             self.physical_pin_update(c,1)
+            self.physical_pin_update(b,0)
             time.sleep(delay)
             
-            self.physical_pin_update(c,0)
+            
             self.physical_pin_update(d,1)
+            self.physical_pin_update(c,0)
             time.sleep(delay)
             
         elif lstepMode == '2Coil':
@@ -197,14 +204,14 @@ class StepperControl(threading.Thread):
         self.physical_pin_update(self.pins[1],0)
         self.physical_pin_update(self.pins[2],0)
         self.physical_pin_update(self.pins[3],0)
+        self.paused = True
 
 
 
 
     def run(self):
-
-
         #time.sleep(2) # just wait till board likely to be up and running
+        self.pause_start_time = dt.datetime.now()
         while self.toTerminate == False:
             #print self.pins[0],self.pins[1],self.pins[2],self.pins[3]
 
@@ -213,23 +220,32 @@ class StepperControl(threading.Thread):
                 local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
                 if local_stepper_value != 0: #if stepper_value non-zero
                     currentStepDelay = step_delay * 100 / abs(local_stepper_value)
-                    if self.steps < (self.steps_start - self.slow_start) :
-                        currentStepDelay = currentStepDelay *  (1.5 - (((self.steps) / float(self.steps_start - self.slow_start)))/2.0)
+                    #if self.steps < (self.steps_start - self.slow_start) :
+                    #    currentStepDelay = currentStepDelay *  (4.0 - (((self.steps) / float(self.steps_start - self.slow_start)))/0.5)
                         #print 2.0 - ((self.steps) / float(self.steps_start - self.slow_start))
-                    if (self.slow_start < self.steps):
+                    #if (self.slow_start < self.steps):
                         #print 2.0 - ((self.steps_start - self.steps) / float(self.steps_start - self.slow_start))
-                        currentStepDelay = currentStepDelay * (1.5 - (((self.steps_start - self.steps) / float(self.steps_start - self.slow_start)))/2.0)
+                    #    currentStepDelay = currentStepDelay * (4.0 - (((self.steps_start - self.steps) / float(self.steps_start - self.slow_start)))/0.5)
                     if local_stepper_value > 0: # if positive value
                         self.step_coarse(self.pins[0],self.pins[1],self.pins[2],self.pins[3],currentStepDelay) #step forward
                     else:
                         self.step_coarse(self.pins[3],self.pins[2],self.pins[1],self.pins[0],currentStepDelay) #step forward
 ##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
 ##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
+                    self.pause_start_time = dt.datetime.now()
+                    self.paused = False
+                    print self.pause_start_time
                 else:
-                    self.pause()
+                    if ((dt.datetime.now() - self.pause_start_time).seconds > 10) and (self.paused == False):
+                        self.pause
+                        print "paused inner"
                     time.sleep(0.1) # sleep if stepper value is zero
             else:
-                self.pause()
+                if ((dt.datetime.now() - self.pause_start_time).seconds > 10) and (self.paused == False):
+                    self.pause
+                    print "paused outer"
+                else:
+                    print (dt.datetime.now() - self.pause_start_time).seconds
                 time.sleep(0.1) # sleep if stepper value is zero
 
         self.terminated = True
@@ -765,7 +781,7 @@ class ScratchListener(threading.Thread):
 
                 if  'stepdelay' in dataraw:
                     sensor_value = dataraw[(dataraw.find('stepdelay')+1+len('stepdelay')):].split()
-                    print 'delay variable', sensor_value[0]
+                    print 'step delay changed to', sensor_value[0]
                     if isNumeric(sensor_value[0]):
                         step_delay = float(sensor_value[0])
 
