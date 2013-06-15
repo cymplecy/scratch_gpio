@@ -1,4 +1,5 @@
-# Scratch GPIO Handler for Raspberry Pi V2.3 15Jun13
+# Scratch GPIO Handler for Raspberry Pi
+# V2.3 15Jun13
 
 This is the source of a Raspberry Pi GPIO handler for Scratch.
 It acts as a go-between between Scratch and the GPIO pins and lets you use simple Scratch broadcasts such as "Pin11On"
