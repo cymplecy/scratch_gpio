@@ -37,6 +37,7 @@ turnAStep = 0
 turnBStep = 0
 turnCStep = 0
 stepMode = ['1Coil','2Coil','HalfStep']
+stepModeDelay = [0.0025,0.0025,0.0013]
 stepType = 2
 if stepType == 2:
     step_delay = 0.0013 # use smaller dealy fro halfstep mode
@@ -918,16 +919,17 @@ class ScratchListener(threading.Thread):
                             self.physical_pin_update(i,0)
 
                         if ('sonar' + str(physical_pin)) in dataraw:
+                            self.physical_pin_update(i,1)
                             ti = dt.datetime.now()
                             # setup a array to hold 3 values and then do 3 distance calcs and store them
                             #print 'sonar started'
-                            distarray = array('i',[0,0,0,0,0])
+                            distarray = array('i',[0,0,0])
                             ts=dt.datetime.now()
-                            for k in range(5):
+                            for k in range(3):
                                 #print "sonar pulse" , k
                                 #GPIO.setup(physical_pin,GPIO.OUT)
                                 #print physical_pin , i
-                                self.physical_pin_update(i,1)   # Send Pulse high
+                                GPIO.output(physical_pin, 1)    # Send Pulse high
                                 time.sleep(0.00001)     #  wait
                                 GPIO.output(physical_pin, 0)  #  bring it back low - pulse over.
                                 t0=dt.datetime.now() # remember current time
@@ -956,7 +958,7 @@ class ScratchListener(threading.Thread):
                                 #print distance
                                 GPIO.setup(physical_pin,GPIO.OUT)
                             tf = (dt.datetime.now()-ts).microseconds
-                            distance = sorted(distarray)[3] # sort the array and pick middle value as best distance
+                            distance = sorted(distarray)[1] # sort the array and pick middle value as best distance
                             
                             #print "total time " , tf
                             #for k in range(5):
@@ -965,9 +967,9 @@ class ScratchListener(threading.Thread):
                             #print "total time in microsecs" , (tf-ti).microseconds                    
                             # only update Scratch values if distance is < 500cm
                             if (distance > 400):
-                                distance = 401
-                            if (distance < 3):
-                                distance = 2
+                                distance = 999
+                            if (distance < 2):
+                                distance = 1
 
                             #print'Distance:',distance,'cm'
                             sensor_name = 'sonar' + str(physical_pin)
@@ -1049,11 +1051,13 @@ class ScratchListener(threading.Thread):
                     print "2coil broadcast"
                     stepType = 1
                     print "step mode" ,stepMode[stepType]
+                    step_delay = 0.0025
                     
                 if  'halfstep' in dataraw:
                     print "halfstep broadcast"
                     stepType = 2
                     print "step mode" ,stepMode[stepType]
+                    step_delay = 0.0013
 
                 #end of broadcast check
                 
