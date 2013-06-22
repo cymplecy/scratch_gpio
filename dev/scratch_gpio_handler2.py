@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.3 15Jun13
+# Version 2.32 22Jun13
 
 
 
@@ -920,11 +920,12 @@ class ScratchListener(threading.Thread):
 
                         if ('sonar' + str(physical_pin)) in dataraw:
                             self.physical_pin_update(i,1)
-                            ti = dt.datetime.now()
+                            ti = time.time()
                             # setup a array to hold 3 values and then do 3 distance calcs and store them
                             #print 'sonar started'
-                            distarray = array('i',[0,0,0])
-                            ts=dt.datetime.now()
+                            distarray = array('f',[0.0,0.0,0.0])
+                            ts=time.time()
+                            print
                             for k in range(3):
                                 #print "sonar pulse" , k
                                 #GPIO.setup(physical_pin,GPIO.OUT)
@@ -932,32 +933,32 @@ class ScratchListener(threading.Thread):
                                 GPIO.output(physical_pin, 1)    # Send Pulse high
                                 time.sleep(0.00001)     #  wait
                                 GPIO.output(physical_pin, 0)  #  bring it back low - pulse over.
-                                t0=dt.datetime.now() # remember current time
+                                t0=time.time() # remember current time
                                 GPIO.setup(physical_pin,GPIO.IN)
                                 #PIN_USE[i] = 0 don't bother telling system
                                 
                                 t1=t0
                                 # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
-                                while ((GPIO.input(physical_pin)==0) and ((t1-t0).microseconds < 40000)):
+                                while ((GPIO.input(physical_pin)==0) and ((t1-t0) < 0.02)):
                                     #time.sleep(0.00001)
-                                    t1=dt.datetime.now()
-                                t1=dt.datetime.now()
+                                    t1=time.time()
+                                t1=time.time()
                                 #print 'low' , (t1-t0).microseconds
                                 t2=t1
                                 #  This while loops waits for input pin to go high to indicate pulse detection
                                 #  with 0.04 sec timeout
-                                while ((GPIO.input(physical_pin)==1) and ((t2-t1).microseconds < 40000)):
+                                while ((GPIO.input(physical_pin)==1) and ((t2-t1) < 0.02)):
                                     #time.sleep(0.00001)
-                                    t2=dt.datetime.now()
-                                t2=dt.datetime.now()
+                                    t2=time.time()
+                                t2=time.time()
                                 #print 'high' , (t2-t1).microseconds
-                                t3=(t2-t1).microseconds  # t2 contains time taken for pulse to return
-                                #print "total time in microsecs" , t3
-                                distance=t3*343/2/10000  # calc distance in cm
+                                t3=(t2-t1)  # t2 contains time taken for pulse to return
+                                print "total time " , t3
+                                distance=t3*343/2*100  # calc distance in cm
                                 distarray[k]=distance
-                                #print distance
+                                print distance
                                 GPIO.setup(physical_pin,GPIO.OUT)
-                            tf = (dt.datetime.now()-ts).microseconds
+                            tf = time.time() - ts
                             distance = sorted(distarray)[1] # sort the array and pick middle value as best distance
                             
                             #print "total time " , tf
@@ -966,8 +967,8 @@ class ScratchListener(threading.Thread):
                             #print "pulse time" , distance*58
                             #print "total time in microsecs" , (tf-ti).microseconds                    
                             # only update Scratch values if distance is < 500cm
-                            if (distance > 400):
-                                distance = 999
+                            if (distance > 280):
+                                distance = 299
                             if (distance < 2):
                                 distance = 1
 
