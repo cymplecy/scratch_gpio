@@ -410,7 +410,7 @@ class ScratchSender(threading.Thread):
             pin_bit_pattern = 0L
             for i in range(PINS):
                 if (PIN_USE[i] == 0):
-                    #print 'pin' , PIN_NUM[i]
+                    #print 'pin' , PIN_NUM[i] , GPIO.input(PIN_NUM[i]
                     pin_bit_pattern += GPIO.input(PIN_NUM[i]) << i
                 #else:
                     #pin_bit_pattern += 1 << i
@@ -442,7 +442,9 @@ class ScratchSender(threading.Thread):
             if (changed_pin_map >> i) & 0b1:
                 pin_value = (pin_value_map >> i) & 0b1
                 if (PIN_USE[i] == 0):
+                    #print PIN_NUM[i] , pin_value
                     self.broadcast_pin_update(i, pin_value)
+                    
 
     def broadcast_pin_update(self, pin_index, value):
         #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
