@@ -58,6 +58,7 @@ PIN_NUM_LOOKUP=[int] * 27
 
 
 PWM_OUT = [None] * PINS
+ULTRA_OUT = [None] * PINS
 
 def isNumeric(s):
     try:
@@ -74,6 +75,59 @@ def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
 
+
+#------- SOnar Threading
+class Ultra(threading.Thread):
+
+  def __init__(self, gpioPin, frequency):
+     """
+Init the Ultra instance. Expected parameters are :
+- frequency : the frequency in Hz for the time between pings.
+- gpioPin : the pin number which will act as PWM ouput
+"""
+     self.delay = 1.0 / frequency
+     self.gpioPin = gpioPin
+     self.terminated = False
+     self.toTerminate = False
+
+  def start(self):
+    """
+Start THread
+"""
+    self.thread = threading.Thread(None, self.run, None, (), {})
+    self.thread.start()
+
+
+  def run(self):
+    """
+Run the Pinging in a background thread. This function should not be called outside of this class.
+"""
+    while self.toTerminate == False:
+      print "Ultra running on Pin" , self.gpioPin
+      time.sleep(1)
+
+    self.terminated = True
+
+
+
+  def changeFrequency(self, frequency):
+    """
+Change the frequency of the Pinging . 
+"""
+    self.delay = 1.0 / frequency
+
+
+
+  def stop(self):
+    """
+Stop Pinging.
+"""
+    self.toTerminate = True
+    while self.terminated == False:
+      # Just wait
+      time.sleep(0.01)
+  
+#---- end of sonar threading
 
 #----------------------------- STEPPER CONTROL --------------
 class StepperControl(threading.Thread):
@@ -669,6 +723,8 @@ class ScratchListener(threading.Thread):
                                     PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
                                 else:
                                     PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                                    
+
 
 
 
@@ -979,6 +1035,18 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)
+                            
+                        #Start using ultrasonic sensor on a pin    
+                        if (('ultra' + str(physical_pin) in dataraw)):
+                            #print dataraw
+                            self.physical_pin_update(i,1)
+                            print 'ultra', str(physical_pin)
+
+
+                            if ULTRA_OUT[i] == None:
+                                ULTRA_OUT[i] = Ultra(PIN_NUM[i],1)
+                                ULTRA_OUT[i].start()
+                                    
                     #end of normal pin checking
 
                 if 'pinpattern' in dataraw:
@@ -1099,6 +1167,12 @@ def cleanup_threads(threads):
         if PIN_USE[i] == 2:
             print "Stopping ", PIN_NUM[i]
             PWM_OUT[i].stop()
+            print "Stopped ", PIN_NUM[i]
+            
+    for i in range(PINS):
+        if ULTRA_OUT[i] != None:
+            print "Stop Pinging on ", PIN_NUM[i]
+            ULTRA_OUT[i].stop()
             print "Stopped ", PIN_NUM[i]
 
     if (stepperInUse[STEPPERA] == True):
