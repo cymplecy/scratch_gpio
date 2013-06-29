@@ -58,7 +58,10 @@ PIN_NUM_LOOKUP=[int] * 27
 
 
 PWM_OUT = [None] * PINS
-ULTRA_OUT = [None] * PINS
+ULTRA_IN_USE = [False] * PINS
+ultraTotalInUse = 0
+ultraSleep = 1.0
+
 
 def isNumeric(s):
     try:
@@ -75,59 +78,6 @@ def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
 
-
-#------- SOnar Threading
-class Ultra(threading.Thread):
-
-  def __init__(self, gpioPin, frequency):
-     """
-Init the Ultra instance. Expected parameters are :
-- frequency : the frequency in Hz for the time between pings.
-- gpioPin : the pin number which will act as PWM ouput
-"""
-     self.delay = 1.0 / frequency
-     self.gpioPin = gpioPin
-     self.terminated = False
-     self.toTerminate = False
-
-  def start(self):
-    """
-Start THread
-"""
-    self.thread = threading.Thread(None, self.run, None, (), {})
-    self.thread.start()
-
-
-  def run(self):
-    """
-Run the Pinging in a background thread. This function should not be called outside of this class.
-"""
-    while self.toTerminate == False:
-      print "Ultra running on Pin" , self.gpioPin
-      time.sleep(1)
-
-    self.terminated = True
-
-
-
-  def changeFrequency(self, frequency):
-    """
-Change the frequency of the Pinging . 
-"""
-    self.delay = 1.0 / frequency
-
-
-
-  def stop(self):
-    """
-Stop Pinging.
-"""
-    self.toTerminate = True
-    while self.terminated == False:
-      # Just wait
-      time.sleep(0.01)
-  
-#---- end of sonar threading
 
 #----------------------------- STEPPER CONTROL --------------
 class StepperControl(threading.Thread):
@@ -437,6 +387,8 @@ class ScratchSender(threading.Thread):
         threading.Thread.__init__(self)
         self.scratch_socket = socket
         self._stop = threading.Event()
+        self.time_last_ping = 0.0
+        self.distarray = array('f',[0.0,0.0,0.0])
 
 
     def stop(self):
@@ -482,6 +434,76 @@ class ScratchSender(threading.Thread):
                     break
 
             last_bit_pattern = pin_bit_pattern
+
+            if (time.time() - self.time_last_ping) > 1:
+
+                for i in range(PINS):
+                    if ULTRA_IN_USE[i] == True:
+                        physical_pin = PIN_NUM[i]
+                        #print 'Pinging Pin', physical_pin
+
+                        ti = time.time()
+                        # setup a array to hold 3 values and then do 3 distance calcs and store them
+                        #print 'sonar started'
+                        ts=time.time()
+                        #print
+                        for k in range(3):
+                            #print "sonar pulse" , k
+                            #GPIO.setup(physical_pin,GPIO.OUT)
+                            #print physical_pin , i
+                            GPIO.output(physical_pin, 1)    # Send Pulse high
+                            time.sleep(0.00001)     #  wait
+                            GPIO.output(physical_pin, 0)  #  bring it back low - pulse over.
+                            t0=time.time() # remember current time
+                            GPIO.setup(physical_pin,GPIO.IN)
+                            #PIN_USE[i] = 0 don't bother telling system
+                            
+                            t1=t0
+                            # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
+                            while ((GPIO.input(physical_pin)==0) and ((t1-t0) < 0.02)):
+                                #time.sleep(0.00001)
+                                t1=time.time()
+                            t1=time.time()
+                            #print 'low' , (t1-t0).microseconds
+                            t2=t1
+                            #  This while loops waits for input pin to go high to indicate pulse detection
+                            #  with 0.04 sec timeout
+                            while ((GPIO.input(physical_pin)==1) and ((t2-t1) < 0.02)):
+                                #time.sleep(0.00001)
+                                t2=time.time()
+                            t2=time.time()
+                            #print 'high' , (t2-t1).microseconds
+                            t3=(t2-t1)  # t2 contains time taken for pulse to return
+                            #print "total time " , t3
+                            distance=t3*343/2*100  # calc distance in cm
+                            self.distarray[k]=distance
+                            #print distance
+                            GPIO.setup(physical_pin,GPIO.OUT)
+                        tf = time.time() - ts
+                        distance = sorted(self.distarray)[1] # sort the array and pick middle value as best distance
+                        
+                        #print "total time " , tf
+                        #for k in range(5):
+                            #print distarray[k]
+                        #print "pulse time" , distance*58
+                        #print "total time in microsecs" , (tf-ti).microseconds                    
+                        # only update Scratch values if distance is < 500cm
+                        if (distance > 280):
+                            distance = 299
+                        if (distance < 2):
+                            distance = 1
+
+                        #print'Distance:',distance,'cm'
+                        sensor_name = 'ultra' + str(physical_pin)
+                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
+                        self.time_last_ping = time.time()
+    
+                
+                
+                
+            #time.sleep(1)
 
 ##            sensor_name = "turninga"
 ##            value = 100.0
@@ -583,7 +605,7 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT,steppera,stepperb,stepperc
+        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT,steppera,stepperb,stepperc,Ultra,ultraTotalInUse
 
         firstRun = False #Used for testing in overcoming Scratch "bug/feature"
         #This is main listening routine
@@ -1040,13 +1062,15 @@ class ScratchListener(threading.Thread):
                         if (('ultra' + str(physical_pin) in dataraw)):
                             #print dataraw
                             self.physical_pin_update(i,1)
-                            print 'ultra', str(physical_pin)
-
-
-                            if ULTRA_OUT[i] == None:
-                                ULTRA_OUT[i] = Ultra(PIN_NUM[i],1)
-                                ULTRA_OUT[i].start()
-                                    
+                            print 'start pinging on', str(physical_pin)
+                            ULTRA_IN_USE[i] = True
+#                            tempTotal = 0
+#                            for k in range(PINS):
+#                                if ULTRA_IN_USE[k] == True:
+#                                    tempTotal += 1
+#                            ultraTotalInUse = tempTotal
+                         
+                                      
                     #end of normal pin checking
 
                 if 'pinpattern' in dataraw:
@@ -1169,12 +1193,6 @@ def cleanup_threads(threads):
             PWM_OUT[i].stop()
             print "Stopped ", PIN_NUM[i]
             
-    for i in range(PINS):
-        if ULTRA_OUT[i] != None:
-            print "Stop Pinging on ", PIN_NUM[i]
-            ULTRA_OUT[i].stop()
-            print "Stopped ", PIN_NUM[i]
-
     if (stepperInUse[STEPPERA] == True):
         print "stopping stepperA"
         steppera.stop()
