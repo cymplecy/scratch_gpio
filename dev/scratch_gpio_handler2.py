@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.34 06Jul13
+# Version 2.35 07Jul13
 
 
 
@@ -922,9 +922,9 @@ class ScratchListener(threading.Thread):
                                 if PIN_USE[i] != 2:
                                     PIN_USE[i] = 2
                                     PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                    PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                    PWM_OUT[i].start(max(0,min(100,int(float(sensor_value[0])))))
                                 else:
-                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
                                     
                 elif ADDON_PRESENT[1] == True:
                     #do MotorPiTx stuff
@@ -952,19 +952,22 @@ class ScratchListener(threading.Thread):
                         outputall_pos = dataraw.find('motor1')
                         sensor_value = dataraw[(outputall_pos+1+len('motor1')):].split()
                         print 'motor1', sensor_value[0]
+                        print dataraw
                         i = PIN_NUM_LOOKUP[23]
                         if isNumeric(sensor_value[0]):
-                            svalue= int(sensor_value[0])
+                            print "isnumeric" , isNumeric(sensor_value[0])
+                            print "length of " , sensor_value[0] , " is ", len(sensor_value[0])
+                            svalue = int(float(sensor_value[0]))
                             if svalue > 0:
                                 print "motor1 set forwared"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[19],1)
                             elif svalue < 0:
-                                print "motor2 set backward"
+                                print "motor1 set backward"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[21],1)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
                             else:
-                                print "motor2 set neutral"
+                                print "motor1 set neutral"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
 
@@ -981,7 +984,7 @@ class ScratchListener(threading.Thread):
                         print 'motor2', sensor_value[0]
                         i = PIN_NUM_LOOKUP[22]
                         if isNumeric(sensor_value[0]):
-                            svalue= int(sensor_value[0])
+                            svalue = int(float(sensor_value[0]))
                             if svalue > 0:
                                 print "motor2 set forwared"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[18],0)
@@ -1036,9 +1039,9 @@ class ScratchListener(threading.Thread):
                                 if PIN_USE[i] != 2:
                                     PIN_USE[i] = 2
                                     PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                    PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                    PWM_OUT[i].start(max(0,min(100,int(float(sensor_value[0])))))
                                 else:
-                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
                                     
                         if  'motor' + str(physical_pin) in dataraw:
                             outputall_pos = dataraw.find('motor' + str(physical_pin))
@@ -1049,9 +1052,9 @@ class ScratchListener(threading.Thread):
                                 if PIN_USE[i] != 2:
                                     PIN_USE[i] = 2
                                     PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                    PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                    PWM_OUT[i].start(max(0,min(100,int(float(sensor_value[0])))))
                                 else:
-                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
+                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
                                     
 
 
@@ -1105,7 +1108,7 @@ class ScratchListener(threading.Thread):
                                         print "setting pin", PIN_NUM[i] , "to PWM" 
                                         PIN_USE[i] = 2
                                         PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                        PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                        PWM_OUT[i].start(max(0,min(100,int(float(sensor_value[0])))))
                                     else:
                                         PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
 
@@ -1137,7 +1140,7 @@ class ScratchListener(threading.Thread):
                                         print "setting pin", PIN_NUM[i] , "to PWM" 
                                         PIN_USE[i] = 2
                                         PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                        PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                        PWM_OUT[i].start(max(0,min(100,int(float(sensor_value[0])))))
                                     else:
                                         PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
 
@@ -1169,7 +1172,7 @@ class ScratchListener(threading.Thread):
                                         print "setting pin", PIN_NUM[i] , "to PWM" 
                                         PIN_USE[i] = 2
                                         PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                        PWM_OUT[i].start(max(0,min(100,int(sensor_value[0]))))
+                                        PWM_OUT[i].start(max(0,min(100,int(float(sensor_value[0])))))
                                     else:
                                         PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
 
