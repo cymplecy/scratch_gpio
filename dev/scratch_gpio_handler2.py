@@ -28,9 +28,9 @@ BIG_NUM = 2123456789
 
 ADDON = ['LadderBoard','MotorPiTx'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
-ADDON_PRESENT = [int] * NUMOF_ADDON # create an enabled/disabled array
+ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
-    ADDON_PRESENT[i] = 0
+    ADDON_PRESENT[i] = False
     ADDON[i] = ADDON[i].lower()
     
 turnAStep = 0
@@ -512,18 +512,24 @@ class ScratchSender(threading.Thread):
                 if (PIN_USE[i] == 0):
                     #print PIN_NUM[i] , pin_value
                     self.broadcast_pin_update(i, pin_value)
-                    
+                                     
 
     def broadcast_pin_update(self, pin_index, value):
         #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         #self.send_scratch_command(bcast_str)
-        if ADDON_PRESENT[0] == 1:
+        if ADDON_PRESENT[0] == True:
             #do ladderboard stuff
             switch_array = array('i',[3,4,2,1])
             #switch_lookup = array('i',[24,26,19,21])
             sensor_name = "switch" + str(switch_array[pin_index-10])
+        elif ADDON_PRESENT[1] == True:
+            #do ladderboard stuff
+            if PIN_NUM[pin_index] == 13:
+                sensor_name = "input1"
+            if PIN_NUM[pin_index] == 7:
+                sensor_name = "input2"
         else:
             sensor_name = "pin" + str(PIN_NUM[pin_index])
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
@@ -649,7 +655,7 @@ class ScratchListener(threading.Thread):
 
             for i in range(NUMOF_ADDON):
                 if ADDON[i] in dataraw:
-                    ADDON_PRESENT[i] = 1
+                    ADDON_PRESENT[i] = True
                     if ADDON[i] == "ladderboard":
                         for k in range(0,10):
                             PIN_USE[k] = 1
@@ -669,6 +675,9 @@ class ScratchListener(threading.Thread):
                         self.physical_pin_update(PIN_NUM_LOOKUP[19], 0)
                         self.physical_pin_update(PIN_NUM_LOOKUP[16], 0)
                         self.physical_pin_update(PIN_NUM_LOOKUP[18], 0)
+                        pin=PIN_NUM_LOOKUP[13]
+                        PIN_USE[pin] = 0
+                        GPIO.setup(13,GPIO.IN)
 
  
 
@@ -677,7 +686,7 @@ class ScratchListener(threading.Thread):
 
   
 
-                if ADDON_PRESENT[0] == 1: # Gordon's Ladder Board
+                if ADDON_PRESENT[0] == True: # Gordon's Ladder Board
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(0, 10):
@@ -882,7 +891,7 @@ class ScratchListener(threading.Thread):
             if 'sensor-update' in dataraw:
                 #print "sensor-update rcvd" , dataraw
               
-                if ADDON_PRESENT[0] == 1:
+                if ADDON_PRESENT[0] == True:
                     #do ladderboard stuff
 
                     if (('allleds" 1' in dataraw) or ('allleds" "on' in dataraw) or ('allleds" "high' in dataraw)):
@@ -917,7 +926,7 @@ class ScratchListener(threading.Thread):
                                 else:
                                     PWM_OUT[i].changeDutyCycle(max(0,min(100,int(sensor_value[0]))))
                                     
-                elif ADDON_PRESENT[1] == 1:
+                elif ADDON_PRESENT[1] == True:
                     #do MotorPiTx stuff
                     """
                     if (('allleds" 1' in dataraw) or ('allleds" "on' in dataraw) or ('allleds" "high' in dataraw)):
@@ -939,23 +948,23 @@ class ScratchListener(threading.Thread):
                             self.physical_pin_update(i,0)
                     """
                     #check for motor variable commands
-                    if  'leftmotor' in dataraw:
-                        outputall_pos = dataraw.find('leftmotor')
-                        sensor_value = dataraw[(outputall_pos+1+len('leftmotor')):].split()
-                        print 'leftmotor', sensor_value[0]
+                    if  'motor1' in dataraw:
+                        outputall_pos = dataraw.find('motor1')
+                        sensor_value = dataraw[(outputall_pos+1+len('motor1')):].split()
+                        print 'motor1', sensor_value[0]
                         i = PIN_NUM_LOOKUP[23]
                         if isNumeric(sensor_value[0]):
                             svalue= int(sensor_value[0])
                             if svalue > 0:
-                                print "leftmotor set forwared"
+                                print "motor1 set forwared"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[19],1)
                             elif svalue < 0:
-                                print "leftmotor set backward"
+                                print "motor2 set backward"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[21],1)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
                             else:
-                                print "leftmotor set neutral"
+                                print "motor2 set neutral"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
 
@@ -966,23 +975,23 @@ class ScratchListener(threading.Thread):
                             else:
                                 PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
                     
-                    if  'rightmotor' in dataraw:
-                        outputall_pos = dataraw.find('rightmotor')
-                        sensor_value = dataraw[(outputall_pos+1+len('rightmotor')):].split()
-                        print 'rightmotor', sensor_value[0]
+                    if  'motor2' in dataraw:
+                        outputall_pos = dataraw.find('motor2')
+                        sensor_value = dataraw[(outputall_pos+1+len('motor2')):].split()
+                        print 'motor2', sensor_value[0]
                         i = PIN_NUM_LOOKUP[22]
                         if isNumeric(sensor_value[0]):
                             svalue= int(sensor_value[0])
                             if svalue > 0:
-                                print "rightmotor set forwared"
+                                print "motor2 set forwared"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[18],0)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[16],1)
                             elif svalue < 0:
-                                print "rightmotor set backward"
+                                print "motor2 set backward"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[18],1)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[16],0)
                             else:
-                                print "rightmotor set neutral"
+                                print "motor2 set neutral"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[18],0)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[16],0)
 
