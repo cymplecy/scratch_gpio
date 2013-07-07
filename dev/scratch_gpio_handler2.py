@@ -951,15 +951,16 @@ class ScratchListener(threading.Thread):
                     if  'motor1' in dataraw:
                         outputall_pos = dataraw.find('motor1')
                         sensor_value = dataraw[(outputall_pos+1+len('motor1')):].split()
+                        sensor_value[0] = sensor_value[0].replace('\"', '')
                         print 'motor1', sensor_value[0]
-                        print dataraw
+                        print "dataraw: " ,dataraw
                         i = PIN_NUM_LOOKUP[23]
                         if isNumeric(sensor_value[0]):
                             print "isnumeric" , isNumeric(sensor_value[0])
                             print "length of " , sensor_value[0] , " is ", len(sensor_value[0])
                             svalue = int(float(sensor_value[0]))
                             if svalue > 0:
-                                print "motor1 set forwared"
+                                print "motor1 set forward"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[19],1)
                             elif svalue < 0:
@@ -986,7 +987,7 @@ class ScratchListener(threading.Thread):
                         if isNumeric(sensor_value[0]):
                             svalue = int(float(sensor_value[0]))
                             if svalue > 0:
-                                print "motor2 set forwared"
+                                print "motor2 set forward"
                                 self.physical_pin_update(PIN_NUM_LOOKUP[18],0)
                                 self.physical_pin_update(PIN_NUM_LOOKUP[16],1)
                             elif svalue < 0:
