@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.35 07Jul13
+# Version 2.36 09Jul13
 
 
 
@@ -624,11 +624,12 @@ class ScratchListener(threading.Thread):
         while not self.stopped():
             try:
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
-                dataraw = data.lower() #data[4:].lower() # convert all to lowercase
+                dataraw = data[4:].lower() # convert all to lowercase
                 #rint 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
 
-                dataraw = ' '.join([item.replace(' ','') for item in shlex.split(data.lower())])
-                #print dataraw
+                if len(dataraw) > 0:
+                    dataraw = ' '.join([item.replace(' ','') for item in shlex.split(data.lower())])
+                    #print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -970,7 +971,7 @@ class ScratchListener(threading.Thread):
                     
                     if  'motor2' in dataraw:
                         i = PIN_NUM_LOOKUP[22]
-                        tempValue = getValue('motor1', dataraw)
+                        tempValue = getValue('motor2', dataraw)
                         svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
 
                         if svalue > 0:
