@@ -625,7 +625,7 @@ class ScratchListener(threading.Thread):
             try:
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
                 dataraw = data[4:].lower() # convert all to lowercase
-                #rint 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
+                #print 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
 
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(data.lower())])
@@ -1070,7 +1070,7 @@ class ScratchListener(threading.Thread):
                 if  'motora' in dataraw:
                     #print "MotorA Received"
                     #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue('motora' + str(physical_pin), dataraw)
+                    tempValue = getValue('motora', dataraw)
                     svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
                     if (stepperInUse[STEPPERA] == True):
                         #print "Stepper A in operation"
@@ -1090,7 +1090,7 @@ class ScratchListener(threading.Thread):
                 if  'motorb' in dataraw:
                     #print "MotorB Received"
                     #print "stepper status" , stepperInUse[STEPPERB]
-                    tempValue = getValue('motorb' + str(physical_pin), dataraw)
+                    tempValue = getValue('motorb', dataraw)
                     svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
                     if (stepperInUse[STEPPERB] == True):
                         #print "Stepper B in operation"
@@ -1109,7 +1109,7 @@ class ScratchListener(threading.Thread):
                 if  'motorc' in dataraw:
                     #print "MotorC Received"
                     #print "stepper status" , stepperInUse[STEPPERC]
-                    tempValue = getValue('motorc' + str(physical_pin), dataraw)
+                    tempValue = getValue('motorc', dataraw)
                     svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
                     if (stepperInUse[STEPPERC] == True):
                         #print "Stepper C in operation"
