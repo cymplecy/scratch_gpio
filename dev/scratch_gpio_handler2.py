@@ -13,6 +13,7 @@ import sys
 import struct
 import datetime as dt
 import shlex
+import os
 
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BOARD)
@@ -628,8 +629,8 @@ class ScratchListener(threading.Thread):
                 #print 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
 
                 if len(dataraw) > 0:
-                    dataraw = ' '.join([item.replace(' ','') for item in shlex.split(data.lower())])
-                    #print dataraw
+                    dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
+                    print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -725,7 +726,13 @@ class ScratchListener(threading.Thread):
                         if (('led' + str(i + 1)+'low' in dataraw) or ('led' + str(i + 1)+'off' in dataraw)):
                             #print dataraw
                             self.physical_pin_update(i,0)
-
+                            
+#                elif ADDON_PRESENT[1] == True: # Boeeerb MotorPiTx
+#                    if (('servoon' in dataraw)):
+#                        os.system("echo 0=180 > /dev/servoblaster")
+#                    if (('servooff' in dataraw)):
+#                        os.system("echo 0=90 > /dev/servoblaster")
+                        
                 else:
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
@@ -993,6 +1000,19 @@ class ScratchListener(threading.Thread):
                             PWM_OUT[i].start(max(0,min(100,abs(svalue))))
                         else:
                             PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
+                            
+#                    if (('servo1' in dataraw)):
+#                        tempValue = getValue('servo1', dataraw)
+#                        svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
+#                        svalue= min(240,max(svalue,60))
+#                        os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
+                    
+                    if (('servo2' in dataraw)):
+                        print "servo2"
+                        tempValue = getValue('servo2', dataraw)
+                        svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue= min(240,max(svalue,60))
+                        os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
                             
                                     
                 else:   #normal variable processing with no add on board
