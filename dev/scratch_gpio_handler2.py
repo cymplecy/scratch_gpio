@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.36 09Jul13
+# Version 2.37 14Jul13
 
 
 
@@ -90,7 +90,18 @@ def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
     
+#Procedure to set pin mode for each pin
+def SetPinMode():
+    for i in range(PINS):
+        if (PIN_USE[i] == 1):
+            print 'setting pin' , PIN_NUM[i] , ' to out'
+            GPIO.setup(PIN_NUM[i],GPIO.OUT)
+        elif (PIN_USE[i] == 0):
+            print 'setting pin' , PIN_NUM[i] , ' to in'
+            GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
+        PIN_NUM_LOOKUP[PIN_NUM[i]] = i
+        
 #----------------------------- STEPPER CONTROL --------------
 class StepperControl(threading.Thread):
     def __init__(self,pinA,pinB,pinC,pinD,step_delay):
@@ -364,17 +375,7 @@ root = Tk()
 root.withdraw()
 '''
 
-#Procedure to set pin mode for each pin
-def SetPinMode():
-    for i in range(PINS):
-        if (PIN_USE[i] == 1):
-            print 'setting pin' , PIN_NUM[i] , ' to out'
-            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-        elif (PIN_USE[i] == 0):
-            print 'setting pin' , PIN_NUM[i] , ' to in'
-            GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
-        PIN_NUM_LOOKUP[PIN_NUM[i]] = i
 
 class MyError(Exception):
     def __init__(self, value):
@@ -695,9 +696,16 @@ class ScratchListener(threading.Thread):
                         self.physical_pin_update(PIN_NUM_LOOKUP[19], 0)
                         self.physical_pin_update(PIN_NUM_LOOKUP[16], 0)
                         self.physical_pin_update(PIN_NUM_LOOKUP[18], 0)
+                        
                         pin=PIN_NUM_LOOKUP[13]
                         PIN_USE[pin] = 0
                         GPIO.setup(13,GPIO.IN)
+                        
+                        #setup servo2 for pin 10
+                        pin=PIN_NUM_LOOKUP[10]
+                        PIN_USE[pin] = 1
+                        GPIO.setup(10,GPIO.OUT)
+                        
 
 
             if 'broadcast' in dataraw:
@@ -1001,11 +1009,11 @@ class ScratchListener(threading.Thread):
                         else:
                             PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
                             
-#                    if (('servo1' in dataraw)):
-#                        tempValue = getValue('servo1', dataraw)
-#                        svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
-#                        svalue= min(240,max(svalue,60))
-#                        os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
+                    if (('servo1' in dataraw)):
+                        tempValue = getValue('servo1', dataraw)
+                        svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue= min(240,max(svalue,60))
+                        os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
                     
                     if (('servo2' in dataraw)):
                         print "servo2"
