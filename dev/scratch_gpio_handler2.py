@@ -443,6 +443,7 @@ class ScratchSender(threading.Thread):
                     if ULTRA_IN_USE[i] == True:
                         physical_pin = PIN_NUM[i]
                         #print 'Pinging Pin', physical_pin
+                        #print PIN_USE[i]
 
                         ti = time.time()
                         # setup a array to hold 3 values and then do 3 distance calcs and store them
@@ -497,6 +498,12 @@ class ScratchSender(threading.Thread):
 
                         #print'Distance:',distance,'cm'
                         sensor_name = 'ultra' + str(physical_pin)
+                        if ADDON_PRESENT[1] == True:
+                            if physical_pin == 13:
+                                sensor_name = "ultra1"
+                            if physical_pin == 7:
+                                sensor_name = "ultra2"
+                                    
                         bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
@@ -699,7 +706,7 @@ class ScratchListener(threading.Thread):
                         
                         pin=PIN_NUM_LOOKUP[13]
                         PIN_USE[pin] = 0
-                        GPIO.setup(13,GPIO.IN)
+                        GPIO.setup(13,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                         
                         #setup servo2 for pin 10
                         pin=PIN_NUM_LOOKUP[10]
@@ -735,12 +742,26 @@ class ScratchListener(threading.Thread):
                             #print dataraw
                             self.physical_pin_update(i,0)
                             
-#                elif ADDON_PRESENT[1] == True: # Boeeerb MotorPiTx
-#                    if (('servoon' in dataraw)):
-#                        os.system("echo 0=180 > /dev/servoblaster")
-#                    if (('servooff' in dataraw)):
-#                        os.system("echo 0=90 > /dev/servoblaster")
+                elif ADDON_PRESENT[1] == True: # Boeeerb MotorPiTx
+                    #Start using ultrasonic sensor on a pin    
+                    if (('ultra1' in dataraw)):
+                        physical_pin = 13
+                        i = PIN_NUM_LOOKUP[physical_pin]
+                        PIN_USE[i] = 0
+                        GPIO.setup(physical_pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+                        #print dataraw
+                        self.physical_pin_update(i,1)
+                        print 'start pinging on', str(physical_pin)
+                        ULTRA_IN_USE[i] = True
                         
+                    if (('ultra2' in dataraw)):
+                        physical_pin = 7
+                        i = PIN_NUM_LOOKUP[physical_pin]
+                        #print dataraw
+                        self.physical_pin_update(i,1)
+                        print 'start pinging on', str(physical_pin)
+                        ULTRA_IN_USE[i] = True
+                    
                 else:
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
