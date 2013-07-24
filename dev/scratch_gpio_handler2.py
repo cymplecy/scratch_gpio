@@ -62,6 +62,8 @@ CMD_ENABLE_LEDS = 0x13
 CMD_SET_PWM_VALUES = 0x01
 CMD_UPDATE = 0x16
 PiGlow_Values = [0] * 18
+PiGlow_Lookup = [0,1,2,3,14,12,6,7,8,5,4,9,17,16,15,13,11,10]
+PiGlow_Brightness = 255
 
 class PiGlow:
 	i2c_addr = 0x54 # fixed i2c address of SN3218 ic
@@ -682,7 +684,7 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT,steppera,stepperb,stepperc,Ultra,ultraTotalInUse
+        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT,steppera,stepperb,stepperc,Ultra,ultraTotalInUse,PiGlow_Brightness
 
         firstRun = False #Used for testing in overcoming Scratch "bug/feature"
         #This is main listening routine
@@ -776,7 +778,7 @@ class ScratchListener(threading.Thread):
 
 
             if 'broadcast' in dataraw:
-                print 'broadcast in data:' , dataraw
+                #print 'broadcast in data:' , dataraw
 
                 if ADDON_PRESENT[0] == True: # Gordon's Ladder Board
 
@@ -826,7 +828,7 @@ class ScratchListener(threading.Thread):
                 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(1,19):
-                            PiGlow_Values[i-1] = 255
+                            PiGlow_Values[i-1] = PiGlow_Brightness
                             piglow.update_pwm_values(PiGlow_Values)
                             
                     if (('alloff' in dataraw) or ('alllow' in dataraw)):
@@ -840,13 +842,31 @@ class ScratchListener(threading.Thread):
                         #print check_broadcast
                         if (('led' + str(i)+'high' in dataraw) or ('led' + str(i)+'on' in dataraw)):
                             #print dataraw
-                            PiGlow_Values[i-1] = 255
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness
                             piglow.update_pwm_values(PiGlow_Values)
 
                         if (('led' + str(i)+'low' in dataraw) or ('led' + str(i)+'off' in dataraw)):
                             #print dataraw
-                            PiGlow_Values[i-1] = 0
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = 0
                             piglow.update_pwm_values(PiGlow_Values)
+                            
+                    pcolours = ['red','orange','yellow','green','blue','white']
+                    for i in range(len(pcolours)):
+                        if ((pcolours[i]+'high' in dataraw) or (pcolours[i]+'on' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[i+0]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[i+12]] = PiGlow_Brightness
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                        if ((pcolours[i]+'low' in dataraw) or (pcolours[i]+'off' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[i+0]] = 0
+                            PiGlow_Values[PiGlow_Lookup[i+6]] = 0
+                            PiGlow_Values[PiGlow_Lookup[i+12]] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+
+
 
                     
                 else:
@@ -1028,7 +1048,7 @@ class ScratchListener(threading.Thread):
 
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
-                print "sensor-update rcvd" , dataraw
+                #print "sensor-update rcvd" , dataraw
               
                 if ADDON_PRESENT[0] == True:
                     #do ladderboard stuff
@@ -1135,12 +1155,41 @@ class ScratchListener(threading.Thread):
                     #check LEDS
                     for i in range(1,19):
                         led_check = 'led' + str(i)
-                        if (led_check in dataraw):
+                        if ((led_check + ' ') in dataraw):
                             tempValue = getValue(led_check, dataraw)
+                            #print tempValue
                             svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
                             svalue= min(255,max(svalue,0))
-                            PiGlow_Values[i-1] = svalue
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
                             piglow.update_pwm_values(PiGlow_Values)
+                            
+                    #Use bit pattern to control leds
+                    if 'ledpattern' in dataraw:
+                        print 'Found ledpattern'
+                        num_of_bits = 18
+                        bit_pattern = ('00000000000000000000000000'+getValue('ledpattern', dataraw))[-num_of_bits:]
+                        print 'led_pattern %s' % bit_pattern
+                        j = 0
+                        for i in range(18):
+                        #bit_state = ((2**i) & sensor_value) >> i
+                        #print 'dummy pin %d state %d' % (i, bit_state)
+                            if bit_pattern[-(j+1)] == '0':
+                                PiGlow_Values[PiGlow_Lookup[i]] = 0
+                            else:
+                                PiGlow_Values[PiGlow_Lookup[i]] = 1
+                            j = j + 1
+                        
+                        piglow.update_pwm_values(PiGlow_Values)
+                        
+                    if (('bright' + ' ') in dataraw):
+                        tempValue = getValue('bright', dataraw)
+                        #print tempValue
+                        svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue= min(255,max(svalue,0))
+                        PiGlow_Brightness = svalue
+                   
+
+                        
                                     
                                     
                 else:   #normal variable processing with no add on board
