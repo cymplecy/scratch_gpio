@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.37 14Jul13
+# Version 2.371 24Jul13
 
 
 
@@ -14,11 +14,17 @@ import struct
 import datetime as dt
 import shlex
 import os
+#try and inport smbus but don't worry if not installed
+try:
+    from smbus import SMBus
+except:
+    pass
 
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 GPIO.cleanup()
+print "Board Revision" , GPIO.RPI_REVISION
 
 #Set some constants and initialise arrays
 STEPPERA=0
@@ -28,7 +34,7 @@ stepperInUse = array('b',[False,False,False])
 INVERT = False
 BIG_NUM = 2123456789
 
-ADDON = ['LadderBoard','MotorPiTx'] #define addons
+ADDON = ['LadderBoard','MotorPiTx','PiGlow'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
@@ -51,9 +57,57 @@ DEFAULT_HOST = '127.0.0.1'
 BUFFER_SIZE = 240 #used to be 100
 SOCKET_TIMEOUT = 1
 
+CMD_ENABLE_OUTPUT = 0x00
+CMD_ENABLE_LEDS = 0x13
+CMD_SET_PWM_VALUES = 0x01
+CMD_UPDATE = 0x16
+PiGlow_Values = [0] * 18
 
-PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
-PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+class PiGlow:
+	i2c_addr = 0x54 # fixed i2c address of SN3218 ic
+	bus = None
+
+	def __init__(self, i2c_bus=1):
+		#print "init"
+                #print i2c_bus
+                #self.bus = smbus.SMBus(i2c_bus)
+		self.bus = SMBus(i2c_bus)
+                
+                self.enable_output()
+		self.enable_leds()
+
+	def enable_output(self):
+		self.write_i2c(CMD_ENABLE_OUTPUT, 0x01)
+
+	def enable_leds(self):
+		self.write_i2c(CMD_ENABLE_LEDS, [0xFF, 0xFF, 0xFF])
+
+	def update_pwm_values(self, values):
+		#print "update pwm"
+		self.write_i2c(CMD_SET_PWM_VALUES, values)
+		self.write_i2c(CMD_UPDATE, 0xFF)
+		
+	def write_i2c(self, reg_addr, value):
+		if not isinstance(value, list):
+			value = [value];
+		self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
+
+piglow = None
+try:
+    if GPIO.RPI_REVISION == 1:
+        piglow = PiGlow(0)
+    else:
+        piglow = PiGlow(1)
+    #print piglow
+    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
+    PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    piglow.update_pwm_values(PiGlow_Values)
+except:
+    print "No PiGlow Detected"
+    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
+    PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
 PINS = len(PIN_NUM)
 PIN_NUM_LOOKUP=[int] * 27
@@ -66,6 +120,8 @@ PWM_OUT = [None] * PINS
 ULTRA_IN_USE = [False] * PINS
 ultraTotalInUse = 0
 ultraSleep = 1.0
+
+
 
 
 def isNumeric(s):
@@ -720,7 +776,7 @@ class ScratchListener(threading.Thread):
 
 
             if 'broadcast' in dataraw:
-                #print 'broadcast in data:' , dataraw
+                print 'broadcast in data:' , dataraw
 
                 if ADDON_PRESENT[0] == True: # Gordon's Ladder Board
 
@@ -765,6 +821,33 @@ class ScratchListener(threading.Thread):
                         self.physical_pin_update(i,1)
                         print 'start pinging on', str(physical_pin)
                         ULTRA_IN_USE[i] = True
+                        
+                elif ADDON_PRESENT[2] == True: # Pimoroni PiGlow
+                
+                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
+                        for i in range(1,19):
+                            PiGlow_Values[i-1] = 255
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
+                        for i in range(1,19):
+                            PiGlow_Values[i-1] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+  
+                    #check LEDS
+                    for i in range(1,19):
+                        #check_broadcast = str(i) + 'on'
+                        #print check_broadcast
+                        if (('led' + str(i)+'high' in dataraw) or ('led' + str(i)+'on' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[i-1] = 255
+                            piglow.update_pwm_values(PiGlow_Values)
+
+                        if (('led' + str(i)+'low' in dataraw) or ('led' + str(i)+'off' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[i-1] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+
                     
                 else:
 
@@ -945,7 +1028,7 @@ class ScratchListener(threading.Thread):
 
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
-                #print "sensor-update rcvd" , dataraw
+                print "sensor-update rcvd" , dataraw
               
                 if ADDON_PRESENT[0] == True:
                     #do ladderboard stuff
@@ -1046,7 +1129,19 @@ class ScratchListener(threading.Thread):
                         svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
                         svalue= min(240,max(svalue,60))
                         os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
-                            
+                        
+                elif ADDON_PRESENT[2] == True:
+                    #do PiGlow stuff                                    
+                    #check LEDS
+                    for i in range(1,19):
+                        led_check = 'led' + str(i)
+                        if (led_check in dataraw):
+                            tempValue = getValue(led_check, dataraw)
+                            svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                            svalue= min(255,max(svalue,0))
+                            PiGlow_Values[i-1] = svalue
+                            piglow.update_pwm_values(PiGlow_Values)
+                                    
                                     
                 else:   #normal variable processing with no add on board
                     #gloablly set all ports
@@ -1307,6 +1402,8 @@ cycle_trace = 'start'
 
 SetPinMode()
 
+# setup a fade across the 18 LEDs of values ranging from 0 - 255
+values = [0x01,0x02,0x04,0x08,0x10,0x18,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xA0,0xC0,0xE0,0xFF]
 
 while True:
 
@@ -1340,8 +1437,14 @@ while True:
 
     # wait for ctrl+c
     try:
+#        val = values.pop(0)
+#        values.append(val)
+#        # update the piglow with current values
+#        piglow.update_pwm_values(values)
+
         time.sleep(0.1)
     except KeyboardInterrupt:
         cleanup_threads((listener,sender))
+        GPIO.cleanup()
         sys.exit()
 
