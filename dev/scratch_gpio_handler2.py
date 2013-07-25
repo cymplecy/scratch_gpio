@@ -62,7 +62,7 @@ CMD_ENABLE_LEDS = 0x13
 CMD_SET_PWM_VALUES = 0x01
 CMD_UPDATE = 0x16
 PiGlow_Values = [0] * 18
-PiGlow_Lookup = [0,1,2,3,14,12,6,7,8,5,4,9,17,16,15,13,11,10]
+PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
 PiGlow_Brightness = 255
 
 class PiGlow:
@@ -865,7 +865,27 @@ class ScratchListener(threading.Thread):
                             PiGlow_Values[PiGlow_Lookup[i+6]] = 0
                             PiGlow_Values[PiGlow_Lookup[i+12]] = 0
                             piglow.update_pwm_values(PiGlow_Values)
+                            
+                    for i in range(1,4):
+                        if (('leg'+str(i)+'high' in dataraw) or ('leg'+str(i)+'on' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness
+                            piglow.update_pwm_values(PiGlow_Values)
 
+                        if (('leg'+str(i)+'low' in dataraw) or ('leg'+str(i)+'off' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
 
 
                     
