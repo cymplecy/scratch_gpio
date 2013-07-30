@@ -34,7 +34,7 @@ stepperInUse = array('b',[False,False,False])
 INVERT = False
 BIG_NUM = 2123456789
 
-ADDON = ['LadderBoard','MotorPiTx','PiGlow'] #define addons
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
@@ -556,7 +556,7 @@ class ScratchSender(threading.Thread):
 
                         #print'Distance:',distance,'cm'
                         sensor_name = 'ultra' + str(physical_pin)
-                        if ADDON_PRESENT[1] == True:
+                        if ADDON_PRESENT[2] == True:
                             if physical_pin == 13:
                                 sensor_name = "ultra1"
                             if physical_pin == 7:
@@ -594,12 +594,12 @@ class ScratchSender(threading.Thread):
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         #self.send_scratch_command(bcast_str)   
-        if ADDON_PRESENT[0] == True:
+        if ADDON_PRESENT[1] == True:
             #do ladderboard stuff
             switch_array = array('i',[3,4,2,1])
             #switch_lookup = array('i',[24,26,19,21])
             sensor_name = "switch" + str(switch_array[pin_index-10])
-        elif ADDON_PRESENT[1] == True:
+        elif ADDON_PRESENT[2] == True:
             #do ladderboard stuff
             if PIN_NUM[pin_index] == 13:
                 sensor_name = "input1"
@@ -610,7 +610,7 @@ class ScratchSender(threading.Thread):
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
-        if ADDON_PRESENT[1] == True:
+        if ADDON_PRESENT[2] == True:
             bcast_str = 'broadcast "%s%s"' % (sensor_name,("Off","On")[value == 1])
             print 'sending: %s' % bcast_str
             self.send_scratch_command(bcast_str)
@@ -746,7 +746,7 @@ class ScratchListener(threading.Thread):
             for i in range(NUMOF_ADDON):
                 if ADDON[i] in dataraw:
                     ADDON_PRESENT[i] = True
-                    if ADDON[i] == "ladderboard":
+                    if ADDON[i] == "ladder":
                         for k in range(0,10):
                             PIN_USE[k] = 1
                         for k in range(10,14):
@@ -780,7 +780,7 @@ class ScratchListener(threading.Thread):
             if 'broadcast' in dataraw:
                 #print 'broadcast in data:' , dataraw
 
-                if ADDON_PRESENT[0] == True: # Gordon's Ladder Board
+                if ADDON_PRESENT[1] == True: # Gordon's Ladder Board
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(0, 10):
@@ -804,7 +804,7 @@ class ScratchListener(threading.Thread):
                             #print dataraw
                             self.physical_pin_update(i,0)
                             
-                elif ADDON_PRESENT[1] == True: # Boeeerb MotorPiTx
+                elif ADDON_PRESENT[2] == True: # Boeeerb MotorPiTx
                     #Start using ultrasonic sensor on a pin    
                     if (('ultra1' in dataraw)):
                         physical_pin = 13
@@ -824,7 +824,7 @@ class ScratchListener(threading.Thread):
                         print 'start pinging on', str(physical_pin)
                         ULTRA_IN_USE[i] = True
                         
-                elif ADDON_PRESENT[2] == True: # Pimoroni PiGlow
+                elif ADDON_PRESENT[3] == True: # Pimoroni PiGlow
                 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(1,19):
@@ -1070,7 +1070,7 @@ class ScratchListener(threading.Thread):
             if 'sensor-update' in dataraw:
                 #print "sensor-update rcvd" , dataraw
               
-                if ADDON_PRESENT[0] == True:
+                if ADDON_PRESENT[1] == True:
                     #do ladderboard stuff
 
                     if (('allleds" 1' in dataraw) or ('allleds" "on' in dataraw) or ('allleds" "high' in dataraw)):
@@ -1105,7 +1105,7 @@ class ScratchListener(threading.Thread):
                                 else:
                                     PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
                                     
-                elif ADDON_PRESENT[1] == True:
+                elif ADDON_PRESENT[2] == True:
                     #do MotorPiTx stuff
                     #check for motor variable commands
                     if  'motor1' in dataraw:
@@ -1170,7 +1170,7 @@ class ScratchListener(threading.Thread):
                         svalue= min(240,max(svalue,60))
                         os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
                         
-                elif ADDON_PRESENT[2] == True:
+                elif ADDON_PRESENT[3] == True:
                     #do PiGlow stuff                                    
                     #check LEDS
                     for i in range(1,19):
