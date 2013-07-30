@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.371 24Jul13
+Version =  2.375 # 30Jul13
 
 
 
@@ -108,6 +108,7 @@ except:
     print "No PiGlow Detected"
     PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
     PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    print "Unexpected error:", sys.exc_info()[0]
 
 
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
@@ -684,9 +685,11 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT,steppera,stepperb,stepperc,Ultra,ultraTotalInUse,PiGlow_Brightness
+        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
+               steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness
 
-        firstRun = False #Used for testing in overcoming Scratch "bug/feature"
+        firstRun = True #Used for testing in overcoming Scratch "bug/feature"
+        firstRunData = ''
         #This is main listening routine
         lcount = 0
         while not self.stopped():
@@ -719,6 +722,7 @@ class ScratchListener(threading.Thread):
             if firstRun == True:
                 if 'sensor-update' in dataraw:
                     #print "this data ignored" , dataraw
+                    firstRunData = dataraw
                     dataraw = ''
                     firstRun = False
 
@@ -775,6 +779,11 @@ class ScratchListener(threading.Thread):
                         PIN_USE[pin] = 1
                         GPIO.setup(10,GPIO.OUT)
                         
+                    print ADDON[i] , "found"
+                    dataraw = dataraw + " " + firstRunData
+                    firstRunData = ''
+                    print "firstrunData Used:" , dataraw
+                            
 
 
             if 'broadcast' in dataraw:
@@ -824,7 +833,7 @@ class ScratchListener(threading.Thread):
                         print 'start pinging on', str(physical_pin)
                         ULTRA_IN_USE[i] = True
                         
-                elif ADDON_PRESENT[3] == True: # Pimoroni PiGlow
+                elif ((ADDON_PRESENT[3] == True) and (piglow != None)): # Pimoroni PiGlow
                 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(1,19):
@@ -1062,6 +1071,11 @@ class ScratchListener(threading.Thread):
                     stepType = 2
                     print "step mode" ,stepMode[stepType]
                     step_delay = 0.0013
+                    
+                if "version" in dataraw:
+                    bcast_str = 'sensor-update "%s" %d' % ("Version", int(Version * 1000))
+                    #print 'sending: %s' % bcast_str
+                    self.send_scratch_command(bcast_str)
 
                 #end of broadcast check
 
@@ -1170,8 +1184,8 @@ class ScratchListener(threading.Thread):
                         svalue= min(240,max(svalue,60))
                         os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
                         
-                elif ADDON_PRESENT[3] == True:
-                    #do PiGlow stuff                                    
+                elif ((ADDON_PRESENT[3] == True) and (piglow != None)):
+                    #do PiGlow stuff but make sure PiGlow physically detected                                  
                     #check LEDS
                     for i in range(1,19):
                         led_check = 'led' + str(i)
