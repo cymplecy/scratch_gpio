@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.375 # 30Jul13
+Version =  2.800 # 31Jul13
 
 
 
@@ -613,7 +613,7 @@ class ScratchSender(threading.Thread):
         self.send_scratch_command(bcast_str)
         if ADDON_PRESENT[2] == True:
             bcast_str = 'broadcast "%s%s"' % (sensor_name,("Off","On")[value == 1])
-            print 'sending: %s' % bcast_str
+            #print 'sending: %s' % bcast_str
             self.send_scratch_command(bcast_str)
         
 
@@ -688,7 +688,7 @@ class ScratchListener(threading.Thread):
         global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
                steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness
 
-        firstRun = True #Used for testing in overcoming Scratch "bug/feature"
+        firstRun = False #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
         #This is main listening routine
         lcount = 0
@@ -699,7 +699,7 @@ class ScratchListener(threading.Thread):
                 #print "try reading socket"
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
                 dataraw = data[4:].lower() # convert all to lowercase
-                #print 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
+                #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
 
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
@@ -718,6 +718,7 @@ class ScratchListener(threading.Thread):
                 #print "No data received: socket timeout"
                 continue
             
+            #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if firstRun == True:
                 if 'sensor-update' in dataraw:
@@ -746,11 +747,14 @@ class ScratchListener(threading.Thread):
                             GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
                             print 'pin' , PIN_NUM[i] , ' in'
                             PIN_USE[i] = 0
-
+                            
+### Check for AddOn boards being declared
             for i in range(NUMOF_ADDON):
-                if ADDON[i] in dataraw:
+                #print "checking for " , ("addon " + ADDON[i]) 
+                if ("addon " + ADDON[i]) in dataraw:
                     ADDON_PRESENT[i] = True
                     if ADDON[i] == "ladder":
+                        #print "addon " + ADDON[i] + " declared"
                         for k in range(0,10):
                             PIN_USE[k] = 1
                         for k in range(10,14):
@@ -764,7 +768,7 @@ class ScratchListener(threading.Thread):
                             self.send_scratch_command(bcast_str)
                             
                     if ADDON[i] == "motorpitx":
-                        print 'motorpitx board in use'
+                        #print "addon " + ADDON[i] + " declared"
                         self.physical_pin_update(PIN_NUM_LOOKUP[21], 0)
                         self.physical_pin_update(PIN_NUM_LOOKUP[19], 0)
                         self.physical_pin_update(PIN_NUM_LOOKUP[16], 0)
@@ -779,13 +783,10 @@ class ScratchListener(threading.Thread):
                         PIN_USE[pin] = 1
                         GPIO.setup(10,GPIO.OUT)
                         
-                    print ADDON[i] , "found"
-                    dataraw = dataraw + " " + firstRunData
-                    firstRunData = ''
-                    print "firstrunData Used:" , dataraw
+
                             
 
-
+### Check for Broadcast type messages being received
             if 'broadcast' in dataraw:
                 #print 'broadcast in data:' , dataraw
 
@@ -957,10 +958,10 @@ class ScratchListener(threading.Thread):
                                 t2=time.time()
                                 #print 'high' , (t2-t1).microseconds
                                 t3=(t2-t1)  # t2 contains time taken for pulse to return
-                                print "total time " , t3
+                                #print "total time " , t3
                                 distance=t3*343/2*100  # calc distance in cm
                                 distarray[k]=distance
-                                print distance
+                                #print distance
                                 GPIO.setup(physical_pin,GPIO.OUT)
                             tf = time.time() - ts
                             distance = sorted(distarray)[1] # sort the array and pick middle value as best distance
@@ -1125,17 +1126,17 @@ class ScratchListener(threading.Thread):
                     if  'motor1' in dataraw:
                         i = PIN_NUM_LOOKUP[23]
                         tempValue = getValue('motor1', dataraw)
-                        svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                         if svalue > 0:
-                            print "motor1 set forward" , svalue
+                            #print "motor1 set forward" , svalue
                             self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                             self.physical_pin_update(PIN_NUM_LOOKUP[19],1)
                         elif svalue < 0:
-                            print "motor1 set backward", svalue
+                            #print "motor1 set backward", svalue
                             self.physical_pin_update(PIN_NUM_LOOKUP[21],1)
                             self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
                         else:
-                            print "motor1 set neutral", svalue
+                            #print "motor1 set neutral", svalue
                             self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                             self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
 
@@ -1149,7 +1150,7 @@ class ScratchListener(threading.Thread):
                     if  'motor2' in dataraw:
                         i = PIN_NUM_LOOKUP[22]
                         tempValue = getValue('motor2', dataraw)
-                        svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
 
                         if svalue > 0:
                             print "motor2 set forward" , svalue
@@ -1173,14 +1174,14 @@ class ScratchListener(threading.Thread):
                             
                     if (('servo1' in dataraw)):
                         tempValue = getValue('servo1', dataraw)
-                        svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
                         svalue= min(240,max(svalue,60))
                         os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
                     
                     if (('servo2' in dataraw)):
                         print "servo2"
                         tempValue = getValue('servo2', dataraw)
-                        svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
                         svalue= min(240,max(svalue,60))
                         os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
                         
@@ -1192,17 +1193,17 @@ class ScratchListener(threading.Thread):
                         if ((led_check + ' ') in dataraw):
                             tempValue = getValue(led_check, dataraw)
                             #print tempValue
-                            svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             svalue= min(255,max(svalue,0))
                             PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
                             piglow.update_pwm_values(PiGlow_Values)
                             
                     #Use bit pattern to control leds
                     if 'ledpattern' in dataraw:
-                        print 'Found ledpattern'
+                        #print 'Found ledpattern'
                         num_of_bits = 18
                         bit_pattern = ('00000000000000000000000000'+getValue('ledpattern', dataraw))[-num_of_bits:]
-                        print 'led_pattern %s' % bit_pattern
+                        #print 'led_pattern %s' % bit_pattern
                         j = 0
                         for i in range(18):
                         #bit_state = ((2**i) & sensor_value) >> i
@@ -1218,7 +1219,8 @@ class ScratchListener(threading.Thread):
                     if (('bright' + ' ') in dataraw):
                         tempValue = getValue('bright', dataraw)
                         #print tempValue
-                        svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                        #print isNumeric(tempValue)
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                         svalue= min(255,max(svalue,0))
                         PiGlow_Brightness = svalue
                    
@@ -1252,7 +1254,7 @@ class ScratchListener(threading.Thread):
                         #check for power variable commands
                         if  'power' + str(physical_pin) in dataraw:
                             tempValue = getValue('power' + str(physical_pin), dataraw)
-                            svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             
                             #outputall_pos = dataraw.find('power' + str(physical_pin))
                             #sensor_value = dataraw[(outputall_pos+1+len('power' + str(physical_pin))):].split()
@@ -1268,7 +1270,7 @@ class ScratchListener(threading.Thread):
                                     
                         if  'motor' + str(physical_pin) in dataraw:
                             tempValue = getValue('motor' + str(physical_pin), dataraw)
-                            svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             
                             if PIN_USE[i] != 2:
                                 PIN_USE[i] = 2
@@ -1302,7 +1304,7 @@ class ScratchListener(threading.Thread):
                     #print "MotorA Received"
                     #print "stepper status" , stepperInUse[STEPPERA]
                     tempValue = getValue('motora', dataraw)
-                    svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     #print "MotorA" , svalue
                     if (stepperInUse[STEPPERA] == True):
                         #print "Stepper A in operation"
@@ -1323,7 +1325,7 @@ class ScratchListener(threading.Thread):
                     #print "MotorB Received"
                     #print "stepper status" , stepperInUse[STEPPERB]
                     tempValue = getValue('motorb', dataraw)
-                    svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     if (stepperInUse[STEPPERB] == True):
                         #print "Stepper B in operation"
                         #print "send change to motorb as a stepper" , sensor_value[0]
@@ -1342,7 +1344,7 @@ class ScratchListener(threading.Thread):
                     #print "MotorC Received"
                     #print "stepper status" , stepperInUse[STEPPERC]
                     tempValue = getValue('motorc', dataraw)
-                    svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     if (stepperInUse[STEPPERC] == True):
                         #print "Stepper C in operation"
                         #print "send change to motorc as a stepper" , sensor_value[0]
