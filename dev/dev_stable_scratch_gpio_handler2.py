@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-# Version 2.37 14Jul13
+Version =  2.800 # 31Jul13
 
 
 
@@ -14,11 +14,17 @@ import struct
 import datetime as dt
 import shlex
 import os
+#try and inport smbus but don't worry if not installed
+try:
+    from smbus import SMBus
+except:
+    pass
 
 import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 GPIO.cleanup()
+print "Board Revision" , GPIO.RPI_REVISION
 
 #Set some constants and initialise arrays
 STEPPERA=0
@@ -28,7 +34,7 @@ stepperInUse = array('b',[False,False,False])
 INVERT = False
 BIG_NUM = 2123456789
 
-ADDON = ['LadderBoard','MotorPiTx'] #define addons
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
@@ -51,9 +57,60 @@ DEFAULT_HOST = '127.0.0.1'
 BUFFER_SIZE = 240 #used to be 100
 SOCKET_TIMEOUT = 1
 
+CMD_ENABLE_OUTPUT = 0x00
+CMD_ENABLE_LEDS = 0x13
+CMD_SET_PWM_VALUES = 0x01
+CMD_UPDATE = 0x16
+PiGlow_Values = [0] * 18
+PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
+PiGlow_Brightness = 255
 
-PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
-PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+class PiGlow:
+	i2c_addr = 0x54 # fixed i2c address of SN3218 ic
+	bus = None
+
+	def __init__(self, i2c_bus=1):
+		#print "init"
+                #print i2c_bus
+                #self.bus = smbus.SMBus(i2c_bus)
+		self.bus = SMBus(i2c_bus)
+                
+                self.enable_output()
+		self.enable_leds()
+
+	def enable_output(self):
+		self.write_i2c(CMD_ENABLE_OUTPUT, 0x01)
+
+	def enable_leds(self):
+		self.write_i2c(CMD_ENABLE_LEDS, [0xFF, 0xFF, 0xFF])
+
+	def update_pwm_values(self, values):
+		#print "update pwm"
+		self.write_i2c(CMD_SET_PWM_VALUES, values)
+		self.write_i2c(CMD_UPDATE, 0xFF)
+		
+	def write_i2c(self, reg_addr, value):
+		if not isinstance(value, list):
+			value = [value];
+		self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
+
+piglow = None
+try:
+    if GPIO.RPI_REVISION == 1:
+        piglow = PiGlow(0)
+    else:
+        piglow = PiGlow(1)
+    #print piglow
+    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
+    PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    piglow.update_pwm_values(PiGlow_Values)
+except:
+    print "No PiGlow Detected"
+    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
+    PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    print "Unexpected error:", sys.exc_info()[0]
+
+
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
 PINS = len(PIN_NUM)
 PIN_NUM_LOOKUP=[int] * 27
@@ -66,6 +123,8 @@ PWM_OUT = [None] * PINS
 ULTRA_IN_USE = [False] * PINS
 ultraTotalInUse = 0
 ultraSleep = 1.0
+
+
 
 
 def isNumeric(s):
@@ -498,7 +557,7 @@ class ScratchSender(threading.Thread):
 
                         #print'Distance:',distance,'cm'
                         sensor_name = 'ultra' + str(physical_pin)
-                        if ADDON_PRESENT[1] == True:
+                        if ADDON_PRESENT[2] == True:
                             if physical_pin == 13:
                                 sensor_name = "ultra1"
                             if physical_pin == 7:
@@ -536,12 +595,12 @@ class ScratchSender(threading.Thread):
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         #self.send_scratch_command(bcast_str)   
-        if ADDON_PRESENT[0] == True:
+        if ADDON_PRESENT[1] == True:
             #do ladderboard stuff
             switch_array = array('i',[3,4,2,1])
             #switch_lookup = array('i',[24,26,19,21])
             sensor_name = "switch" + str(switch_array[pin_index-10])
-        elif ADDON_PRESENT[1] == True:
+        elif ADDON_PRESENT[2] == True:
             #do ladderboard stuff
             if PIN_NUM[pin_index] == 13:
                 sensor_name = "input1"
@@ -552,9 +611,9 @@ class ScratchSender(threading.Thread):
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
-        if ADDON_PRESENT[1] == True:
+        if ADDON_PRESENT[2] == True:
             bcast_str = 'broadcast "%s%s"' % (sensor_name,("Off","On")[value == 1])
-            print 'sending: %s' % bcast_str
+            #print 'sending: %s' % bcast_str
             self.send_scratch_command(bcast_str)
         
 
@@ -626,9 +685,11 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT,steppera,stepperb,stepperc,Ultra,ultraTotalInUse
+        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
+               steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness
 
         firstRun = False #Used for testing in overcoming Scratch "bug/feature"
+        firstRunData = ''
         #This is main listening routine
         lcount = 0
         while not self.stopped():
@@ -638,7 +699,7 @@ class ScratchListener(threading.Thread):
                 #print "try reading socket"
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
                 dataraw = data[4:].lower() # convert all to lowercase
-                #print 'data revd from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
+                #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
 
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
@@ -657,10 +718,12 @@ class ScratchListener(threading.Thread):
                 #print "No data received: socket timeout"
                 continue
             
+            #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if firstRun == True:
                 if 'sensor-update' in dataraw:
                     #print "this data ignored" , dataraw
+                    firstRunData = dataraw
                     dataraw = ''
                     firstRun = False
 
@@ -684,11 +747,14 @@ class ScratchListener(threading.Thread):
                             GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
                             print 'pin' , PIN_NUM[i] , ' in'
                             PIN_USE[i] = 0
-
+                            
+### Check for AddOn boards being declared
             for i in range(NUMOF_ADDON):
-                if ADDON[i] in dataraw:
+                #print "checking for " , ("addon " + ADDON[i]) 
+                if ("addon " + ADDON[i]) in dataraw:
                     ADDON_PRESENT[i] = True
-                    if ADDON[i] == "ladderboard":
+                    if ADDON[i] == "ladder":
+                        #print "addon " + ADDON[i] + " declared"
                         for k in range(0,10):
                             PIN_USE[k] = 1
                         for k in range(10,14):
@@ -702,7 +768,7 @@ class ScratchListener(threading.Thread):
                             self.send_scratch_command(bcast_str)
                             
                     if ADDON[i] == "motorpitx":
-                        print 'motorpitx board in use'
+                        #print "addon " + ADDON[i] + " declared"
                         self.physical_pin_update(PIN_NUM_LOOKUP[21], 0)
                         self.physical_pin_update(PIN_NUM_LOOKUP[19], 0)
                         self.physical_pin_update(PIN_NUM_LOOKUP[16], 0)
@@ -718,11 +784,13 @@ class ScratchListener(threading.Thread):
                         GPIO.setup(10,GPIO.OUT)
                         
 
+                            
 
+### Check for Broadcast type messages being received
             if 'broadcast' in dataraw:
                 #print 'broadcast in data:' , dataraw
 
-                if ADDON_PRESENT[0] == True: # Gordon's Ladder Board
+                if ADDON_PRESENT[1] == True: # Gordon's Ladder Board
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(0, 10):
@@ -746,7 +814,7 @@ class ScratchListener(threading.Thread):
                             #print dataraw
                             self.physical_pin_update(i,0)
                             
-                elif ADDON_PRESENT[1] == True: # Boeeerb MotorPiTx
+                elif ADDON_PRESENT[2] == True: # Boeeerb MotorPiTx
                     #Start using ultrasonic sensor on a pin    
                     if (('ultra1' in dataraw)):
                         physical_pin = 13
@@ -765,6 +833,71 @@ class ScratchListener(threading.Thread):
                         self.physical_pin_update(i,1)
                         print 'start pinging on', str(physical_pin)
                         ULTRA_IN_USE[i] = True
+                        
+                elif ((ADDON_PRESENT[3] == True) and (piglow != None)): # Pimoroni PiGlow
+                
+                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
+                        for i in range(1,19):
+                            PiGlow_Values[i-1] = PiGlow_Brightness
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
+                        for i in range(1,19):
+                            PiGlow_Values[i-1] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+  
+                    #check LEDS
+                    for i in range(1,19):
+                        #check_broadcast = str(i) + 'on'
+                        #print check_broadcast
+                        if (('led' + str(i)+'high' in dataraw) or ('led' + str(i)+'on' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness
+                            piglow.update_pwm_values(PiGlow_Values)
+
+                        if (('led' + str(i)+'low' in dataraw) or ('led' + str(i)+'off' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                    pcolours = ['red','orange','yellow','green','blue','white']
+                    for i in range(len(pcolours)):
+                        if ((pcolours[i]+'high' in dataraw) or (pcolours[i]+'on' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[i+0]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[i+12]] = PiGlow_Brightness
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                        if ((pcolours[i]+'low' in dataraw) or (pcolours[i]+'off' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[i+0]] = 0
+                            PiGlow_Values[PiGlow_Lookup[i+6]] = 0
+                            PiGlow_Values[PiGlow_Lookup[i+12]] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                    for i in range(1,4):
+                        if (('leg'+str(i)+'high' in dataraw) or ('leg'+str(i)+'on' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness
+                            piglow.update_pwm_values(PiGlow_Values)
+
+                        if (('leg'+str(i)+'low' in dataraw) or ('leg'+str(i)+'off' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+
+
                     
                 else:
 
@@ -825,10 +958,10 @@ class ScratchListener(threading.Thread):
                                 t2=time.time()
                                 #print 'high' , (t2-t1).microseconds
                                 t3=(t2-t1)  # t2 contains time taken for pulse to return
-                                print "total time " , t3
+                                #print "total time " , t3
                                 distance=t3*343/2*100  # calc distance in cm
                                 distarray[k]=distance
-                                print distance
+                                #print distance
                                 GPIO.setup(physical_pin,GPIO.OUT)
                             tf = time.time() - ts
                             distance = sorted(distarray)[1] # sort the array and pick middle value as best distance
@@ -939,6 +1072,11 @@ class ScratchListener(threading.Thread):
                     stepType = 2
                     print "step mode" ,stepMode[stepType]
                     step_delay = 0.0013
+                    
+                if "version" in dataraw:
+                    bcast_str = 'sensor-update "%s" %d' % ("Version", int(Version * 1000))
+                    #print 'sending: %s' % bcast_str
+                    self.send_scratch_command(bcast_str)
 
                 #end of broadcast check
 
@@ -947,7 +1085,7 @@ class ScratchListener(threading.Thread):
             if 'sensor-update' in dataraw:
                 #print "sensor-update rcvd" , dataraw
               
-                if ADDON_PRESENT[0] == True:
+                if ADDON_PRESENT[1] == True:
                     #do ladderboard stuff
 
                     if (('allleds" 1' in dataraw) or ('allleds" "on' in dataraw) or ('allleds" "high' in dataraw)):
@@ -982,23 +1120,23 @@ class ScratchListener(threading.Thread):
                                 else:
                                     PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
                                     
-                elif ADDON_PRESENT[1] == True:
+                elif ADDON_PRESENT[2] == True:
                     #do MotorPiTx stuff
                     #check for motor variable commands
                     if  'motor1' in dataraw:
                         i = PIN_NUM_LOOKUP[23]
                         tempValue = getValue('motor1', dataraw)
-                        svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                         if svalue > 0:
-                            print "motor1 set forward" , svalue
+                            #print "motor1 set forward" , svalue
                             self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                             self.physical_pin_update(PIN_NUM_LOOKUP[19],1)
                         elif svalue < 0:
-                            print "motor1 set backward", svalue
+                            #print "motor1 set backward", svalue
                             self.physical_pin_update(PIN_NUM_LOOKUP[21],1)
                             self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
                         else:
-                            print "motor1 set neutral", svalue
+                            #print "motor1 set neutral", svalue
                             self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
                             self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
 
@@ -1012,7 +1150,7 @@ class ScratchListener(threading.Thread):
                     if  'motor2' in dataraw:
                         i = PIN_NUM_LOOKUP[22]
                         tempValue = getValue('motor2', dataraw)
-                        svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
 
                         if svalue > 0:
                             print "motor2 set forward" , svalue
@@ -1036,17 +1174,59 @@ class ScratchListener(threading.Thread):
                             
                     if (('servo1' in dataraw)):
                         tempValue = getValue('servo1', dataraw)
-                        svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
                         svalue= min(240,max(svalue,60))
                         os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
                     
                     if (('servo2' in dataraw)):
                         print "servo2"
                         tempValue = getValue('servo2', dataraw)
-                        svalue = (180,int(float(tempValue)))[isNumeric(tempValue)]
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
                         svalue= min(240,max(svalue,60))
                         os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
+                        
+                elif ((ADDON_PRESENT[3] == True) and (piglow != None)):
+                    #do PiGlow stuff but make sure PiGlow physically detected                                  
+                    #check LEDS
+                    for i in range(1,19):
+                        led_check = 'led' + str(i)
+                        if ((led_check + ' ') in dataraw):
+                            tempValue = getValue(led_check, dataraw)
+                            #print tempValue
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            svalue= min(255,max(svalue,0))
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
+                            piglow.update_pwm_values(PiGlow_Values)
                             
+                    #Use bit pattern to control leds
+                    if 'ledpattern' in dataraw:
+                        #print 'Found ledpattern'
+                        num_of_bits = 18
+                        bit_pattern = ('00000000000000000000000000'+getValue('ledpattern', dataraw))[-num_of_bits:]
+                        #print 'led_pattern %s' % bit_pattern
+                        j = 0
+                        for i in range(18):
+                        #bit_state = ((2**i) & sensor_value) >> i
+                        #print 'dummy pin %d state %d' % (i, bit_state)
+                            if bit_pattern[-(j+1)] == '0':
+                                PiGlow_Values[PiGlow_Lookup[i]] = 0
+                            else:
+                                PiGlow_Values[PiGlow_Lookup[i]] = 1
+                            j = j + 1
+                        
+                        piglow.update_pwm_values(PiGlow_Values)
+                        
+                    if (('bright' + ' ') in dataraw):
+                        tempValue = getValue('bright', dataraw)
+                        #print tempValue
+                        #print isNumeric(tempValue)
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        svalue= min(255,max(svalue,0))
+                        PiGlow_Brightness = svalue
+                   
+
+                        
+                                    
                                     
                 else:   #normal variable processing with no add on board
                     #gloablly set all ports
@@ -1074,7 +1254,7 @@ class ScratchListener(threading.Thread):
                         #check for power variable commands
                         if  'power' + str(physical_pin) in dataraw:
                             tempValue = getValue('power' + str(physical_pin), dataraw)
-                            svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             
                             #outputall_pos = dataraw.find('power' + str(physical_pin))
                             #sensor_value = dataraw[(outputall_pos+1+len('power' + str(physical_pin))):].split()
@@ -1090,7 +1270,7 @@ class ScratchListener(threading.Thread):
                                     
                         if  'motor' + str(physical_pin) in dataraw:
                             tempValue = getValue('motor' + str(physical_pin), dataraw)
-                            svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             
                             if PIN_USE[i] != 2:
                                 PIN_USE[i] = 2
@@ -1124,7 +1304,7 @@ class ScratchListener(threading.Thread):
                     #print "MotorA Received"
                     #print "stepper status" , stepperInUse[STEPPERA]
                     tempValue = getValue('motora', dataraw)
-                    svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     #print "MotorA" , svalue
                     if (stepperInUse[STEPPERA] == True):
                         #print "Stepper A in operation"
@@ -1145,7 +1325,7 @@ class ScratchListener(threading.Thread):
                     #print "MotorB Received"
                     #print "stepper status" , stepperInUse[STEPPERB]
                     tempValue = getValue('motorb', dataraw)
-                    svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     if (stepperInUse[STEPPERB] == True):
                         #print "Stepper B in operation"
                         #print "send change to motorb as a stepper" , sensor_value[0]
@@ -1164,7 +1344,7 @@ class ScratchListener(threading.Thread):
                     #print "MotorC Received"
                     #print "stepper status" , stepperInUse[STEPPERC]
                     tempValue = getValue('motorc', dataraw)
-                    svalue = (0,int(float(tempValue)))[isNumeric(tempValue)]
+                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     if (stepperInUse[STEPPERC] == True):
                         #print "Stepper C in operation"
                         #print "send change to motorc as a stepper" , sensor_value[0]
@@ -1307,6 +1487,8 @@ cycle_trace = 'start'
 
 SetPinMode()
 
+# setup a fade across the 18 LEDs of values ranging from 0 - 255
+values = [0x01,0x02,0x04,0x08,0x10,0x18,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xA0,0xC0,0xE0,0xFF]
 
 while True:
 
@@ -1340,8 +1522,14 @@ while True:
 
     # wait for ctrl+c
     try:
+#        val = values.pop(0)
+#        values.append(val)
+#        # update the piglow with current values
+#        piglow.update_pwm_values(values)
+
         time.sleep(0.1)
     except KeyboardInterrupt:
         cleanup_threads((listener,sender))
+        GPIO.cleanup()
         sys.exit()
 
