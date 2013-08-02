@@ -717,6 +717,9 @@ class ScratchListener(threading.Thread):
             except socket.timeout:
                 #print "No data received: socket timeout"
                 continue
+            except:
+                print "Unknown error occured with receiving data"
+                continue
             
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
