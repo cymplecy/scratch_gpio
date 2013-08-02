@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.802 # 01Aug13
+Version =  2.803 # 02Aug13
 
 
 
@@ -714,6 +714,9 @@ class ScratchListener(threading.Thread):
                         cycle_trace = 'disconnected'
                         break
 
+            except (KeyboardInterrupt, SystemExit):
+                #print "reraise error"
+                raise
             except socket.timeout:
                 #print "No data received: socket timeout"
                 continue
@@ -1484,6 +1487,7 @@ if __name__ == '__main__':
         host = sys.argv[1]
     else:
         host = DEFAULT_HOST
+    host = host.replace("'", "")
 
 cycle_trace = 'start'
 
