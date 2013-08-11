@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.81 # 10Aug13
+Version =  2.82 # 10Aug13
 
 
 
@@ -14,6 +14,7 @@ import struct
 import datetime as dt
 import shlex
 import os
+import math
 #try and inport smbus but don't worry if not installed
 try:
     from smbus import SMBus
@@ -34,7 +35,7 @@ stepperInUse = array('b',[False,False,False])
 INVERT = False
 BIG_NUM = 2123456789
 
-ADDON = ['Normal','Ladder','MotorPiTx','PiGlow'] #define addons
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
@@ -66,35 +67,34 @@ PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
 PiGlow_Brightness = 255
 
 class PiGlow:
-	i2c_addr = 0x54 # fixed i2c address of SN3218 ic
-	bus = None
+    i2c_addr = 0x54 # fixed i2c address of SN3218 ic
+    bus = None
 
-	def __init__(self, i2c_bus=1):
-		#print "init"
-                #print i2c_bus
-                #self.bus = smbus.SMBus(i2c_bus)
-		self.bus = SMBus(i2c_bus)
-                
-                self.enable_output()
-		self.enable_leds()
+    def __init__(self, i2c_bus=1):
+        #print "init"
+        #print i2c_bus
+        #self.bus = smbus.SMBus(i2c_bus)
+        self.bus = SMBus(i2c_bus)
+        self.enable_output()
+        self.enable_leds()
 
-	def enable_output(self):
-		self.write_i2c(CMD_ENABLE_OUTPUT, 0x01)
+    def enable_output(self):
+        self.write_i2c(CMD_ENABLE_OUTPUT, 0x01)
 
-	def enable_leds(self):
-		self.write_i2c(CMD_ENABLE_LEDS, [0xFF, 0xFF, 0xFF])
+    def enable_leds(self):
+        self.write_i2c(CMD_ENABLE_LEDS, [0xFF, 0xFF, 0xFF])
 
-	def update_pwm_values(self, values):
-		#print "update pwm"
-		self.write_i2c(CMD_SET_PWM_VALUES, values)
-		self.write_i2c(CMD_UPDATE, 0xFF)
-		
-	def write_i2c(self, reg_addr, value):
-		if not isinstance(value, list):
-			value = [value];
-		self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
-                
-class Compass
+    def update_pwm_values(self, values):
+        #print "update pwm"
+        self.write_i2c(CMD_SET_PWM_VALUES, values)
+        self.write_i2c(CMD_UPDATE, 0xFF)
+
+    def write_i2c(self, reg_addr, value):
+        if not isinstance(value, list):
+            value = [value];
+        self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
+
+class Compass:
 
     __scales = {
         0.88: [0, 0.73],
@@ -107,8 +107,8 @@ class Compass
         8.10: [7, 4.35],
     }
 
-    def __init__(self,,i2c_bus=1, address=0x1E, gauss=1.3, declination=(0,0)):
-        self.bus = smbus.SMBus(i2c_bus)
+    def __init__(self, port=0, address=0x1E, gauss=1.3, declination=(0,0)):
+        self.bus = SMBus(port)
         self.address = address
 
         (degrees, minutes) = declination
@@ -160,51 +160,55 @@ class Compass
         headingDeg = headingRad * 180 / math.pi
         degrees = math.floor(headingDeg)
         minutes = round((headingDeg - degrees) * 60)
-        return (degrees, minutes)
+        return headingDeg
 
     def degrees(self, (degrees, minutes)):
-        return str(degrees) + "°" + str(minutes) + "'"
+        return str(degrees) + "*" + str(minutes) + "'"
+    
+    def degreesdecimal(self, (degrees, minutes)):
+        return str(degrees + (minutes /60.0) ) if (degrees >=0) else str(degrees - (minutes /60.0) )
 
     def __str__(self):
         (x, y, z) = self.axes()
         return "Axis X: " + str(x) + "\n" \
                "Axis Y: " + str(y) + "\n" \
                "Axis Z: " + str(z) + "\n" \
-               "Declination: " + self.degrees(self.declination()) + "\n" \
-               "Heading: " + self.degrees(self.heading()) + "\n"
+               "dec deg: " + str(self.__declDegrees) + "\n" \
+               "dec min: " + str(self.__declMinutes) + "\n" \
+               "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
+               "Heading: " + str(self.heading()) + "\n"
 
 piglow = None
-try:
-    if GPIO.RPI_REVISION == 1:
-        piglow = PiGlow(0)
-    else:
-        piglow = PiGlow(1)
-    #print piglow
-    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
-    PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-    piglow.update_pwm_values(PiGlow_Values)
-except:
-    print "No PiGlow Detected"
-    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
-    PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-    print "Unexpected error:", sys.exc_info()[0]
-
-
+#try:
+#    if GPIO.RPI_REVISION == 1:
+#        piglow = PiGlow(0)
+#    else:
+#        piglow = PiGlow(1)
+#    piglow.update_pwm_values(PiGlow_Values)
+#except:
+#    print "No PiGlow Detected"
+    
+#See if Compass connected
 compass = None
 try:
     if GPIO.RPI_REVISION == 1:
-        compass = Compass(0)
+        compass = Compass(gauss = 4.7, declination = (-0,0))
     else:
-        compass = Compass(1)
-    #print piglow
+        compass = Compass(gauss = 4.7, declination = (-0,0))
+    print "compass detected"
+except:
+    print "No Compass Detected"
+    
+#If I2C then don't uses pins 3 and 5
+if ((piglow != None) or (compass != None)):
+    print "I2C device detected"
     PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
     PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-    piglow.update_pwm_values(PiGlow_Values)
-except:
-    print "No PiGlow Detected"
+else:
+    print "No I2C Device Detected"
     PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
     PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-    print "Unexpected error:", sys.exc_info()[0]
+    
 
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
 PINS = len(PIN_NUM)
@@ -544,6 +548,7 @@ class ScratchSender(threading.Thread):
         self.scratch_socket = socket
         self._stop = threading.Event()
         self.time_last_ping = 0.0
+        self.time_last_compass = 0.0
         self.distarray = array('f',[0.0,0.0,0.0])
 
 
@@ -663,6 +668,19 @@ class ScratchSender(threading.Thread):
                         self.send_scratch_command(bcast_str)
                         self.time_last_ping = time.time()
     
+            if (time.time() - self.time_last_compass) > 0.25:
+                #print "time up"
+                #print ADDON_PRESENT[4]
+                #print compass
+                #If Compass board truely present
+                if ((ADDON_PRESENT[4] == True) and (compass != None)):
+                    #print "compass code"
+                    heading = compass.heading()
+                    sensor_name = 'heading'
+                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, heading)
+                    #print 'sending: %s' % bcast_str
+                    self.send_scratch_command(bcast_str)
+                self.time_last_compass = time.time()
                 
                 
                 
@@ -781,7 +799,8 @@ class ScratchListener(threading.Thread):
 
     def run(self):
         global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
-               steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness
+               steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness, \
+                   compass
 
         firstRun = False #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -853,9 +872,10 @@ class ScratchListener(threading.Thread):
             for i in range(NUMOF_ADDON):
                 #print "checking for " , ("addon " + ADDON[i]) 
                 if ("addon " + ADDON[i]) in dataraw:
+                    print "addon " + ADDON[i] + " declared"
                     ADDON_PRESENT[i] = True
                     if ADDON[i] == "ladder":
-                        #print "addon " + ADDON[i] + " declared"
+
                         for k in range(0,10):
                             PIN_USE[k] = 1
                         for k in range(10,14):
@@ -1001,6 +1021,7 @@ class ScratchListener(threading.Thread):
                             svalue= min(255,max(svalue,0))
                             PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
                             piglow.update_pwm_values(PiGlow_Values)
+                            
                             
                     #Use bit pattern to control leds
                     if 'ledpattern' in dataraw:
@@ -1634,4 +1655,6 @@ while True:
         cleanup_threads((listener,sender))
         GPIO.cleanup()
         sys.exit()
+        print "CleanUp complete"
+        
 
