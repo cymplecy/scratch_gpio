@@ -2,7 +2,7 @@
 #Original Code Martin Bateman 2013
 #Modified by Simon Walters
 #GPLv2 applies
-#V0.2 10Aug13
+#V0.21 7Sep13
 
 import sys
 from socket import *
@@ -34,6 +34,11 @@ s.bind(('', 50000))
 s.settimeout(300)
 
 os.system("echo none >/sys/class/leds/led0/trigger")
+for i in range (0,20):
+    os.system("echo 0 >/sys/class/leds/led0/brightness")
+    time.sleep(0.2)
+    os.system("echo 1 >/sys/class/leds/led0/brightness")
+    time.sleep(0.2)
 os.system("echo 0 >/sys/class/leds/led0/brightness")
 time.sleep(5)
 
