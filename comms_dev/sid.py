@@ -12,7 +12,7 @@ import os
 import sys
 import time
 import threading
-
+import getopt
 
 class Blink(threading.Thread):
 
@@ -67,13 +67,32 @@ def getserial():
 myserial = getserial()
 print myserial
 print myserial[-4:]
+
+if __name__ == "__main__":
+   timeout = '300'
+   try:
+      opts, args = getopt.getopt(sys.argv[1:],"ht:",["timeout="])
+   except getopt.GetoptError:
+      print 'sudo sid.py -t <timeout>'
+      sys.exit(2)
+   for opt, arg in opts:
+      if opt == '-h':
+         print 'sudo sid.py -t <timeout>'
+         sys.exit()
+      elif opt in ("-t", "--timeout"):
+         timeout = arg
+         timeout = timeout.strip()
+   print 'Timeout is:', timeout
+
+
+   
 s = socket(AF_INET, SOCK_DGRAM)
 s.bind(('', 50000))
-s.settimeout(300)
+s.settimeout(int(float(timeout)))
 
 os.system("echo none >/sys/class/leds/led0/trigger")
 
-blinkthread = Blink(1,2)       
+blinkthread = Blink(0.3,0.3)       
 blinkthread.start()
 
     #blinkthread.join()
@@ -86,7 +105,7 @@ while 1:
         data, wherefrom = s.recvfrom(1500, 0) # get the data from the socket
 
     except (KeyboardInterrupt, SystemExit):
-        #print "reraise error"
+        print "Program Ending - please wait a few secs"
         break
     except timeout:
         print "No data received: socket timeout"
@@ -102,21 +121,15 @@ while 1:
 
 #        call(['sudo', 'python', '/home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py', str(repr(wherefrom[0]))],shell=True)
         os.system('sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py '+ str(repr(wherefrom[0])) +' &')
-        blinkthread.set_delays(0.5,0.5)
+        blinkthread.set_delays(1,1)
         time.sleep(10)
-#        for i in range (0,20):
-#            os.system("echo 0 >/sys/class/leds/led0/brightness")
-#            time.sleep(0.2)
-#            os.system("echo 1 >/sys/class/leds/led0/brightness")
-#            time.sleep(0.2)
         break
 
-#for i in range (0,10):
-#    os.system("echo 0 >/sys/class/leds/led0/brightness")
-#    time.sleep(1)
-#    os.system("echo 1 >/sys/class/leds/led0/brightness")
-#    time.sleep(1)
-blinkthread.stop()
+
+try:
+    blinkthread.stop()
+except:
+    pass
 time.sleep(1)
 os.system("echo 0 >/sys/class/leds/led0/brightness")
 time.sleep(1)
