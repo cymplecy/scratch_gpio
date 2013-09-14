@@ -2,17 +2,19 @@
 #Original Code Martin Bateman 2013
 #Modified by Simon Walters
 #GPLv2 applies
-#V0.21 12Sep13
+#V0.22 14Sep13
 
 import sys
 from socket import *
-from subprocess import Popen, call
+import subprocess
+#from subprocess import Popen, call
 import shlex
 import os
 import sys
 import time
 import threading
 import getopt
+import shlex
 
 class Blink(threading.Thread):
 
@@ -118,9 +120,10 @@ while 1:
     print (data + " " + repr(wherefrom[0]))
 
     if (data.find("Start SID" + myserial[-4:]) != -1):
+        #os.system('sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py '+ str(repr(wherefrom[0])) +' &')
+        process = subprocess.Popen(shlex.split("""x-terminal-emulator -e 'bash -c "sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py" + str(repr(wherefrom[0]))'"""), stdout=subprocess.PIPE)
 
-#        call(['sudo', 'python', '/home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py', str(repr(wherefrom[0]))],shell=True)
-        os.system('sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py '+ str(repr(wherefrom[0])) +' &')
+        
         blinkthread.set_delays(1,1)
         time.sleep(10)
         break
