@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.821 # 17Aug13
+Version =  2.84 # 28Aug13
 
 
 
@@ -179,14 +179,14 @@ class Compass:
                "Heading: " + str(self.heading()) + "\n"
 
 piglow = None
-#try:
-#    if GPIO.RPI_REVISION == 1:
-#        piglow = PiGlow(0)
-#    else:
-#        piglow = PiGlow(1)
-#    piglow.update_pwm_values(PiGlow_Values)
-#except:
-#    print "No PiGlow Detected"
+try:
+    if GPIO.RPI_REVISION == 1:
+        piglow = PiGlow(0)
+    else:
+        piglow = PiGlow(1)
+    piglow.update_pwm_values(PiGlow_Values)
+except:
+    print "No PiGlow Detected"
     
 #See if Compass connected
 compass = None
@@ -838,7 +838,7 @@ class ScratchListener(threading.Thread):
                 print "Unknown error occured with receiving data"
                 continue
             
-            print "data being processed:" , dataraw
+            #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if firstRun == True:
                 if 'sensor-update' in dataraw:
@@ -912,10 +912,10 @@ class ScratchListener(threading.Thread):
                 if ADDON_PRESENT[1] == True:
                     #do ladderboard stuff
 
-                    if (('allleds" 1' in dataraw) or ('allleds" "on' in dataraw) or ('allleds" "high' in dataraw)):
+                    if (('allleds 1' in dataraw) or ('allleds on' in dataraw) or ('allleds high' in dataraw)):
                         for i in range(0, 10): # limit pins to first 10
                             self.physical_pin_update(i,1)
-                    if (('allleds" 0' in dataraw) or ('allleds" "off' in dataraw) or ('allleds" "low' in dataraw)):
+                    if (('allleds 0' in dataraw) or ('allleds off' in dataraw) or ('allleds low' in dataraw)):
                         for i in range(0, 10): # limit pins to first 10
                             self.physical_pin_update(i,0)
                     
@@ -923,31 +923,32 @@ class ScratchListener(threading.Thread):
                         physical_pin = PIN_NUM[i]
                         pin_string = 'led' + str(i + 1)
                         #print "pin string" , pin_string
-                        if (((pin_string + '" 1' )in dataraw) or ((pin_string + '" "on') in dataraw) or ((pin_string + '" "high') in dataraw )):
+                        if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
+                             ((pin_string + ' high') in dataraw )):
                             #print "variable detect 1/on/high" , dataraw
                             self.physical_pin_update(i,1)
-                        if  (((pin_string + '" 0') in dataraw) or ((pin_string + '" "off') in dataraw) or ((pin_string + '" "low') in dataraw )):
+                        if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
+                              ((pin_string + ' low') in dataraw )):
                             #print "variable detect 0/off/low" , dataraw
                             self.physical_pin_update(i,0)
 
                         #check for power variable commands
-                        if  'power' + str(i + 1) in dataraw:
-                            outputall_pos = dataraw.find('power' + str(i + 1))
-                            sensor_value = dataraw[(outputall_pos+1+len('power' + str(i + 1))):].split()
-                            #print 'power', str(physical_pin) , sensor_value[0]
+                        if 'power' + str(i + 1) in dataraw:
+                            tempValue = getValue('power' + str(i + 1), dataraw)
+                            #print 'power', str(physical_pin) , tempValue
 
-                            if isNumeric(sensor_value[0]):
+                            if isNumeric(tempValue):
                                 if PIN_USE[i] != 2:
                                     PIN_USE[i] = 2
                                     PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                    PWM_OUT[i].start(max(0,min(100,int(float(sensor_value[0])))))
+                                    PWM_OUT[i].start(max(0,min(100,int(float(tempValue)))))
                                 else:
-                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(sensor_value[0])))))
+                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(tempValue)))))
                                     
                 elif ADDON_PRESENT[2] == True:
                     #do MotorPiTx stuff
                     #check for motor variable commands
-                    if  'motor1' in dataraw:
+                    if  'motor1 ' in dataraw:
                         i = PIN_NUM_LOOKUP[23]
                         tempValue = getValue('motor1', dataraw)
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
@@ -971,7 +972,7 @@ class ScratchListener(threading.Thread):
                         else:
                             PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
                     
-                    if  'motor2' in dataraw:
+                    if  'motor2 ' in dataraw:
                         i = PIN_NUM_LOOKUP[22]
                         tempValue = getValue('motor2', dataraw)
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
@@ -1013,15 +1014,55 @@ class ScratchListener(threading.Thread):
                     #do PiGlow stuff but make sure PiGlow physically detected                                  
                     #check LEDS
                     for i in range(1,19):
-                        led_check = 'led' + str(i)
-                        if ((led_check + ' ') in dataraw):
-                            tempValue = getValue(led_check, dataraw)
+                        checkStr = 'led' + str(i)
+                        if ((checkStr + ' ') in dataraw):
+                            tempValue = getValue(checkStr, dataraw)
                             #print tempValue
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             svalue= min(255,max(svalue,0))
                             PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
                             piglow.update_pwm_values(PiGlow_Values)
+                    for i in range(1,4):
+                        checkStr = 'leg' + str(i)
+                        if ((checkStr + ' ') in dataraw):
+                            tempValue = getValue(checkStr, dataraw)
+                            #print tempValue
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            svalue= min(255,max(svalue,0))
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
+                            piglow.update_pwm_values(PiGlow_Values)
                             
+                        checkStr = 'arm' + str(i)
+                        if ((checkStr + ' ') in dataraw):
+                            tempValue = getValue(checkStr, dataraw)
+                            #print tempValue
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            svalue= min(255,max(svalue,0))
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                    pcolours = ['red','orange','yellow','green','blue','white']
+                    for i in range(len(pcolours)):
+                        checkStr = pcolours[i]
+                        if ((checkStr + ' ') in dataraw):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            svalue= min(255,max(svalue,0))
+                            PiGlow_Values[PiGlow_Lookup[i+0]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[i+6]] = svalue
+                            PiGlow_Values[PiGlow_Lookup[i+12]] = svalue
+                            piglow.update_pwm_values(PiGlow_Values)
+                        
                             
                     #Use bit pattern to control leds
                     if 'ledpattern' in dataraw:
@@ -1055,10 +1096,10 @@ class ScratchListener(threading.Thread):
                                     
                 else:   #normal variable processing with no add on board
                     #gloablly set all ports
-                    if (('allpins" 1' in dataraw) or ('allpins" "on' in dataraw) or ('allpins" "high' in dataraw)):
+                    if (('allpins 1' in dataraw) or ('allpins on' in dataraw) or ('allpins high' in dataraw)):
                         for i in range(PINS): 
                             self.physical_pin_update(i,1)
-                    if (('allpins" 0' in dataraw) or ('allpins" "off' in dataraw) or ('allpins" "low' in dataraw)):
+                    if (('allpins 0' in dataraw) or ('allpins off' in dataraw) or ('allpins low' in dataraw)):
                         for i in range(PINS): 
                             self.physical_pin_update(i,0)
                     
@@ -1079,8 +1120,9 @@ class ScratchListener(threading.Thread):
                             self.physical_pin_update(i,0)
 
                         #check for power variable commands
-                        if  'power' + str(physical_pin) in dataraw:
-                            tempValue = getValue('power' + str(physical_pin), dataraw)
+                        checkStr = 'power' + str(physical_pin)
+                        if  (checkStr + ' ') in dataraw:
+                            tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             
                             #outputall_pos = dataraw.find('power' + str(physical_pin))
@@ -1095,8 +1137,9 @@ class ScratchListener(threading.Thread):
                             else:
                                 PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
                                     
-                        if  'motor' + str(physical_pin) in dataraw:
-                            tempValue = getValue('motor' + str(physical_pin), dataraw)
+                        checkStr = 'motor' + str(physical_pin)
+                        if  (checkStr + ' ') in dataraw:
+                            tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             
                             if PIN_USE[i] != 2:
@@ -1107,13 +1150,13 @@ class ScratchListener(threading.Thread):
                                 PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
                 #Use bit pattern to control ports
-                if 'pinpattern' in dataraw:
+                checkStr = 'pinpattern'
+                if  (checkStr + ' ') in dataraw:
                     #print 'Found pinpattern'
                     num_of_bits = PINS
-                    outputall_pos = dataraw.find('pinpattern')
-                    sensor_value = dataraw[(outputall_pos+12):].split()
+                    svalue = getValue(checkStr, dataraw)
                     #print sensor_value[0]
-                    bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-num_of_bits:]
+                    bit_pattern = ('00000000000000000000000000'+svalue)[-num_of_bits:]
                     #print 'bit_pattern %s' % bit_pattern
                     j = 0
                     for i in range(PINS):
@@ -1127,10 +1170,11 @@ class ScratchListener(threading.Thread):
                             j = j + 1
 
                                        
-                if  'motora' in dataraw:
+                checkStr = 'motora'
+                if  (checkStr + ' ') in dataraw:
                     #print "MotorA Received"
                     #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue('motora', dataraw)
+                    tempValue = getValue(checkStr, dataraw)
                     svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     #print "MotorA" , svalue
                     if (stepperInUse[STEPPERA] == True):
@@ -1148,10 +1192,11 @@ class ScratchListener(threading.Thread):
                             PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
 
-                if  'motorb' in dataraw:
-                    #print "MotorB Received"
-                    #print "stepper status" , stepperInUse[STEPPERB]
-                    tempValue = getValue('motorb', dataraw)
+                checkStr = 'motorb'
+                if  (checkStr + ' ') in dataraw:
+                    #print "MotorA Received"
+                    #print "stepper status" , stepperInUse[STEPPERA]
+                    tempValue = getValue(checkStr, dataraw)
                     svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     if (stepperInUse[STEPPERB] == True):
                         #print "Stepper B in operation"
@@ -1167,10 +1212,11 @@ class ScratchListener(threading.Thread):
                         else:
                             PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
-                if  'motorc' in dataraw:
-                    #print "MotorC Received"
-                    #print "stepper status" , stepperInUse[STEPPERC]
-                    tempValue = getValue('motorc', dataraw)
+                checkStr = 'motorc'
+                if  (checkStr + ' ') in dataraw:
+                    #print "MotorA Received"
+                    #print "stepper status" , stepperInUse[STEPPERA]
+                    tempValue = getValue(checkStr, dataraw)
                     svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                     if (stepperInUse[STEPPERC] == True):
                         #print "Stepper C in operation"
@@ -1188,12 +1234,14 @@ class ScratchListener(threading.Thread):
 
 
 
-                if  'stepdelay' in dataraw:
-                    sensor_value = dataraw[(dataraw.find('stepdelay')+1+len('stepdelay')):].split()
-                    print 'step delay changed to', sensor_value[0]
-                    if isNumeric(sensor_value[0]):
-                        step_delay = float(sensor_value[0])
-
+                checkStr = 'stepdelay'
+                if  (checkStr + ' ') in dataraw:
+                    #print "MotorA Received"
+                    #print "stepper status" , stepperInUse[STEPPERA]
+                    tempValue = getValue(checkStr, dataraw)
+                    if isNumeric(tempValue):
+                        step_delay = int(float(tempValue))
+                        print 'step delay changed to', step_delay
 
                 if  'positiona' in dataraw:
                     #print "positiona" , dataraw
@@ -1321,6 +1369,16 @@ class ScratchListener(threading.Thread):
                             PiGlow_Values[PiGlow_Lookup[i-1]] = 0
                             piglow.update_pwm_values(PiGlow_Values)
                             
+                        if (('light' + str(i)+'high' in dataraw) or ('light' + str(i)+'on' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness
+                            piglow.update_pwm_values(PiGlow_Values)
+
+                        if (('light' + str(i)+'low' in dataraw) or ('light' + str(i)+'off' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
                     pcolours = ['red','orange','yellow','green','blue','white']
                     for i in range(len(pcolours)):
                         if ((pcolours[i]+'high' in dataraw) or (pcolours[i]+'on' in dataraw)):
@@ -1349,6 +1407,26 @@ class ScratchListener(threading.Thread):
                             piglow.update_pwm_values(PiGlow_Values)
 
                         if (('leg'+str(i)+'low' in dataraw) or ('leg'+str(i)+'off' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = 0
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                        if (('arm'+str(i)+'high' in dataraw) or ('arm'+str(i)+'on' in dataraw)):
+                            #print dataraw
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness
+                            piglow.update_pwm_values(PiGlow_Values)
+
+                        if (('arm'+str(i)+'low' in dataraw) or ('arm'+str(i)+'off' in dataraw)):
                             #print dataraw
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = 0
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = 0

@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.83 # 17Aug13
+Version =  2.84 # 28Aug13
 
 
 
@@ -179,14 +179,14 @@ class Compass:
                "Heading: " + str(self.heading()) + "\n"
 
 piglow = None
-#try:
-#    if GPIO.RPI_REVISION == 1:
-#        piglow = PiGlow(0)
-#    else:
-#        piglow = PiGlow(1)
-#    piglow.update_pwm_values(PiGlow_Values)
-#except:
-#    print "No PiGlow Detected"
+try:
+    if GPIO.RPI_REVISION == 1:
+        piglow = PiGlow(0)
+    else:
+        piglow = PiGlow(1)
+    piglow.update_pwm_values(PiGlow_Values)
+except:
+    print "No PiGlow Detected"
     
 #See if Compass connected
 compass = None

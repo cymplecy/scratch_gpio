@@ -121,11 +121,11 @@ while 1:
 
     if (data.find("Start SID" + myserial[-4:]) != -1):
         #os.system('sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py '+ str(repr(wherefrom[0])) +' &')
-        process = subprocess.Popen(shlex.split("""x-terminal-emulator -e 'bash -c "sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py" + str(repr(wherefrom[0]))'"""), stdout=subprocess.PIPE)
-
-        
+        #print shlex.split("""x-terminal-emulator -e 'bash -c "sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py """ + str(repr(wherefrom[0])) + """"'""")
+        process = subprocess.Popen(shlex.split("""x-terminal-emulator -e 'bash -c "sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py """ + str(repr(wherefrom[0])) + """"'"""), stdout=subprocess.PIPE)
+       
         blinkthread.set_delays(1,1)
-        time.sleep(10)
+        time.sleep(30)
         break
 
 
