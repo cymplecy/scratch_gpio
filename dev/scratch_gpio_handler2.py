@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.84 # 28Aug13
+Version =  2.85 # 5Oct13
 
 
 
@@ -35,7 +35,7 @@ stepperInUse = array('b',[False,False,False])
 INVERT = False
 BIG_NUM = 2123456789
 
-ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass'] #define addons
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
@@ -714,13 +714,22 @@ class ScratchSender(threading.Thread):
             #switch_lookup = array('i',[24,26,19,21])
             sensor_name = "switch" + str(switch_array[pin_index-10])
         elif ADDON_PRESENT[2] == True:
-            #do ladderboard stuff
+            #do MotorPiTx stuff
             if PIN_NUM[pin_index] == 13:
                 sensor_name = "input1"
             if PIN_NUM[pin_index] == 7:
                 sensor_name = "input2"
+        elif ADDON_PRESENT[6] == True:
+            #do berryclip stuff
+            #print PIN_NUM[pin_index]
+            if PIN_NUM[pin_index] == 26:
+                sensor_name = "switch"
         else:
             sensor_name = "pin" + str(PIN_NUM[pin_index])
+        #if ADDON_PRESENT[5] == True:
+            #print PIN_NUM[pin_index] , PIN_NUM[pin_index] in [7,8,10,22]
+            #if not(PIN_NUM[pin_index] in [7,8,10,22]):
+            #    return
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
@@ -903,6 +912,29 @@ class ScratchListener(threading.Thread):
                         pin=PIN_NUM_LOOKUP[10]
                         PIN_USE[pin] = 1
                         GPIO.setup(10,GPIO.OUT)
+                        
+                    if ADDON[i] == "berry":
+
+                        PIN_USE[PIN_NUM_LOOKUP[7]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[11]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[15]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[19]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[21]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[23]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[24]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[26]] = 0
+                        #dummy out to stop random inputs registering
+                        PIN_USE[PIN_NUM_LOOKUP[3]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[5]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[8]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[10]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[22]] = 1
+                        SetPinMode()
+                        
+                        sensor_name = 'switch'
+                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, 0)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
                         
 
             #Listen for Variable changes
@@ -1436,7 +1468,34 @@ class ScratchListener(threading.Thread):
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = 0
                             piglow.update_pwm_values(PiGlow_Values)
 
+                elif ADDON_PRESENT[6] == True: # BerryClip
 
+                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
+                        for i in [7,11,15,19,21,23,24]:
+                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[i],1)
+                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
+                        for i in [7,11,15,19,21,23,24]:
+                            #print i
+                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[i],0)
+                                
+                        #do lberryclip stuff
+                    for i in range(0,6):
+                        leds = [7,11,15,19,21,23]
+                        #print i
+                        if (('led' + str(i + 1)+'high' in dataraw) or ('led' + str(i + 1)+'on' in dataraw)):
+                            #print dataraw
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],1)
+
+                        if (('led' + str(i + 1)+'low' in dataraw) or ('led' + str(i + 1)+'off' in dataraw)):
+                            #print dataraw
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],1)
+
+                    if (('buzzeron' in dataraw) or ('buzzerhigh' in dataraw)):
+                        self.physical_pin_update(PIN_NUM_LOOKUP[24],1)
+                    if (('buzzeroff' in dataraw) or ('buzzerlow' in dataraw)):
+                        self.physical_pin_update(PIN_NUM_LOOKUP[24],0)
                     
                 else:
 
