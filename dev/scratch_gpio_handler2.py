@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.86 # 15Oct13
+Version =  2.861 # 16Oct13
 
 
 
@@ -755,6 +755,7 @@ class ScratchListener(threading.Thread):
         threading.Thread.__init__(self)
         self.scratch_socket = socket
         self._stop = threading.Event()
+        self.dataraw = ''
         
     def send_scratch_command(self, cmd):
         n = len(cmd)
@@ -764,6 +765,25 @@ class ScratchListener(threading.Thread):
         a.append(chr((n >>  8) & 0xFF))
         a.append(chr(n & 0xFF))
         self.scratch_socket.send(a.tostring() + cmd)
+        
+    def dFind(self,searchStr):
+        return (searchStr in self.dataraw)
+        
+    def dFindOn(self,searchStr):
+        return (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high'))
+        
+    def dFindOff(self,searchStr):
+        return (self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low'))
+        
+    def dFindOnOff(self,searchStr):
+        return (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high') 
+                or self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low'))
+
+    def dRtnOnOff(self,searchStr):
+        if self.dFindOn(searchStr):
+            return 1
+        else:
+            return 0
 
 
     def stop(self):
@@ -826,6 +846,7 @@ class ScratchListener(threading.Thread):
 
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
+                    self.dataraw = dataraw
                     #print dataraw
 
                 #print 'Cycle trace' , cycle_trace
@@ -1122,6 +1143,43 @@ class ScratchListener(threading.Thread):
                         svalue= min(255,max(svalue,0))
                         PiGlow_Brightness = svalue
                    
+                if ADDON_PRESENT[6] == True:
+                    #do BerryClip stuff
+                    leds = [7,11,15,19,21,23]
+                    if (self.dFind('allleds 1') or self.dFind('allleds on')or self.dFind('allleds high')):
+                        for i in leds:
+                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[i],1)
+                    if (self.dFind('allleds 0') or self.dFind('allleds off')or self.dFind('allleds low')):
+                        for i in leds:
+                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[i],0)
+                    
+#                    for i in range(0, 10): # limit pins to first 10
+#                        physical_pin = PIN_NUM[i]
+#                        pin_string = 'led' + str(i + 1)
+#                        #print "pin string" , pin_string
+#                        if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
+#                             ((pin_string + ' high') in dataraw )):
+#                            #print "variable detect 1/on/high" , dataraw
+#                            self.physical_pin_update(i,1)
+#                        if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
+#                              ((pin_string + ' low') in dataraw )):
+#                            #print "variable detect 0/off/low" , dataraw
+#                            self.physical_pin_update(i,0)
+
+#                        #check for power variable commands
+#                        if 'power' + str(i + 1) in dataraw:
+#                            tempValue = getValue('power' + str(i + 1), dataraw)
+#                            #print 'power', str(physical_pin) , tempValue
+
+#                            if isNumeric(tempValue):
+#                                if PIN_USE[i] != 2:
+#                                    PIN_USE[i] = 2
+#                                    PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+#                                    PWM_OUT[i].start(max(0,min(100,int(float(tempValue)))))
+#                                else:
+#                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(tempValue)))))
 
                         
                                     
@@ -1470,34 +1528,32 @@ class ScratchListener(threading.Thread):
 
                 elif ADDON_PRESENT[6] == True: # BerryClip
 
-                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
+                    if self.dFindOnOff('all'):
                         for i in [7,11,15,19,21,23,24]:
                             if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[i],1)
-                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
-                        for i in [7,11,15,19,21,23,24]:
-                            #print i
-                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[i],0)
-                                
-                        #do lberryclip stuff
+                                self.physical_pin_update(PIN_NUM_LOOKUP[i],self.dRtnOnOff('all'))
+                                                                
+                    leds = [7,11,15,19,21,23]
                     for i in range(0,6):
-                        leds = [7,11,15,19,21,23]
-                        #print i
-                        if (('led' + str(i + 1)+'high' in dataraw) or ('led' + str(i + 1)+'on' in dataraw)):
-                            #print dataraw
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],1)
+                        if self.dFindOnOff('led' + str(i + 1)):
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dRtnOnOff('led' + str(i + 1)))
 
-                        if (('led' + str(i + 1)+'low' in dataraw) or ('led' + str(i + 1)+'off' in dataraw)):
-                            #print dataraw
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],1)
-
-                    if (('buzzeron' in dataraw) or ('buzzerhigh' in dataraw)):
-                        self.physical_pin_update(PIN_NUM_LOOKUP[24],1)
-                    if (('buzzeroff' in dataraw) or ('buzzerlow' in dataraw)):
-                        self.physical_pin_update(PIN_NUM_LOOKUP[24],0)
-                    
-                else:
+                    if self.dFindOnOff('buzzer'):
+                        self.physical_pin_update(PIN_NUM_LOOKUP[24],self.dRtnOnOff('buzzer'))
+                                                
+                    for i in range(0,3):
+                        led_col = ['red','yellow','green']
+                        if (self.dFindOnOff(led_col[i])):
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dRtnOnOff(led_col[i]))
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dRtnOnOff(led_col[i]))
+                            
+                    for i in range(0,3):
+                        led_col = ['red','yellow','green']
+                        for k in range(0,2):
+                            if self.dFindOnOff(led_col[i] + str(k+1)):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dRtnOnOff(led_col[i] + str(k+1)))
+   
+                else: # Plain GPIO Broadcast processing
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(PINS):
