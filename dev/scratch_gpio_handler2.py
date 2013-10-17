@@ -784,6 +784,21 @@ class ScratchListener(threading.Thread):
             return 1
         else:
             return 0
+        
+    def dVFindOn(self,searchStr):
+        return (self.dFind(searchStr + ' on') or self.dFind(searchStr + ' high')or self.dFind(searchStr + ' 1'))
+        
+    def dVFindOff(self,searchStr):
+        return (self.dFind(searchStr + ' off') or self.dFind(searchStr + ' low') or self.dFind(searchStr + ' 0'))
+        
+    def dVFindOnOff(self,searchStr):
+        return (self.dVFindOn(searchStr) or self.dVFindOff(searchStr))
+
+    def dVRtnOnOff(self,searchStr):
+        if self.dVFindOn(searchStr):
+            return 1
+        else:
+            return 0
 
 
     def stop(self):
@@ -1146,40 +1161,45 @@ class ScratchListener(threading.Thread):
                 if ADDON_PRESENT[6] == True:
                     #do BerryClip stuff
                     leds = [7,11,15,19,21,23]
-                    if (self.dFind('allleds 1') or self.dFind('allleds on')or self.dFind('allleds high')):
+                    if self.dVFindOnOff('allleds'):
                         for i in leds:
-                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[i],1)
-                    if (self.dFind('allleds 0') or self.dFind('allleds off')or self.dFind('allleds low')):
-                        for i in leds:
-                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[i],0)
+                            self.physical_pin_update(PIN_NUM_LOOKUP[i],self.dVRtnOnOff('allleds'))
                     
-#                    for i in range(0, 10): # limit pins to first 10
-#                        physical_pin = PIN_NUM[i]
-#                        pin_string = 'led' + str(i + 1)
-#                        #print "pin string" , pin_string
-#                        if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
-#                             ((pin_string + ' high') in dataraw )):
-#                            #print "variable detect 1/on/high" , dataraw
-#                            self.physical_pin_update(i,1)
-#                        if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
-#                              ((pin_string + ' low') in dataraw )):
-#                            #print "variable detect 0/off/low" , dataraw
-#                            self.physical_pin_update(i,0)
+                    for i in range(0, 6): # go thru 6 LEDS on/off
+                        pin_string = 'led' + str(i + 1)
+                        if self.dVFindOnOff(pin_string):
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dVRtnOnOff(pin_string))
+                            
+                        #check for power variable commands
+                        checkStr = 'power' + str(i + 1)
+                        if  self.dFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            pinIndex = PIN_NUM_LOOKUP[leds[i]]
+                            if PIN_USE[pinIndex ] != 2:
+                                PIN_USE[pinIndex ] = 2
+                                PWM_OUT[pinIndex ] = PiZyPwm(100, PIN_NUM[pinIndex], GPIO.BOARD)
+                                PWM_OUT[pinIndex ].start(max(0,min(100,svalue)))
+                            else:
+                                PWM_OUT[pinIndex ].changeDutyCycle(max(0,min(100,svalue)))
+                            
+                    if self.dVFindOnOff('buzzer'):
+                        self.physical_pin_update(PIN_NUM_LOOKUP[24],self.dVRtnOnOff('buzzer'))
+                                                
+                    for i in range(0,3):
+                        led_col = ['red','yellow','green']
+                        if (self.dVFindOnOff(led_col[i])):
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dVRtnOnOff(led_col[i]))
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dVRtnOnOff(led_col[i]))
+                            
+                    for i in range(0,3):
+                        led_col = ['red','yellow','green']
+                        for k in range(0,2):
+                            if self.dVFindOnOff(led_col[i] + str(k+1)):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dVRtnOnOff(led_col[i] + str(k+1)))
+                            
 
-#                        #check for power variable commands
-#                        if 'power' + str(i + 1) in dataraw:
-#                            tempValue = getValue('power' + str(i + 1), dataraw)
-#                            #print 'power', str(physical_pin) , tempValue
 
-#                            if isNumeric(tempValue):
-#                                if PIN_USE[i] != 2:
-#                                    PIN_USE[i] = 2
-#                                    PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-#                                    PWM_OUT[i].start(max(0,min(100,int(float(tempValue)))))
-#                                else:
-#                                    PWM_OUT[i].changeDutyCycle(max(0,min(100,int(float(tempValue)))))
 
                         
                                     
