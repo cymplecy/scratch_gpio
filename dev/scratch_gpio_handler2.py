@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.861 # 16Oct13
+Version =  '2.8.7.1' # 19Oct13
 
 
 
@@ -15,6 +15,7 @@ import datetime as dt
 import shlex
 import os
 import math
+from Adafruit_PWM_Servo_Driver import PWM
 #try and inport smbus but don't worry if not installed
 try:
     from smbus import SMBus
@@ -35,7 +36,7 @@ stepperInUse = array('b',[False,False,False])
 INVERT = False
 BIG_NUM = 2123456789
 
-ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry'] #define addons
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
@@ -177,7 +178,7 @@ class Compass:
                "dec min: " + str(self.__declMinutes) + "\n" \
                "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
                "Heading: " + str(self.heading()) + "\n"
-
+               
 piglow = None
 try:
     if GPIO.RPI_REVISION == 1:
@@ -199,8 +200,17 @@ try:
 except:
     print "No Compass Detected"
     
+pcaPWM = None
+try:
+    pcaPWM = PWM(0x40, debug=False)
+    pcaPWM.setPWMFreq(60)                        # Set frequency to 60 Hz
+    print "AdaFruit PCA9685 detected"
+except:
+    pass
+    #print "No pcaPwm Detected"
+    
 #If I2C then don't uses pins 3 and 5
-if ((piglow != None) or (compass != None)):
+if ((piglow != None) or (compass != None) or (pcaPWM != None)):
     print "I2C device detected"
     PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
     PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -236,7 +246,7 @@ def isNumeric(s):
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
     
 def getValue(searchString, dataString):
-    outputall_pos = dataString.find(searchString)
+    outputall_pos = dataString.find((searchString + ' '))
     sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
     return sensor_value[0]
     
@@ -299,7 +309,7 @@ class StepperControl(threading.Thread):
             
 
 
-    def physical_pin_update(self, pin_index, value):
+    def index_pin_update(self, pin_index, value):
         if (PIN_USE[pin_index] == 0):
             PIN_USE[pin_index] = 1
             GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
@@ -319,77 +329,77 @@ class StepperControl(threading.Thread):
         lstepMode = stepMode[stepType]
         #print stepMode[stepType]
         if lstepMode == '1Coil':
-            self.physical_pin_update(d,0)
-            self.physical_pin_update(a,1)
+            self.index_pin_update(d,0)
+            self.index_pin_update(a,1)
             time.sleep(delay)
 
             
-            self.physical_pin_update(b,1)
-            self.physical_pin_update(a,0)
+            self.index_pin_update(b,1)
+            self.index_pin_update(a,0)
             time.sleep(delay)
             
             
-            self.physical_pin_update(c,1)
-            self.physical_pin_update(b,0)
+            self.index_pin_update(c,1)
+            self.index_pin_update(b,0)
             time.sleep(delay)
             
             
-            self.physical_pin_update(d,1)
-            self.physical_pin_update(c,0)
+            self.index_pin_update(d,1)
+            self.index_pin_update(c,0)
             time.sleep(delay)
             
         elif lstepMode == '2Coil':
-            self.physical_pin_update(d,0)
-            self.physical_pin_update(c,0)
-            self.physical_pin_update(a,1)
-            self.physical_pin_update(b,1)
+            self.index_pin_update(d,0)
+            self.index_pin_update(c,0)
+            self.index_pin_update(a,1)
+            self.index_pin_update(b,1)
 
             time.sleep(delay)
 
-            self.physical_pin_update(a,0)
-            self.physical_pin_update(c,1)
+            self.index_pin_update(a,0)
+            self.index_pin_update(c,1)
             time.sleep(delay)
             
-            self.physical_pin_update(b,0)
-            self.physical_pin_update(d,1)
+            self.index_pin_update(b,0)
+            self.index_pin_update(d,1)
             time.sleep(delay)
             
-            self.physical_pin_update(c,0)
-            self.physical_pin_update(a,1)
+            self.index_pin_update(c,0)
+            self.index_pin_update(a,1)
             time.sleep(delay)
             
         elif lstepMode == 'HalfStep':
-            self.physical_pin_update(d,0) 
-            self.physical_pin_update(a,1)
+            self.index_pin_update(d,0) 
+            self.index_pin_update(a,1)
             time.sleep(delay)
 
 
-            self.physical_pin_update(b,1)
+            self.index_pin_update(b,1)
             time.sleep(delay)
 
-            self.physical_pin_update(a,0)
+            self.index_pin_update(a,0)
             time.sleep(delay)
             
-            self.physical_pin_update(c,1)
+            self.index_pin_update(c,1)
             time.sleep(delay)
 
-            self.physical_pin_update(b,0)
+            self.index_pin_update(b,0)
             time.sleep(delay)
 
-            self.physical_pin_update(d,1)
+            self.index_pin_update(d,1)
             time.sleep(delay)
 
-            self.physical_pin_update(c,0)
+            self.index_pin_update(c,0)
             time.sleep(delay)
             
-            self.physical_pin_update(a,1)
+            self.index_pin_update(a,1)
             time.sleep(delay)
 
     def pause(self):
-        self.physical_pin_update(self.pins[0],0)
-        self.physical_pin_update(self.pins[1],0)
-        self.physical_pin_update(self.pins[2],0)
-        self.physical_pin_update(self.pins[3],0)
+        self.index_pin_update(self.pins[0],0)
+        self.index_pin_update(self.pins[1],0)
+        self.index_pin_update(self.pins[2],0)
+        self.index_pin_update(self.pins[3],0)
         self.paused = True
         print PIN_NUM[self.pins[0]], "pause method run"
 
@@ -785,11 +795,14 @@ class ScratchListener(threading.Thread):
         else:
             return 0
         
+    def dVFind(self,searchStr):
+        return ((searchStr + ' ') in self.dataraw)
+        
     def dVFindOn(self,searchStr):
-        return (self.dFind(searchStr + ' on') or self.dFind(searchStr + ' high')or self.dFind(searchStr + ' 1'))
+        return (self.dVFind(searchStr + 'on') or self.dVFind(searchStr + 'high')or self.dVFind(searchStr + '1'))
         
     def dVFindOff(self,searchStr):
-        return (self.dFind(searchStr + ' off') or self.dFind(searchStr + ' low') or self.dFind(searchStr + ' 0'))
+        return (self.dVFind(searchStr + 'off') or self.dVFind(searchStr + 'low') or self.dVFind(searchStr + '0'))
         
     def dVFindOnOff(self,searchStr):
         return (self.dVFindOn(searchStr) or self.dVFindOff(searchStr))
@@ -807,7 +820,7 @@ class ScratchListener(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-    def physical_pin_update(self, pin_index, value):
+    def index_pin_update(self, pin_index, value):
         if INVERT == True:
             if PIN_USE[pin_index] == 1:
                 value = abs(value - 1)
@@ -825,20 +838,20 @@ class ScratchListener(threading.Thread):
             GPIO.output(PIN_NUM[pin_index], value)
 
     def step_coarse(self,a,b,c,d,delay):
-        self.physical_pin_update(a,1)
-        self.physical_pin_update(d,0)
+        self.index_pin_update(a,1)
+        self.index_pin_update(d,0)
         time.sleep(delay)
 
-        self.physical_pin_update(b,1)
-        self.physical_pin_update(a,0)
+        self.index_pin_update(b,1)
+        self.index_pin_update(a,0)
         time.sleep(delay)
         
-        self.physical_pin_update(c,1)
-        self.physical_pin_update(b,0)
+        self.index_pin_update(c,1)
+        self.index_pin_update(b,0)
         time.sleep(delay)
         
-        self.physical_pin_update(d,1)
-        self.physical_pin_update(c,0)
+        self.index_pin_update(d,1)
+        self.index_pin_update(c,0)
         time.sleep(delay)
 
     def run(self):
@@ -862,7 +875,7 @@ class ScratchListener(threading.Thread):
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
                     self.dataraw = dataraw
-                    #print dataraw
+                    print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -935,10 +948,10 @@ class ScratchListener(threading.Thread):
                             
                     if ADDON[i] == "motorpitx":
                         #print "addon " + ADDON[i] + " declared"
-                        self.physical_pin_update(PIN_NUM_LOOKUP[21], 0)
-                        self.physical_pin_update(PIN_NUM_LOOKUP[19], 0)
-                        self.physical_pin_update(PIN_NUM_LOOKUP[16], 0)
-                        self.physical_pin_update(PIN_NUM_LOOKUP[18], 0)
+                        self.index_pin_update(PIN_NUM_LOOKUP[21], 0)
+                        self.index_pin_update(PIN_NUM_LOOKUP[19], 0)
+                        self.index_pin_update(PIN_NUM_LOOKUP[16], 0)
+                        self.index_pin_update(PIN_NUM_LOOKUP[18], 0)
                         
                         pin=PIN_NUM_LOOKUP[13]
                         PIN_USE[pin] = 0
@@ -972,6 +985,21 @@ class ScratchListener(threading.Thread):
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
                         
+                    if ADDON[i] == "pirocon":
+                        PIN_USE[PIN_NUM_LOOKUP[18]] = 1 #tilt servoA
+                        PIN_USE[PIN_NUM_LOOKUP[22]] = 1 #pan servoB
+                        PIN_USE[PIN_NUM_LOOKUP[19]] = 1 #MotorA PWM
+                        PIN_USE[PIN_NUM_LOOKUP[21]] = 1 #MotorB PWM
+                        PIN_USE[PIN_NUM_LOOKUP[26]] = 1 #MotorA Direction
+                        PIN_USE[PIN_NUM_LOOKUP[24]] = 1 #Motor Direction
+
+                        SetPinMode()
+                        
+                        sensor_name = 'switch'
+                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, 0)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
+                        
 
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
@@ -982,10 +1010,10 @@ class ScratchListener(threading.Thread):
 
                     if (('allleds 1' in dataraw) or ('allleds on' in dataraw) or ('allleds high' in dataraw)):
                         for i in range(0, 10): # limit pins to first 10
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                     if (('allleds 0' in dataraw) or ('allleds off' in dataraw) or ('allleds low' in dataraw)):
                         for i in range(0, 10): # limit pins to first 10
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
                     
                     for i in range(0, 10): # limit pins to first 10
                         physical_pin = PIN_NUM[i]
@@ -994,11 +1022,11 @@ class ScratchListener(threading.Thread):
                         if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
                              ((pin_string + ' high') in dataraw )):
                             #print "variable detect 1/on/high" , dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                         if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
                               ((pin_string + ' low') in dataraw )):
                             #print "variable detect 0/off/low" , dataraw
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
 
                         #check for power variable commands
                         if 'power' + str(i + 1) in dataraw:
@@ -1022,16 +1050,16 @@ class ScratchListener(threading.Thread):
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                         if svalue > 0:
                             #print "motor1 set forward" , svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[19],1)
+                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[19],1)
                         elif svalue < 0:
                             #print "motor1 set backward", svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[21],1)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[21],1)
+                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
                         else:
                             #print "motor1 set neutral", svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
 
                         if PIN_USE[i] != 2:
                             PIN_USE[i] = 2
@@ -1047,16 +1075,16 @@ class ScratchListener(threading.Thread):
 
                         if svalue > 0:
                             print "motor2 set forward" , svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[18],0)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[16],1)
+                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[16],1)
                         elif svalue < 0:
                             print "motor2 set backward" , svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[18],1)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[16],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[18],1)
+                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
                         else:
                             print "motor2 set neutral" , svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[18],0)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[16],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
 
                         if PIN_USE[i] != 2:
                             PIN_USE[i] = 2
@@ -1068,14 +1096,14 @@ class ScratchListener(threading.Thread):
                     if (('servo1' in dataraw)):
                         tempValue = getValue('servo1', dataraw)
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-                        svalue= min(240,max(svalue,60))
+                        svalue= min(360,max(svalue,0))
                         os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
                     
                     if (('servo2' in dataraw)):
                         print "servo2"
                         tempValue = getValue('servo2', dataraw)
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-                        svalue= min(240,max(svalue,60))
+                        svalue= min(360,max(svalue,0))
                         os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
                         
                 elif ((ADDON_PRESENT[3] == True) and (piglow != None)):
@@ -1163,12 +1191,12 @@ class ScratchListener(threading.Thread):
                     leds = [7,11,15,19,21,23]
                     if self.dVFindOnOff('allleds'):
                         for i in leds:
-                            self.physical_pin_update(PIN_NUM_LOOKUP[i],self.dVRtnOnOff('allleds'))
+                            self.index_pin_update(PIN_NUM_LOOKUP[i],self.dVRtnOnOff('allleds'))
                     
                     for i in range(0, 6): # go thru 6 LEDS on/off
                         pin_string = 'led' + str(i + 1)
                         if self.dVFindOnOff(pin_string):
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dVRtnOnOff(pin_string))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dVRtnOnOff(pin_string))
                             
                         #check for power variable commands
                         checkStr = 'power' + str(i + 1)
@@ -1184,34 +1212,98 @@ class ScratchListener(threading.Thread):
                                 PWM_OUT[pinIndex ].changeDutyCycle(max(0,min(100,svalue)))
                             
                     if self.dVFindOnOff('buzzer'):
-                        self.physical_pin_update(PIN_NUM_LOOKUP[24],self.dVRtnOnOff('buzzer'))
+                        self.index_pin_update(PIN_NUM_LOOKUP[24],self.dVRtnOnOff('buzzer'))
                                                 
                     for i in range(0,3):
                         led_col = ['red','yellow','green']
                         if (self.dVFindOnOff(led_col[i])):
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dVRtnOnOff(led_col[i]))
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dVRtnOnOff(led_col[i]))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dVRtnOnOff(led_col[i]))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dVRtnOnOff(led_col[i]))
                             
                     for i in range(0,3):
                         led_col = ['red','yellow','green']
                         for k in range(0,2):
                             if self.dVFindOnOff(led_col[i] + str(k+1)):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dVRtnOnOff(led_col[i] + str(k+1)))
+                                self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dVRtnOnOff(led_col[i] + str(k+1)))
                             
+                elif ADDON_PRESENT[7] == True:
+                    #do PiRoCon stuff
+                    #check for motor variable commands
+#                    if  'motor1 ' in dataraw:
+#                        i = PIN_NUM_LOOKUP[23]
+#                        tempValue = getValue('motor1', dataraw)
+#                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+#                        if svalue > 0:
+#                            #print "motor1 set forward" , svalue
+#                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
+#                            self.index_pin_update(PIN_NUM_LOOKUP[19],1)
+#                        elif svalue < 0:
+#                            #print "motor1 set backward", svalue
+#                            self.index_pin_update(PIN_NUM_LOOKUP[21],1)
+#                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
+#                        else:
+#                            #print "motor1 set neutral", svalue
+#                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
+#                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
 
+#                        if PIN_USE[i] != 2:
+#                            PIN_USE[i] = 2
+#                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+#                            PWM_OUT[i].start(max(0,min(100,abs(svalue))))
+#                        else:
+#                            PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
+                    
+#                    if  'motor2 ' in dataraw:
+#                        i = PIN_NUM_LOOKUP[22]
+#                        tempValue = getValue('motor2', dataraw)
+#                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
 
+#                        if svalue > 0:
+#                            print "motor2 set forward" , svalue
+#                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
+#                            self.index_pin_update(PIN_NUM_LOOKUP[16],1)
+#                        elif svalue < 0:
+#                            print "motor2 set backward" , svalue
+#                            self.index_pin_update(PIN_NUM_LOOKUP[18],1)
+#                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
+#                        else:
+#                            print "motor2 set neutral" , svalue
+#                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
+#                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
 
-                        
-                                    
-                                    
+#                        if PIN_USE[i] != 2:
+#                            PIN_USE[i] = 2
+#                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+#                            PWM_OUT[i].start(max(0,min(100,abs(svalue))))
+#                        else:
+#                            PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
+
+                    servoDict = {'servoa': '0', 'tilt': '0', 'servob': '1', 'pan': '1' }
+                    for key in servoDict:
+                        #print key , servoDict[key]
+                        checkStr = key
+                        if self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
+                            svalue= min(360,max(svalue,0))
+                            os.system("echo " + servoDict[key] + "=" + str(svalue) + " > /dev/servoblaster")
+
+                    for i in range(0, 16): # go thru 6 LEDS on/off
+                        checkStr = 'servo' + str(i + 1) 
+                        if  self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            #print i, svalue
+                            pcaPWM.setPWM(i, 0, svalue)
+                                                            
                 else:   #normal variable processing with no add on board
                     #gloablly set all ports
                     if (('allpins 1' in dataraw) or ('allpins on' in dataraw) or ('allpins high' in dataraw)):
                         for i in range(PINS): 
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                     if (('allpins 0' in dataraw) or ('allpins off' in dataraw) or ('allpins low' in dataraw)):
                         for i in range(PINS): 
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
                     
                     #check for individual pin on off commands
                     for i in range(PINS):
@@ -1223,11 +1315,11 @@ class ScratchListener(threading.Thread):
                         if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
                              ((pin_string + ' high') in dataraw )):
                             #print "variable detect 1/on/high" , dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                         if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
                               ((pin_string + ' low') in dataraw )):
                             #print "variable detect 0/off/low" , dataraw
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
 
                         #check for power variable commands
                         checkStr = 'power' + str(physical_pin)
@@ -1274,9 +1366,9 @@ class ScratchListener(threading.Thread):
                     #print 'dummy pin %d state %d' % (i, bit_state)
                         if (PIN_USE[i] == 1):
                             if bit_pattern[-(j+1)] == '0':
-                                self.physical_pin_update(i,0)
+                                self.index_pin_update(i,0)
                             else:
-                                self.physical_pin_update(i,1)
+                                self.index_pin_update(i,1)
                             j = j + 1
 
                                        
@@ -1414,11 +1506,11 @@ class ScratchListener(threading.Thread):
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(0, 10):
                             if (PIN_USE[i] <> 0):
-                                self.physical_pin_update(i,1)
+                                self.index_pin_update(i,1)
                     if (('alloff' in dataraw) or ('alllow' in dataraw)):
                         for i in range(0, 10):
                             if (PIN_USE[i] <> 0):
-                                self.physical_pin_update(i,0)
+                                self.index_pin_update(i,0)
                                 
                         #do ladderboard stuff
                     for i in range(0, 10):
@@ -1427,11 +1519,11 @@ class ScratchListener(threading.Thread):
                         #print "pin" + str(i + 1) + "high"
                         if (('led' + str(i + 1)+'high' in dataraw) or ('led' + str(i + 1)+'on' in dataraw)):
                             #print dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
 
                         if (('led' + str(i + 1)+'low' in dataraw) or ('led' + str(i + 1)+'off' in dataraw)):
                             #print dataraw
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
                             
                 elif ADDON_PRESENT[2] == True: # Boeeerb MotorPiTx
                     #Start using ultrasonic sensor on a pin    
@@ -1441,7 +1533,7 @@ class ScratchListener(threading.Thread):
                         PIN_USE[i] = 0
                         GPIO.setup(physical_pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                         #print dataraw
-                        self.physical_pin_update(i,1)
+                        self.index_pin_update(i,1)
                         print 'start pinging on', str(physical_pin)
                         ULTRA_IN_USE[i] = True
                         
@@ -1449,7 +1541,7 @@ class ScratchListener(threading.Thread):
                         physical_pin = 7
                         i = PIN_NUM_LOOKUP[physical_pin]
                         #print dataraw
-                        self.physical_pin_update(i,1)
+                        self.index_pin_update(i,1)
                         print 'start pinging on', str(physical_pin)
                         ULTRA_IN_USE[i] = True
                         
@@ -1551,38 +1643,38 @@ class ScratchListener(threading.Thread):
                     if self.dFindOnOff('all'):
                         for i in [7,11,15,19,21,23,24]:
                             if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[i],self.dRtnOnOff('all'))
+                                self.index_pin_update(PIN_NUM_LOOKUP[i],self.dRtnOnOff('all'))
                                                                 
                     leds = [7,11,15,19,21,23]
                     for i in range(0,6):
                         if self.dFindOnOff('led' + str(i + 1)):
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dRtnOnOff('led' + str(i + 1)))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dRtnOnOff('led' + str(i + 1)))
 
                     if self.dFindOnOff('buzzer'):
-                        self.physical_pin_update(PIN_NUM_LOOKUP[24],self.dRtnOnOff('buzzer'))
+                        self.index_pin_update(PIN_NUM_LOOKUP[24],self.dRtnOnOff('buzzer'))
                                                 
                     for i in range(0,3):
                         led_col = ['red','yellow','green']
                         if (self.dFindOnOff(led_col[i])):
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dRtnOnOff(led_col[i]))
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dRtnOnOff(led_col[i]))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dRtnOnOff(led_col[i]))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dRtnOnOff(led_col[i]))
                             
                     for i in range(0,3):
                         led_col = ['red','yellow','green']
                         for k in range(0,2):
                             if self.dFindOnOff(led_col[i] + str(k+1)):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dRtnOnOff(led_col[i] + str(k+1)))
+                                self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dRtnOnOff(led_col[i] + str(k+1)))
    
                 else: # Plain GPIO Broadcast processing
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(PINS):
                             if (PIN_USE[i] <> 0):
-                                self.physical_pin_update(i,1)
+                                self.index_pin_update(i,1)
                     if (('alloff' in dataraw) or ('alllow' in dataraw)):
                         for i in range(PINS):
                             if (PIN_USE[i] <> 0):
-                                self.physical_pin_update(i,0)
+                                self.index_pin_update(i,0)
                                 
                     #check pins
                     for i in range(PINS):
@@ -1591,14 +1683,14 @@ class ScratchListener(threading.Thread):
                         physical_pin = PIN_NUM[i]
                         if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
                             #print dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
 
                         if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
                             #print dataraw
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
 
                         if ('sonar' + str(physical_pin)) in dataraw:
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                             ti = time.time()
                             # setup a array to hold 3 values and then do 3 distance calcs and store them
                             #print 'sonar started'
@@ -1660,7 +1752,7 @@ class ScratchListener(threading.Thread):
                         #Start using ultrasonic sensor on a pin    
                         if (('ultra' + str(physical_pin) in dataraw)):
                             #print dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                             print 'start pinging on', str(physical_pin)
                             ULTRA_IN_USE[i] = True
 #                            tempTotal = 0
@@ -1688,9 +1780,9 @@ class ScratchListener(threading.Thread):
                     #print 'dummy pin %d state %d' % (i, bit_state)
                         if (PIN_USE[i] == 1):
                             if bit_pattern[-(j+1)] == '0':
-                                self.physical_pin_update(i,0)
+                                self.index_pin_update(i,0)
                             else:
-                                self.physical_pin_update(i,1)
+                                self.index_pin_update(i,1)
                             j = j + 1
                              
 
