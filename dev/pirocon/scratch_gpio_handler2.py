@@ -875,7 +875,7 @@ class ScratchListener(threading.Thread):
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
                     self.dataraw = dataraw
-                    print dataraw
+                    #print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -1222,59 +1222,31 @@ class ScratchListener(threading.Thread):
                         for k in range(0,2):
                             if self.dVFindOnOff(led_col[i] + str(k+1)):
                                 self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dVRtnOnOff(led_col[i] + str(k+1)))
-                            
+                    ######### End of BerryClip Variable handling
+                    
                 elif ADDON_PRESENT[7] == True:
                     #do PiRoCon stuff
                     #check for motor variable commands
-#                    if  'motor1 ' in dataraw:
-#                        i = PIN_NUM_LOOKUP[23]
-#                        tempValue = getValue('motor1', dataraw)
-#                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-#                        if svalue > 0:
-#                            #print "motor1 set forward" , svalue
-#                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
-#                            self.index_pin_update(PIN_NUM_LOOKUP[19],1)
-#                        elif svalue < 0:
-#                            #print "motor1 set backward", svalue
-#                            self.index_pin_update(PIN_NUM_LOOKUP[21],1)
-#                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
-#                        else:
-#                            #print "motor1 set neutral", svalue
-#                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
-#                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
-
-#                        if PIN_USE[i] != 2:
-#                            PIN_USE[i] = 2
-#                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-#                            PWM_OUT[i].start(max(0,min(100,abs(svalue))))
-#                        else:
-#                            PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
+                    motorList = [['motora',19,24],['motorb',21,26]]
+                    for listLoop in range(0,2):
+                        checkStr = motorList[listLoop][0]
+                        if self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            if svalue > 0:
+                                #print "motor1 set forward" , svalue
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
+                            elif svalue < 0:
+                                #print "motor1 set backward", svalue
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+                            i = PIN_NUM_LOOKUP[motorList[listLoop][1]]
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,abs(svalue))))
+                            else:
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
                     
-#                    if  'motor2 ' in dataraw:
-#                        i = PIN_NUM_LOOKUP[22]
-#                        tempValue = getValue('motor2', dataraw)
-#                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-
-#                        if svalue > 0:
-#                            print "motor2 set forward" , svalue
-#                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
-#                            self.index_pin_update(PIN_NUM_LOOKUP[16],1)
-#                        elif svalue < 0:
-#                            print "motor2 set backward" , svalue
-#                            self.index_pin_update(PIN_NUM_LOOKUP[18],1)
-#                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
-#                        else:
-#                            print "motor2 set neutral" , svalue
-#                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
-#                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
-
-#                        if PIN_USE[i] != 2:
-#                            PIN_USE[i] = 2
-#                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-#                            PWM_OUT[i].start(max(0,min(100,abs(svalue))))
-#                        else:
-#                            PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
-
                     servoDict = {'servoa': '0', 'tilt': '0', 'servob': '1', 'pan': '1' }
                     for key in servoDict:
                         #print key , servoDict[key]
@@ -1285,22 +1257,23 @@ class ScratchListener(threading.Thread):
                             svalue= min(360,max(svalue,0))
                             os.system("echo " + servoDict[key] + "=" + str(svalue) + " > /dev/servoblaster")
 
-                    for i in range(0, 16): # go thru servos on PCA Board
-                        checkStr = 'servo' + str(i + 1) 
-                        if  self.dVFind(checkStr):
-                            tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-                            #print i, svalue
-                            pcaPWM.setPWM(i, 0, svalue)
-                            
-                    for i in range(0, 16): # go thru PowerPWM on PCA Board
-                        checkStr = 'power' + str(i + 1) 
-                        if  self.dVFind(checkStr):
-                            tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                            svalue = min(4095,max(((svalue * 4096) /100),0))
-                            pcaPWM.setPWM(i, 0, svalue)
-                            
+                    if (pcaPWM != None):
+                        for i in range(0, 16): # go thru servos on PCA Board
+                            checkStr = 'servo' + str(i + 1) 
+                            if  self.dVFind(checkStr):
+                                tempValue = getValue(checkStr, dataraw)
+                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
+                                #print i, svalue
+                                pcaPWM.setPWM(i, 0, svalue)
+                                
+                        for i in range(0, 16): # go thru PowerPWM on PCA Board
+                            checkStr = 'power' + str(i + 1) 
+                            if  self.dVFind(checkStr):
+                                tempValue = getValue(checkStr, dataraw)
+                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                                svalue = min(4095,max(((svalue * 4096) /100),0))
+                                pcaPWM.setPWM(i, 0, svalue)
+                                
                     ######### End of PiRoCon Variable handling
                                                             
                 else:   #normal variable processing with no add on board
