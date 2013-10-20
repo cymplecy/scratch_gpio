@@ -995,10 +995,7 @@ class ScratchListener(threading.Thread):
 
                         SetPinMode()
                         
-                        sensor_name = 'switch'
-                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, 0)
-                        #print 'sending: %s' % bcast_str
-                        self.send_scratch_command(bcast_str)
+                        os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon')
                         
 
             #Listen for Variable changes
@@ -1200,7 +1197,7 @@ class ScratchListener(threading.Thread):
                             
                         #check for power variable commands
                         checkStr = 'power' + str(i + 1)
-                        if  self.dFind(checkStr):
+                        if  self.dVFind(checkStr):
                             tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             pinIndex = PIN_NUM_LOOKUP[leds[i]]
@@ -1288,13 +1285,23 @@ class ScratchListener(threading.Thread):
                             svalue= min(360,max(svalue,0))
                             os.system("echo " + servoDict[key] + "=" + str(svalue) + " > /dev/servoblaster")
 
-                    for i in range(0, 16): # go thru 6 LEDS on/off
+                    for i in range(0, 16): # go thru servos on PCA Board
                         checkStr = 'servo' + str(i + 1) 
                         if  self.dVFind(checkStr):
                             tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
                             #print i, svalue
                             pcaPWM.setPWM(i, 0, svalue)
+                            
+                    for i in range(0, 16): # go thru PowerPWM on PCA Board
+                        checkStr = 'power' + str(i + 1) 
+                        if  self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            svalue = min(4095,max(((svalue * 4096) /100),0))
+                            pcaPWM.setPWM(i, 0, svalue)
+                            
+                    ######### End of PiRoCon Variable handling
                                                             
                 else:   #normal variable processing with no add on board
                     #gloablly set all ports
@@ -1682,11 +1689,11 @@ class ScratchListener(threading.Thread):
                         #print check_broadcast
                         physical_pin = PIN_NUM[i]
                         if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
-                            #print dataraw
+                            print 'pin' , physical_pin, 'on'
                             self.index_pin_update(i,1)
 
                         if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
-                            #print dataraw
+                            print 'pin' , physical_pin, 'off'
                             self.index_pin_update(i,0)
 
                         if ('sonar' + str(physical_pin)) in dataraw:
