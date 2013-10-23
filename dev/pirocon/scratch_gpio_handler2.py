@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '2.8.7.1' # 19Oct13
+Version =  '2.8.8.1' # 23Oct13
 
 
 
@@ -226,6 +226,7 @@ PIN_NUM_LOOKUP=[int] * 27
 
 for i in range(PINS):
     PIN_NUM_LOOKUP[PIN_NUM[i]] = i
+    print i, PIN_NUM[i]
 
 
 PWM_OUT = [None] * PINS
@@ -836,6 +837,16 @@ class ScratchListener(threading.Thread):
         if (PIN_USE[pin_index] == 1):
             #print 'setting gpio %d (physical pin %d) to %d' % (GPIO_NUM[pin_index],PIN_NUM[pin_index],value)
             GPIO.output(PIN_NUM[pin_index], value)
+            
+    def index_pwm_update(self, pin_index, value):
+        print "pwm changed" , value
+        if PIN_USE[pin_index] != 2:
+            PIN_USE[pin_index] = 2
+            PWM_OUT[pin_index] = PiZyPwm(100, PIN_NUM[pin_ind], GPIO.BOARD)
+            PWM_OUT[pin_index].start(max(0,min(100,abs(value))))
+        else:
+            PWM_OUT[pin_index].changeDutyCycle(max(0,min(100,abs(value))))
+            
 
     def step_coarse(self,a,b,c,d,delay):
         self.index_pin_update(a,1)
@@ -1227,31 +1238,35 @@ class ScratchListener(threading.Thread):
                 elif ADDON_PRESENT[7] == True:
                     #do PiRoCon stuff
                     #check for motor variable commands
-                    motorList = [['motora',19,24],['motorb',21,26]]
+                    motorList = [['motora',21,26],['motorb',19,24]]
                     for listLoop in range(0,2):
+                        #print motorList[listLoop]
                         checkStr = motorList[listLoop][0]
                         if self.dVFind(checkStr):
                             tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            print "svalue", svalue
                             if svalue > 0:
-                                #print "motor1 set forward" , svalue
+                                print motorList[listLoop]
+                                print "motor set forward" , svalue
                                 self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
+                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(100-svalue))
                             elif svalue < 0:
-                                #print "motor1 set backward", svalue
+                                print motorList[listLoop]
+                                print "motor set backward", svalue
                                 self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
-                            i = PIN_NUM_LOOKUP[motorList[listLoop][1]]
-                            if PIN_USE[i] != 2:
-                                PIN_USE[i] = 2
-                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                                PWM_OUT[i].start(max(0,min(100,abs(svalue))))
+                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(svalue))
                             else:
-                                PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
+                                #print svalue, "zero"
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],0)
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
                     
                     servoDict = {'servoa': '0', 'tilt': '0', 'servob': '1', 'pan': '1' }
                     for key in servoDict:
                         #print key , servoDict[key]
                         checkStr = key
                         if self.dVFind(checkStr):
+                            #print key , servoDict[key]
                             tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
                             svalue= min(360,max(svalue,0))
@@ -1330,151 +1345,153 @@ class ScratchListener(threading.Thread):
                                 PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
                                 PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
-
-                #Use bit pattern to control ports
-                checkStr = 'pinpattern'
-                if  (checkStr + ' ') in dataraw:
-                    #print 'Found pinpattern'
-                    num_of_bits = PINS
-                    svalue = getValue(checkStr, dataraw)
-                    #print sensor_value[0]
-                    bit_pattern = ('00000000000000000000000000'+svalue)[-num_of_bits:]
-                    #print 'bit_pattern %s' % bit_pattern
-                    j = 0
-                    for i in range(PINS):
-                    #bit_state = ((2**i) & sensor_value) >> i
-                    #print 'dummy pin %d state %d' % (i, bit_state)
-                        if (PIN_USE[i] == 1):
-                            if bit_pattern[-(j+1)] == '0':
-                                self.index_pin_update(i,0)
-                            else:
-                                self.index_pin_update(i,1)
-                            j = j + 1
-
-                                       
-                checkStr = 'motora'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                    #print "MotorA" , svalue
-                    if (stepperInUse[STEPPERA] == True):
-                        #print "Stepper A in operation"
-                        #print "send change to motora as a stepper" , sensor_value[0]
-                        steppera.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                        
-                    else:
-                        i = PIN_NUM_LOOKUP[11] # assume motora is connected to Pin11
-                        if PIN_USE[i] != 2:
-                            PIN_USE[i] = 2
-                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                            PWM_OUT[i].start(max(0,min(100,svalue)))
+                                
+                    checkStr = 'motora'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        #print "MotorA" , svalue
+                        if (stepperInUse[STEPPERA] == True):
+                            #print "Stepper A in operation"
+                            #print "send change to motora as a stepper" , sensor_value[0]
+                            steppera.changeSpeed(max(-100,min(100,svalue)),2123456789)
+                            
                         else:
-                            PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
+                            i = PIN_NUM_LOOKUP[11] # assume motora is connected to Pin11
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,svalue)))
+                            else:
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
 
-                checkStr = 'motorb'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                    if (stepperInUse[STEPPERB] == True):
-                        #print "Stepper B in operation"
-                        #print "send change to motorb as a stepper" , sensor_value[0]
-                        stepperb.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                        
-                    else:
-                        i = PIN_NUM_LOOKUP[12] # assume motorb is connected to Pin11
-                        if PIN_USE[i] != 2:
-                            PIN_USE[i] = 2
-                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                            PWM_OUT[i].start(max(0,min(100,svalue)))
+                    checkStr = 'motorb'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if (stepperInUse[STEPPERB] == True):
+                            #print "Stepper B in operation"
+                            #print "send change to motorb as a stepper" , sensor_value[0]
+                            stepperb.changeSpeed(max(-100,min(100,svalue)),2123456789)
+                            
                         else:
-                            PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
+                            i = PIN_NUM_LOOKUP[12] # assume motorb is connected to Pin11
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,svalue)))
+                            else:
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
-                checkStr = 'motorc'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                    if (stepperInUse[STEPPERC] == True):
-                        #print "Stepper C in operation"
-                        #print "send change to motorc as a stepper" , sensor_value[0]
-                        stepperc.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                        
-                    else:
-                        i = PIN_NUM_LOOKUP[13] # assume motorc is connected to Pin11
-                        if PIN_USE[i] != 2:
-                            PIN_USE[i] = 2
-                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                            PWM_OUT[i].start(max(0,min(100,svalue)))
+                    checkStr = 'motorc'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if (stepperInUse[STEPPERC] == True):
+                            #print "Stepper C in operation"
+                            #print "send change to motorc as a stepper" , sensor_value[0]
+                            stepperc.changeSpeed(max(-100,min(100,svalue)),2123456789)
+                            
                         else:
-                            PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
-
-
-
-                checkStr = 'stepdelay'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    if isNumeric(tempValue):
-                        step_delay = int(float(tempValue))
-                        print 'step delay changed to', step_delay
-
-                if  'positiona' in dataraw:
-                    #print "positiona" , dataraw
-                    if (stepperInUse[STEPPERA] == True):
-                        outputall_pos = dataraw.find('positiona')
-                        sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
-                        if isNumeric(sensor_value[0]):
-                            #if int(float(sensor_value[0])) != 0:s
-                            if 'steppera' in dataraw:
-                                turnAStep = int(float(sensor_value[0]))
+                            i = PIN_NUM_LOOKUP[13] # assume motorc is connected to Pin11
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
-                                steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
-                                turnAStep = int(float(sensor_value[0]))
-                                #else:
-                                #    turnAStep = 0
-                                            
-                if  'positionb' in dataraw:
-                    #print "positionb" , dataraw
-                    if (stepperInUse[STEPPERB] == True):
-                        outputall_pos = dataraw.find('positionb')
-                        sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
-                        #print "sensor" , sensor_value[0]
-                        if isNumeric(sensor_value[0]):
-                            #if int(float(sensor_value[0])) != 0:
-                            if 'stepperb' in dataraw:
-                                turnBStep = int(float(sensor_value[0]))
-                                #print "stepperb found"
-                            else:
-                                #print "change posb" , sensor_value[0]
-                                stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
-                                turnBStep = int(float(sensor_value[0]))
-                                #else:
-                                #    turnBStep = 0
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
-                if  'positionc' in dataraw:
-                    print "positionc" , dataraw
-                    if (stepperInUse[STEPPERC] == True):
-                        outputall_pos = dataraw.find('positionc')
-                        sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
-                        #print "sensor" , sensor_value[0]
-                        if isNumeric(sensor_value[0]):
-                            #if int(float(sensor_value[0])) != 0:
-                            if 'stepperc' in dataraw:
-                                turnCStep = int(float(sensor_value[0]))
-                                #print "stepperb found"
-                            else:
-                                #print "change posb" , sensor_value[0]
-                                stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
-                                turnCStep = int(float(sensor_value[0]))
-                                #else:
-                                #    turnBStep = 0
+
+                    #Use bit pattern to control ports
+                    checkStr = 'pinpattern'
+                    if  (checkStr + ' ') in dataraw:
+                        #print 'Found pinpattern'
+                        num_of_bits = PINS
+                        svalue = getValue(checkStr, dataraw)
+                        #print sensor_value[0]
+                        bit_pattern = ('00000000000000000000000000'+svalue)[-num_of_bits:]
+                        #print 'bit_pattern %s' % bit_pattern
+                        j = 0
+                        for i in range(PINS):
+                        #bit_state = ((2**i) & sensor_value) >> i
+                        #print 'dummy pin %d state %d' % (i, bit_state)
+                            if (PIN_USE[i] == 1):
+                                if bit_pattern[-(j+1)] == '0':
+                                    self.index_pin_update(i,0)
+                                else:
+                                    self.index_pin_update(i,1)
+                                j = j + 1
+
+                                           
+
+
+
+                    checkStr = 'stepdelay'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        if isNumeric(tempValue):
+                            step_delay = int(float(tempValue))
+                            print 'step delay changed to', step_delay
+
+                    if  'positiona' in dataraw:
+                        #print "positiona" , dataraw
+                        if (stepperInUse[STEPPERA] == True):
+                            outputall_pos = dataraw.find('positiona')
+                            sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
+                            if isNumeric(sensor_value[0]):
+                                #if int(float(sensor_value[0])) != 0:s
+                                if 'steppera' in dataraw:
+                                    turnAStep = int(float(sensor_value[0]))
+                                else:
+                                    steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
+                                    turnAStep = int(float(sensor_value[0]))
+                                    #else:
+                                    #    turnAStep = 0
+                                                
+                    if  'positionb' in dataraw:
+                        #print "positionb" , dataraw
+                        if (stepperInUse[STEPPERB] == True):
+                            outputall_pos = dataraw.find('positionb')
+                            sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
+                            #print "sensor" , sensor_value[0]
+                            if isNumeric(sensor_value[0]):
+                                #if int(float(sensor_value[0])) != 0:
+                                if 'stepperb' in dataraw:
+                                    turnBStep = int(float(sensor_value[0]))
+                                    #print "stepperb found"
+                                else:
+                                    #print "change posb" , sensor_value[0]
+                                    stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
+                                    turnBStep = int(float(sensor_value[0]))
+                                    #else:
+                                    #    turnBStep = 0
+
+                    if  'positionc' in dataraw:
+                        print "positionc" , dataraw
+                        if (stepperInUse[STEPPERC] == True):
+                            outputall_pos = dataraw.find('positionc')
+                            sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
+                            #print "sensor" , sensor_value[0]
+                            if isNumeric(sensor_value[0]):
+                                #if int(float(sensor_value[0])) != 0:
+                                if 'stepperc' in dataraw:
+                                    turnCStep = int(float(sensor_value[0]))
+                                    #print "stepperb found"
+                                else:
+                                    #print "change posb" , sensor_value[0]
+                                    stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
+                                    turnCStep = int(float(sensor_value[0]))
+                                    #else:
+                                    #    turnBStep = 0
                             
 
 ### Check for Broadcast type messages being received
