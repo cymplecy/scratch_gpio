@@ -842,7 +842,7 @@ class ScratchListener(threading.Thread):
         print "pwm changed" , value
         if PIN_USE[pin_index] != 2:
             PIN_USE[pin_index] = 2
-            PWM_OUT[pin_index] = PiZyPwm(100, PIN_NUM[pin_ind], GPIO.BOARD)
+            PWM_OUT[pin_index] = PiZyPwm(100, PIN_NUM[pin_index], GPIO.BOARD)
             PWM_OUT[pin_index].start(max(0,min(100,abs(value))))
         else:
             PWM_OUT[pin_index].changeDutyCycle(max(0,min(100,abs(value))))
