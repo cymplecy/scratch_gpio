@@ -1209,6 +1209,35 @@ class ScratchListener(threading.Thread):
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                         svalue= min(255,max(svalue,0))
                         PiGlow_Brightness = svalue
+                        
+                elif ADDON_PRESENT[5] == True:
+                    #do gPiO stuff
+                    #check for motor variable commands
+                    motorList = [['motora',11,12],['motorb',13,15]]
+                    #motorList = [['motora',21,26],['motorb',19,24]]
+                    for listLoop in range(0,2):
+                        #print motorList[listLoop]
+                        checkStr = motorList[listLoop][0]
+                        if self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            print "svalue", svalue
+                            if svalue > 0:
+                                print motorList[listLoop]
+                                print "motor set forward" , svalue
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
+                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(100-svalue))
+                            elif svalue < 0:
+                                print motorList[listLoop]
+                                print "motor set backward", svalue
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(svalue))
+                            else:
+                                #print svalue, "zero"
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],0)
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+
+                    ######### End of gPiO Variable handling
                    
                 if ADDON_PRESENT[6] == True:
                     #do BerryClip stuff
