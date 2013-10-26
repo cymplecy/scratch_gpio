@@ -1,6 +1,6 @@
 #!/bin/bash
-#V0.2 Modified for sid
-#cp ../scratch_gpio_handler2.py ./payload/ #copy dev version to payload folder
+#V0.2a Modified for sid
+cp ../sid.sh ./payload/ #copy dev version to payload folder
 cd payload
 tar cf ../payload.tar ./* #tar all the payload files
 cd ..

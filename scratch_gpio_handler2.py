@@ -1,7 +1,7 @@
 # This code is copyright Simon Walters under GPL v2
 # This code is derived from Pi-Face scratch_handler by Thomas Preston
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.84 # 28Aug13
+Version =  2.861 # 16Oct13
 
 
 
@@ -35,7 +35,7 @@ stepperInUse = array('b',[False,False,False])
 INVERT = False
 BIG_NUM = 2123456789
 
-ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass'] #define addons
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
@@ -714,13 +714,22 @@ class ScratchSender(threading.Thread):
             #switch_lookup = array('i',[24,26,19,21])
             sensor_name = "switch" + str(switch_array[pin_index-10])
         elif ADDON_PRESENT[2] == True:
-            #do ladderboard stuff
+            #do MotorPiTx stuff
             if PIN_NUM[pin_index] == 13:
                 sensor_name = "input1"
             if PIN_NUM[pin_index] == 7:
                 sensor_name = "input2"
+        elif ADDON_PRESENT[6] == True:
+            #do berryclip stuff
+            #print PIN_NUM[pin_index]
+            if PIN_NUM[pin_index] == 26:
+                sensor_name = "switch"
         else:
             sensor_name = "pin" + str(PIN_NUM[pin_index])
+        #if ADDON_PRESENT[5] == True:
+            #print PIN_NUM[pin_index] , PIN_NUM[pin_index] in [7,8,10,22]
+            #if not(PIN_NUM[pin_index] in [7,8,10,22]):
+            #    return
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
@@ -746,6 +755,7 @@ class ScratchListener(threading.Thread):
         threading.Thread.__init__(self)
         self.scratch_socket = socket
         self._stop = threading.Event()
+        self.dataraw = ''
         
     def send_scratch_command(self, cmd):
         n = len(cmd)
@@ -755,6 +765,40 @@ class ScratchListener(threading.Thread):
         a.append(chr((n >>  8) & 0xFF))
         a.append(chr(n & 0xFF))
         self.scratch_socket.send(a.tostring() + cmd)
+        
+    def dFind(self,searchStr):
+        return (searchStr in self.dataraw)
+        
+    def dFindOn(self,searchStr):
+        return (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high'))
+        
+    def dFindOff(self,searchStr):
+        return (self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low'))
+        
+    def dFindOnOff(self,searchStr):
+        return (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high') 
+                or self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low'))
+
+    def dRtnOnOff(self,searchStr):
+        if self.dFindOn(searchStr):
+            return 1
+        else:
+            return 0
+        
+    def dVFindOn(self,searchStr):
+        return (self.dFind(searchStr + ' on') or self.dFind(searchStr + ' high')or self.dFind(searchStr + ' 1'))
+        
+    def dVFindOff(self,searchStr):
+        return (self.dFind(searchStr + ' off') or self.dFind(searchStr + ' low') or self.dFind(searchStr + ' 0'))
+        
+    def dVFindOnOff(self,searchStr):
+        return (self.dVFindOn(searchStr) or self.dVFindOff(searchStr))
+
+    def dVRtnOnOff(self,searchStr):
+        if self.dVFindOn(searchStr):
+            return 1
+        else:
+            return 0
 
 
     def stop(self):
@@ -817,6 +861,7 @@ class ScratchListener(threading.Thread):
 
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
+                    self.dataraw = dataraw
                     #print dataraw
 
                 #print 'Cycle trace' , cycle_trace
@@ -903,6 +948,29 @@ class ScratchListener(threading.Thread):
                         pin=PIN_NUM_LOOKUP[10]
                         PIN_USE[pin] = 1
                         GPIO.setup(10,GPIO.OUT)
+                        
+                    if ADDON[i] == "berry":
+
+                        PIN_USE[PIN_NUM_LOOKUP[7]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[11]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[15]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[19]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[21]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[23]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[24]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[26]] = 0
+                        #dummy out to stop random inputs registering
+                        PIN_USE[PIN_NUM_LOOKUP[3]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[5]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[8]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[10]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[22]] = 1
+                        SetPinMode()
+                        
+                        sensor_name = 'switch'
+                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, 0)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
                         
 
             #Listen for Variable changes
@@ -1090,6 +1158,48 @@ class ScratchListener(threading.Thread):
                         svalue= min(255,max(svalue,0))
                         PiGlow_Brightness = svalue
                    
+                if ADDON_PRESENT[6] == True:
+                    #do BerryClip stuff
+                    leds = [7,11,15,19,21,23]
+                    if self.dVFindOnOff('allleds'):
+                        for i in leds:
+                            self.physical_pin_update(PIN_NUM_LOOKUP[i],self.dVRtnOnOff('allleds'))
+                    
+                    for i in range(0, 6): # go thru 6 LEDS on/off
+                        pin_string = 'led' + str(i + 1)
+                        if self.dVFindOnOff(pin_string):
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dVRtnOnOff(pin_string))
+                            
+                        #check for power variable commands
+                        checkStr = 'power' + str(i + 1)
+                        if  self.dFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            pinIndex = PIN_NUM_LOOKUP[leds[i]]
+                            if PIN_USE[pinIndex ] != 2:
+                                PIN_USE[pinIndex ] = 2
+                                PWM_OUT[pinIndex ] = PiZyPwm(100, PIN_NUM[pinIndex], GPIO.BOARD)
+                                PWM_OUT[pinIndex ].start(max(0,min(100,svalue)))
+                            else:
+                                PWM_OUT[pinIndex ].changeDutyCycle(max(0,min(100,svalue)))
+                            
+                    if self.dVFindOnOff('buzzer'):
+                        self.physical_pin_update(PIN_NUM_LOOKUP[24],self.dVRtnOnOff('buzzer'))
+                                                
+                    for i in range(0,3):
+                        led_col = ['red','yellow','green']
+                        if (self.dVFindOnOff(led_col[i])):
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dVRtnOnOff(led_col[i]))
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dVRtnOnOff(led_col[i]))
+                            
+                    for i in range(0,3):
+                        led_col = ['red','yellow','green']
+                        for k in range(0,2):
+                            if self.dVFindOnOff(led_col[i] + str(k+1)):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dVRtnOnOff(led_col[i] + str(k+1)))
+                            
+
+
 
                         
                                     
@@ -1436,9 +1546,34 @@ class ScratchListener(threading.Thread):
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = 0
                             piglow.update_pwm_values(PiGlow_Values)
 
+                elif ADDON_PRESENT[6] == True: # BerryClip
 
-                    
-                else:
+                    if self.dFindOnOff('all'):
+                        for i in [7,11,15,19,21,23,24]:
+                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[i],self.dRtnOnOff('all'))
+                                                                
+                    leds = [7,11,15,19,21,23]
+                    for i in range(0,6):
+                        if self.dFindOnOff('led' + str(i + 1)):
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dRtnOnOff('led' + str(i + 1)))
+
+                    if self.dFindOnOff('buzzer'):
+                        self.physical_pin_update(PIN_NUM_LOOKUP[24],self.dRtnOnOff('buzzer'))
+                                                
+                    for i in range(0,3):
+                        led_col = ['red','yellow','green']
+                        if (self.dFindOnOff(led_col[i])):
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dRtnOnOff(led_col[i]))
+                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dRtnOnOff(led_col[i]))
+                            
+                    for i in range(0,3):
+                        led_col = ['red','yellow','green']
+                        for k in range(0,2):
+                            if self.dFindOnOff(led_col[i] + str(k+1)):
+                                self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dRtnOnOff(led_col[i] + str(k+1)))
+   
+                else: # Plain GPIO Broadcast processing
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(PINS):
