@@ -1015,10 +1015,11 @@ class ScratchListener(threading.Thread):
                     if ADDON[i] == "pirocon":
                         PIN_USE[PIN_NUM_LOOKUP[18]] = 1 #tilt servoA
                         PIN_USE[PIN_NUM_LOOKUP[22]] = 1 #pan servoB
-                        PIN_USE[PIN_NUM_LOOKUP[19]] = 1 #MotorA PWM
-                        PIN_USE[PIN_NUM_LOOKUP[21]] = 1 #MotorB PWM
-                        PIN_USE[PIN_NUM_LOOKUP[26]] = 1 #MotorA Direction
-                        PIN_USE[PIN_NUM_LOOKUP[24]] = 1 #Motor Direction
+                        PIN_USE[PIN_NUM_LOOKUP[19]] = 1 #MotorA 
+                        PIN_USE[PIN_NUM_LOOKUP[21]] = 1 #MotorB
+                        PIN_USE[PIN_NUM_LOOKUP[26]] = 1 #MotorA 
+                        PIN_USE[PIN_NUM_LOOKUP[24]] = 1 #MotorB
+                        PIN_USE[PIN_NUM_LOOKUP[16]] = 0 #MotorB
 
                         SetPinMode()
                         
@@ -1212,6 +1213,25 @@ class ScratchListener(threading.Thread):
                         
                 elif ADDON_PRESENT[5] == True:
                     #do gPiO stuff
+                    
+                    if self.dVFindOnOff('allpins'):
+                        for i in range(PINS): 
+                            self.index_pin_update(i,self.dVRtnOnOff('allpins'))
+                            
+                    for i in range(PINS):
+                        physical_pin = PIN_NUM[i]
+                        checkStr = 'pin' + str(physical_pin)
+                        if self.dVFindOnOff(checkStr):
+                            self.index_pin_update(i,self.dVRtnOnOff(checkStr))
+                            
+                        #check for power variable commands
+                        for k in ['power','motor']:
+                            checkStr = k + str(physical_pin)
+                            if  self.dVFind(checkStr):
+                                tempValue = getValue(checkStr, dataraw)
+                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                                self.index_pwm_update(i,svalue)
+                            
                     #check for motor variable commands
                     motorList = [['motora',11,12],['motorb',13,15]]
                     #motorList = [['motora',21,26],['motorb',19,24]]
@@ -1221,15 +1241,15 @@ class ScratchListener(threading.Thread):
                         if self.dVFind(checkStr):
                             tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                            print "svalue", svalue
+                            #print "svalue", svalue
                             if svalue > 0:
-                                print motorList[listLoop]
-                                print "motor set forward" , svalue
+                                #print motorList[listLoop]
+                                #print "motor set forward" , svalue
                                 self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
                                 self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(100-svalue))
                             elif svalue < 0:
-                                print motorList[listLoop]
-                                print "motor set backward", svalue
+                                #print motorList[listLoop]
+                                #print "motor set backward", svalue
                                 self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
                                 self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(svalue))
                             else:
