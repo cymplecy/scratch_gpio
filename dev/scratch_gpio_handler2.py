@@ -31,7 +31,10 @@ import datetime as dt
 import shlex
 import os
 import math
-from Adafruit_PWM_Servo_Driver import PWM
+try:
+    from Adafruit_PWM_Servo_Driver import PWM
+except:
+    pass
 #try and inport smbus but don't worry if not installed
 try:
     from smbus import SMBus
