@@ -1,7 +1,23 @@
-# This code is copyright Simon Walters under GPL v2
-# This code is derived from Pi-Face scratch_handler by Thomas Preston
+#!/usr/bin/env python
+# ScratchGPIO - control Raspberry Pi GPIO ports using Scratch.
+#Copyright (C) 2013 by Simon Walters based on original code for PiFace by Thomas Preston
+
+#This program is free software; you can redistribute it and/or
+#modify it under the terms of the GNU General Public License
+#as published by the Free Software Foundation; either version 2
+#of the License, or (at your option) any later version.
+
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+#You should have received a copy of the GNU General Public License
+#along with this program; if not, write to the Free Software
+#Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  2.861 # 16Oct13
+Version =  '2.9.0.0' # 29Oct13
 
 
 
@@ -15,6 +31,10 @@ import datetime as dt
 import shlex
 import os
 import math
+try:
+    from Adafruit_PWM_Servo_Driver import PWM
+except:
+    pass
 #try and inport smbus but don't worry if not installed
 try:
     from smbus import SMBus
@@ -35,7 +55,7 @@ stepperInUse = array('b',[False,False,False])
 INVERT = False
 BIG_NUM = 2123456789
 
-ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry'] #define addons
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
 for i in range(NUMOF_ADDON): # set all addons to diabled
@@ -177,7 +197,7 @@ class Compass:
                "dec min: " + str(self.__declMinutes) + "\n" \
                "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
                "Heading: " + str(self.heading()) + "\n"
-
+               
 piglow = None
 try:
     if GPIO.RPI_REVISION == 1:
@@ -199,8 +219,17 @@ try:
 except:
     print "No Compass Detected"
     
+pcaPWM = None
+try:
+    pcaPWM = PWM(0x40, debug=False)
+    print pcaPWM
+    print pcaPWM.setPWMFreq(60)                        # Set frequency to 60 Hz
+    print "AdaFruit PCA9685 detected"
+except:
+    print "No pcaPwm Detected"
+    
 #If I2C then don't uses pins 3 and 5
-if ((piglow != None) or (compass != None)):
+if ((piglow != None) or (compass != None) or (pcaPWM != None)):
     print "I2C device detected"
     PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
     PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
@@ -216,6 +245,7 @@ PIN_NUM_LOOKUP=[int] * 27
 
 for i in range(PINS):
     PIN_NUM_LOOKUP[PIN_NUM[i]] = i
+    print i, PIN_NUM[i]
 
 
 PWM_OUT = [None] * PINS
@@ -236,7 +266,7 @@ def isNumeric(s):
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
     
 def getValue(searchString, dataString):
-    outputall_pos = dataString.find(searchString)
+    outputall_pos = dataString.find((searchString + ' '))
     sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
     return sensor_value[0]
     
@@ -299,7 +329,7 @@ class StepperControl(threading.Thread):
             
 
 
-    def physical_pin_update(self, pin_index, value):
+    def index_pin_update(self, pin_index, value):
         if (PIN_USE[pin_index] == 0):
             PIN_USE[pin_index] = 1
             GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
@@ -319,77 +349,77 @@ class StepperControl(threading.Thread):
         lstepMode = stepMode[stepType]
         #print stepMode[stepType]
         if lstepMode == '1Coil':
-            self.physical_pin_update(d,0)
-            self.physical_pin_update(a,1)
+            self.index_pin_update(d,0)
+            self.index_pin_update(a,1)
             time.sleep(delay)
 
             
-            self.physical_pin_update(b,1)
-            self.physical_pin_update(a,0)
+            self.index_pin_update(b,1)
+            self.index_pin_update(a,0)
             time.sleep(delay)
             
             
-            self.physical_pin_update(c,1)
-            self.physical_pin_update(b,0)
+            self.index_pin_update(c,1)
+            self.index_pin_update(b,0)
             time.sleep(delay)
             
             
-            self.physical_pin_update(d,1)
-            self.physical_pin_update(c,0)
+            self.index_pin_update(d,1)
+            self.index_pin_update(c,0)
             time.sleep(delay)
             
         elif lstepMode == '2Coil':
-            self.physical_pin_update(d,0)
-            self.physical_pin_update(c,0)
-            self.physical_pin_update(a,1)
-            self.physical_pin_update(b,1)
+            self.index_pin_update(d,0)
+            self.index_pin_update(c,0)
+            self.index_pin_update(a,1)
+            self.index_pin_update(b,1)
 
             time.sleep(delay)
 
-            self.physical_pin_update(a,0)
-            self.physical_pin_update(c,1)
+            self.index_pin_update(a,0)
+            self.index_pin_update(c,1)
             time.sleep(delay)
             
-            self.physical_pin_update(b,0)
-            self.physical_pin_update(d,1)
+            self.index_pin_update(b,0)
+            self.index_pin_update(d,1)
             time.sleep(delay)
             
-            self.physical_pin_update(c,0)
-            self.physical_pin_update(a,1)
+            self.index_pin_update(c,0)
+            self.index_pin_update(a,1)
             time.sleep(delay)
             
         elif lstepMode == 'HalfStep':
-            self.physical_pin_update(d,0) 
-            self.physical_pin_update(a,1)
+            self.index_pin_update(d,0) 
+            self.index_pin_update(a,1)
             time.sleep(delay)
 
 
-            self.physical_pin_update(b,1)
+            self.index_pin_update(b,1)
             time.sleep(delay)
 
-            self.physical_pin_update(a,0)
+            self.index_pin_update(a,0)
             time.sleep(delay)
             
-            self.physical_pin_update(c,1)
+            self.index_pin_update(c,1)
             time.sleep(delay)
 
-            self.physical_pin_update(b,0)
+            self.index_pin_update(b,0)
             time.sleep(delay)
 
-            self.physical_pin_update(d,1)
+            self.index_pin_update(d,1)
             time.sleep(delay)
 
-            self.physical_pin_update(c,0)
+            self.index_pin_update(c,0)
             time.sleep(delay)
             
-            self.physical_pin_update(a,1)
+            self.index_pin_update(a,1)
             time.sleep(delay)
 
     def pause(self):
-        self.physical_pin_update(self.pins[0],0)
-        self.physical_pin_update(self.pins[1],0)
-        self.physical_pin_update(self.pins[2],0)
-        self.physical_pin_update(self.pins[3],0)
+        self.index_pin_update(self.pins[0],0)
+        self.index_pin_update(self.pins[1],0)
+        self.index_pin_update(self.pins[2],0)
+        self.index_pin_update(self.pins[3],0)
         self.paused = True
         print PIN_NUM[self.pins[0]], "pause method run"
 
@@ -785,11 +815,14 @@ class ScratchListener(threading.Thread):
         else:
             return 0
         
+    def dVFind(self,searchStr):
+        return ((searchStr + ' ') in self.dataraw)
+        
     def dVFindOn(self,searchStr):
-        return (self.dFind(searchStr + ' on') or self.dFind(searchStr + ' high')or self.dFind(searchStr + ' 1'))
+        return (self.dVFind(searchStr + 'on') or self.dVFind(searchStr + 'high')or self.dVFind(searchStr + '1'))
         
     def dVFindOff(self,searchStr):
-        return (self.dFind(searchStr + ' off') or self.dFind(searchStr + ' low') or self.dFind(searchStr + ' 0'))
+        return (self.dVFind(searchStr + 'off') or self.dVFind(searchStr + 'low') or self.dVFind(searchStr + '0'))
         
     def dVFindOnOff(self,searchStr):
         return (self.dVFindOn(searchStr) or self.dVFindOff(searchStr))
@@ -807,7 +840,7 @@ class ScratchListener(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-    def physical_pin_update(self, pin_index, value):
+    def index_pin_update(self, pin_index, value):
         if INVERT == True:
             if PIN_USE[pin_index] == 1:
                 value = abs(value - 1)
@@ -823,22 +856,32 @@ class ScratchListener(threading.Thread):
         if (PIN_USE[pin_index] == 1):
             #print 'setting gpio %d (physical pin %d) to %d' % (GPIO_NUM[pin_index],PIN_NUM[pin_index],value)
             GPIO.output(PIN_NUM[pin_index], value)
+            
+    def index_pwm_update(self, pin_index, value):
+        print "pwm changed" , value
+        if PIN_USE[pin_index] != 2:
+            PIN_USE[pin_index] = 2
+            PWM_OUT[pin_index] = PiZyPwm(100, PIN_NUM[pin_index], GPIO.BOARD)
+            PWM_OUT[pin_index].start(max(0,min(100,abs(value))))
+        else:
+            PWM_OUT[pin_index].changeDutyCycle(max(0,min(100,abs(value))))
+            
 
     def step_coarse(self,a,b,c,d,delay):
-        self.physical_pin_update(a,1)
-        self.physical_pin_update(d,0)
+        self.index_pin_update(a,1)
+        self.index_pin_update(d,0)
         time.sleep(delay)
 
-        self.physical_pin_update(b,1)
-        self.physical_pin_update(a,0)
+        self.index_pin_update(b,1)
+        self.index_pin_update(a,0)
         time.sleep(delay)
         
-        self.physical_pin_update(c,1)
-        self.physical_pin_update(b,0)
+        self.index_pin_update(c,1)
+        self.index_pin_update(b,0)
         time.sleep(delay)
         
-        self.physical_pin_update(d,1)
-        self.physical_pin_update(c,0)
+        self.index_pin_update(d,1)
+        self.index_pin_update(c,0)
         time.sleep(delay)
 
     def run(self):
@@ -935,10 +978,10 @@ class ScratchListener(threading.Thread):
                             
                     if ADDON[i] == "motorpitx":
                         #print "addon " + ADDON[i] + " declared"
-                        self.physical_pin_update(PIN_NUM_LOOKUP[21], 0)
-                        self.physical_pin_update(PIN_NUM_LOOKUP[19], 0)
-                        self.physical_pin_update(PIN_NUM_LOOKUP[16], 0)
-                        self.physical_pin_update(PIN_NUM_LOOKUP[18], 0)
+                        self.index_pin_update(PIN_NUM_LOOKUP[21], 0)
+                        self.index_pin_update(PIN_NUM_LOOKUP[19], 0)
+                        self.index_pin_update(PIN_NUM_LOOKUP[16], 0)
+                        self.index_pin_update(PIN_NUM_LOOKUP[18], 0)
                         
                         pin=PIN_NUM_LOOKUP[13]
                         PIN_USE[pin] = 0
@@ -972,6 +1015,22 @@ class ScratchListener(threading.Thread):
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
                         
+                    if ADDON[i] == "pirocon":
+                        PIN_USE[PIN_NUM_LOOKUP[18]] = 1 #tilt servoA
+                        PIN_USE[PIN_NUM_LOOKUP[22]] = 1 #pan servoB
+                        PIN_USE[PIN_NUM_LOOKUP[19]] = 1 #MotorA 
+                        PIN_USE[PIN_NUM_LOOKUP[21]] = 1 #MotorB
+                        PIN_USE[PIN_NUM_LOOKUP[26]] = 1 #MotorA 
+                        PIN_USE[PIN_NUM_LOOKUP[24]] = 1 #MotorB
+                        PIN_USE[PIN_NUM_LOOKUP[16]] = 0 #MotorB
+                        PIN_USE[PIN_NUM_LOOKUP[11]] = 0 #ObsRight
+                        PIN_USE[PIN_NUM_LOOKUP[12]] = 0 #LFLeft
+                        PIN_USE[PIN_NUM_LOOKUP[13]] = 0 #LFRight
+
+                        SetPinMode()
+                        
+                        os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon')
+                        
 
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
@@ -982,10 +1041,10 @@ class ScratchListener(threading.Thread):
 
                     if (('allleds 1' in dataraw) or ('allleds on' in dataraw) or ('allleds high' in dataraw)):
                         for i in range(0, 10): # limit pins to first 10
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                     if (('allleds 0' in dataraw) or ('allleds off' in dataraw) or ('allleds low' in dataraw)):
                         for i in range(0, 10): # limit pins to first 10
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
                     
                     for i in range(0, 10): # limit pins to first 10
                         physical_pin = PIN_NUM[i]
@@ -994,11 +1053,11 @@ class ScratchListener(threading.Thread):
                         if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
                              ((pin_string + ' high') in dataraw )):
                             #print "variable detect 1/on/high" , dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                         if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
                               ((pin_string + ' low') in dataraw )):
                             #print "variable detect 0/off/low" , dataraw
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
 
                         #check for power variable commands
                         if 'power' + str(i + 1) in dataraw:
@@ -1022,16 +1081,16 @@ class ScratchListener(threading.Thread):
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                         if svalue > 0:
                             #print "motor1 set forward" , svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[19],1)
+                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[19],1)
                         elif svalue < 0:
                             #print "motor1 set backward", svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[21],1)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[21],1)
+                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
                         else:
                             #print "motor1 set neutral", svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[21],0)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[19],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
 
                         if PIN_USE[i] != 2:
                             PIN_USE[i] = 2
@@ -1047,16 +1106,16 @@ class ScratchListener(threading.Thread):
 
                         if svalue > 0:
                             print "motor2 set forward" , svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[18],0)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[16],1)
+                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[16],1)
                         elif svalue < 0:
                             print "motor2 set backward" , svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[18],1)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[16],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[18],1)
+                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
                         else:
                             print "motor2 set neutral" , svalue
-                            self.physical_pin_update(PIN_NUM_LOOKUP[18],0)
-                            self.physical_pin_update(PIN_NUM_LOOKUP[16],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
+                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
 
                         if PIN_USE[i] != 2:
                             PIN_USE[i] = 2
@@ -1068,14 +1127,14 @@ class ScratchListener(threading.Thread):
                     if (('servo1' in dataraw)):
                         tempValue = getValue('servo1', dataraw)
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-                        svalue= min(240,max(svalue,60))
+                        svalue= min(360,max(svalue,0))
                         os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
                     
                     if (('servo2' in dataraw)):
                         print "servo2"
                         tempValue = getValue('servo2', dataraw)
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-                        svalue= min(240,max(svalue,60))
+                        svalue= min(360,max(svalue,0))
                         os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
                         
                 elif ((ADDON_PRESENT[3] == True) and (piglow != None)):
@@ -1157,22 +1216,70 @@ class ScratchListener(threading.Thread):
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                         svalue= min(255,max(svalue,0))
                         PiGlow_Brightness = svalue
+                        
+                elif ADDON_PRESENT[5] == True:
+                    #do gPiO stuff
+                    
+                    if self.dVFindOnOff('allpins'):
+                        for i in range(PINS): 
+                            self.index_pin_update(i,self.dVRtnOnOff('allpins'))
+                            
+                    for i in range(PINS):
+                        physical_pin = PIN_NUM[i]
+                        checkStr = 'pin' + str(physical_pin)
+                        if self.dVFindOnOff(checkStr):
+                            self.index_pin_update(i,self.dVRtnOnOff(checkStr))
+                            
+                        #check for power variable commands
+                        for k in ['power','motor']:
+                            checkStr = k + str(physical_pin)
+                            if  self.dVFind(checkStr):
+                                tempValue = getValue(checkStr, dataraw)
+                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                                self.index_pwm_update(i,svalue)
+                            
+                    #check for motor variable commands
+                    motorList = [['motora',11,12],['motorb',13,15]]
+                    #motorList = [['motora',21,26],['motorb',19,24]]
+                    for listLoop in range(0,2):
+                        #print motorList[listLoop]
+                        checkStr = motorList[listLoop][0]
+                        if self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            #print "svalue", svalue
+                            if svalue > 0:
+                                #print motorList[listLoop]
+                                #print "motor set forward" , svalue
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
+                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(100-svalue))
+                            elif svalue < 0:
+                                #print motorList[listLoop]
+                                #print "motor set backward", svalue
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(svalue))
+                            else:
+                                #print svalue, "zero"
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],0)
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+
+                    ######### End of gPiO Variable handling
                    
-                if ADDON_PRESENT[6] == True:
+                elif ADDON_PRESENT[6] == True:
                     #do BerryClip stuff
                     leds = [7,11,15,19,21,23]
                     if self.dVFindOnOff('allleds'):
                         for i in leds:
-                            self.physical_pin_update(PIN_NUM_LOOKUP[i],self.dVRtnOnOff('allleds'))
+                            self.index_pin_update(PIN_NUM_LOOKUP[i],self.dVRtnOnOff('allleds'))
                     
                     for i in range(0, 6): # go thru 6 LEDS on/off
                         pin_string = 'led' + str(i + 1)
                         if self.dVFindOnOff(pin_string):
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dVRtnOnOff(pin_string))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dVRtnOnOff(pin_string))
                             
                         #check for power variable commands
                         checkStr = 'power' + str(i + 1)
-                        if  self.dFind(checkStr):
+                        if  self.dVFind(checkStr):
                             tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             pinIndex = PIN_NUM_LOOKUP[leds[i]]
@@ -1184,34 +1291,85 @@ class ScratchListener(threading.Thread):
                                 PWM_OUT[pinIndex ].changeDutyCycle(max(0,min(100,svalue)))
                             
                     if self.dVFindOnOff('buzzer'):
-                        self.physical_pin_update(PIN_NUM_LOOKUP[24],self.dVRtnOnOff('buzzer'))
+                        self.index_pin_update(PIN_NUM_LOOKUP[24],self.dVRtnOnOff('buzzer'))
                                                 
                     for i in range(0,3):
                         led_col = ['red','yellow','green']
                         if (self.dVFindOnOff(led_col[i])):
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dVRtnOnOff(led_col[i]))
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dVRtnOnOff(led_col[i]))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dVRtnOnOff(led_col[i]))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dVRtnOnOff(led_col[i]))
                             
                     for i in range(0,3):
                         led_col = ['red','yellow','green']
                         for k in range(0,2):
                             if self.dVFindOnOff(led_col[i] + str(k+1)):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dVRtnOnOff(led_col[i] + str(k+1)))
-                            
+                                self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dVRtnOnOff(led_col[i] + str(k+1)))
+                    ######### End of BerryClip Variable handling
+                    
+                elif ADDON_PRESENT[7] == True:
+                    #do PiRoCon stuff
+                    #check for motor variable commands
+                    motorList = [['motora',21,26],['motorb',19,24]]
+                    for listLoop in range(0,2):
+                        #print motorList[listLoop]
+                        checkStr = motorList[listLoop][0]
+                        if self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            print "svalue", svalue
+                            if svalue > 0:
+                                print motorList[listLoop]
+                                print "motor set forward" , svalue
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
+                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(100-svalue))
+                            elif svalue < 0:
+                                print motorList[listLoop]
+                                print "motor set backward", svalue
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(svalue))
+                            else:
+                                #print svalue, "zero"
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],0)
+                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+                    
+                    servoDict = {'servoa': '0', 'tilt': '0', 'servob': '1', 'pan': '1' }
+                    for key in servoDict:
+                        #print key , servoDict[key]
+                        checkStr = key
+                        if self.dVFind(checkStr):
+                            #print key , servoDict[key]
+                            tempValue = getValue(checkStr, dataraw)
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 150
+                            svalue= min(360,max(svalue,0))
+                            os.system("echo " + servoDict[key] + "=" + str(svalue) + " > /dev/servoblaster")
 
-
-
-                        
-                                    
-                                    
+                    if (pcaPWM != None):
+                        for i in range(0, 16): # go thru servos on PCA Board
+                            checkStr = 'servo' + str(i + 1) 
+                            if  self.dVFind(checkStr):
+                                tempValue = getValue(checkStr, dataraw)
+                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
+                                #print i, svalue
+                                pcaPWM.setPWM(i, 0, svalue)
+                                
+                        for i in range(0, 16): # go thru PowerPWM on PCA Board
+                            checkStr = 'power' + str(i + 1) 
+                            if  self.dVFind(checkStr):
+                                tempValue = getValue(checkStr, dataraw)
+                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                                svalue = min(4095,max(((svalue * 4096) /100),0))
+                                pcaPWM.setPWM(i, 0, svalue)
+                                
+                    ######### End of PiRoCon Variable handling
+                                                            
                 else:   #normal variable processing with no add on board
                     #gloablly set all ports
                     if (('allpins 1' in dataraw) or ('allpins on' in dataraw) or ('allpins high' in dataraw)):
                         for i in range(PINS): 
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                     if (('allpins 0' in dataraw) or ('allpins off' in dataraw) or ('allpins low' in dataraw)):
                         for i in range(PINS): 
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
                     
                     #check for individual pin on off commands
                     for i in range(PINS):
@@ -1223,11 +1381,11 @@ class ScratchListener(threading.Thread):
                         if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
                              ((pin_string + ' high') in dataraw )):
                             #print "variable detect 1/on/high" , dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                         if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
                               ((pin_string + ' low') in dataraw )):
                             #print "variable detect 0/off/low" , dataraw
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
 
                         #check for power variable commands
                         checkStr = 'power' + str(physical_pin)
@@ -1258,151 +1416,153 @@ class ScratchListener(threading.Thread):
                                 PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
                                 PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
-
-                #Use bit pattern to control ports
-                checkStr = 'pinpattern'
-                if  (checkStr + ' ') in dataraw:
-                    #print 'Found pinpattern'
-                    num_of_bits = PINS
-                    svalue = getValue(checkStr, dataraw)
-                    #print sensor_value[0]
-                    bit_pattern = ('00000000000000000000000000'+svalue)[-num_of_bits:]
-                    #print 'bit_pattern %s' % bit_pattern
-                    j = 0
-                    for i in range(PINS):
-                    #bit_state = ((2**i) & sensor_value) >> i
-                    #print 'dummy pin %d state %d' % (i, bit_state)
-                        if (PIN_USE[i] == 1):
-                            if bit_pattern[-(j+1)] == '0':
-                                self.physical_pin_update(i,0)
-                            else:
-                                self.physical_pin_update(i,1)
-                            j = j + 1
-
-                                       
-                checkStr = 'motora'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                    #print "MotorA" , svalue
-                    if (stepperInUse[STEPPERA] == True):
-                        #print "Stepper A in operation"
-                        #print "send change to motora as a stepper" , sensor_value[0]
-                        steppera.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                        
-                    else:
-                        i = PIN_NUM_LOOKUP[11] # assume motora is connected to Pin11
-                        if PIN_USE[i] != 2:
-                            PIN_USE[i] = 2
-                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                            PWM_OUT[i].start(max(0,min(100,svalue)))
+                                
+                    checkStr = 'motora'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        #print "MotorA" , svalue
+                        if (stepperInUse[STEPPERA] == True):
+                            #print "Stepper A in operation"
+                            #print "send change to motora as a stepper" , sensor_value[0]
+                            steppera.changeSpeed(max(-100,min(100,svalue)),2123456789)
+                            
                         else:
-                            PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
+                            i = PIN_NUM_LOOKUP[11] # assume motora is connected to Pin11
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,svalue)))
+                            else:
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
 
-                checkStr = 'motorb'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                    if (stepperInUse[STEPPERB] == True):
-                        #print "Stepper B in operation"
-                        #print "send change to motorb as a stepper" , sensor_value[0]
-                        stepperb.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                        
-                    else:
-                        i = PIN_NUM_LOOKUP[12] # assume motorb is connected to Pin11
-                        if PIN_USE[i] != 2:
-                            PIN_USE[i] = 2
-                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                            PWM_OUT[i].start(max(0,min(100,svalue)))
+                    checkStr = 'motorb'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if (stepperInUse[STEPPERB] == True):
+                            #print "Stepper B in operation"
+                            #print "send change to motorb as a stepper" , sensor_value[0]
+                            stepperb.changeSpeed(max(-100,min(100,svalue)),2123456789)
+                            
                         else:
-                            PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
+                            i = PIN_NUM_LOOKUP[12] # assume motorb is connected to Pin11
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,svalue)))
+                            else:
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
-                checkStr = 'motorc'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                    if (stepperInUse[STEPPERC] == True):
-                        #print "Stepper C in operation"
-                        #print "send change to motorc as a stepper" , sensor_value[0]
-                        stepperc.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                        
-                    else:
-                        i = PIN_NUM_LOOKUP[13] # assume motorc is connected to Pin11
-                        if PIN_USE[i] != 2:
-                            PIN_USE[i] = 2
-                            PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
-                            PWM_OUT[i].start(max(0,min(100,svalue)))
+                    checkStr = 'motorc'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if (stepperInUse[STEPPERC] == True):
+                            #print "Stepper C in operation"
+                            #print "send change to motorc as a stepper" , sensor_value[0]
+                            stepperc.changeSpeed(max(-100,min(100,svalue)),2123456789)
+                            
                         else:
-                            PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
-
-
-
-                checkStr = 'stepdelay'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    if isNumeric(tempValue):
-                        step_delay = int(float(tempValue))
-                        print 'step delay changed to', step_delay
-
-                if  'positiona' in dataraw:
-                    #print "positiona" , dataraw
-                    if (stepperInUse[STEPPERA] == True):
-                        outputall_pos = dataraw.find('positiona')
-                        sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
-                        if isNumeric(sensor_value[0]):
-                            #if int(float(sensor_value[0])) != 0:s
-                            if 'steppera' in dataraw:
-                                turnAStep = int(float(sensor_value[0]))
+                            i = PIN_NUM_LOOKUP[13] # assume motorc is connected to Pin11
+                            if PIN_USE[i] != 2:
+                                PIN_USE[i] = 2
+                                PWM_OUT[i] = PiZyPwm(100, PIN_NUM[i], GPIO.BOARD)
+                                PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
-                                steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
-                                turnAStep = int(float(sensor_value[0]))
-                                #else:
-                                #    turnAStep = 0
-                                            
-                if  'positionb' in dataraw:
-                    #print "positionb" , dataraw
-                    if (stepperInUse[STEPPERB] == True):
-                        outputall_pos = dataraw.find('positionb')
-                        sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
-                        #print "sensor" , sensor_value[0]
-                        if isNumeric(sensor_value[0]):
-                            #if int(float(sensor_value[0])) != 0:
-                            if 'stepperb' in dataraw:
-                                turnBStep = int(float(sensor_value[0]))
-                                #print "stepperb found"
-                            else:
-                                #print "change posb" , sensor_value[0]
-                                stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
-                                turnBStep = int(float(sensor_value[0]))
-                                #else:
-                                #    turnBStep = 0
+                                PWM_OUT[i].changeDutyCycle(max(0,min(100,svalue)))
 
-                if  'positionc' in dataraw:
-                    print "positionc" , dataraw
-                    if (stepperInUse[STEPPERC] == True):
-                        outputall_pos = dataraw.find('positionc')
-                        sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
-                        #print "sensor" , sensor_value[0]
-                        if isNumeric(sensor_value[0]):
-                            #if int(float(sensor_value[0])) != 0:
-                            if 'stepperc' in dataraw:
-                                turnCStep = int(float(sensor_value[0]))
-                                #print "stepperb found"
-                            else:
-                                #print "change posb" , sensor_value[0]
-                                stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
-                                turnCStep = int(float(sensor_value[0]))
-                                #else:
-                                #    turnBStep = 0
+
+                    #Use bit pattern to control ports
+                    checkStr = 'pinpattern'
+                    if  (checkStr + ' ') in dataraw:
+                        #print 'Found pinpattern'
+                        num_of_bits = PINS
+                        svalue = getValue(checkStr, dataraw)
+                        #print sensor_value[0]
+                        bit_pattern = ('00000000000000000000000000'+svalue)[-num_of_bits:]
+                        #print 'bit_pattern %s' % bit_pattern
+                        j = 0
+                        for i in range(PINS):
+                        #bit_state = ((2**i) & sensor_value) >> i
+                        #print 'dummy pin %d state %d' % (i, bit_state)
+                            if (PIN_USE[i] == 1):
+                                if bit_pattern[-(j+1)] == '0':
+                                    self.index_pin_update(i,0)
+                                else:
+                                    self.index_pin_update(i,1)
+                                j = j + 1
+
+                                           
+
+
+
+                    checkStr = 'stepdelay'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        if isNumeric(tempValue):
+                            step_delay = int(float(tempValue))
+                            print 'step delay changed to', step_delay
+
+                    if  'positiona' in dataraw:
+                        #print "positiona" , dataraw
+                        if (stepperInUse[STEPPERA] == True):
+                            outputall_pos = dataraw.find('positiona')
+                            sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
+                            if isNumeric(sensor_value[0]):
+                                #if int(float(sensor_value[0])) != 0:s
+                                if 'steppera' in dataraw:
+                                    turnAStep = int(float(sensor_value[0]))
+                                else:
+                                    steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
+                                    turnAStep = int(float(sensor_value[0]))
+                                    #else:
+                                    #    turnAStep = 0
+                                                
+                    if  'positionb' in dataraw:
+                        #print "positionb" , dataraw
+                        if (stepperInUse[STEPPERB] == True):
+                            outputall_pos = dataraw.find('positionb')
+                            sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
+                            #print "sensor" , sensor_value[0]
+                            if isNumeric(sensor_value[0]):
+                                #if int(float(sensor_value[0])) != 0:
+                                if 'stepperb' in dataraw:
+                                    turnBStep = int(float(sensor_value[0]))
+                                    #print "stepperb found"
+                                else:
+                                    #print "change posb" , sensor_value[0]
+                                    stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
+                                    turnBStep = int(float(sensor_value[0]))
+                                    #else:
+                                    #    turnBStep = 0
+
+                    if  'positionc' in dataraw:
+                        print "positionc" , dataraw
+                        if (stepperInUse[STEPPERC] == True):
+                            outputall_pos = dataraw.find('positionc')
+                            sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
+                            #print "sensor" , sensor_value[0]
+                            if isNumeric(sensor_value[0]):
+                                #if int(float(sensor_value[0])) != 0:
+                                if 'stepperc' in dataraw:
+                                    turnCStep = int(float(sensor_value[0]))
+                                    #print "stepperb found"
+                                else:
+                                    #print "change posb" , sensor_value[0]
+                                    stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
+                                    turnCStep = int(float(sensor_value[0]))
+                                    #else:
+                                    #    turnBStep = 0
                             
 
 ### Check for Broadcast type messages being received
@@ -1414,11 +1574,11 @@ class ScratchListener(threading.Thread):
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(0, 10):
                             if (PIN_USE[i] <> 0):
-                                self.physical_pin_update(i,1)
+                                self.index_pin_update(i,1)
                     if (('alloff' in dataraw) or ('alllow' in dataraw)):
                         for i in range(0, 10):
                             if (PIN_USE[i] <> 0):
-                                self.physical_pin_update(i,0)
+                                self.index_pin_update(i,0)
                                 
                         #do ladderboard stuff
                     for i in range(0, 10):
@@ -1427,11 +1587,11 @@ class ScratchListener(threading.Thread):
                         #print "pin" + str(i + 1) + "high"
                         if (('led' + str(i + 1)+'high' in dataraw) or ('led' + str(i + 1)+'on' in dataraw)):
                             #print dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
 
                         if (('led' + str(i + 1)+'low' in dataraw) or ('led' + str(i + 1)+'off' in dataraw)):
                             #print dataraw
-                            self.physical_pin_update(i,0)
+                            self.index_pin_update(i,0)
                             
                 elif ADDON_PRESENT[2] == True: # Boeeerb MotorPiTx
                     #Start using ultrasonic sensor on a pin    
@@ -1441,7 +1601,7 @@ class ScratchListener(threading.Thread):
                         PIN_USE[i] = 0
                         GPIO.setup(physical_pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                         #print dataraw
-                        self.physical_pin_update(i,1)
+                        self.index_pin_update(i,1)
                         print 'start pinging on', str(physical_pin)
                         ULTRA_IN_USE[i] = True
                         
@@ -1449,7 +1609,7 @@ class ScratchListener(threading.Thread):
                         physical_pin = 7
                         i = PIN_NUM_LOOKUP[physical_pin]
                         #print dataraw
-                        self.physical_pin_update(i,1)
+                        self.index_pin_update(i,1)
                         print 'start pinging on', str(physical_pin)
                         ULTRA_IN_USE[i] = True
                         
@@ -1551,38 +1711,38 @@ class ScratchListener(threading.Thread):
                     if self.dFindOnOff('all'):
                         for i in [7,11,15,19,21,23,24]:
                             if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[i],self.dRtnOnOff('all'))
+                                self.index_pin_update(PIN_NUM_LOOKUP[i],self.dRtnOnOff('all'))
                                                                 
                     leds = [7,11,15,19,21,23]
                     for i in range(0,6):
                         if self.dFindOnOff('led' + str(i + 1)):
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dRtnOnOff('led' + str(i + 1)))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[i]],self.dRtnOnOff('led' + str(i + 1)))
 
                     if self.dFindOnOff('buzzer'):
-                        self.physical_pin_update(PIN_NUM_LOOKUP[24],self.dRtnOnOff('buzzer'))
+                        self.index_pin_update(PIN_NUM_LOOKUP[24],self.dRtnOnOff('buzzer'))
                                                 
                     for i in range(0,3):
                         led_col = ['red','yellow','green']
                         if (self.dFindOnOff(led_col[i])):
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dRtnOnOff(led_col[i]))
-                            self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dRtnOnOff(led_col[i]))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2)]],self.dRtnOnOff(led_col[i]))
+                            self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + 1]],self.dRtnOnOff(led_col[i]))
                             
                     for i in range(0,3):
                         led_col = ['red','yellow','green']
                         for k in range(0,2):
                             if self.dFindOnOff(led_col[i] + str(k+1)):
-                                self.physical_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dRtnOnOff(led_col[i] + str(k+1)))
+                                self.index_pin_update(PIN_NUM_LOOKUP[leds[(i * 2) + k]],self.dRtnOnOff(led_col[i] + str(k+1)))
    
                 else: # Plain GPIO Broadcast processing
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(PINS):
                             if (PIN_USE[i] <> 0):
-                                self.physical_pin_update(i,1)
+                                self.index_pin_update(i,1)
                     if (('alloff' in dataraw) or ('alllow' in dataraw)):
                         for i in range(PINS):
                             if (PIN_USE[i] <> 0):
-                                self.physical_pin_update(i,0)
+                                self.index_pin_update(i,0)
                                 
                     #check pins
                     for i in range(PINS):
@@ -1590,15 +1750,15 @@ class ScratchListener(threading.Thread):
                         #print check_broadcast
                         physical_pin = PIN_NUM[i]
                         if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
-                            #print dataraw
-                            self.physical_pin_update(i,1)
+                            print 'pin' , physical_pin, 'on'
+                            self.index_pin_update(i,1)
 
                         if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
-                            #print dataraw
-                            self.physical_pin_update(i,0)
+                            print 'pin' , physical_pin, 'off'
+                            self.index_pin_update(i,0)
 
                         if ('sonar' + str(physical_pin)) in dataraw:
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                             ti = time.time()
                             # setup a array to hold 3 values and then do 3 distance calcs and store them
                             #print 'sonar started'
@@ -1660,7 +1820,7 @@ class ScratchListener(threading.Thread):
                         #Start using ultrasonic sensor on a pin    
                         if (('ultra' + str(physical_pin) in dataraw)):
                             #print dataraw
-                            self.physical_pin_update(i,1)
+                            self.index_pin_update(i,1)
                             print 'start pinging on', str(physical_pin)
                             ULTRA_IN_USE[i] = True
 #                            tempTotal = 0
@@ -1688,9 +1848,9 @@ class ScratchListener(threading.Thread):
                     #print 'dummy pin %d state %d' % (i, bit_state)
                         if (PIN_USE[i] == 1):
                             if bit_pattern[-(j+1)] == '0':
-                                self.physical_pin_update(i,0)
+                                self.index_pin_update(i,0)
                             else:
-                                self.physical_pin_update(i,1)
+                                self.index_pin_update(i,1)
                             j = j + 1
                              
 

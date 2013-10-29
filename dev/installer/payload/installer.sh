@@ -7,7 +7,7 @@
 #Version F 13Oct12 – rem out rpi.gpio as now included in Raspbian
 #Version G 20Mar13 - Allow otheruser option on commandline (Tnever/meltwater)
 #Version H 24Mar13 - correct newline issues
-#Version 28Oct13 Add in Chown commands
+#Version 29Oct13 Add in Chown commands and extra Adafruit and servod files and alter gpio_scrath2.sh and bit of chmod +x
 f_exit(){
 echo ""
 echo "Usage:"
@@ -48,9 +48,13 @@ fi
 
 
 mkdir -p $HDIR/simplesi_scratch_handler
+sudo chown -R $USERID:$GROUPID $HDIR/simplesi_scratch_handler
 
 cp scratch_gpio_handler2.py $HDIR/simplesi_scratch_handler
-sudo chown -R $USERID:$GROUPID $HDIR/simplesi_scratch_handler
+cp Adafruit_I2C.py $HDIR/simplesi_scratch_handler
+cp Adafruit_PWM_Servo_Driver.py $HDIR/simplesi_scratch_handler
+cp servodpirocon $HDIR/simplesi_scratch_handler
+chmod +x servodpirocon
 
 #Instead of copying the scratch_gpio2.sh file, we will generate it
 #Create a new file for scratch_gpio2.sh
@@ -58,8 +62,10 @@ echo "#!/bin/bash" > $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
 echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
 echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
 echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
+echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
 echo "sudo ps aux | grep 'python.*scratch_gpio_handler2.py' | grep -v grep | awk '{print \$2}' | xargs sudo kill -9 " >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
-echo "sudo python $HDIR/simplesi_scratch_handler/scratch_gpio_handler2.py &" >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
+echo "cd $HDIR/simplesi_scratch_handler" >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
+echo "sudo python scratch_gpio_handler2.py &" >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
 echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
 
 sudo chmod +x $HDIR/simplesi_scratch_handler/scratch_gpio2.sh
