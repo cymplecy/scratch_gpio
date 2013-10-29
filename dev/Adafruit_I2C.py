@@ -3,7 +3,7 @@
 import smbus
 
 # ===========================================================================
-# Adafruit_I2C Class
+# Adafruit_I2C Class mod @cymplecy 29Oct13 error raises exception
 # ===========================================================================
 
 class Adafruit_I2C :
@@ -48,6 +48,7 @@ class Adafruit_I2C :
 
   def errMsg(self):
     print "Error accessing 0x%02X: Check your I2C address" % self.address
+    raise Exception("Error accesing I2C Device") # Added by Simon Walters to raise an error if no device found
     return -1
 
   def write8(self, reg, value):

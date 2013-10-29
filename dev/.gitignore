@@ -1,3 +1,5 @@
 *scratch_gpio2.sh
 pyglow.*
+*.pyo
+*.pyc
 

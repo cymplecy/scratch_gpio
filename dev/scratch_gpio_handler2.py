@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '2.8.8.2' # 26Oct13
+Version =  '2.9.0.0' # 29Oct13
 
 
 
@@ -222,11 +222,11 @@ except:
 pcaPWM = None
 try:
     pcaPWM = PWM(0x40, debug=False)
-    pcaPWM.setPWMFreq(60)                        # Set frequency to 60 Hz
+    print pcaPWM
+    print pcaPWM.setPWMFreq(60)                        # Set frequency to 60 Hz
     print "AdaFruit PCA9685 detected"
 except:
-    pass
-    #print "No pcaPwm Detected"
+    print "No pcaPwm Detected"
     
 #If I2C then don't uses pins 3 and 5
 if ((piglow != None) or (compass != None) or (pcaPWM != None)):
@@ -1023,6 +1023,9 @@ class ScratchListener(threading.Thread):
                         PIN_USE[PIN_NUM_LOOKUP[26]] = 1 #MotorA 
                         PIN_USE[PIN_NUM_LOOKUP[24]] = 1 #MotorB
                         PIN_USE[PIN_NUM_LOOKUP[16]] = 0 #MotorB
+                        PIN_USE[PIN_NUM_LOOKUP[11]] = 0 #ObsRight
+                        PIN_USE[PIN_NUM_LOOKUP[12]] = 0 #LFLeft
+                        PIN_USE[PIN_NUM_LOOKUP[13]] = 0 #LFRight
 
                         SetPinMode()
                         
@@ -1262,7 +1265,7 @@ class ScratchListener(threading.Thread):
 
                     ######### End of gPiO Variable handling
                    
-                if ADDON_PRESENT[6] == True:
+                elif ADDON_PRESENT[6] == True:
                     #do BerryClip stuff
                     leds = [7,11,15,19,21,23]
                     if self.dVFindOnOff('allleds'):
@@ -1336,7 +1339,7 @@ class ScratchListener(threading.Thread):
                         if self.dVFind(checkStr):
                             #print key , servoDict[key]
                             tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
+                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 150
                             svalue= min(360,max(svalue,0))
                             os.system("echo " + servoDict[key] + "=" + str(svalue) + " > /dev/servoblaster")
 

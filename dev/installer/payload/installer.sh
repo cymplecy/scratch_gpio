@@ -7,6 +7,7 @@
 #Version F 13Oct12 – rem out rpi.gpio as now included in Raspbian
 #Version G 20Mar13 - Allow otheruser option on commandline (Tnever/meltwater)
 #Version H 24Mar13 - correct newline issues
+#Version 28Oct13 Add in Chown commands
 f_exit(){
 echo ""
 echo "Usage:"
@@ -49,6 +50,7 @@ fi
 mkdir -p $HDIR/simplesi_scratch_handler
 
 cp scratch_gpio_handler2.py $HDIR/simplesi_scratch_handler
+sudo chown -R $USERID:$GROUPID $HDIR/simplesi_scratch_handler
 
 #Instead of copying the scratch_gpio2.sh file, we will generate it
 #Create a new file for scratch_gpio2.sh
@@ -66,8 +68,12 @@ cp blink11.py $HDIR
 
 cp scratchgpio2.desktop $HDIR/Desktop
 
+mkdir -p $HDIR/Documents
+sudo chown -R $USERID:$GROUPID $HDIR/Documents
+
 mkdir -p $HDIR/Documents/Scratch\ Projects
 sudo chown -R $USERID:$GROUPID $HDIR/Documents/Scratch\ Projects
+
 cp rsc.sb $HDIR/Documents/Scratch\ Projects
 cp GPIOexample.sb $HDIR/Documents/Scratch\ Projects
 cp blink11.sb $HDIR/Documents/Scratch\ Projects
