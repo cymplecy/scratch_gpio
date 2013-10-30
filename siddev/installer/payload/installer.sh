@@ -40,21 +40,21 @@ if [ ! -d "$HDIR" ]; then
 fi
 
 #Not needed as directory should already exist from sgh install
-#mkdir -p $HDIR/simplesi_scratch_handler
+mkdir -p $HDIR/sid
 
-cp sid.py $HDIR/simplesi_scratch_handler
+cp sid.py $HDIR/sid
 
 #Instead of copying the sid.sh file, we will generate it
 #Create a new file for sid.sh
-echo "#!/bin/bash" > $HDIR/simplesi_scratch_handler/sid.sh
-echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $HDIR/simplesi_scratch_handler/sid.sh
-echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/simplesi_scratch_handler/sid.sh
-echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/simplesi_scratch_handler/sid.sh
-echo "#V0.5 re-used for launching sid.py" >> $HDIR/simplesi_scratch_handler/sid.sh
-echo "sudo ps aux | grep 'python.*sid.py' | grep -v grep | awk '{print $2}' | xargs sudo kill -9 " >> $HDIR/simplesi_scratch_handler/sid.sh
-echo "sudo python /home/pi/simplesi_scratch_handler/sid.py" >> $HDIR/simplesi_scratch_handler/sid.sh
+echo "#!/bin/bash" > $HDIR/sid/sid.sh
+echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $HDIR/sid/sid.sh
+echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/sid/sid.sh
+echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/sid/sid.sh
+echo "#V0.5 re-used for launching sid.py" >> $HDIR/sid/sid.sh
+echo "sudo ps aux | grep 'python.*sid.py' | grep -v grep | awk '{print $2}' | xargs sudo kill -9 " >> $HDIR/sid/sid.sh
+echo "sudo python /home/pi/sid/sid.py" >> $HDIR/sid/sid.sh
 
-sudo chmod 4775 $HDIR/simplesi_scratch_handler/sid.sh
+sudo chmod 4775 $HDIR/sid/sid.sh
 
 cp sid.desktop $HDIR/Desktop
 cp sid.desktop $HDIR/.config/autostart

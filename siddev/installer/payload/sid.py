@@ -2,7 +2,7 @@
 #Original Code Martin Bateman 2013
 #Modified by Simon Walters
 #GPLv2 applies
-#V0.22 14Sep13
+#V0.4 30Oct13
 
 import sys
 from socket import *
@@ -24,18 +24,34 @@ class Blink(threading.Thread):
         self.off = off
         self.terminated = False
         self.toTerminate = False
+        self.sequence = [1,2,1,2,1,2]
 
     def start(self):
         self.thread = threading.Thread(None, self.run, None, (), {})
         self.thread.start()
+        
 
 
     def run(self):
         while self.toTerminate == False:
-            os.system("echo 0 >/sys/class/leds/led0/brightness")
-            time.sleep(self.on )
-            os.system("echo 1 >/sys/class/leds/led0/brightness")
-            time.sleep(self.off )
+            #print self.sequence
+            for i in range(len(self.sequence)):
+                if self.sequence[i] == 0:
+                    #print self.sequence[i]
+                    os.system("echo 0 >/sys/class/leds/led0/brightness")
+                    time.sleep(self.off )
+                if self.sequence[i] == 1:
+                    #print self.sequence[i]
+                    os.system("echo 1 >/sys/class/leds/led0/brightness")
+                    time.sleep(self.on )
+                    os.system("echo 0 >/sys/class/leds/led0/brightness")
+                    time.sleep(self.off )
+                if self.sequence[i] == 2:
+                    #print self.sequence[i]
+                    os.system("echo 1 >/sys/class/leds/led0/brightness")
+                    time.sleep(3 * self.on )
+                    os.system("echo 0 >/sys/class/leds/led0/brightness")
+                    time.sleep(self.off )
         self.terminated = True
 
     def stop(self):
@@ -47,6 +63,9 @@ class Blink(threading.Thread):
     def set_delays(self,on,off):
         self.on = on
         self.off = off
+
+    def set_sequence(self,sequence):
+        self.sequence = sequence
         
             
 
@@ -94,7 +113,9 @@ s.settimeout(int(float(timeout)))
 
 os.system("echo none >/sys/class/leds/led0/trigger")
 
-blinkthread = Blink(0.3,0.3)       
+blinkthread = Blink(0.2,0.2) 
+blinkthread.set_sequence([1,1,1,0,0,0])
+      
 blinkthread.start()
 
     #blinkthread.join()
@@ -117,15 +138,16 @@ while 1:
         print "Unknown error occured with receiving data"
         break    
 
+    data = data.lower()
     print (data + " " + repr(wherefrom[0]))
 
-    if (data.find("Start SID" + myserial[-4:]) != -1):
-        os.system('sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py '+ str(repr(wherefrom[0])) +' &')
-        #process = subprocess.Popen(shlex.split("""x-terminal-emulator -e 'bash -c "sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py" + str(repr(wherefrom[0]))'"""), stdout=subprocess.PIPE)
-
-        
-        blinkthread.set_delays(1,1)
-        time.sleep(10)
+    if (data.find("start sid" + myserial[-4:]) != -1):
+        #os.system('sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py '+ str(repr(wherefrom[0])) +' &')
+        #print shlex.split("""x-terminal-emulator -e 'bash -c "sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py """ + str(repr(wherefrom[0])) + """"'""")
+        process = subprocess.Popen(shlex.split("""x-terminal-emulator -e 'bash -c "sudo python /home/pi/simplesi_scratch_handler/scratch_gpio_handler2.py """ + str(repr(wherefrom[0])) + """"'"""), stdout=subprocess.PIPE)
+       
+        blinkthread.set_sequence([2,2,2,0,0,0])
+        time.sleep(30)
         break
 
 

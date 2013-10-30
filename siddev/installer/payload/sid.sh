@@ -4,4 +4,4 @@
 #Version 0.4 - 20Mar13 meltwater - change to use provided name for home
 #V0.5 re-used for launching sid.py
 sudo ps aux | grep 'python.*sid.py' | grep -v grep | awk '{print $2}' | xargs sudo kill -9 
-sudo python /home/pi/simplesi_scratch_handler/sid.py
+sudo python /home/pi/sid/sid.py

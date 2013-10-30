@@ -1,6 +1,7 @@
 #!/bin/bash
 #V0.2a Modified for sid
 cp ../sid.sh ./payload/ #copy dev version to payload folder
+cp ../sid.py ./payload/ #copy dev version to payload folder
 cd payload
 tar cf ../payload.tar ./* #tar all the payload files
 cd ..
@@ -20,8 +21,8 @@ else
 fi
 chmod +x install_sid.sh #make install script executeable
 echo "install_sid.sh created"
-cp install_sid.sh ../../ #copy installer to base folder
-#cp ../scratch_gpio_handler2.py ../../ # copy handler to base folder
-#rm install_scratch_gpio2.sh
+cp install_sid.sh ../ #copy installer to siddev folder
+
+
 
 exit 0

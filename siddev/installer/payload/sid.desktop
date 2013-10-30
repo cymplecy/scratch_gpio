@@ -1,7 +1,7 @@
 [Desktop Entry]
 Name=SID
-Comment=Integrated Development Environment for Python
-Exec=/home/pi/simplesi_scratch_handler/sid.sh
+Comment=Scratch Interface Device for RPi
+Exec=/home/pi/sid/sid.sh
 Icon=/usr/share/pixmaps/idle.xpm
 Terminal=false
 MultipleArgs=false
