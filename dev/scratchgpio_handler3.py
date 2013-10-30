@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.0.0' # 29Oct13
+Version =  '3.0.1' # 30Oct13
 
 
 
@@ -1339,9 +1339,17 @@ class ScratchListener(threading.Thread):
                         if self.dVFind(checkStr):
                             #print key , servoDict[key]
                             tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 150
-                            svalue= min(360,max(svalue,0))
-                            os.system("echo " + servoDict[key] + "=" + str(svalue) + " > /dev/servoblaster")
+                            if isNumeric(tempValue):
+                                degrees = int(float(tempValue))
+                                print "value" , degrees
+                                degrees = min(90,max(degrees,-90))
+                                print "convert" , degrees
+                                servodvalue = 50+ ((degrees + 90) * 200 / 180)
+                                print "servod", servodvalue
+                                os.system("echo " + servoDict[key] + "=" + str(servodvalue) + " > /dev/servoblaster")
+                            elif tempValue == "off":
+                                print key ,"servod off"
+                                os.system("echo " + servoDict[key] + "=0 > /dev/servoblaster")
 
                     if (pcaPWM != None):
                         for i in range(0, 16): # go thru servos on PCA Board

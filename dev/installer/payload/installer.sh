@@ -15,6 +15,9 @@ echo "i.e. sudo install_scratchgpio3.sh otheruser"
 echo "Optional: Add a non-default 'otheruser' username after the command (default is:pi)."
 exit
 }
+echo "Debug Info"
+echo %SUDO_UID
+echo %SUDO_USER
 
 echo "Running Installer"
 if [ -z $1 ]
@@ -50,7 +53,7 @@ echo "Please wait a few seconds"
 sudo pkill -f servodpirocon
 sleep 3
 echo "Thank you"
-sudo rm $HDIR/scratchgpio -R
+sudo rm -rf $HDIR/scratchgpio
 
 mkdir -p $HDIR/scratchgpio
 chown -R $USERID:$GROUPID $HDIR/scratchgpio
@@ -92,5 +95,6 @@ chown -R $USERID:$GROUPID $HDIR/Documents/Scratch\ Projects
 cp rsc.sb $HDIR/Documents/Scratch\ Projects
 cp GPIOexample.sb $HDIR/Documents/Scratch\ Projects
 cp blink11.sb $HDIR/Documents/Scratch\ Projects
+chown -R $USERID:$GROUPID $HDIR/Documents/Scratch\ Projects
 echo ""
 echo "Finished."
