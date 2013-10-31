@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.0.1' # 31Oct13
+Version =  '3.0.2' # 31Oct13
 
 
 
@@ -991,6 +991,9 @@ class ScratchListener(threading.Thread):
                         pin=PIN_NUM_LOOKUP[10]
                         PIN_USE[pin] = 1
                         GPIO.setup(10,GPIO.OUT)
+                        os.system("sudo pkill -f servodpirocon")
+
+                        os.system('ps -ef | grep -v grep | grep "./servodmotorpitx" || ./servodmotorpitx')
                         
                     if ADDON[i] == "berry":
 
@@ -1028,7 +1031,7 @@ class ScratchListener(threading.Thread):
                         PIN_USE[PIN_NUM_LOOKUP[13]] = 0 #LFRight
 
                         SetPinMode()
-                        
+                        os.system("sudo pkill -f servodmotorpitx")
                         os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon')
                         
 
@@ -1124,18 +1127,42 @@ class ScratchListener(threading.Thread):
                         else:
                             PWM_OUT[i].changeDutyCycle(max(0,min(100,abs(svalue))))
                             
-                    if (('servo1' in dataraw)):
-                        tempValue = getValue('servo1', dataraw)
-                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-                        svalue= min(360,max(svalue,0))
-                        os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
+#                    if (('servo1' in dataraw)):
+#                        tempValue = getValue('servo1', dataraw)
+#                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
+#                        svalue= min(360,max(svalue,0))
+#                        os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
                     
-                    if (('servo2' in dataraw)):
-                        print "servo2"
-                        tempValue = getValue('servo2', dataraw)
-                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-                        svalue= min(360,max(svalue,0))
-                        os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
+#                    if (('servo2' in dataraw)):
+#                        print "servo2"
+#                        tempValue = getValue('servo2', dataraw)
+#                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
+#                        svalue= min(360,max(svalue,0))
+#                        os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
+                        
+                    servoDict = {'servo1': '0', 'tilt': '0', 'servo2': '1', 'pan': '1' }
+                    for key in servoDict:
+                        #print key , servoDict[key]
+                        checkStr = key
+                        if self.dVFind(checkStr):
+                            print key , servoDict[key]
+                            tempValue = getValue(checkStr, dataraw)
+                            if isNumeric(tempValue):
+                                degrees = -1 * int(float(tempValue))
+                                print "value" , degrees
+                                #print key
+                                if (key == 'servo1') or (key == 'tilt'):
+                                    degrees = min(60,max(degrees,-60))
+                                else:
+                                    degrees = min(90,max(degrees,-90))
+                                #print "convert" , degrees
+                                servodvalue = 50+ ((degrees + 90) * 200 / 180)
+                                print "servod", servodvalue
+                                os.system("echo " + servoDict[key] + "=" + str(servodvalue) + " > /dev/servoblaster")
+                            elif tempValue == "off":
+                                #print key ,"servod off"
+                                os.system("echo " + servoDict[key] + "=0 > /dev/servoblaster")
+
                         
                 elif ((ADDON_PRESENT[3] == True) and (piglow != None)):
                     #do PiGlow stuff but make sure PiGlow physically detected                                  
@@ -2006,6 +2033,7 @@ while True:
         print "Scratch disconnected"
         cleanup_threads((listener, sender))
         os.system("sudo pkill -f servodpirocon")
+        os.system("sudo pkill -f servodmotorpitx")
         time.sleep(1)
         cycle_trace = 'start'
 
@@ -2041,6 +2069,8 @@ while True:
         time.sleep(0.1)
     except KeyboardInterrupt:
         cleanup_threads((listener,sender))
+        os.system("sudo pkill -f servodpirocon")
+        os.system("sudo pkill -f servodmotorpitx")
         GPIO.cleanup()
         sys.exit()
         print "CleanUp complete"

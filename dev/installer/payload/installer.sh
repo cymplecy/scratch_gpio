@@ -51,7 +51,9 @@ fi
 
 echo "Please wait a few seconds"
 sudo pkill -f servodpirocon
-sleep 3
+sleep 1
+sudo pkill -f servodmotorpitx
+sleep 1
 echo "Thank you"
 sudo rm -rf $HDIR/scratchgpio
 
@@ -65,6 +67,10 @@ cp Adafruit_PWM_Servo_Driver.py $HDIR/scratchgpio
 cp servodpirocon $HDIR/scratchgpio
 chown -R $USERID:$GROUPID $HDIR/scratchgpio
 chmod +x servodpirocon
+
+cp servodmotorpitx $HDIR/scratchgpio
+chown -R $USERID:$GROUPID $HDIR/scratchgpio
+chmod +x servodmotorpitx
 
 #Instead of copying the scratchgpio3.sh file, we will generate it
 #Create a new file for scratchgpio3.sh
