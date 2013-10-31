@@ -16,8 +16,8 @@ echo "Optional: Add a non-default 'otheruser' username after the command (defaul
 exit
 }
 echo "Debug Info"
-echo %SUDO_UID
-echo %SUDO_USER
+
+#echo $SUDO_USER
 
 echo "Running Installer"
 if [ -z $1 ]

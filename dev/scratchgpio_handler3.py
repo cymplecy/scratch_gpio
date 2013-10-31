@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.0.1' # 30Oct13
+Version =  '3.0.1' # 31Oct13
 
 
 
@@ -1340,15 +1340,19 @@ class ScratchListener(threading.Thread):
                             #print key , servoDict[key]
                             tempValue = getValue(checkStr, dataraw)
                             if isNumeric(tempValue):
-                                degrees = int(float(tempValue))
-                                print "value" , degrees
-                                degrees = min(90,max(degrees,-90))
-                                print "convert" , degrees
+                                degrees = -1 * int(float(tempValue))
+                                #print "value" , degrees
+                                #print key
+                                if (key == 'servoa') or (key == 'tilt'):
+                                    degrees = min(60,max(degrees,-80))
+                                else:
+                                    degrees = min(90,max(degrees,-90))
+                                #print "convert" , degrees
                                 servodvalue = 50+ ((degrees + 90) * 200 / 180)
-                                print "servod", servodvalue
+                                #print "servod", servodvalue
                                 os.system("echo " + servoDict[key] + "=" + str(servodvalue) + " > /dev/servoblaster")
                             elif tempValue == "off":
-                                print key ,"servod off"
+                                #print key ,"servod off"
                                 os.system("echo " + servoDict[key] + "=0 > /dev/servoblaster")
 
                     if (pcaPWM != None):
@@ -2001,6 +2005,7 @@ while True:
     if (cycle_trace == 'disconnected'):
         print "Scratch disconnected"
         cleanup_threads((listener, sender))
+        os.system("sudo pkill -f servodpirocon")
         time.sleep(1)
         cycle_trace = 'start'
 

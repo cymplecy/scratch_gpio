@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.0.0' # 29Oct13
+Version =  '3.0.1' # 31Oct13
 
 
 
@@ -1339,9 +1339,21 @@ class ScratchListener(threading.Thread):
                         if self.dVFind(checkStr):
                             #print key , servoDict[key]
                             tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 150
-                            svalue= min(360,max(svalue,0))
-                            os.system("echo " + servoDict[key] + "=" + str(svalue) + " > /dev/servoblaster")
+                            if isNumeric(tempValue):
+                                degrees = -1 * int(float(tempValue))
+                                #print "value" , degrees
+                                #print key
+                                if (key == 'servoa') or (key == 'tilt'):
+                                    degrees = min(60,max(degrees,-80))
+                                else:
+                                    degrees = min(90,max(degrees,-90))
+                                #print "convert" , degrees
+                                servodvalue = 50+ ((degrees + 90) * 200 / 180)
+                                #print "servod", servodvalue
+                                os.system("echo " + servoDict[key] + "=" + str(servodvalue) + " > /dev/servoblaster")
+                            elif tempValue == "off":
+                                #print key ,"servod off"
+                                os.system("echo " + servoDict[key] + "=0 > /dev/servoblaster")
 
                     if (pcaPWM != None):
                         for i in range(0, 16): # go thru servos on PCA Board
@@ -1993,6 +2005,7 @@ while True:
     if (cycle_trace == 'disconnected'):
         print "Scratch disconnected"
         cleanup_threads((listener, sender))
+        os.system("sudo pkill -f servodpirocon")
         time.sleep(1)
         cycle_trace = 'start'
 
