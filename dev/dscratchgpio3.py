@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.1.0beta1' # 01Nov13
+Version =  '3.1.03' # 02Nov13
 
 
 
@@ -48,6 +48,9 @@ GPIO.cleanup()
 print "Board Revision" , GPIO.RPI_REVISION
 
 #Set some constants and initialise arrays
+PINPUT = 4
+POUTPUT = 1
+PPWM = 2
 STEPPERA=0
 STEPPERB=1
 STEPPERC=2
@@ -232,11 +235,11 @@ except:
 if ((piglow != None) or (compass != None) or (pcaPWM != None)):
     print "I2C device detected"
     PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
-    PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    PIN_USE = array('i',[ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT])
 else:
     print "No I2C Device Detected"
     PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
-    PIN_USE = array('i',[ 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    PIN_USE = array('i',[ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT])
     
 
 #  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
@@ -245,7 +248,7 @@ PIN_NUM_LOOKUP=[int] * 27
 
 for i in range(PINS):
     PIN_NUM_LOOKUP[PIN_NUM[i]] = i
-    print i, PIN_NUM[i]
+    #print i, PIN_NUM[i]
 
 
 PWM_OUT = [None] * PINS
@@ -281,10 +284,10 @@ def parse_data(dataraw, search_string):
 #Procedure to set pin mode for each pin
 def SetPinMode():
     for i in range(PINS):
-        if (PIN_USE[i] == 1):
+        if (PIN_USE[i] == POUTPUT):
             print 'setting pin' , PIN_NUM[i] , ' to out'
             GPIO.setup(PIN_NUM[i],GPIO.OUT)
-        elif (PIN_USE[i] == 0):
+        elif (PIN_USE[i] == PINPUT):
             print 'setting pin' , PIN_NUM[i] , ' to in'
             GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
@@ -330,16 +333,16 @@ class StepperControl(threading.Thread):
 
 
     def index_pin_update(self, pin_index, value):
-        if (PIN_USE[pin_index] == 0):
-            PIN_USE[pin_index] = 1
+        if (PIN_USE[pin_index] == PINPUT):
+            PIN_USE[pin_index] = POUTPUT
             GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
             print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from input'
-        if (PIN_USE[pin_index] == 2):
-            PIN_USE[pin_index] = 1
+        if (PIN_USE[pin_index] == PPWM):
+            PIN_USE[pin_index] = POUTPUT
             PWM_OUT[pin_index].stop()
             GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
             print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from PWM'
-        if (PIN_USE[pin_index] == 1):
+        if (PIN_USE[pin_index] == POUTPUT):
             #print 'setting physical pin %d to %d' % (PIN_NUM[pin_index],value)
             GPIO.output(PIN_NUM[pin_index], value)
 
@@ -512,7 +515,7 @@ class ScratchSender(threading.Thread):
         for i in range(PINS):
             #print 'i %d' % i
             #print 'GPIO PIN %d' % GPIO_PIN_INPUT[i]
-            if (PIN_USE[i] == 0):
+            if (PIN_USE[i] == PINPUT):
                 last_bit_pattern += GPIO.input(PIN_NUM[i]) << i
             #else:
                 #last_bit_pattern += 1 << i
@@ -525,7 +528,7 @@ class ScratchSender(threading.Thread):
             time.sleep(0.01) # be kind to cpu - not certain why :)
             pin_bit_pattern = 0L
             for i in range(PINS):
-                if (PIN_USE[i] == 0):
+                if (PIN_USE[i] == PINPUT):
                     #print 'pin' , PIN_NUM[i] , GPIO.input(PIN_NUM[i]
                     pin_bit_pattern += GPIO.input(PIN_NUM[i]) << i
                 #else:
@@ -535,7 +538,7 @@ class ScratchSender(threading.Thread):
             changed_pins = pin_bit_pattern ^ last_bit_pattern
             #print "changed pins" , bin(changed_pins)
             if changed_pins:
-                #print 'pin bit pattern %d' % pin_bit_pattern
+                print 'pin bit pattern' , bin(pin_bit_pattern)
 
                 try:
                     self.broadcast_changed_pins(changed_pins, pin_bit_pattern)
@@ -647,7 +650,7 @@ class ScratchSender(threading.Thread):
             # if we care about this pin's value
             if (changed_pin_map >> i) & 0b1:
                 pin_value = (pin_value_map >> i) & 0b1
-                if (PIN_USE[i] == 0):
+                if (PIN_USE[i] == PINPUT):
                     #print PIN_NUM[i] , pin_value
                     self.broadcast_pin_update(i, pin_value)
                                      
@@ -761,26 +764,27 @@ class ScratchListener(threading.Thread):
 
     def index_pin_update(self, pin_index, value):
         if INVERT == True:
-            if PIN_USE[pin_index] == 1:
+            if PIN_USE[pin_index] == POUTPUT:
                 value = abs(value - 1)
-        if (PIN_USE[pin_index] == 0):
-            PIN_USE[pin_index] = 1
+        if (PIN_USE[pin_index] == PINPUT):
+            PIN_USE[pin_index] = POUTPUT
             GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
             print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from input'
-        if (PIN_USE[pin_index] == 2):
-            PIN_USE[pin_index] = 1
+        if (PIN_USE[pin_index] == PPWM):
+            PIN_USE[pin_index] = POUTPUT
             PWM_OUT[pin_index].stop()
             GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
             print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from PWM'
-        if (PIN_USE[pin_index] == 1):
+        if (PIN_USE[pin_index] == POUTPUT):
             #print 'setting gpio %d (physical pin %d) to %d' % (GPIO_NUM[pin_index],PIN_NUM[pin_index],value)
             GPIO.output(PIN_NUM[pin_index], value)
             
     def index_pwm_update(self, pin_index, value):
-        print "pwm changed" , value
-        if PIN_USE[pin_index] != 2:
-            PIN_USE[pin_index] = 2
-            GPIO.PWM(PIN_NUM[i],100)
+        #print "pwm changed on pin index" , pin_index, "to", value
+        #print "Actualy pin=" , PIN_NUM[pin_index]
+        if PIN_USE[pin_index] != PPWM:
+            PIN_USE[pin_index] = PPWM
+            GPIO.PWM(PIN_NUM[pin_index],100)
             PWM_OUT[pin_index] = GPIO.PWM(PIN_NUM[pin_index],100)
             PWM_OUT[pin_index].start(max(0,min(100,abs(value))))
         else:
@@ -811,6 +815,13 @@ class ScratchListener(threading.Thread):
 
         firstRun = False #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
+
+        #semi global variables used for servos in PiRoCon
+        panoffset = 0
+        tiltoffset = 0
+        pan = 0
+        tilt = 0
+        
         #This is main listening routine
         lcount = 0
         while not self.stopped():
@@ -825,7 +836,7 @@ class ScratchListener(threading.Thread):
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
                     self.dataraw = dataraw
-                    #print dataraw
+                    print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -866,15 +877,15 @@ class ScratchListener(threading.Thread):
                     #print check_broadcast
                     physical_pin = PIN_NUM[i]
                     if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
-                        if PIN_USE[i] == 0:                           # check to see if it is an input at moment
+                        if PIN_USE[i] == PINPUT:                           # check to see if it is an input at moment
                             GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
                             print 'pin' , PIN_NUM[i] , ' out'
-                            PIN_USE[i] = 1
+                            PIN_USE[i] = POUTPUT
                     if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
-                        if PIN_USE[i] != 0:                                         # check to see if it not an input already
+                        if PIN_USE[i] != PINPUT:                                         # check to see if it not an input already
                             GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
                             print 'pin' , PIN_NUM[i] , ' in'
-                            PIN_USE[i] = 0
+                            PIN_USE[i] = PINPUT
                             
 ### Check for AddOn boards being declared
             for i in range(NUMOF_ADDON):
@@ -885,9 +896,9 @@ class ScratchListener(threading.Thread):
                     if ADDON[i] == "ladder":
 
                         for k in range(0,10):
-                            PIN_USE[k] = 1
+                            PIN_USE[k] = POUTPUT
                         for k in range(10,14):
-                            PIN_USE[k] = 0
+                            PIN_USE[k] = PINPUT
                         SetPinMode()
 
                         for k in range(1,5):
@@ -904,33 +915,33 @@ class ScratchListener(threading.Thread):
                         self.index_pin_update(PIN_NUM_LOOKUP[18], 0)
                         
                         pin=PIN_NUM_LOOKUP[13]
-                        PIN_USE[pin] = 0
+                        PIN_USE[pin] = PINPUT
                         GPIO.setup(13,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                         
                         #setup servo2 for pin 10
                         pin=PIN_NUM_LOOKUP[10]
-                        PIN_USE[pin] = 1
+                        PIN_USE[pin] = POUTPUT
                         GPIO.setup(10,GPIO.OUT)
                         os.system("sudo pkill -f servodpirocon")
 
-                        os.system('ps -ef | grep -v grep | grep "./servodmotorpitx" || ./servodmotorpitx')
+                        os.system('ps -ef | grep -v grep | grep "./servodmotorpitx" || ./servodmotorpitx--idle-timeout=20000')
                         
                     if ADDON[i] == "berry":
 
-                        PIN_USE[PIN_NUM_LOOKUP[7]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[11]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[15]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[19]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[21]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[23]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[24]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[26]] = 0
+                        PIN_USE[PIN_NUM_LOOKUP[7]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[11]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[15]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[19]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[21]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[23]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[24]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[26]] = PINPUT
                         #dummy out to stop random inputs registering
-                        PIN_USE[PIN_NUM_LOOKUP[3]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[5]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[8]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[10]] = 1
-                        PIN_USE[PIN_NUM_LOOKUP[22]] = 1
+                        PIN_USE[PIN_NUM_LOOKUP[3]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[5]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[8]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[10]] = POUTPUT
+                        PIN_USE[PIN_NUM_LOOKUP[22]] = POUTPUT
                         SetPinMode()
                         
                         sensor_name = 'switch'
@@ -939,25 +950,26 @@ class ScratchListener(threading.Thread):
                         self.send_scratch_command(bcast_str)
                         
                     if ADDON[i] == "pirocon":
-                        PIN_USE[PIN_NUM_LOOKUP[18]] = 1 #tilt servoA
-                        PIN_USE[PIN_NUM_LOOKUP[22]] = 1 #pan servoB
-                        PIN_USE[PIN_NUM_LOOKUP[19]] = 1 #MotorA 
-                        PIN_USE[PIN_NUM_LOOKUP[21]] = 1 #MotorB
-                        PIN_USE[PIN_NUM_LOOKUP[26]] = 1 #MotorA 
-                        PIN_USE[PIN_NUM_LOOKUP[24]] = 1 #MotorB
-                        PIN_USE[PIN_NUM_LOOKUP[16]] = 0 #MotorB
-                        PIN_USE[PIN_NUM_LOOKUP[11]] = 0 #ObsRight
-                        PIN_USE[PIN_NUM_LOOKUP[12]] = 0 #LFLeft
-                        PIN_USE[PIN_NUM_LOOKUP[13]] = 0 #LFRight
+                        PIN_USE[PIN_NUM_LOOKUP[18]] = POUTPUT #tilt servoA
+                        PIN_USE[PIN_NUM_LOOKUP[22]] = POUTPUT #pan servoB
+                        PIN_USE[PIN_NUM_LOOKUP[19]] = POUTPUT #MotorA 
+                        PIN_USE[PIN_NUM_LOOKUP[21]] = POUTPUT #MotorB
+                        PIN_USE[PIN_NUM_LOOKUP[26]] = POUTPUT #MotorA 
+                        PIN_USE[PIN_NUM_LOOKUP[24]] = POUTPUT #MotorB
+                        PIN_USE[PIN_NUM_LOOKUP[16]] = PINPUT #ObsLeft
+                        PIN_USE[PIN_NUM_LOOKUP[11]] = PINPUT #ObsRight
+                        PIN_USE[PIN_NUM_LOOKUP[12]] = PINPUT #LFLeft
+                        PIN_USE[PIN_NUM_LOOKUP[13]] = PINPUT #LFRight
 
                         SetPinMode()
                         os.system("sudo pkill -f servodmotorpitx")
-                        os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon')
+                        os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon --idle-timeout=20000')
                         
 
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
                 #print "sensor-update rcvd" , dataraw
+                           
               
                 if ADDON_PRESENT[1] == True:
                     #do ladderboard stuff
@@ -988,8 +1000,8 @@ class ScratchListener(threading.Thread):
                             #print 'power', str(physical_pin) , tempValue
 
                             if isNumeric(tempValue):
-                                if PIN_USE[i] != 2:
-                                    PIN_USE[i] = 2
+                                if PIN_USE[i] != PPWM:
+                                    PIN_USE[i] = PPWM
                                     PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
                                     PWM_OUT[i].start(max(0,min(100,int(float(tempValue)))))
                                 else:
@@ -1015,8 +1027,8 @@ class ScratchListener(threading.Thread):
                             self.index_pin_update(PIN_NUM_LOOKUP[21],0)
                             self.index_pin_update(PIN_NUM_LOOKUP[19],0)
 
-                        if PIN_USE[i] != 2:
-                            PIN_USE[i] = 2
+                        if PIN_USE[i] != PPWM:
+                            PIN_USE[i] = PPWM
                             PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
                             PWM_OUT[i].start(max(0,min(100,abs(svalue))))
                         else:
@@ -1028,48 +1040,36 @@ class ScratchListener(threading.Thread):
                         svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
 
                         if svalue > 0:
-                            print "motor2 set forward" , svalue
+                            #print "motor2 set forward" , svalue
                             self.index_pin_update(PIN_NUM_LOOKUP[18],0)
                             self.index_pin_update(PIN_NUM_LOOKUP[16],1)
                         elif svalue < 0:
-                            print "motor2 set backward" , svalue
+                            #print "motor2 set backward" , svalue
                             self.index_pin_update(PIN_NUM_LOOKUP[18],1)
                             self.index_pin_update(PIN_NUM_LOOKUP[16],0)
                         else:
-                            print "motor2 set neutral" , svalue
+                            #print "motor2 set neutral" , svalue
                             self.index_pin_update(PIN_NUM_LOOKUP[18],0)
                             self.index_pin_update(PIN_NUM_LOOKUP[16],0)
 
-                        if PIN_USE[i] != 2:
-                            PIN_USE[i] = 2
+                        if PIN_USE[i] != PPWM:
+                            PIN_USE[i] = PPWM
                             PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
                             PWM_OUT[i].start(max(0,min(100,abs(svalue))))
                         else:
                             PWM_OUT[i].ChangeDutyCycle(max(0,min(100,abs(svalue))))
                             
-#                    if (('servo1' in dataraw)):
-#                        tempValue = getValue('servo1', dataraw)
-#                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-#                        svalue= min(360,max(svalue,0))
-#                        os.system("echo 0=" + str(svalue) + " > /dev/servoblaster")
-                    
-#                    if (('servo2' in dataraw)):
-#                        print "servo2"
-#                        tempValue = getValue('servo2', dataraw)
-#                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
-#                        svalue= min(360,max(svalue,0))
-#                        os.system("echo 1=" + str(svalue) + " > /dev/servoblaster")
                         
                     servoDict = {'servo1': '0', 'tilt': '0', 'servo2': '1', 'pan': '1' }
                     for key in servoDict:
                         #print key , servoDict[key]
                         checkStr = key
                         if self.dVFind(checkStr):
-                            print key , servoDict[key]
+                            #print key , servoDict[key]
                             tempValue = getValue(checkStr, dataraw)
                             if isNumeric(tempValue):
                                 degrees = -1 * int(float(tempValue))
-                                print "value" , degrees
+                                #print "value" , degrees
                                 #print key
                                 if (key == 'servo1') or (key == 'tilt'):
                                     degrees = min(60,max(degrees,-60))
@@ -1077,7 +1077,7 @@ class ScratchListener(threading.Thread):
                                     degrees = min(90,max(degrees,-90))
                                 #print "convert" , degrees
                                 servodvalue = 50+ ((degrees + 90) * 200 / 180)
-                                print "servod", servodvalue
+                                #print "servod", servodvalue
                                 os.system("echo " + servoDict[key] + "=" + str(servodvalue) + " > /dev/servoblaster")
                             elif tempValue == "off":
                                 #print key ,"servod off"
@@ -1250,6 +1250,77 @@ class ScratchListener(threading.Thread):
                     
                 elif ADDON_PRESENT[7] == True:
                     #do PiRoCon stuff
+                    #print "panoffset" , panoffset, "tilt",tiltoffset
+                    moveServos = False
+                    
+                    checkStr = 'tiltoffset'
+                    if self.dVFind(checkStr):
+                        tempValue = getValue(checkStr, dataraw)
+                        tiltoffset = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        moveServos = True
+
+                    checkStr = 'panoffset'
+                    if self.dVFind(checkStr):
+                        tempValue = getValue(checkStr, dataraw)
+                        panoffset = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        moveServos = True
+                        
+                    checkStr = 'tilt'
+                    if self.dVFind(checkStr):
+                        #print "tilt command rcvd"
+                        tempValue = getValue(checkStr, dataraw)
+                        if isNumeric(tempValue):
+                            tilt = int(float(tempValue)) 
+                            moveServos = True
+                            print "tilt=", tilt
+                        elif tempValue == "off":
+                            os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                    else:
+                        checkStr = 'servoa'
+                        if self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            if isNumeric(tempValue):
+                                tilt = int(float(tempValue)) 
+                                moveServos = True
+                            elif tempValue == "off":
+                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
+
+                    checkStr = 'pan'
+                    if self.dVFind(checkStr):
+                        tempValue = getValue(checkStr, dataraw)
+                        if isNumeric(tempValue):
+                            pan = int(float(tempValue)) 
+                            moveServos = True
+                        elif tempValue == "off":
+                            os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                    else:
+                        checkStr = 'servob'
+                        if self.dVFind(checkStr):
+                            tempValue = getValue(checkStr, dataraw)
+                            if isNumeric(tempValue):
+                                pan = int(float(tempValue)) 
+                                moveServos = True
+                            elif tempValue == "off":
+                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                   
+                    if moveServos == True:
+                        degrees = int(tilt + tiltoffset)
+                        degrees = min(80,max(degrees,-60))
+                        servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                        #print "sending", servodvalue, "to servod"
+                        os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                        os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
+                        degrees = int(pan + panoffset)
+                        degrees = min(90,max(degrees,-90))
+                        servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                        os.system("echo " + "1" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                        os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
+
+
+                    # elif tempValue == "off":
+                        # #print key ,"servod off"
+                        # os.system("echo " + servoDict[key] + "=0 > /dev/servoblaster")
+
                     #check for motor variable commands
                     motorList = [['motora',21,26],['motorb',19,24]]
                     for listLoop in range(0,2):
@@ -1258,15 +1329,15 @@ class ScratchListener(threading.Thread):
                         if self.dVFind(checkStr):
                             tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                            print "svalue", svalue
+                            #print "svalue", svalue
                             if svalue > 0:
-                                print motorList[listLoop]
-                                print "motor set forward" , svalue
+                                #print motorList[listLoop]
+                                #print "motor set forward" , svalue
                                 self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
                                 self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(100-svalue))
                             elif svalue < 0:
-                                print motorList[listLoop]
-                                print "motor set backward", svalue
+                                #print motorList[listLoop]
+                                #print "motor set backward", svalue
                                 self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
                                 self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(svalue))
                             else:
@@ -1274,28 +1345,6 @@ class ScratchListener(threading.Thread):
                                 self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],0)
                                 self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
                     
-                    servoDict = {'servoa': '0', 'tilt': '0', 'servob': '1', 'pan': '1' }
-                    for key in servoDict:
-                        #print key , servoDict[key]
-                        checkStr = key
-                        if self.dVFind(checkStr):
-                            #print key , servoDict[key]
-                            tempValue = getValue(checkStr, dataraw)
-                            if isNumeric(tempValue):
-                                degrees = -1 * int(float(tempValue))
-                                #print "value" , degrees
-                                #print key
-                                if (key == 'servoa') or (key == 'tilt'):
-                                    degrees = min(60,max(degrees,-80))
-                                else:
-                                    degrees = min(90,max(degrees,-90))
-                                #print "convert" , degrees
-                                servodvalue = 50+ ((degrees + 90) * 200 / 180)
-                                #print "servod", servodvalue
-                                os.system("echo " + servoDict[key] + "=" + str(servodvalue) + " > /dev/servoblaster")
-                            elif tempValue == "off":
-                                #print key ,"servod off"
-                                os.system("echo " + servoDict[key] + "=0 > /dev/servoblaster")
 
                     if (pcaPWM != None):
                         for i in range(0, 16): # go thru servos on PCA Board
@@ -1352,8 +1401,8 @@ class ScratchListener(threading.Thread):
                             #print 'power', str(physical_pin) , sensor_value[0]
 
                             #if isNumeric(sensor_value[0]):
-                            if PIN_USE[i] != 2:
-                                PIN_USE[i] = 2
+                            if PIN_USE[i] != PPWM:
+                                PIN_USE[i] = PPWM
                                 PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
                                 PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
@@ -1364,8 +1413,8 @@ class ScratchListener(threading.Thread):
                             tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             
-                            if PIN_USE[i] != 2:
-                                PIN_USE[i] = 2
+                            if PIN_USE[i] != PPWM:
+                                PIN_USE[i] = PPWM
                                 PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
                                 PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
@@ -1385,8 +1434,8 @@ class ScratchListener(threading.Thread):
                             
                         else:
                             i = PIN_NUM_LOOKUP[11] # assume motora is connected to Pin11
-                            if PIN_USE[i] != 2:
-                                PIN_USE[i] = 2
+                            if PIN_USE[i] != PPWM:
+                                PIN_USE[i] = PPWM
                                 PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
                                 PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
@@ -1406,8 +1455,8 @@ class ScratchListener(threading.Thread):
                             
                         else:
                             i = PIN_NUM_LOOKUP[12] # assume motorb is connected to Pin11
-                            if PIN_USE[i] != 2:
-                                PIN_USE[i] = 2
+                            if PIN_USE[i] != PPWM:
+                                PIN_USE[i] = PPWM
                                 PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
                                 PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
@@ -1426,8 +1475,8 @@ class ScratchListener(threading.Thread):
                             
                         else:
                             i = PIN_NUM_LOOKUP[13] # assume motorc is connected to Pin13
-                            if PIN_USE[i] != 2:
-                                PIN_USE[i] = 2
+                            if PIN_USE[i] != PPWM:
+                                PIN_USE[i] = PPWM
                                 PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
                                 PWM_OUT[i].start(max(0,min(100,svalue)))
                             else:
@@ -1517,6 +1566,7 @@ class ScratchListener(threading.Thread):
                                     turnCStep = int(float(sensor_value[0]))
                                     #else:
                                     #    turnBStep = 0
+            
                             
 
 ### Check for Broadcast type messages being received
@@ -1552,7 +1602,7 @@ class ScratchListener(threading.Thread):
                     if (('ultra1' in dataraw)):
                         physical_pin = 13
                         i = PIN_NUM_LOOKUP[physical_pin]
-                        PIN_USE[i] = 0
+                        PIN_USE[i] = PINPUT
                         GPIO.setup(physical_pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                         #print dataraw
                         self.index_pin_update(i,1)
@@ -1704,11 +1754,11 @@ class ScratchListener(threading.Thread):
                         #print check_broadcast
                         physical_pin = PIN_NUM[i]
                         if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
-                            print 'pin' , physical_pin, 'on'
+                            #print 'pin' , physical_pin, 'on'
                             self.index_pin_update(i,1)
 
                         if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
-                            print 'pin' , physical_pin, 'off'
+                            #print 'pin' , physical_pin, 'off'
                             self.index_pin_update(i,0)
 
                         if ('sonar' + str(physical_pin)) in dataraw:
@@ -1907,7 +1957,7 @@ def cleanup_threads(threads):
         thread.join()
 
     for i in range(PINS):
-        if PIN_USE[i] == 2:
+        if PIN_USE[i] == PPWM:
             print "Stopping ", PIN_NUM[i]
             PWM_OUT[i].stop()
             print "Stopped ", PIN_NUM[i]
