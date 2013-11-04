@@ -538,7 +538,7 @@ class ScratchSender(threading.Thread):
             changed_pins = pin_bit_pattern ^ last_bit_pattern
             #print "changed pins" , bin(changed_pins)
             if changed_pins:
-                print 'pin bit pattern' , bin(pin_bit_pattern)
+                #print 'pin bit pattern' , bin(pin_bit_pattern)
 
                 try:
                     self.broadcast_changed_pins(changed_pins, pin_bit_pattern)
@@ -836,7 +836,7 @@ class ScratchListener(threading.Thread):
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
                     self.dataraw = dataraw
-                    print dataraw
+                    #print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -963,7 +963,7 @@ class ScratchListener(threading.Thread):
 
                         SetPinMode()
                         os.system("sudo pkill -f servodmotorpitx")
-                        os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon --idle-timeout=20000')
+                        os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon --idle-timeout=20000 --p1pins="18,22"' )
                         
 
             #Listen for Variable changes
@@ -1272,7 +1272,7 @@ class ScratchListener(threading.Thread):
                         if isNumeric(tempValue):
                             tilt = int(float(tempValue)) 
                             moveServos = True
-                            print "tilt=", tilt
+                            #print "tilt=", tilt
                         elif tempValue == "off":
                             os.system("echo " + "0" + "=0 > /dev/servoblaster")
                     else:
@@ -1308,12 +1308,12 @@ class ScratchListener(threading.Thread):
                         degrees = min(80,max(degrees,-60))
                         servodvalue = 50+ ((90 - degrees) * 200 / 180)
                         #print "sending", servodvalue, "to servod"
-                        os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                        #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
                         os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
                         degrees = int(pan + panoffset)
                         degrees = min(90,max(degrees,-90))
                         servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                        os.system("echo " + "1" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                        #os.system("echo " + "1" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
                         os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
 
 
