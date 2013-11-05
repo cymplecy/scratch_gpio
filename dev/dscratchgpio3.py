@@ -42,173 +42,6 @@ except:
     pass
 
 import RPi.GPIO as GPIO
-GPIO.setmode(GPIO.BOARD)
-GPIO.setwarnings(False)
-GPIO.cleanup()
-print "Board Revision" , GPIO.RPI_REVISION
-
-#Set some constants and initialise arrays
-PINPUT = 4
-POUTPUT = 1
-PPWM = 2
-STEPPERA=0
-STEPPERB=1
-STEPPERC=2
-stepperInUse = array('b',[False,False,False])
-INVERT = False
-BIG_NUM = 2123456789
-
-ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon'] #define addons
-NUMOF_ADDON = len(ADDON) # find number of addons
-ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
-for i in range(NUMOF_ADDON): # set all addons to diabled
-    ADDON_PRESENT[i] = False
-    ADDON[i] = ADDON[i].lower()
-    
-turnAStep = 0
-turnBStep = 0
-turnCStep = 0
-stepMode = ['1Coil','2Coil','HalfStep']
-stepModeDelay = [0.0025,0.0025,0.0013]
-stepType = 2
-if stepType == 2:
-    step_delay = 0.0013 # use smaller dealy fro halfstep mode
-else:
-    step_delay = 0.003
-
-PORT = 42001
-DEFAULT_HOST = '127.0.0.1'
-BUFFER_SIZE = 240 #used to be 100
-SOCKET_TIMEOUT = 1
-
-CMD_ENABLE_OUTPUT = 0x00
-CMD_ENABLE_LEDS = 0x13
-CMD_SET_PWM_VALUES = 0x01
-CMD_UPDATE = 0x16
-PiGlow_Values = [0] * 18
-PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
-PiGlow_Brightness = 255
-
-piglow = None
-try:
-    if GPIO.RPI_REVISION == 1:
-        piglow = PiGlow(0)
-    else:
-        piglow = PiGlow(1)
-    piglow.update_pwm_values(PiGlow_Values)
-except:
-    print "No PiGlow Detected"
-    
-#See if Compass connected
-compass = None
-try:
-    if GPIO.RPI_REVISION == 1:
-        compass = Compass(gauss = 4.7, declination = (-0,0))
-    else:
-        compass = Compass(gauss = 4.7, declination = (-0,0))
-    print "compass detected"
-except:
-    print "No Compass Detected"
-    
-pcaPWM = None
-try:
-    pcaPWM = PWM(0x40, debug=False)
-    print pcaPWM
-    print pcaPWM.setPWMFreq(60)                        # Set frequency to 60 Hz
-    print "AdaFruit PCA9685 detected"
-except:
-    print "No pcaPwm Detected"
-    
-#If I2C then don't uses pins 3 and 5
-if ((piglow != None) or (compass != None) or (pcaPWM != None)):
-    print "I2C device detected"
-    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
-    PIN_USE = array('i',[ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT])
-else:
-    print "No I2C Device Detected"
-    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
-    PIN_USE = array('i',[ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT])
-    
-
-#  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
-PINS = len(PIN_NUM)
-PIN_NUM_LOOKUP=[int] * 27
-
-for i in range(PINS):
-    PIN_NUM_LOOKUP[PIN_NUM[i]] = i
-    #print i, PIN_NUM[i]
-
-
-PWM_OUT = [None] * PINS
-ULTRA_IN_USE = [False] * PINS
-ultraTotalInUse = 0
-ultraSleep = 1.0
-
-
-if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        host = sys.argv[1]
-    else:
-        host = DEFAULT_HOST
-    host = host.replace("'", "")
-
-cycle_trace = 'start'
-
-
-SetPinMode()
-
-# setup a fade across the 18 LEDs of values ranging from 0 - 255
-values = [0x01,0x02,0x04,0x08,0x10,0x18,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xA0,0xC0,0xE0,0xFF]
-
-while True:
-
-    if (cycle_trace == 'disconnected'):
-        print "Scratch disconnected"
-        cleanup_threads((listener, sender))
-        os.system("sudo pkill -f servodpirocon")
-        os.system("sudo pkill -f servodmotorpitx")
-        time.sleep(1)
-        cycle_trace = 'start'
-
-    if (cycle_trace == 'start'):
-        # open the socket
-        print 'Starting to connect...' ,
-        the_socket = create_socket(host, PORT)
-        print 'Connected!'
-        the_socket.settimeout(SOCKET_TIMEOUT)
-        listener = ScratchListener(the_socket)
-#        steppera = StepperControl(11,12,13,15,step_delay)
-#        stepperb = StepperControl(16,18,22,7,step_delay)
-#        stepperc = StepperControl(24,26,19,21,step_delay)
-
-
-##        data = the_socket.recv(BUFFER_SIZE)
-##        print "Discard 1st data buffer" , data[4:].lower()
-        sender = ScratchSender(the_socket)
-        cycle_trace = 'running'
-        print "Running...."
-        listener.start()
-        sender.start()
-##        stepperb.start()
-
-
-    # wait for ctrl+c
-    try:
-#        val = values.pop(0)
-#        values.append(val)
-#        # update the piglow with current values
-#        piglow.update_pwm_values(values)
-
-        time.sleep(0.1)
-    except KeyboardInterrupt:
-        cleanup_threads((listener,sender))
-        os.system("sudo pkill -f servodpirocon")
-        os.system("sudo pkill -f servodmotorpitx")
-        GPIO.cleanup()
-        sys.exit()
-        print "CleanUp complete"
-        
-#### End of main program
 
 class PiGlow:
     i2c_addr = 0x54 # fixed i2c address of SN3218 ic
@@ -629,7 +462,7 @@ class ScratchSender(threading.Thread):
                             GPIO.output(physical_pin, 0)  #  bring it back low - pulse over.
                             t0=time.time() # remember current time
                             GPIO.setup(physical_pin,GPIO.IN)
-                            #PIN_USE[i] = 0 don't bother telling system
+                            #PIN_USE[i] = PINPUT don't bother telling system
                             
                             t1=t0
                             # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
@@ -1021,6 +854,7 @@ class ScratchListener(threading.Thread):
                         PIN_USE[PIN_NUM_LOOKUP[13]] = PINPUT #LFRight
 
                         SetPinMode()
+                        print "pirocon setup"
                         os.system("sudo pkill -f servodmotorpitx")
                         os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon --idle-timeout=20000 --p1pins="18,22"' )
                         
@@ -1555,7 +1389,7 @@ class ScratchListener(threading.Thread):
                         for i in range(PINS):
                         #bit_state = ((2**i) & sensor_value) >> i
                         #print 'dummy pin %d state %d' % (i, bit_state)
-                            if (PIN_USE[i] == 1):
+                            if (PIN_USE[i] == POUTPUT):
                                 if bit_pattern[-(j+1)] == '0':
                                     self.index_pin_update(i,0)
                                 else:
@@ -1636,11 +1470,11 @@ class ScratchListener(threading.Thread):
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(0, 10):
-                            if (PIN_USE[i] <> 0):
+                            if (PIN_USE[i] <> PINPUT):
                                 self.index_pin_update(i,1)
                     if (('alloff' in dataraw) or ('alllow' in dataraw)):
                         for i in range(0, 10):
-                            if (PIN_USE[i] <> 0):
+                            if (PIN_USE[i] <> PINPUT):
                                 self.index_pin_update(i,0)
                                 
                         #do ladderboard stuff
@@ -1773,7 +1607,7 @@ class ScratchListener(threading.Thread):
 
                     if self.dFindOnOff('all'):
                         for i in [7,11,15,19,21,23,24]:
-                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> 0):
+                            if (PIN_USE[PIN_NUM_LOOKUP[i]] <> PINPUT):
                                 self.index_pin_update(PIN_NUM_LOOKUP[i],self.dRtnOnOff('all'))
                                                                 
                     leds = [7,11,15,19,21,23]
@@ -1800,11 +1634,12 @@ class ScratchListener(threading.Thread):
 
                     if (('allon' in dataraw) or ('allhigh' in dataraw)):
                         for i in range(PINS):
-                            if (PIN_USE[i] <> 0):
+                            if (PIN_USE[i] <> PINPUT):
                                 self.index_pin_update(i,1)
                     if (('alloff' in dataraw) or ('alllow' in dataraw)):
+                        print "alloff detected" 
                         for i in range(PINS):
-                            if (PIN_USE[i] <> 0):
+                            if (PIN_USE[i] <> PINPUT):
                                 self.index_pin_update(i,0)
                                 
                     #check pins
@@ -1837,7 +1672,7 @@ class ScratchListener(threading.Thread):
                                 GPIO.output(physical_pin, 0)  #  bring it back low - pulse over.
                                 t0=time.time() # remember current time
                                 GPIO.setup(physical_pin,GPIO.IN)
-                                #PIN_USE[i] = 0 don't bother telling system
+                                #PIN_USE[i] = PINPUT don't bother telling system
                                 
                                 t1=t0
                                 # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
@@ -2029,6 +1864,175 @@ def cleanup_threads(threads):
         stepperc.stop()
         print "stepperC stopped"
 
+        
+######### Main Program Here
+GPIO.setmode(GPIO.BOARD)
+GPIO.setwarnings(False)
+GPIO.cleanup()
+print "Board Revision" , GPIO.RPI_REVISION
+
+#Set some constants and initialise arrays
+PINPUT = 4
+POUTPUT = 1
+PPWM = 2
+STEPPERA=0
+STEPPERB=1
+STEPPERC=2
+stepperInUse = array('b',[False,False,False])
+INVERT = False
+BIG_NUM = 2123456789
+
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon'] #define addons
+NUMOF_ADDON = len(ADDON) # find number of addons
+ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
+for i in range(NUMOF_ADDON): # set all addons to diabled
+    ADDON_PRESENT[i] = False
+    ADDON[i] = ADDON[i].lower()
+    
+turnAStep = 0
+turnBStep = 0
+turnCStep = 0
+stepMode = ['1Coil','2Coil','HalfStep']
+stepModeDelay = [0.0025,0.0025,0.0013]
+stepType = 2
+if stepType == 2:
+    step_delay = 0.0013 # use smaller dealy fro halfstep mode
+else:
+    step_delay = 0.003
+
+PORT = 42001
+DEFAULT_HOST = '127.0.0.1'
+BUFFER_SIZE = 240 #used to be 100
+SOCKET_TIMEOUT = 1
+
+CMD_ENABLE_OUTPUT = 0x00
+CMD_ENABLE_LEDS = 0x13
+CMD_SET_PWM_VALUES = 0x01
+CMD_UPDATE = 0x16
+PiGlow_Values = [0] * 18
+PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
+PiGlow_Brightness = 255
+
+piglow = None
+try:
+    if GPIO.RPI_REVISION == 1:
+        piglow = PiGlow(0)
+    else:
+        piglow = PiGlow(1)
+    piglow.update_pwm_values(PiGlow_Values)
+except:
+    print "No PiGlow Detected"
+    
+#See if Compass connected
+compass = None
+try:
+    if GPIO.RPI_REVISION == 1:
+        compass = Compass(gauss = 4.7, declination = (-0,0))
+    else:
+        compass = Compass(gauss = 4.7, declination = (-0,0))
+    print "compass detected"
+except:
+    print "No Compass Detected"
+    
+pcaPWM = None
+try:
+    pcaPWM = PWM(0x40, debug=False)
+    print pcaPWM
+    print pcaPWM.setPWMFreq(60)                        # Set frequency to 60 Hz
+    print "AdaFruit PCA9685 detected"
+except:
+    print "No pcaPwm Detected"
+    
+#If I2C then don't uses pins 3 and 5
+if ((piglow != None) or (compass != None) or (pcaPWM != None)):
+    print "I2C device detected"
+    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
+    PIN_USE = array('i',[ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT])
+else:
+    print "No I2C Device Detected"
+    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
+    PIN_USE = array('i',[ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT])
+    
+
+#  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
+PINS = len(PIN_NUM)
+PIN_NUM_LOOKUP=[int] * 27
+
+for i in range(PINS):
+    PIN_NUM_LOOKUP[PIN_NUM[i]] = i
+    #print i, PIN_NUM[i]
+
+
+PWM_OUT = [None] * PINS
+ULTRA_IN_USE = [False] * PINS
+ultraTotalInUse = 0
+ultraSleep = 1.0
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        host = sys.argv[1]
+    else:
+        host = DEFAULT_HOST
+    host = host.replace("'", "")
+
+cycle_trace = 'start'
+
+
+SetPinMode()
+
+# setup a fade across the 18 LEDs of values ranging from 0 - 255
+values = [0x01,0x02,0x04,0x08,0x10,0x18,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xA0,0xC0,0xE0,0xFF]
+
+while True:
+
+    if (cycle_trace == 'disconnected'):
+        print "Scratch disconnected"
+        cleanup_threads((listener, sender))
+        os.system("sudo pkill -f servodpirocon")
+        os.system("sudo pkill -f servodmotorpitx")
+        time.sleep(1)
+        cycle_trace = 'start'
+
+    if (cycle_trace == 'start'):
+        # open the socket
+        print 'Starting to connect...' ,
+        the_socket = create_socket(host, PORT)
+        print 'Connected!'
+        the_socket.settimeout(SOCKET_TIMEOUT)
+        listener = ScratchListener(the_socket)
+#        steppera = StepperControl(11,12,13,15,step_delay)
+#        stepperb = StepperControl(16,18,22,7,step_delay)
+#        stepperc = StepperControl(24,26,19,21,step_delay)
+
+
+##        data = the_socket.recv(BUFFER_SIZE)
+##        print "Discard 1st data buffer" , data[4:].lower()
+        sender = ScratchSender(the_socket)
+        cycle_trace = 'running'
+        print "Running...."
+        listener.start()
+        sender.start()
+##        stepperb.start()
+
+
+    # wait for ctrl+c
+    try:
+#        val = values.pop(0)
+#        values.append(val)
+#        # update the piglow with current values
+#        piglow.update_pwm_values(values)
+
+        time.sleep(0.1)
+    except KeyboardInterrupt:
+        cleanup_threads((listener,sender))
+        os.system("sudo pkill -f servodpirocon")
+        os.system("sudo pkill -f servodmotorpitx")
+        GPIO.cleanup()
+        sys.exit()
+        print "CleanUp complete"
+        
+#### End of main program
 
         
 
