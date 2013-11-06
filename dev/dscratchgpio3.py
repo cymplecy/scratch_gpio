@@ -17,11 +17,11 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.1.06' # 05Nov13
+Version =  '3.1.07' # 05Nov13
 
 
 
-from array import *
+#from array import *
 import threading
 import socket
 import time
@@ -204,7 +204,7 @@ class StepperControl(threading.Thread):
         self.toTerminate = False
         threading.Thread.__init__(self)
         self._stop = threading.Event()
-        self.pins = array("i",[PIN_NUM_LOOKUP[pinA],PIN_NUM_LOOKUP[pinB],PIN_NUM_LOOKUP[pinC],PIN_NUM_LOOKUP[pinD]])
+        self.pins = [PIN_NUM_LOOKUP[pinA],PIN_NUM_LOOKUP[pinB],PIN_NUM_LOOKUP[pinC],PIN_NUM_LOOKUP[pinD]]
         self.slow_start = self.steps
         self.steps_start = self.steps
         self.paused = False
@@ -393,7 +393,7 @@ class ScratchSender(threading.Thread):
         self._stop = threading.Event()
         self.time_last_ping = 0.0
         self.time_last_compass = 0.0
-        self.distarray = array('f',[0.0,0.0,0.0])
+        self.distarray = [0.0,0.0,0.0]
 
 
     def stop(self):
@@ -554,7 +554,7 @@ class ScratchSender(threading.Thread):
         #self.send_scratch_command(bcast_str)   
         if ADDON_PRESENT[1] == True:
             #do ladderboard stuff
-            switch_array = array('i',[3,4,2,1])
+            switch_array = [3,4,2,1]
             #switch_lookup = array('i',[24,26,19,21])
             sensor_name = "switch" + str(switch_array[pin_index-10])
         elif ADDON_PRESENT[2] == True:
@@ -592,6 +592,14 @@ class ScratchSender(threading.Thread):
         a.append(chr((n >>  8) & 0xFF))
         a.append(chr(n & 0xFF))
         self.scratch_socket.send(a.tostring() + cmd)
+#        n = len(cmd)
+#        a = array('c')
+#        a.append(chr((n >> 24) & 0xFF))
+#        a.append(chr((n >> 16) & 0xFF))
+#        a.append(chr((n >>  8) & 0xFF))
+#        a.append(chr(n & 0xFF))
+#        self.scratch_socket.send(a.tostring() + cmd)
+
 
 
 class ScratchListener(threading.Thread):
