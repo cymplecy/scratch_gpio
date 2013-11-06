@@ -21,7 +21,6 @@ Version =  '3.1.07' # 05Nov13
 
 
 
-#from array import *
 import threading
 import socket
 import time
@@ -393,7 +392,7 @@ class ScratchSender(threading.Thread):
         self._stop = threading.Event()
         self.time_last_ping = 0.0
         self.time_last_compass = 0.0
-        self.distarray = [0.0,0.0,0.0]
+        self.distlist = [0.0,0.0,0.0]
 
 
     def stop(self):
@@ -401,21 +400,68 @@ class ScratchSender(threading.Thread):
 
     def stopped(self):
         return self._stop.isSet()
+        
+    def broadcast_changed_pins(self, changed_pin_map, pin_value_map):
+        for i in range(PINS):
+            # if we care about this pin's value
+            if (changed_pin_map >> i) & 0b1:
+                pin_value = (pin_value_map >> i) & 0b1
+                if (PIN_USE[i] == PINPUT):
+                    #print PIN_NUM[i] , pin_value
+                    self.broadcast_pin_update(i, pin_value)
+                                     
+    def broadcast_pin_update(self, pin_index, value):
+        #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
+        #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
+        #print 'sending: %s' % bcast_str
+        #self.send_scratch_command(bcast_str)   
+        if ADDON_PRESENT[1] == True:
+            #do ladderboard stuff
+            switch_list = [3,4,2,1]
+            #switch_lookup = [24,26,19,21]
+            sensor_name = "switch" + str(switch_list[pin_index-10])
+        elif ADDON_PRESENT[2] == True:
+            #do MotorPiTx stuff
+            if PIN_NUM[pin_index] == 13:
+                sensor_name = "input1"
+            if PIN_NUM[pin_index] == 7:
+                sensor_name = "input2"
+        elif ADDON_PRESENT[6] == True:
+            #do berryclip stuff
+            #print PIN_NUM[pin_index]
+            if PIN_NUM[pin_index] == 26:
+                sensor_name = "switch"
+        else:
+            sensor_name = "pin" + str(PIN_NUM[pin_index])
+        #if ADDON_PRESENT[5] == True:
+            #print PIN_NUM[pin_index] , PIN_NUM[pin_index] in [7,8,10,22]
+            #if not(PIN_NUM[pin_index] in [7,8,10,22]):
+            #    return
+        bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
+        #print 'sending: %s' % bcast_str
+        self.send_scratch_command(bcast_str)
+        if ADDON_PRESENT[2] == True:
+            bcast_str = 'broadcast "%s%s"' % (sensor_name,("Off","On")[value == 1])
+            #print 'sending: %s' % bcast_str
+            self.send_scratch_command(bcast_str)
+        
+    def send_scratch_command(self, cmd):
+        n = len(cmd)
+        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+        self.scratch_socket.send(b + cmd)
 
     def run(self):
         last_bit_pattern=0L
         for i in range(PINS):
             #print 'i %d' % i
-            #print 'GPIO PIN %d' % GPIO_PIN_INPUT[i]
             if (PIN_USE[i] == PINPUT):
                 last_bit_pattern += GPIO.input(PIN_NUM[i]) << i
+                print GPIO.input(PIN_NUM[i])
             #else:
                 #last_bit_pattern += 1 << i
             #print 'lbp %s' % bin(last_bit_pattern)
 
         last_bit_pattern = last_bit_pattern ^ -1
-
-        
         while not self.stopped():
             time.sleep(0.01) # be kind to cpu - not certain why :)
             pin_bit_pattern = 0L
@@ -449,7 +495,7 @@ class ScratchSender(threading.Thread):
                         #print PIN_USE[i]
 
                         ti = time.time()
-                        # setup a array to hold 3 values and then do 3 distance calcs and store them
+                        # setup a list to hold 3 values and then do 3 distance calcs and store them
                         #print 'sonar started'
                         ts=time.time()
                         #print
@@ -482,15 +528,15 @@ class ScratchSender(threading.Thread):
                             t3=(t2-t1)  # t2 contains time taken for pulse to return
                             #print "total time " , t3
                             distance=t3*343/2*100  # calc distance in cm
-                            self.distarray[k]=distance
+                            self.distlist[k]=distance
                             #print distance
                             GPIO.setup(physical_pin,GPIO.OUT)
                         tf = time.time() - ts
-                        distance = sorted(self.distarray)[1] # sort the array and pick middle value as best distance
+                        distance = sorted(self.distlist)[1] # sort the list and pick middle value as best distance
                         
                         #print "total time " , tf
                         #for k in range(5):
-                            #print distarray[k]
+                            #print distlist[k]
                         #print "pulse time" , distance*58
                         #print "total time in microsecs" , (tf-ti).microseconds                    
                         # only update Scratch values if distance is < 500cm
@@ -537,70 +583,6 @@ class ScratchSender(threading.Thread):
 ##            self.send_scratch_command(bcast_str)
             
 
-    def broadcast_changed_pins(self, changed_pin_map, pin_value_map):
-        for i in range(PINS):
-            # if we care about this pin's value
-            if (changed_pin_map >> i) & 0b1:
-                pin_value = (pin_value_map >> i) & 0b1
-                if (PIN_USE[i] == PINPUT):
-                    #print PIN_NUM[i] , pin_value
-                    self.broadcast_pin_update(i, pin_value)
-                                     
-
-    def broadcast_pin_update(self, pin_index, value):
-        #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
-        #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
-        #print 'sending: %s' % bcast_str
-        #self.send_scratch_command(bcast_str)   
-        if ADDON_PRESENT[1] == True:
-            #do ladderboard stuff
-            switch_array = [3,4,2,1]
-            #switch_lookup = array('i',[24,26,19,21])
-            sensor_name = "switch" + str(switch_array[pin_index-10])
-        elif ADDON_PRESENT[2] == True:
-            #do MotorPiTx stuff
-            if PIN_NUM[pin_index] == 13:
-                sensor_name = "input1"
-            if PIN_NUM[pin_index] == 7:
-                sensor_name = "input2"
-        elif ADDON_PRESENT[6] == True:
-            #do berryclip stuff
-            #print PIN_NUM[pin_index]
-            if PIN_NUM[pin_index] == 26:
-                sensor_name = "switch"
-        else:
-            sensor_name = "pin" + str(PIN_NUM[pin_index])
-        #if ADDON_PRESENT[5] == True:
-            #print PIN_NUM[pin_index] , PIN_NUM[pin_index] in [7,8,10,22]
-            #if not(PIN_NUM[pin_index] in [7,8,10,22]):
-            #    return
-        bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
-        #print 'sending: %s' % bcast_str
-        self.send_scratch_command(bcast_str)
-        if ADDON_PRESENT[2] == True:
-            bcast_str = 'broadcast "%s%s"' % (sensor_name,("Off","On")[value == 1])
-            #print 'sending: %s' % bcast_str
-            self.send_scratch_command(bcast_str)
-        
-
-
-    def send_scratch_command(self, cmd):
-        n = len(cmd)
-        a = array('c')
-        a.append(chr((n >> 24) & 0xFF))
-        a.append(chr((n >> 16) & 0xFF))
-        a.append(chr((n >>  8) & 0xFF))
-        a.append(chr(n & 0xFF))
-        self.scratch_socket.send(a.tostring() + cmd)
-#        n = len(cmd)
-#        a = array('c')
-#        a.append(chr((n >> 24) & 0xFF))
-#        a.append(chr((n >> 16) & 0xFF))
-#        a.append(chr((n >>  8) & 0xFF))
-#        a.append(chr(n & 0xFF))
-#        self.scratch_socket.send(a.tostring() + cmd)
-
-
 
 class ScratchListener(threading.Thread):
     def __init__(self, socket):
@@ -608,15 +590,14 @@ class ScratchListener(threading.Thread):
         self.scratch_socket = socket
         self._stop = threading.Event()
         self.dataraw = ''
+        self.value = None
+        self.valueNumeric = None
+        self.valueIsNumeric = None
         
     def send_scratch_command(self, cmd):
         n = len(cmd)
-        a = array('c')
-        a.append(chr((n >> 24) & 0xFF))
-        a.append(chr((n >> 16) & 0xFF))
-        a.append(chr((n >>  8) & 0xFF))
-        a.append(chr(n & 0xFF))
-        self.scratch_socket.send(a.tostring() + cmd)
+        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+        self.scratch_socket.send(b + cmd)
         
     def dFind(self,searchStr):
         return (searchStr in self.dataraw)
@@ -654,6 +635,29 @@ class ScratchListener(threading.Thread):
             return 1
         else:
             return 0
+            
+            
+# def getValue(searchString, dataString):
+    # outputall_pos = dataString.find((searchString + ' '))
+    # sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
+    # return sensor_value[0]
+            
+    def dVFindValue(self,searchStr):
+        #print "searching for ", searchStr 
+        self.value = None
+        self.valueNumeric = None
+        self.valueIsNumeric = False
+        if self.dVFind(searchStr):
+            #print "found"
+            self.value = getValue(searchStr, self.dataraw)
+            #print self.value
+            if isNumeric(self.value):
+                self.valueNumeric = float(self.value)
+                self.valueIsNumeric = True
+                #print "numeric" , self.valueNumeric
+            return True
+        else:
+            return False
 
 
     def stop(self):
@@ -1153,55 +1157,49 @@ class ScratchListener(threading.Thread):
                     #do PiRoCon stuff
                     #print "panoffset" , panoffset, "tilt",tiltoffset
                     moveServos = False
-                    
-                    checkStr = 'tiltoffset'
-                    if self.dVFind(checkStr):
-                        tempValue = getValue(checkStr, dataraw)
-                        tiltoffset = int(float(tempValue)) if isNumeric(tempValue) else 0
+
+                    if self.dVFindValue('tiltoffset'):
+                        tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
                         moveServos = True
 
-                    checkStr = 'panoffset'
-                    if self.dVFind(checkStr):
-                        tempValue = getValue(checkStr, dataraw)
-                        panoffset = int(float(tempValue)) if isNumeric(tempValue) else 0
+                    if self.dVFindValue('panoffset'):
+                        panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
                         moveServos = True
                         
-                    checkStr = 'tilt'
-                    if self.dVFind(checkStr):
+                    if self.dVFindValue('tilt'):
                         #print "tilt command rcvd"
-                        tempValue = getValue(checkStr, dataraw)
-                        if isNumeric(tempValue):
-                            tilt = int(float(tempValue)) 
+                        if self.valueIsNumeric:
+                            tilt = int(self.valueNumeric) 
                             moveServos = True
                             #print "tilt=", tilt
-                        elif tempValue == "off":
+                        elif self.value == "off":
                             os.system("echo " + "0" + "=0 > /dev/servoblaster")
                     else:
-                        checkStr = 'servoa'
-                        if self.dVFind(checkStr):
-                            tempValue = getValue(checkStr, dataraw)
-                            if isNumeric(tempValue):
-                                tilt = int(float(tempValue)) 
+                        if self.dVFindValue('servoa'):
+                            #print "tilt command rcvd"
+                            if self.valueIsNumeric:
+                                tilt = int(self.valueNumeric) 
                                 moveServos = True
-                            elif tempValue == "off":
-                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
-
-                    checkStr = 'pan'
-                    if self.dVFind(checkStr):
-                        tempValue = getValue(checkStr, dataraw)
-                        if isNumeric(tempValue):
-                            pan = int(float(tempValue)) 
+                                #print "tilt=", tilt
+                            elif self.value == "off":
+                                os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                                
+                    if self.dVFindValue('pan'):
+                        #print "pan command rcvd"
+                        if self.valueIsNumeric:
+                            pan = int(self.valueNumeric) 
                             moveServos = True
-                        elif tempValue == "off":
+                            #print "pan=", pan
+                        elif self.value == "off":
                             os.system("echo " + "1" + "=0 > /dev/servoblaster")
                     else:
-                        checkStr = 'servob'
-                        if self.dVFind(checkStr):
-                            tempValue = getValue(checkStr, dataraw)
-                            if isNumeric(tempValue):
-                                pan = int(float(tempValue)) 
+                        if self.dVFindValue('servob'):
+                            #print "pan command rcvd"
+                            if self.valueIsNumeric:
+                                pan = int(self.valueNumeric) 
                                 moveServos = True
-                            elif tempValue == "off":
+                                #print "pan=", pan
+                            elif self.value == "off":
                                 os.system("echo " + "1" + "=0 > /dev/servoblaster")
                    
                     if moveServos == True:
@@ -1218,18 +1216,12 @@ class ScratchListener(threading.Thread):
                         os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
 
 
-                    # elif tempValue == "off":
-                        # #print key ,"servod off"
-                        # os.system("echo " + servoDict[key] + "=0 > /dev/servoblaster")
-
                     #check for motor variable commands
                     motorList = [['motora',21,26],['motorb',19,24]]
                     for listLoop in range(0,2):
                         #print motorList[listLoop]
-                        checkStr = motorList[listLoop][0]
-                        if self.dVFind(checkStr):
-                            tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if self.dVFindValue(motorList[listLoop][0]):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             #print "svalue", svalue
                             if svalue > 0:
                                 #print motorList[listLoop]
@@ -1249,18 +1241,14 @@ class ScratchListener(threading.Thread):
 
                     if (pcaPWM != None):
                         for i in range(0, 16): # go thru servos on PCA Board
-                            checkStr = 'servo' + str(i + 1) 
-                            if  self.dVFind(checkStr):
-                                tempValue = getValue(checkStr, dataraw)
-                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 180
+                            if self.dVFindValue('servo' + str(i + 1)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
                                 #print i, svalue
                                 pcaPWM.setPWM(i, 0, svalue)
                                 
                         for i in range(0, 16): # go thru PowerPWM on PCA Board
-                            checkStr = 'power' + str(i + 1) 
-                            if  self.dVFind(checkStr):
-                                tempValue = getValue(checkStr, dataraw)
-                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                            if self.dVFindValue('power' + str(i + 1)):
+                                svalue = int(self.valueNueric) if self.valueIsNumeric else 0
                                 svalue = min(4095,max(((svalue * 4096) /100),0))
                                 pcaPWM.setPWM(i, 0, svalue)
                                 
@@ -1666,9 +1654,9 @@ class ScratchListener(threading.Thread):
                         if ('sonar' + str(physical_pin)) in dataraw:
                             self.index_pin_update(i,1)
                             ti = time.time()
-                            # setup a array to hold 3 values and then do 3 distance calcs and store them
+                            # setup a list to hold 3 values and then do 3 distance calcs and store them
                             #print 'sonar started'
-                            distarray = array('f',[0.0,0.0,0.0])
+                            distlist = [0.0,0.0,0.0]
                             ts=time.time()
                             print
                             for k in range(3):
@@ -1700,15 +1688,15 @@ class ScratchListener(threading.Thread):
                                 t3=(t2-t1)  # t2 contains time taken for pulse to return
                                 #print "total time " , t3
                                 distance=t3*343/2*100  # calc distance in cm
-                                distarray[k]=distance
+                                distlist[k]=distance
                                 #print distance
                                 GPIO.setup(physical_pin,GPIO.OUT)
                             tf = time.time() - ts
-                            distance = sorted(distarray)[1] # sort the array and pick middle value as best distance
+                            distance = sorted(distlist)[1] # sort the list and pick middle value as best distance
                             
                             #print "total time " , tf
                             #for k in range(5):
-                                #print distarray[k]
+                                #print distlist[k]
                             #print "pulse time" , distance*58
                             #print "total time in microsecs" , (tf-ti).microseconds                    
                             # only update Scratch values if distance is < 500cm
@@ -1879,20 +1867,22 @@ GPIO.setwarnings(False)
 GPIO.cleanup()
 print "Board Revision" , GPIO.RPI_REVISION
 
-#Set some constants and initialise arrays
+#Set some constants and initialise lists
 PINPUT = 4
 POUTPUT = 1
 PPWM = 2
+PUNUSED = 8
+
 STEPPERA=0
 STEPPERB=1
 STEPPERC=2
-stepperInUse = array('b',[False,False,False])
+stepperInUse = [False,False,False]
 INVERT = False
 BIG_NUM = 2123456789
 
 ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
-ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled array
+ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled list
 for i in range(NUMOF_ADDON): # set all addons to diabled
     ADDON_PRESENT[i] = False
     ADDON[i] = ADDON[i].lower()
@@ -1954,15 +1944,14 @@ except:
 #If I2C then don't uses pins 3 and 5
 if ((piglow != None) or (compass != None) or (pcaPWM != None)):
     print "I2C device detected"
-    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10])
-    PIN_USE = array('i',[ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT])
+    PIN_NUM = [11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10]
+    PIN_USE = [ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT]
 else:
     print "No I2C Device Detected"
-    PIN_NUM = array('i',[11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10])
-    PIN_USE = array('i',[ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT])
+    PIN_NUM = [11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10]
+    PIN_USE = [ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT]
     
 
-#  GPIO_NUM = array('i',[17,18,21,22,23,24,25,4,14,15,8,7,10,9])
 PINS = len(PIN_NUM)
 PIN_NUM_LOOKUP=[int] * 27
 
