@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.1.07' # 05Nov13
+Version =  '3.1.08' # 07Nov13
 
 
 
@@ -69,6 +69,7 @@ class PiGlow:
         if not isinstance(value, list):
             value = [value];
         self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
+#### end PiGlow ###############################################################
 
 class Compass:
 
@@ -154,7 +155,7 @@ class Compass:
                "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
                "Heading: " + str(self.heading()) + "\n"
                
-
+### End Compasss ###################################################################################################
 
 
 
@@ -593,6 +594,7 @@ class ScratchListener(threading.Thread):
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = None
+        self.OnOrOff = None
         
     def send_scratch_command(self, cmd):
         n = len(cmd)
@@ -609,9 +611,14 @@ class ScratchListener(threading.Thread):
         return (self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low'))
         
     def dFindOnOff(self,searchStr):
-        return (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high') 
-                or self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low'))
-
+        self.OnOrOff = None
+        if (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high')):
+            self.OnOrOff = 1
+            return True
+        if (self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low')):
+            self.OnOrOff = 0
+            return False
+            
     def dRtnOnOff(self,searchStr):
         if self.dFindOn(searchStr):
             return 1
