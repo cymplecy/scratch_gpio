@@ -30,8 +30,11 @@ try:
     sghGC.pinUse[21] = sghGC.POUTPUT
     sghGC.pinUse[26] = sghGC.POUTPUT
     sghGC.setPinMode()
-    sghGC.pin_update(21,0)
-    sghGC.pin_update(26,1)
+    sghGC.pinUpdate(21,0)
+    for speed in [20,30,40,50,60,70,80,90,100]:
+        sghGC.pinUpdate(26,speed,type="pwm")
+        time.sleep(1)
+    sghGC.pinUpdate(26,speed)
     print (sghGC.pinUse)
     
     while True:
