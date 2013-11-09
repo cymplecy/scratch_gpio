@@ -19,25 +19,31 @@
 
 Version =  '0.0.1' # 08Nov13
 
-from sgh_GPIOController import GPIOController 
+#from sgh_GPIOController import GPIOController 
+import  sgh_GPIOController 
 import time
 import sys
 
 try:
-    sghGC = GPIOController(True)
+    sghGC = sgh_GPIOController.GPIOController(True)
     print sghGC.getPiRevision()
+    sghGC.pinUse[21] = sghGC.POUTPUT
+    sghGC.pinUse[26] = sghGC.POUTPUT
     sghGC.setPinMode()
+    sghGC.pin_update(21,0)
+    sghGC.pin_update(26,1)
+    print (sghGC.pinUse)
     
     while True:
         time.sleep(1)
-        
+
 except KeyboardInterrupt:
     print ("Cleaning up")
     sghGC.cleanup()
     sys.exit()
     print "CleanUp complete"
-        
+
 #### End of main program
 
-        
+
 

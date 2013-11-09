@@ -30,6 +30,8 @@ import datetime as dt
 import shlex
 import os
 import math
+import sgh_GPIOController
+
 try:
     from Adafruit_PWM_Servo_Driver import PWM
 except:
@@ -181,17 +183,6 @@ def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
     
-#Procedure to set pin mode for each pin
-def SetPinMode():
-    for i in range(PINS):
-        if (PIN_USE[i] == POUTPUT):
-            print 'setting pin' , PIN_NUM[i] , ' to out'
-            GPIO.setup(PIN_NUM[i],GPIO.OUT)
-        elif (PIN_USE[i] == PINPUT):
-            print 'setting pin' , PIN_NUM[i] , ' to in'
-            GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP)
-
-        PIN_NUM_LOOKUP[PIN_NUM[i]] = i
         
 #----------------------------- STEPPER CONTROL --------------
 class StepperControl(threading.Thread):
@@ -230,23 +221,6 @@ class StepperControl(threading.Thread):
         if self.steps > (BIG_NUM / 2):
             self.slow_start = self.steps - 64       
             
-
-
-    def index_pin_update(self, pin_index, value):
-        if (PIN_USE[pin_index] == PINPUT):
-            PIN_USE[pin_index] = POUTPUT
-            GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
-            print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from input'
-        if (PIN_USE[pin_index] == PPWM):
-            PIN_USE[pin_index] = POUTPUT
-            PWM_OUT[pin_index].stop()
-            GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
-            print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from PWM'
-        if (PIN_USE[pin_index] == POUTPUT):
-            #print 'setting physical pin %d to %d' % (PIN_NUM[pin_index],value)
-            GPIO.output(PIN_NUM[pin_index], value)
-
-
     def step_coarse(self,a,b,c,d,delay):
         global stepType
         lstepMode = stepMode[stepType]
@@ -452,126 +426,126 @@ class ScratchSender(threading.Thread):
         self.scratch_socket.send(b + cmd)
 
     def run(self):
-        last_bit_pattern=0L
-        for i in range(PINS):
-            #print 'i %d' % i
-            if (PIN_USE[i] == PINPUT):
-                last_bit_pattern += GPIO.input(PIN_NUM[i]) << i
-                print GPIO.input(PIN_NUM[i])
-            #else:
-                #last_bit_pattern += 1 << i
-            #print 'lbp %s' % bin(last_bit_pattern)
+        # last_bit_pattern=0L
+        # for i in range(PINS):
+            # #print 'i %d' % i
+            # if (PIN_USE[i] == PINPUT):
+                # last_bit_pattern += GPIO.input(PIN_NUM[i]) << i
+                # print GPIO.input(PIN_NUM[i])
+            # #else:
+                # #last_bit_pattern += 1 << i
+            # #print 'lbp %s' % bin(last_bit_pattern)
 
-        last_bit_pattern = last_bit_pattern ^ -1
+        # last_bit_pattern = last_bit_pattern ^ -1
         while not self.stopped():
             time.sleep(0.01) # be kind to cpu - not certain why :)
-            pin_bit_pattern = 0L
-            for i in range(PINS):
-                if (PIN_USE[i] == PINPUT):
-                    #print 'pin' , PIN_NUM[i] , GPIO.input(PIN_NUM[i]
-                    pin_bit_pattern += GPIO.input(PIN_NUM[i]) << i
-                #else:
-                    #pin_bit_pattern += 1 << i
-            #print bin(pin_bit_pattern)
-            # if there is a change in the input pins
-            changed_pins = pin_bit_pattern ^ last_bit_pattern
-            #print "changed pins" , bin(changed_pins)
-            if changed_pins:
-                #print 'pin bit pattern' , bin(pin_bit_pattern)
+            # pin_bit_pattern = 0L
+            # for i in range(PINS):
+                # if (PIN_USE[i] == PINPUT):
+                    # #print 'pin' , PIN_NUM[i] , GPIO.input(PIN_NUM[i]
+                    # pin_bit_pattern += GPIO.input(PIN_NUM[i]) << i
+                # #else:
+                    # #pin_bit_pattern += 1 << i
+            # #print bin(pin_bit_pattern)
+            # # if there is a change in the input pins
+            # changed_pins = pin_bit_pattern ^ last_bit_pattern
+            # #print "changed pins" , bin(changed_pins)
+            # if changed_pins:
+                # #print 'pin bit pattern' , bin(pin_bit_pattern)
 
-                try:
-                    self.broadcast_changed_pins(changed_pins, pin_bit_pattern)
-                except Exception as e:
-                    print e
-                    break
+                # try:
+                    # self.broadcast_changed_pins(changed_pins, pin_bit_pattern)
+                # except Exception as e:
+                    # print e
+                    # break
 
-            last_bit_pattern = pin_bit_pattern
+            # last_bit_pattern = pin_bit_pattern
 
-            if (time.time() - self.time_last_ping) > 1:
+            # if (time.time() - self.time_last_ping) > 1:
 
-                for i in range(PINS):
-                    if ULTRA_IN_USE[i] == True:
-                        physical_pin = PIN_NUM[i]
-                        #print 'Pinging Pin', physical_pin
-                        #print PIN_USE[i]
+                # for i in range(PINS):
+                    # if ULTRA_IN_USE[i] == True:
+                        # physical_pin = PIN_NUM[i]
+                        # #print 'Pinging Pin', physical_pin
+                        # #print PIN_USE[i]
 
-                        ti = time.time()
-                        # setup a list to hold 3 values and then do 3 distance calcs and store them
-                        #print 'sonar started'
-                        ts=time.time()
-                        #print
-                        for k in range(3):
-                            #print "sonar pulse" , k
-                            #GPIO.setup(physical_pin,GPIO.OUT)
-                            #print physical_pin , i
-                            GPIO.output(physical_pin, 1)    # Send Pulse high
-                            time.sleep(0.00001)     #  wait
-                            GPIO.output(physical_pin, 0)  #  bring it back low - pulse over.
-                            t0=time.time() # remember current time
-                            GPIO.setup(physical_pin,GPIO.IN)
-                            #PIN_USE[i] = PINPUT don't bother telling system
+                        # ti = time.time()
+                        # # setup a list to hold 3 values and then do 3 distance calcs and store them
+                        # #print 'sonar started'
+                        # ts=time.time()
+                        # #print
+                        # for k in range(3):
+                            # #print "sonar pulse" , k
+                            # #GPIO.setup(physical_pin,GPIO.OUT)
+                            # #print physical_pin , i
+                            # GPIO.output(physical_pin, 1)    # Send Pulse high
+                            # time.sleep(0.00001)     #  wait
+                            # GPIO.output(physical_pin, 0)  #  bring it back low - pulse over.
+                            # t0=time.time() # remember current time
+                            # GPIO.setup(physical_pin,GPIO.IN)
+                            # #PIN_USE[i] = PINPUT don't bother telling system
                             
-                            t1=t0
-                            # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
-                            while ((GPIO.input(physical_pin)==0) and ((t1-t0) < 0.02)):
-                                #time.sleep(0.00001)
-                                t1=time.time()
-                            t1=time.time()
-                            #print 'low' , (t1-t0).microseconds
-                            t2=t1
-                            #  This while loops waits for input pin to go high to indicate pulse detection
-                            #  with 0.04 sec timeout
-                            while ((GPIO.input(physical_pin)==1) and ((t2-t1) < 0.02)):
-                                #time.sleep(0.00001)
-                                t2=time.time()
-                            t2=time.time()
-                            #print 'high' , (t2-t1).microseconds
-                            t3=(t2-t1)  # t2 contains time taken for pulse to return
-                            #print "total time " , t3
-                            distance=t3*343/2*100  # calc distance in cm
-                            self.distlist[k]=distance
-                            #print distance
-                            GPIO.setup(physical_pin,GPIO.OUT)
-                        tf = time.time() - ts
-                        distance = sorted(self.distlist)[1] # sort the list and pick middle value as best distance
+                            # t1=t0
+                            # # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
+                            # while ((GPIO.input(physical_pin)==0) and ((t1-t0) < 0.02)):
+                                # #time.sleep(0.00001)
+                                # t1=time.time()
+                            # t1=time.time()
+                            # #print 'low' , (t1-t0).microseconds
+                            # t2=t1
+                            # #  This while loops waits for input pin to go high to indicate pulse detection
+                            # #  with 0.04 sec timeout
+                            # while ((GPIO.input(physical_pin)==1) and ((t2-t1) < 0.02)):
+                                # #time.sleep(0.00001)
+                                # t2=time.time()
+                            # t2=time.time()
+                            # #print 'high' , (t2-t1).microseconds
+                            # t3=(t2-t1)  # t2 contains time taken for pulse to return
+                            # #print "total time " , t3
+                            # distance=t3*343/2*100  # calc distance in cm
+                            # self.distlist[k]=distance
+                            # #print distance
+                            # GPIO.setup(physical_pin,GPIO.OUT)
+                        # tf = time.time() - ts
+                        # distance = sorted(self.distlist)[1] # sort the list and pick middle value as best distance
                         
-                        #print "total time " , tf
-                        #for k in range(5):
-                            #print distlist[k]
-                        #print "pulse time" , distance*58
-                        #print "total time in microsecs" , (tf-ti).microseconds                    
-                        # only update Scratch values if distance is < 500cm
-                        if (distance > 280):
-                            distance = 299
-                        if (distance < 2):
-                            distance = 1
+                        # #print "total time " , tf
+                        # #for k in range(5):
+                            # #print distlist[k]
+                        # #print "pulse time" , distance*58
+                        # #print "total time in microsecs" , (tf-ti).microseconds                    
+                        # # only update Scratch values if distance is < 500cm
+                        # if (distance > 280):
+                            # distance = 299
+                        # if (distance < 2):
+                            # distance = 1
 
-                        #print'Distance:',distance,'cm'
-                        sensor_name = 'ultra' + str(physical_pin)
-                        if ADDON_PRESENT[2] == True:
-                            if physical_pin == 13:
-                                sensor_name = "ultra1"
-                            if physical_pin == 7:
-                                sensor_name = "ultra2"
+                        # #print'Distance:',distance,'cm'
+                        # sensor_name = 'ultra' + str(physical_pin)
+                        # if ADDON_PRESENT[2] == True:
+                            # if physical_pin == 13:
+                                # sensor_name = "ultra1"
+                            # if physical_pin == 7:
+                                # sensor_name = "ultra2"
                                     
-                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                        #print 'sending: %s' % bcast_str
-                        self.send_scratch_command(bcast_str)
-                        self.time_last_ping = time.time()
+                        # bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                        # #print 'sending: %s' % bcast_str
+                        # self.send_scratch_command(bcast_str)
+                        # self.time_last_ping = time.time()
     
-            if (time.time() - self.time_last_compass) > 0.25:
-                #print "time up"
-                #print ADDON_PRESENT[4]
-                #print compass
-                #If Compass board truely present
-                if ((ADDON_PRESENT[4] == True) and (compass != None)):
-                    #print "compass code"
-                    heading = compass.heading()
-                    sensor_name = 'heading'
-                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, heading)
-                    #print 'sending: %s' % bcast_str
-                    self.send_scratch_command(bcast_str)
-                self.time_last_compass = time.time()
+            # if (time.time() - self.time_last_compass) > 0.25:
+                # #print "time up"
+                # #print ADDON_PRESENT[4]
+                # #print compass
+                # #If Compass board truely present
+                # if ((ADDON_PRESENT[4] == True) and (compass != None)):
+                    # #print "compass code"
+                    # heading = compass.heading()
+                    # sensor_name = 'heading'
+                    # bcast_str = 'sensor-update "%s" %d' % (sensor_name, heading)
+                    # #print 'sending: %s' % bcast_str
+                    # self.send_scratch_command(bcast_str)
+                # self.time_last_compass = time.time()
                 
                 
                 
@@ -615,8 +589,10 @@ class ScratchListener(threading.Thread):
         if (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high')):
             self.OnOrOff = 1
             return True
-        if (self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low')):
+        elif (self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low')):
             self.OnOrOff = 0
+            return True
+        else:
             return False
             
     def dRtnOnOff(self,searchStr):
@@ -673,35 +649,6 @@ class ScratchListener(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-    def index_pin_update(self, pin_index, value):
-        if INVERT == True:
-            if PIN_USE[pin_index] == POUTPUT:
-                value = abs(value - 1)
-        if (PIN_USE[pin_index] == PINPUT):
-            PIN_USE[pin_index] = POUTPUT
-            GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
-            print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from input'
-        if (PIN_USE[pin_index] == PPWM):
-            PIN_USE[pin_index] = POUTPUT
-            PWM_OUT[pin_index].stop()
-            GPIO.setup(PIN_NUM[pin_index],GPIO.OUT)
-            print 'pin' , PIN_NUM[pin_index] , ' changed to digital out from PWM'
-        if (PIN_USE[pin_index] == POUTPUT):
-            #print 'setting gpio %d (physical pin %d) to %d' % (GPIO_NUM[pin_index],PIN_NUM[pin_index],value)
-            GPIO.output(PIN_NUM[pin_index], value)
-            
-    def index_pwm_update(self, pin_index, value):
-        #print "pwm changed on pin index" , pin_index, "to", value
-        #print "Actualy pin=" , PIN_NUM[pin_index]
-        if PIN_USE[pin_index] != PPWM:
-            PIN_USE[pin_index] = PPWM
-            GPIO.PWM(PIN_NUM[pin_index],100)
-            PWM_OUT[pin_index] = GPIO.PWM(PIN_NUM[pin_index],100)
-            PWM_OUT[pin_index].start(max(0,min(100,abs(value))))
-        else:
-            PWM_OUT[pin_index].ChangeDutyCycle(max(0,min(100,abs(value))))
-            
-
     def step_coarse(self,a,b,c,d,delay):
         self.index_pin_update(a,1)
         self.index_pin_update(d,0)
@@ -747,7 +694,7 @@ class ScratchListener(threading.Thread):
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
                     self.dataraw = dataraw
-                    #print dataraw
+                    print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -861,18 +808,18 @@ class ScratchListener(threading.Thread):
                         self.send_scratch_command(bcast_str)
                         
                     if ADDON[i] == "pirocon":
-                        PIN_USE[PIN_NUM_LOOKUP[18]] = POUTPUT #tilt servoA
-                        PIN_USE[PIN_NUM_LOOKUP[22]] = POUTPUT #pan servoB
-                        PIN_USE[PIN_NUM_LOOKUP[19]] = POUTPUT #MotorA 
-                        PIN_USE[PIN_NUM_LOOKUP[21]] = POUTPUT #MotorB
-                        PIN_USE[PIN_NUM_LOOKUP[26]] = POUTPUT #MotorA 
-                        PIN_USE[PIN_NUM_LOOKUP[24]] = POUTPUT #MotorB
-                        PIN_USE[PIN_NUM_LOOKUP[16]] = PINPUT #ObsLeft
-                        PIN_USE[PIN_NUM_LOOKUP[11]] = PINPUT #ObsRight
-                        PIN_USE[PIN_NUM_LOOKUP[12]] = PINPUT #LFLeft
-                        PIN_USE[PIN_NUM_LOOKUP[13]] = PINPUT #LFRight
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[18]] = sghGC.POUTPUT #tilt servoA
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[22]] = sghGC.POUTPUT #pan servoB
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[19]] = sghGC.POUTPUT #MotorA 
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[21]] = sghGC.POUTPUT #MotorB
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[26]] = sghGC.POUTPUT #MotorA 
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[24]] = sghGC.POUTPUT #MotorB
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[16]] = sghGC.PINPUT #ObsLeft
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[11]] = sghGC.PINPUT #ObsRight
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[12]] = sghGC.PINPUT #LFLeft
+                        sghGC.PIN_USE[sghGC.PIN_NUM_LOOKUP[13]] = sghGC.PINPUT #LFRight
 
-                        SetPinMode()
+                        sghGC.setPinMode()
                         print "pirocon setup"
                         os.system("sudo pkill -f servodmotorpitx")
                         os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon --idle-timeout=20000 --p1pins="18,22"' )
@@ -1226,24 +1173,17 @@ class ScratchListener(threading.Thread):
                     #check for motor variable commands
                     motorList = [['motora',21,26],['motorb',19,24]]
                     for listLoop in range(0,2):
-                        #print motorList[listLoop]
                         if self.dVFindValue(motorList[listLoop][0]):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            #print "svalue", svalue
                             if svalue > 0:
-                                #print motorList[listLoop]
-                                #print "motor set forward" , svalue
-                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
-                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(100-svalue))
+                                sghGC.pin_update(motorList[listLoop][2],1)
+                                sghGC.pwm_update(motorList[listLoop][1],(100-svalue))
                             elif svalue < 0:
-                                #print motorList[listLoop]
-                                #print "motor set backward", svalue
-                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
-                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(svalue))
+                                sghGC.pin_update(motorList[listLoop][2],0)
+                                sghGC.pwm_update(motorList[listLoop][1],(svalue))
                             else:
-                                #print svalue, "zero"
-                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],0)
-                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+                                sghGC.pin_update(motorList[listLoop][1],0)
+                                sghGC.pin_update(motorList[listLoop][2],0)
                     
 
                     if (pcaPWM != None):
@@ -1264,27 +1204,27 @@ class ScratchListener(threading.Thread):
                 else:   #normal variable processing with no add on board
                     #gloablly set all ports
                     if (('allpins 1' in dataraw) or ('allpins on' in dataraw) or ('allpins high' in dataraw)):
-                        for i in range(PINS): 
-                            self.index_pin_update(i,1)
+                        for i in range(sghGC.PINS): 
+                            sghGC.index_pin_update(i,1)
                     if (('allpins 0' in dataraw) or ('allpins off' in dataraw) or ('allpins low' in dataraw)):
-                        for i in range(PINS): 
-                            self.index_pin_update(i,0)
+                        for i in range(sghGC.PINS): 
+                            sghGC.index_pin_update(i,0)
                     
                     #check for individual pin on off commands
-                    for i in range(PINS):
+                    for i in range(sghGC.PINS):
                         #check_broadcast = str(i) + 'on'
                         #print check_broadcast
-                        physical_pin = PIN_NUM[i]
+                        physical_pin = sghGC.PIN_NUM[i]
                         pin_string = 'pin' + str(physical_pin)
                         #print "pin string" , pin_string
                         if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
                              ((pin_string + ' high') in dataraw )):
                             #print "variable detect 1/on/high" , dataraw
-                            self.index_pin_update(i,1)
+                            sghGC.index_pin_update(i,1)
                         if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
                               ((pin_string + ' low') in dataraw )):
                             #print "variable detect 0/off/low" , dataraw
-                            self.index_pin_update(i,0)
+                            sghGC.index_pin_update(i,0)
 
                         #check for power variable commands
                         checkStr = 'power' + str(physical_pin)
@@ -1635,28 +1575,23 @@ class ScratchListener(threading.Thread):
    
                 else: # Plain GPIO Broadcast processing
 
-                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
-                        for i in range(PINS):
-                            if (PIN_USE[i] <> PINPUT):
-                                self.index_pin_update(i,1)
-                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
-                        print "alloff detected" 
-                        for i in range(PINS):
-                            if (PIN_USE[i] <> PINPUT):
-                                self.index_pin_update(i,0)
+                    if self.dFindOnOff('all'):
+                        for i in range(sghGC.PINS):
+                            if (sghGC.PIN_USE[i] <> sghGC.PINPUT):
+                                sghGC.index_pin_update(i,self.OnOrOff)
                                 
                     #check pins
-                    for i in range(PINS):
+                    for i in range(sghGC.PINS):
                         #check_broadcast = str(i) + 'on'
                         #print check_broadcast
-                        physical_pin = PIN_NUM[i]
+                        physical_pin = sghGC.PIN_NUM[i]
                         if (('pin' + str(physical_pin)+'high' in dataraw) or ('pin' + str(physical_pin)+'on' in dataraw)):
                             #print 'pin' , physical_pin, 'on'
-                            self.index_pin_update(i,1)
+                            sghGC.index_pin_update(i,1)
 
                         if (('pin' + str(physical_pin)+'low' in dataraw) or ('pin' + str(physical_pin)+'off' in dataraw)):
                             #print 'pin' , physical_pin, 'off'
-                            self.index_pin_update(i,0)
+                            sghGC.index_pin_update(i,0)
 
                         if ('sonar' + str(physical_pin)) in dataraw:
                             self.index_pin_update(i,1)
@@ -1869,22 +1804,17 @@ def cleanup_threads(threads):
 
         
 ######### Main Program Here
-GPIO.setmode(GPIO.BOARD)
-GPIO.setwarnings(False)
-GPIO.cleanup()
-print "Board Revision" , GPIO.RPI_REVISION
+
 
 #Set some constants and initialise lists
-PINPUT = 4
-POUTPUT = 1
-PPWM = 2
-PUNUSED = 8
+
+sgh_GPIOController.GPIOController(True)
+print sghGC.getPiRevision()
 
 STEPPERA=0
 STEPPERB=1
 STEPPERC=2
 stepperInUse = [False,False,False]
-INVERT = False
 BIG_NUM = 2123456789
 
 ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon'] #define addons
@@ -1931,7 +1861,7 @@ except:
 #See if Compass connected
 compass = None
 try:
-    if GPIO.RPI_REVISION == 1:
+    if sghGC.getPiRevision == 1:
         compass = Compass(gauss = 4.7, declination = (-0,0))
     else:
         compass = Compass(gauss = 4.7, declination = (-0,0))
@@ -1951,24 +1881,13 @@ except:
 #If I2C then don't uses pins 3 and 5
 if ((piglow != None) or (compass != None) or (pcaPWM != None)):
     print "I2C device detected"
-    PIN_NUM = [11,12,13,15,16,18,22, 7, 24,26,19,21,23, 8,10]
-    PIN_USE = [ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT]
+    PIN_NUM = sghGC.PIN_NUM
 else:
     print "No I2C Device Detected"
-    PIN_NUM = [11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10]
-    PIN_USE = [ POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, POUTPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT, PINPUT]
-    
+    PIN_NUM = sghGC.PIN_NUM
 
-PINS = len(PIN_NUM)
-PIN_NUM_LOOKUP=[int] * 27
-
-for i in range(PINS):
-    PIN_NUM_LOOKUP[PIN_NUM[i]] = i
-    #print i, PIN_NUM[i]
-
-
-PWM_OUT = [None] * PINS
-ULTRA_IN_USE = [False] * PINS
+ 
+ULTRA_IN_USE = [False] * sghGC.PINS
 ultraTotalInUse = 0
 ultraSleep = 1.0
 
@@ -1983,8 +1902,7 @@ if __name__ == '__main__':
 cycle_trace = 'start'
 
 
-SetPinMode()
-
+sghGC.setPinMode()
 # setup a fade across the 18 LEDs of values ranging from 0 - 255
 values = [0x01,0x02,0x04,0x08,0x10,0x18,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xA0,0xC0,0xE0,0xFF]
 
