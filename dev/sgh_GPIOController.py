@@ -96,17 +96,17 @@ class GPIOController :
                 if self.pinUse[pin] == self.POUTPUT:
                     value = abs(value - 1)
             if (self.pinUse[pin] == self.POUTPUT): # if already an output
-                GPIO.output(pin, value) # set output to 1 ot 0
+                GPIO.output(pin, int(value)) # set output to 1 ot 0
             elif (self.pinUse[pin] == self.PINPUT): # if pin is an input
                 self.pinUse[pin] = self.POUTPUT # switch it to output
                 GPIO.setup(pin,GPIO.OUT)
-                GPIO.output(pin, value) # set output to 1 ot 0
+                GPIO.output(pin, int(value)) # set output to 1 ot 0
                 print 'pin' , pin , ' changed to digital out from input' 
             elif (self.pinUse[pin] == self.PPWM): #if pin in use for PWM
                 self.pinUse[pin] = self.POUTPUT # switch it to output
                 self.pwmRef[pin].stop() # stop PWM from running
                 GPIO.setup(pin,GPIO.OUT)
-                GPIO.output(pin, value) # set output to 1 ot 0
+                GPIO.output(pin, int(value)) # set output to 1 ot 0
                 print 'pin' , pin , ' changed to digital out from PWM' 
 
     def pinSonar(self, pin):

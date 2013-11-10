@@ -170,7 +170,7 @@ def isNumeric(s):
     
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
     
-def getValue(searchString, dataString):
+def xgetValue(searchString, dataString):
     outputall_pos = dataString.find((searchString + ' '))
     sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
     return sensor_value[0]
@@ -378,11 +378,14 @@ class ScratchSender(threading.Thread):
         
     def broadcast_changed_pins(self, changed_pin_map, pin_value_map):
         for pin in range(sghGC.numOfPins):
+            #print pin
             # if we care about this pin's value
             if (changed_pin_map >> pin) & 0b1:
+                #print "changed"
                 pin_value = (pin_value_map >> pin) & 0b1
                 if (sghGC.pinUse[pin] == sghGC.PINPUT):
                     #print PIN_NUM[i] , pin_value
+                    #print "broadcast"
                     self.broadcast_pin_update(pin, pin_value)
                                      
     def broadcast_pin_update(self, pin, value):
@@ -426,11 +429,12 @@ class ScratchSender(threading.Thread):
         self.scratch_socket.send(b + cmd)
 
     def run(self):
-        time.sleep(3)
+        time.sleep(2)
         last_bit_pattern=0L
         print sghGC.pinUse
         for pin in range(sghGC.numOfPins):
             if (sghGC.pinUse[pin] == sghGC.PINPUT):
+                self.broadcast_pin_update(pin, sghGC.pinRead(pin))
                 last_bit_pattern += sghGC.pinRead(pin) << i
             else:
                 last_bit_pattern += 1 << i
@@ -438,15 +442,17 @@ class ScratchSender(threading.Thread):
 
         last_bit_pattern = last_bit_pattern ^ -1
         while not self.stopped():
-            time.sleep(0.01) # be kind to cpu - not certain why :)
-            pin_bit_pattern = 0L
+            time.sleep(0.01) # be kind to cpu  :)
+            pin_bit_pattern = 0
             for pin in range(sghGC.numOfPins):
+                #print pin
                 if (sghGC.pinUse[pin] == sghGC.PINPUT):
-                    #print 'pin' , PIN_NUM[i] , GPIO.input(PIN_NUM[i]
-                    pin_bit_pattern += sghGC.pinRead(pin) << i
+                    #print 'pin' , pin , sghGC.pinRead(pin)
+                    pin_bit_pattern += sghGC.pinRead(pin) << pin
                 else:
-                    pin_bit_pattern += 1 << i
-            #print bin(pin_bit_pattern)
+                    pin_bit_pattern += 1 << pin
+                #print bin(pin_bit_pattern) , pin_bit_pattern
+            #print bin(pin_bit_pattern) , pin_bit_pattern
             # if there is a change in the input pins
             changed_pins = pin_bit_pattern ^ last_bit_pattern
             #print "changed pins" , bin(changed_pins)
@@ -461,8 +467,7 @@ class ScratchSender(threading.Thread):
 
             last_bit_pattern = pin_bit_pattern
 
-            if (time.time() - self.time_last_ping) > 1:
-
+            if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
                 for pin in range(sghGC.numOfPins):
                     if sghGC.pinUse[pin] == sghGC.ULTRA:
                         distance = sghGC.pinSonar(pin) # do a ping
@@ -492,19 +497,10 @@ class ScratchSender(threading.Thread):
                     # #print 'sending: %s' % bcast_str
                     # self.send_scratch_command(bcast_str)
                 # self.time_last_compass = time.time()
-                
-                
-                
+
             #time.sleep(1)
 
-##            sensor_name = "turninga"
-##            value = 100.0
-##            bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
-##            print 'sending: %s' % bcast_str
-##            self.send_scratch_command(bcast_str)
             
-
-
 class ScratchListener(threading.Thread):
     def __init__(self, socket):
         threading.Thread.__init__(self)
@@ -520,6 +516,11 @@ class ScratchListener(threading.Thread):
         n = len(cmd)
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
+        
+    def getValue(self,searchString):
+        outputall_pos = self.dataraw.find((searchString + ' '))
+        sensor_value = self.dataraw[(outputall_pos+1+len(searchString)):].split()
+        return sensor_value[0]
         
     def dFind(self,searchStr):
         return (searchStr in self.dataraw)
@@ -541,44 +542,51 @@ class ScratchListener(threading.Thread):
         else:
             return False
             
-    def dRtnOnOff(self,searchStr):
-        if self.dFindOn(searchStr):
-            return 1
-        else:
-            return 0
+    # def dRtnOnOff(self,searchStr):
+        # if self.dFindOn(searchStr):
+            # return 1
+        # else:
+            # return 0
+
+    def bCheckAll(self):
+        if self.dFindOnOff('all'):
+            for pin in range(sghGC.numOfPins):
+                #print pin
+                if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                    #print pin
+                    sghGC.pinUpdate(pin,self.OnOrOff)
         
-    def dVFind(self,searchStr):
+    def vFind(self,searchStr):
         return ((searchStr + ' ') in self.dataraw)
         
-    def dVFindOn(self,searchStr):
-        return (self.dVFind(searchStr + 'on') or self.dVFind(searchStr + 'high')or self.dVFind(searchStr + '1'))
+    def vFindOn(self,searchStr):
+        return (self.vFind(searchStr + 'on') or self.vFind(searchStr + 'high')or self.vFind(searchStr + '1'))
         
-    def dVFindOff(self,searchStr):
-        return (self.dVFind(searchStr + 'off') or self.dVFind(searchStr + 'low') or self.dVFind(searchStr + '0'))
+    def vFindOff(self,searchStr):
+        return (self.vFind(searchStr + 'off') or self.vFind(searchStr + 'low') or self.vFind(searchStr + '0'))
         
-    def dVFindOnOff(self,searchStr):
-        return (self.dVFindOn(searchStr) or self.dVFindOff(searchStr))
-
-    def dVRtnOnOff(self,searchStr):
-        if self.dVFindOn(searchStr):
-            return 1
+    def vFindOnOff(self,searchStr):
+        self.value = None
+        self.valueNumeric = None
+        self.valueIsNumeric = False
+        if self.vFind(searchStr):
+            self.value = self.getValue(searchStr)
+            if str(self.value) in ["high","on","1"]:
+                self.valueNumeric = 1
+            else:
+                self.valueNumeric = 0
+            return True
         else:
-            return 0
-            
-            
-# def getValue(searchString, dataString):
-    # outputall_pos = dataString.find((searchString + ' '))
-    # sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
-    # return sensor_value[0]
-            
-    def dVFindValue(self,searchStr):
+            return False
+
+    def vFindValue(self,searchStr):
         #print "searching for ", searchStr 
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
-        if self.dVFind(searchStr):
+        if self.vFind(searchStr):
             #print "found"
-            self.value = getValue(searchStr, self.dataraw)
+            self.value = self.getValue(searchStr)
             #print self.value
             if isNumeric(self.value):
                 self.valueNumeric = float(self.value)
@@ -587,6 +595,32 @@ class ScratchListener(threading.Thread):
             return True
         else:
             return False
+            
+    def vAllCheck(self):
+        if self.vFindOnOff('allpins'):
+            for pin in range(sghGC.numOfPins):
+                if sghGC.pinUse[pin] == sghGC.POUTPUT:
+                    sghGC.pinUpdate(pin,self.valueNumeric)
+    
+    def vPinCheck(self):
+        for pin in range(sghGC.numOfPins):
+            if self.vFindValue('pin' + str(pin)):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pin,self.valueNumeric)
+                else:
+                    sghGC.pinUpdate(pin,0)
+                    
+            if self.vFindValue('power' + str(pin)):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
+                else:
+                    sghGC.pinUpdate(pin,0,type="pwm")
+                    
+            if self.vFindValue('motor' + str(pin)):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
+                else:
+                    sghGC.pinUpdate(pin,0,type="pwm")
 
 
     def stop(self):
@@ -711,9 +745,23 @@ class ScratchListener(threading.Thread):
 
                                 os.system('ps -ef | grep -v grep | grep "./servodmotorpitx" || ./servodmotorpitx--idle-timeout=20000')
                                 
+                            if ADDON[i] == "gpio":
+                                sghGC.pinUse[11] = sghGC.POUTPUT
+                                sghGC.pinUse[12] = sghGC.POUTPUT
+                                sghGC.pinUse[13] = sghGC.POUTPUT
+                                sghGC.pinUse[15] = sghGC.POUTPUT                                
+                                sghGC.pinUse[16] = sghGC.POUTPUT
+                                sghGC.pinUse[18] = sghGC.POUTPUT
+                                sghGC.pinUse[7]  = sghGC.PINPUT
+                                sghGC.pinUse[8]  = sghGC.PINPUT
+                                sghGC.pinUse[10] = sghGC.PINPUT
+                                sghGC.pinUse[22] = sghGC.PINPUT                                 
+                                sghGC.setPinMode()
+                                print  "gPiO setup"
+                                                               
                             if ADDON[i] == "berry":
 
-                                PIN_USE[PIN_NUM_LOOKUP[7]] = POUTPUT
+                                sghGC.pinUse[7] = sghGC.POUTPUT
                                 PIN_USE[PIN_NUM_LOOKUP[11]] = POUTPUT
                                 PIN_USE[PIN_NUM_LOOKUP[15]] = POUTPUT
                                 PIN_USE[PIN_NUM_LOOKUP[19]] = POUTPUT
@@ -727,7 +775,7 @@ class ScratchListener(threading.Thread):
                                 PIN_USE[PIN_NUM_LOOKUP[8]] = POUTPUT
                                 PIN_USE[PIN_NUM_LOOKUP[10]] = POUTPUT
                                 PIN_USE[PIN_NUM_LOOKUP[22]] = POUTPUT
-                                SetPinMode()
+                                sghGC.setPinMode()
                                 
                                 sensor_name = 'switch'
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, 0)
@@ -990,23 +1038,9 @@ class ScratchListener(threading.Thread):
                 elif ADDON_PRESENT[5] == True:
                     #do gPiO stuff
                     
-                    if self.dVFindOnOff('allpins'):
-                        for i in range(PINS): 
-                            self.index_pin_update(i,self.dVRtnOnOff('allpins'))
-                            
-                    for i in range(PINS):
-                        physical_pin = PIN_NUM[i]
-                        checkStr = 'pin' + str(physical_pin)
-                        if self.dVFindOnOff(checkStr):
-                            self.index_pin_update(i,self.dVRtnOnOff(checkStr))
-                            
-                        #check for power variable commands
-                        for k in ['power','motor']:
-                            checkStr = k + str(physical_pin)
-                            if  self.dVFind(checkStr):
-                                tempValue = getValue(checkStr, dataraw)
-                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                                self.index_pwm_update(i,svalue)
+                    self.vAllCheck() # check Allpins On/Off/High/Low/1/0
+ 
+                    self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
                             
                     #check for motor variable commands
                     motorList = [['motora',11,12],['motorb',13,15]]
@@ -1014,24 +1048,24 @@ class ScratchListener(threading.Thread):
                     for listLoop in range(0,2):
                         #print motorList[listLoop]
                         checkStr = motorList[listLoop][0]
-                        if self.dVFind(checkStr):
+                        if self.vFind(checkStr):
                             tempValue = getValue(checkStr, dataraw)
                             svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
                             #print "svalue", svalue
                             if svalue > 0:
                                 #print motorList[listLoop]
                                 #print "motor set forward" , svalue
-                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],1)
-                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(100-svalue))
+                                self.pinUpdate(motorList[listLoop][2],1)
+                                self.pinUpdate(motorList[listLoop][1],(100-svalue),type="pwm")
                             elif svalue < 0:
                                 #print motorList[listLoop]
                                 #print "motor set backward", svalue
-                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
-                                self.index_pwm_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],(svalue))
+                                self.pinUpdate(motorList[listLoop][2],0)
+                                self.pinUpdate(motorList[listLoop][1],(svalue),type="pwm")
                             else:
                                 #print svalue, "zero"
-                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][1]],0)
-                                self.index_pin_update(PIN_NUM_LOOKUP[motorList[listLoop][2]],0)
+                                self.pinUpdate(motorList[listLoop][1],0)
+                                self.pinUpdate(motorList[listLoop][2],0)
 
                     ######### End of gPiO Variable handling
                    
@@ -1166,34 +1200,10 @@ class ScratchListener(threading.Thread):
                     ######### End of PiRoCon Variable handling
                                                             
                 else:   #normal variable processing with no add on board
-                    #gloablly set all ports
-                    if self.dVFindOnOff('allpins'):
-                        for pin in range(sghGC.numOfPins):
-                            if sghGC.pinUse[pin] == sghGC.POUTPUT:
-                                if self.valueIsNumeric:
-                                    sghGC.pinUpdate(pin,self.valueNumeric)
-                                else:
-                                    sghGC.pinUpdate(pin,0)
+                    
+                    self.vCheckAll() # check All On/Off/High/Low/1/0
  
-                    #check for individual pin on off commands
-                    for pin in range(sghGC.numOfPins):
-                        if self.dVFindValue('pin' + str(pin)):
-                            if self.valueIsNumeric:
-                                sghGC.pinUpdate(pin,self.valueNumeric)
-                            else:
-                                sghGC.pinUpdate(pin,0)
-                                
-                        if self.dVFindValue('power' + str(pin)):
-                            if self.valueIsNumeric:
-                                sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
-                            else:
-                                sghGC.pinUpdate(pin,0,type="pwm")
-                                
-                        if self.dVFindValue('motor' + str(pin)):
-                            if self.valueIsNumeric:
-                                sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
-                            else:
-                                sghGC.pinUpdate(pin,0,type="pwm")
+                    self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
                                 
                     checkStr = 'motora'
                     if  (checkStr + ' ') in dataraw:
@@ -1485,6 +1495,14 @@ class ScratchListener(threading.Thread):
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = 0
                             piglow.update_pwm_values(PiGlow_Values)
 
+                elif ADDON_PRESENT[5] == True: # gPiO
+                    print ("gPiO broadcast processing")
+                    self.bCheckAll() # Check for all off/on type broadcasrs
+                              
+                    for pin in range(sghGC.numOfPins): # Check each pin for on/off
+                        if self.dFindOnOff('pin' + str(pin)):
+                            sghGC.pinUpdate(pin,self.OnOrOff)
+                
                 elif ADDON_PRESENT[6] == True: # BerryClip
 
                     if self.dFindOnOff('all'):
@@ -1514,24 +1532,12 @@ class ScratchListener(threading.Thread):
    
                 else: # Plain GPIO Broadcast processing
 
-                    if self.dFindOnOff('all'):
-                        for pin in range(sghGC.numOfPins):
-                            #print pin
-                            if (sghGC.pinUse[pin] == sghGC.POUTPUT):
-                                #print pin
-                                sghGC.pinUpdate(pin,self.OnOrOff)
+                    self.bCheckAll() # Check for all off/on type broadcasrs
                                 
                     #check pins
                     for pin in range(sghGC.numOfPins):
-                        #check_broadcast = str(i) + 'on'
-                        #print check_broadcast
-                        if (('pin' + str(pin)+'high' in dataraw) or ('pin' + str(pin)+'on' in dataraw)):
-                            #print 'pin' , pin, 'on'
-                            sghGC.pinUpdate(pin,1)
-
-                        if (('pin' + str(pin)+'low' in dataraw) or ('pin' + str(pin)+'off' in dataraw)):
-                            #print 'pin' , pin, 'off'
-                            sghGC.pinUpdate(pin,0)
+                        if self.dFindOnOff('pin' + str(pin)):
+                            sghGC.pinUpdate(pin,self.OnOrOff)
 
                         if ('sonar' + str(pin)) in dataraw:
                             distance = sghGC.pinSonar(pin)
@@ -1542,9 +1548,10 @@ class ScratchListener(threading.Thread):
                             self.send_scratch_command(bcast_str)
                             
                         #Start using ultrasonic sensor on a pin    
-                        if (('ultra' + str(pin) in dataraw)):
+                        if self.dFind('ultra' + str(pin)):
                             print 'start pinging on', str(pin)
-                            ULTRA_IN_USE[i] = True
+                            sghGC.pinUse[pin] = sghGC.PULTRA
+                            #ULTRA_IN_USE[i] = True
 #                            tempTotal = 0
 #                            for k in range(PINS):
 #                                if ULTRA_IN_USE[k] == True:
