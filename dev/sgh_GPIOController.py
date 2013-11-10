@@ -74,7 +74,7 @@ class GPIOController :
     #Procedure to set pin mode for each pin
     def setPinMode(self):
         for pin in range(self.numOfPins):
-            print pin
+            #print pin
             if (self.pinUse[pin] == self.POUTPUT):
                 print 'setting pin' , pin , ' to out' 
                 GPIO.setup(pin,GPIO.OUT)
@@ -165,6 +165,7 @@ class GPIOController :
         return distance
         
     def pinRead(self, pin):
+        #print "pin",pin ,"set to", self.pinUse[pin]
         return GPIO.input(pin)
 
 #### End of main program

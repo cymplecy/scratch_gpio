@@ -426,11 +426,10 @@ class ScratchSender(threading.Thread):
         self.scratch_socket.send(b + cmd)
 
     def run(self):
-        time.sleep(2)
+        time.sleep(3)
         last_bit_pattern=0L
         print sghGC.pinUse
         for pin in range(sghGC.numOfPins):
-            #print 'i %d' % i
             if (sghGC.pinUse[pin] == sghGC.PINPUT):
                 last_bit_pattern += sghGC.pinRead(pin) << i
             else:
@@ -618,7 +617,7 @@ class ScratchListener(threading.Thread):
                steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness, \
                    compass
 
-        firstRun = False #Used for testing in overcoming Scratch "bug/feature"
+        firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
 
         #semi global variables used for servos in PiRoCon
@@ -668,8 +667,104 @@ class ScratchListener(threading.Thread):
                 if 'sensor-update' in dataraw:
                     #print "this data ignored" , dataraw
                     firstRunData = dataraw
-                    dataraw = ''
+                    #dataraw = ''
+                    #firstRun = False
+                    
+                    anyAddOns = False
+                    for i in range(NUMOF_ADDON):
+                        #print "checking for " , ("addon " + ADDON[i]) 
+                        ADDON_PRESENT[i] = False
+                        if ("addon " + ADDON[i]) in firstRunData:
+                            print "addon " + ADDON[i] + " declared"
+                            ADDON_PRESENT[i] = True
+                            anyAddOns = True
+                            if ADDON[i] == "ladder":
+
+                                for k in range(0,10):
+                                    PIN_USE[k] = POUTPUT
+                                for k in range(10,14):
+                                    PIN_USE[k] = PINPUT
+                                SetPinMode()
+
+                                for k in range(1,5):
+                                    sensor_name = 'switch' + str(k)
+                                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, 1)
+                                    #print 'sending: %s' % bcast_str
+                                    self.send_scratch_command(bcast_str)
+                                    
+                            if ADDON[i] == "motorpitx":
+                                #print "addon " + ADDON[i] + " declared"
+                                self.index_pin_update(PIN_NUM_LOOKUP[21], 0)
+                                self.index_pin_update(PIN_NUM_LOOKUP[19], 0)
+                                self.index_pin_update(PIN_NUM_LOOKUP[16], 0)
+                                self.index_pin_update(PIN_NUM_LOOKUP[18], 0)
+                                
+                                pin=PIN_NUM_LOOKUP[13]
+                                PIN_USE[pin] = PINPUT
+                                GPIO.setup(13,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+                                
+                                #setup servo2 for pin 10
+                                pin=PIN_NUM_LOOKUP[10]
+                                PIN_USE[pin] = POUTPUT
+                                GPIO.setup(10,GPIO.OUT)
+                                os.system("sudo pkill -f servodpirocon")
+
+                                os.system('ps -ef | grep -v grep | grep "./servodmotorpitx" || ./servodmotorpitx--idle-timeout=20000')
+                                
+                            if ADDON[i] == "berry":
+
+                                PIN_USE[PIN_NUM_LOOKUP[7]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[11]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[15]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[19]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[21]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[23]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[24]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[26]] = PINPUT
+                                #dummy out to stop random inputs registering
+                                PIN_USE[PIN_NUM_LOOKUP[3]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[5]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[8]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[10]] = POUTPUT
+                                PIN_USE[PIN_NUM_LOOKUP[22]] = POUTPUT
+                                SetPinMode()
+                                
+                                sensor_name = 'switch'
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, 0)
+                                #print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)
+                                
+                            if ADDON[i] == "pirocon":
+                                sghGC.pinUse[18] = sghGC.POUTPUT #tilt servoA
+                                sghGC.pinUse[22] = sghGC.POUTPUT #pan servoB
+                                sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
+                                sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
+                                sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
+                                sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[13] = sghGC.PINPUT #LFRight
+
+                                sghGC.setPinMode()
+                                print "pirocon setup"
+                                os.system("sudo pkill -f servodmotorpitx")
+                                os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon --idle-timeout=20000 --p1pins="18,22"' )
+                                                      
+                    if anyAddOns == False:
+                        print "no AddOns Declared"
+                        sghGC.pinUse[11] = sghGC.POUTPUT
+                        sghGC.pinUse[12] = sghGC.POUTPUT
+                        sghGC.pinUse[13] = sghGC.POUTPUT
+                        sghGC.pinUse[15] = sghGC.POUTPUT
+                        sghGC.pinUse[16] = sghGC.POUTPUT
+                        sghGC.pinUse[18] = sghGC.POUTPUT
+                        sghGC.pinUse[7]  = sghGC.PINPUT
+                        sghGC.pinUse[22] = sghGC.PINPUT
+                        sghGC.setPinMode()
+                        
                     firstRun = False
+
 
             #If outputs need globally inverting (7 segment common anode needs it)
             if ('invert' in dataraw):
@@ -693,85 +788,7 @@ class ScratchListener(threading.Thread):
                             PIN_USE[i] = PINPUT
                             
 ### Check for AddOn boards being declared
-            for i in range(NUMOF_ADDON):
-                #print "checking for " , ("addon " + ADDON[i]) 
-                if ("addon " + ADDON[i]) in dataraw:
-                    print "addon " + ADDON[i] + " declared"
-                    ADDON_PRESENT[i] = True
-                    if ADDON[i] == "ladder":
-
-                        for k in range(0,10):
-                            PIN_USE[k] = POUTPUT
-                        for k in range(10,14):
-                            PIN_USE[k] = PINPUT
-                        SetPinMode()
-
-                        for k in range(1,5):
-                            sensor_name = 'switch' + str(k)
-                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, 1)
-                            #print 'sending: %s' % bcast_str
-                            self.send_scratch_command(bcast_str)
-                            
-                    if ADDON[i] == "motorpitx":
-                        #print "addon " + ADDON[i] + " declared"
-                        self.index_pin_update(PIN_NUM_LOOKUP[21], 0)
-                        self.index_pin_update(PIN_NUM_LOOKUP[19], 0)
-                        self.index_pin_update(PIN_NUM_LOOKUP[16], 0)
-                        self.index_pin_update(PIN_NUM_LOOKUP[18], 0)
-                        
-                        pin=PIN_NUM_LOOKUP[13]
-                        PIN_USE[pin] = PINPUT
-                        GPIO.setup(13,GPIO.IN,pull_up_down=GPIO.PUD_UP)
-                        
-                        #setup servo2 for pin 10
-                        pin=PIN_NUM_LOOKUP[10]
-                        PIN_USE[pin] = POUTPUT
-                        GPIO.setup(10,GPIO.OUT)
-                        os.system("sudo pkill -f servodpirocon")
-
-                        os.system('ps -ef | grep -v grep | grep "./servodmotorpitx" || ./servodmotorpitx--idle-timeout=20000')
-                        
-                    if ADDON[i] == "berry":
-
-                        PIN_USE[PIN_NUM_LOOKUP[7]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[11]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[15]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[19]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[21]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[23]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[24]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[26]] = PINPUT
-                        #dummy out to stop random inputs registering
-                        PIN_USE[PIN_NUM_LOOKUP[3]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[5]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[8]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[10]] = POUTPUT
-                        PIN_USE[PIN_NUM_LOOKUP[22]] = POUTPUT
-                        SetPinMode()
-                        
-                        sensor_name = 'switch'
-                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, 0)
-                        #print 'sending: %s' % bcast_str
-                        self.send_scratch_command(bcast_str)
-                        
-                    if ADDON[i] == "pirocon":
-                        sghGC.pinUse[18] = sghGC.POUTPUT #tilt servoA
-                        sghGC.pinUse[22] = sghGC.POUTPUT #pan servoB
-                        sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
-                        sghGC.pinUse[21] = sghGC.POUTPUT #MotorB
-                        sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
-                        sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
-                        sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
-                        sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
-                        sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
-                        sghGC.pinUse[13] = sghGC.PINPUT #LFRight
-
-                        sghGC.setPinMode()
-                        print "pirocon setup"
-                        os.system("sudo pkill -f servodmotorpitx")
-                        os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon --idle-timeout=20000 --p1pins="18,22"' )
-                        
-
+                
             #Listen for Variable changes
             if 'sensor-update' in dataraw:
                 #print "sensor-update rcvd" , dataraw
@@ -1150,58 +1167,33 @@ class ScratchListener(threading.Thread):
                                                             
                 else:   #normal variable processing with no add on board
                     #gloablly set all ports
-                    if (('allpins 1' in dataraw) or ('allpins on' in dataraw) or ('allpins high' in dataraw)):
-                        for i in range(sghGC.PINS): 
-                            sghGC.index_pin_update(i,1)
-                    if (('allpins 0' in dataraw) or ('allpins off' in dataraw) or ('allpins low' in dataraw)):
-                        for i in range(sghGC.PINS): 
-                            sghGC.index_pin_update(i,0)
-                    
+                    if self.dVFindOnOff('allpins'):
+                        for pin in range(sghGC.numOfPins):
+                            if sghGC.pinUse[pin] == sghGC.POUTPUT:
+                                if self.valueIsNumeric:
+                                    sghGC.pinUpdate(pin,self.valueNumeric)
+                                else:
+                                    sghGC.pinUpdate(pin,0)
+ 
                     #check for individual pin on off commands
-                    for i in range(sghGC.PINS):
-                        #check_broadcast = str(i) + 'on'
-                        #print check_broadcast
-                        physical_pin = sghGC.PIN_NUM[i]
-                        pin_string = 'pin' + str(physical_pin)
-                        #print "pin string" , pin_string
-                        if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
-                             ((pin_string + ' high') in dataraw )):
-                            #print "variable detect 1/on/high" , dataraw
-                            sghGC.index_pin_update(i,1)
-                        if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
-                              ((pin_string + ' low') in dataraw )):
-                            #print "variable detect 0/off/low" , dataraw
-                            sghGC.index_pin_update(i,0)
-
-                        #check for power variable commands
-                        checkStr = 'power' + str(physical_pin)
-                        if  (checkStr + ' ') in dataraw:
-                            tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                            
-                            #outputall_pos = dataraw.find('power' + str(physical_pin))
-                            #sensor_value = dataraw[(outputall_pos+1+len('power' + str(physical_pin))):].split()
-                            #print 'power', str(physical_pin) , sensor_value[0]
-
-                            #if isNumeric(sensor_value[0]):
-                            if PIN_USE[i] != PPWM:
-                                PIN_USE[i] = PPWM
-                                PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                                PWM_OUT[i].start(max(0,min(100,svalue)))
+                    for pin in range(sghGC.numOfPins):
+                        if self.dVFindValue('pin' + str(pin)):
+                            if self.valueIsNumeric:
+                                sghGC.pinUpdate(pin,self.valueNumeric)
                             else:
-                                PWM_OUT[i].ChangeDutyCycle(max(0,min(100,svalue)))
-                                    
-                        checkStr = 'motor' + str(physical_pin)
-                        if  (checkStr + ' ') in dataraw:
-                            tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                            
-                            if PIN_USE[i] != PPWM:
-                                PIN_USE[i] = PPWM
-                                PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                                PWM_OUT[i].start(max(0,min(100,svalue)))
+                                sghGC.pinUpdate(pin,0)
+                                
+                        if self.dVFindValue('power' + str(pin)):
+                            if self.valueIsNumeric:
+                                sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                             else:
-                                PWM_OUT[i].ChangeDutyCycle(max(0,min(100,svalue)))
+                                sghGC.pinUpdate(pin,0,type="pwm")
+                                
+                        if self.dVFindValue('motor' + str(pin)):
+                            if self.valueIsNumeric:
+                                sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
+                            else:
+                                sghGC.pinUpdate(pin,0,type="pwm")
                                 
                     checkStr = 'motora'
                     if  (checkStr + ' ') in dataraw:
@@ -1524,8 +1516,10 @@ class ScratchListener(threading.Thread):
 
                     if self.dFindOnOff('all'):
                         for pin in range(sghGC.numOfPins):
-                            if (sghGC.pinUse[i] <> sghGC.PINPUT):
-                                sghGC.pinUpdate(i,self.OnOrOff)
+                            #print pin
+                            if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                                #print pin
+                                sghGC.pinUpdate(pin,self.OnOrOff)
                                 
                     #check pins
                     for pin in range(sghGC.numOfPins):
