@@ -393,7 +393,7 @@ class ScratchSender(threading.Thread):
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         #self.send_scratch_command(bcast_str)   
-        if ADDON_PRESENT[1] == True:
+        if ADDON_PRESENT[1] == "usedtobetru":
             #do ladderboard stuff
             switch_list = [3,4,2,1]
             #switch_lookup = [24,26,19,21]
@@ -552,8 +552,8 @@ class ScratchListener(threading.Thread):
         if self.dFindOnOff('all'):
             for pin in range(sghGC.numOfPins):
                 #print pin
-                if (sghGC.pinUse[pin] == sghGC.POUTPUT):
-                    #print pin
+                if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
+                    print pin
                     sghGC.pinUpdate(pin,self.OnOrOff)
         
     def vFind(self,searchStr):
@@ -596,12 +596,12 @@ class ScratchListener(threading.Thread):
         else:
             return False
             
-    def vAllCheck(self):
-        if self.vFindOnOff('allpins'):
+    def vAllCheck(self,searchStr):
+        if self.vFindOnOff(searchStr):
             for pin in range(sghGC.numOfPins):
-                if sghGC.pinUse[pin] == sghGC.POUTPUT:
+                if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
                     sghGC.pinUpdate(pin,self.valueNumeric)
-    
+
     def vPinCheck(self):
         for pin in range(sghGC.numOfPins):
             if self.vFindValue('pin' + str(pin)):
@@ -713,18 +713,12 @@ class ScratchListener(threading.Thread):
                             ADDON_PRESENT[i] = True
                             anyAddOns = True
                             if ADDON[i] == "ladder":
-
-                                for k in range(0,10):
-                                    PIN_USE[k] = POUTPUT
-                                for k in range(10,14):
-                                    PIN_USE[k] = PINPUT
-                                SetPinMode()
-
-                                for k in range(1,5):
-                                    sensor_name = 'switch' + str(k)
-                                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, 1)
-                                    #print 'sending: %s' % bcast_str
-                                    self.send_scratch_command(bcast_str)
+                                ladderOutputs = [11,12,13,15,16,18,22, 7, 3, 5]
+                                for pin in ladderOutputs:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                for pin in [24,26,19,21]:
+                                    sghGC.pinUse[pin] = sghGC.PINPUT
+                                sghGC.setPinMode()
                                     
                             if ADDON[i] == "motorpitx":
                                 #print "addon " + ADDON[i] + " declared"
@@ -845,38 +839,20 @@ class ScratchListener(threading.Thread):
                 if ADDON_PRESENT[1] == True:
                     #do ladderboard stuff
 
-                    if (('allleds 1' in dataraw) or ('allleds on' in dataraw) or ('allleds high' in dataraw)):
-                        for i in range(0, 10): # limit pins to first 10
-                            self.index_pin_update(i,1)
-                    if (('allleds 0' in dataraw) or ('allleds off' in dataraw) or ('allleds low' in dataraw)):
-                        for i in range(0, 10): # limit pins to first 10
-                            self.index_pin_update(i,0)
-                    
-                    for i in range(0, 10): # limit pins to first 10
-                        physical_pin = PIN_NUM[i]
-                        pin_string = 'led' + str(i + 1)
-                        #print "pin string" , pin_string
-                        if (((pin_string + ' 1' )in dataraw) or ((pin_string + ' on') in dataraw) or
-                             ((pin_string + ' high') in dataraw )):
-                            #print "variable detect 1/on/high" , dataraw
-                            self.index_pin_update(i,1)
-                        if  (((pin_string + ' 0') in dataraw) or ((pin_string + ' off') in dataraw) or
-                              ((pin_string + ' low') in dataraw )):
-                            #print "variable detect 0/off/low" , dataraw
-                            self.index_pin_update(i,0)
+                    self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
-                        #check for power variable commands
-                        if 'power' + str(i + 1) in dataraw:
-                            tempValue = getValue('power' + str(i + 1), dataraw)
-                            #print 'power', str(physical_pin) , tempValue
-
-                            if isNumeric(tempValue):
-                                if PIN_USE[i] != PPWM:
-                                    PIN_USE[i] = PPWM
-                                    PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                                    PWM_OUT[i].start(max(0,min(100,int(float(tempValue)))))
-                                else:
-                                    PWM_OUT[i].ChangeDutyCycle(max(0,min(100,int(float(tempValue)))))
+                    for led in range(1,11): # loop thru leds 1..10
+                        if self.vFindValue('led' + str(led)): #check if present in data
+                            if self.valueIsNumeric:
+                                sghGC.pinUpdate(ladderOutputs[led - 1],self.valueNumeric) # set appropriate pin using list lookup
+                            else:
+                                sghGC.pinUpdate(ladderOutputs[led - 1],0)
+                                
+                        if self.vFindValue('power' + str(led)):
+                            if self.valueIsNumeric:
+                                sghGC.pinUpdate(ladderOutputs[led - 1],self.valueNumeric,type="pwm")
+                            else:
+                                sghGC.pinUpdate(ladderOutputs[led - 1],0,type="pwm")
                                     
                 elif ADDON_PRESENT[2] == True:
                     #do MotorPiTx stuff
@@ -1038,7 +1014,7 @@ class ScratchListener(threading.Thread):
                 elif ADDON_PRESENT[5] == True:
                     #do gPiO stuff
                     
-                    self.vAllCheck() # check Allpins On/Off/High/Low/1/0
+                    self.vAllCheck("allpins") # check Allpins On/Off/High/Low/1/0
  
                     self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
                             
@@ -1201,7 +1177,7 @@ class ScratchListener(threading.Thread):
                                                             
                 else:   #normal variable processing with no add on board
                     
-                    self.vCheckAll() # check All On/Off/High/Low/1/0
+                    self.vCheckAll("allpins") # check All On/Off/High/Low/1/0
  
                     self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
                                 
@@ -1359,28 +1335,22 @@ class ScratchListener(threading.Thread):
                 #print 'broadcast in data:' , dataraw
 
                 if ADDON_PRESENT[1] == True: # Gordon's Ladder Board
-
-                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
-                        for i in range(0, 10):
-                            if (PIN_USE[i] <> PINPUT):
-                                self.index_pin_update(i,1)
-                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
-                        for i in range(0, 10):
-                            if (PIN_USE[i] <> PINPUT):
-                                self.index_pin_update(i,0)
+                    #do ladderboard stuff
+                    print ("Ladder broadcast processing")                    
+                    self.bCheckAll() # Check for all off/on type broadcasrs
                                 
-                        #do ladderboard stuff
-                    for i in range(0, 10):
-                        #print i
-                        physical_pin = PIN_NUM[i]
-                        #print "pin" + str(i + 1) + "high"
-                        if (('led' + str(i + 1)+'high' in dataraw) or ('led' + str(i + 1)+'on' in dataraw)):
-                            #print dataraw
-                            self.index_pin_update(i,1)
 
-                        if (('led' + str(i + 1)+'low' in dataraw) or ('led' + str(i + 1)+'off' in dataraw)):
-                            #print dataraw
-                            self.index_pin_update(i,0)
+                    # for i in range(0, 10):
+                        # #print i
+                        # physical_pin = PIN_NUM[i]
+                        # #print "pin" + str(i + 1) + "high"
+                        # if (('led' + str(i + 1)+'high' in dataraw) or ('led' + str(i + 1)+'on' in dataraw)):
+                            # #print dataraw
+                            # self.index_pin_update(i,1)
+
+                        # if (('led' + str(i + 1)+'low' in dataraw) or ('led' + str(i + 1)+'off' in dataraw)):
+                            # #print dataraw
+                            # self.index_pin_update(i,0)
                             
                 elif ADDON_PRESENT[2] == True: # Boeeerb MotorPiTx
                     #Start using ultrasonic sensor on a pin    

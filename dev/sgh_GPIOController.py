@@ -91,6 +91,7 @@ class GPIOController :
                 if self.pwmRef[pin] == None: #if not used previously used for PWM then 
                     self.pwmRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance 
                 self.pwmRef[pin].start(max(0,min(100,abs(value)))) # update PWM value
+                print 'pin' , pin , ' changed to PWM' 
         else:
             if self.INVERT == True: # Invert data value (useful for 7 segment common anode displays)
                 if self.pinUse[pin] == self.POUTPUT:
