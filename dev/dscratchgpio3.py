@@ -755,7 +755,7 @@ class ScratchListener(threading.Thread):
                                 pin=PIN_NUM_LOOKUP[10]
                                 PIN_USE[pin] = POUTPUT
                                 GPIO.setup(10,GPIO.OUT)
-                                os.system("sudo pkill -f servodpirocon")
+                                os.system("sudo pkill -f sghservod")
 
                                 os.system('ps -ef | grep -v grep | grep "./servodmotorpitx" || ./servodmotorpitx--idle-timeout=20000')
                                 
@@ -782,8 +782,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 
                             if ADDON[i] == "pirocon":
-                                sghGC.pinUse[18] = sghGC.POUTPUT #tilt servoA
-                                sghGC.pinUse[22] = sghGC.POUTPUT #pan servoB
+
                                 sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
                                 sghGC.pinUse[21] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
@@ -794,9 +793,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
 
                                 sghGC.setPinMode()
+                                sghGC.startServod([18,22]) # servos
                                 print "pirocon setup"
-                                os.system("sudo pkill -f servodmotorpitx")
-                                os.system('ps -ef | grep -v grep | grep "./servodpirocon" || ./servodpirocon --idle-timeout=20000 --p1pins="18,22"' )
                                                       
                     if anyAddOns == False:
                         print "no AddOns Declared"
@@ -919,6 +917,7 @@ class ScratchListener(threading.Thread):
                                 #print "convert" , degrees
                                 servodvalue = 50+ ((degrees + 90) * 200 / 180)
                                 #print "servod", servodvalue
+
                                 os.system("echo " + servoDict[key] + "=" + str(servodvalue) + " > /dev/servoblaster")
                             elif tempValue == "off":
                                 #print key ,"servod off"
@@ -1105,12 +1104,13 @@ class ScratchListener(threading.Thread):
                         servodvalue = 50+ ((90 - degrees) * 200 / 180)
                         #print "sending", servodvalue, "to servod"
                         #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
-                        os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
+                        sghGC.pinServod(18,servodvalue)
+                        #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
                         degrees = int(pan + panoffset)
                         degrees = min(90,max(degrees,-90))
                         servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                        #os.system("echo " + "1" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
-                        os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
+                        sghGC.pinServod(22,servodvalue)
+                        #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
 
 
                     #check for motor variable commands
@@ -1709,8 +1709,7 @@ while True:
     if (cycle_trace == 'disconnected'):
         print "Scratch disconnected"
         cleanup_threads((listener, sender))
-        os.system("sudo pkill -f servodpirocon")
-        os.system("sudo pkill -f servodmotorpitx")
+        sghGC.stopServod()
         time.sleep(1)
         cycle_trace = 'start'
 
@@ -1746,8 +1745,7 @@ while True:
         time.sleep(0.1)
     except KeyboardInterrupt:
         cleanup_threads((listener,sender))
-        os.system("sudo pkill -f servodpirocon")
-        os.system("sudo pkill -f servodmotorpitx")
+        sghGC.stopServod()
         sghGC.cleanup()
         sys.exit()
         print "CleanUp complete"

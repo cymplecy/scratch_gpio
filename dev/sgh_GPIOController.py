@@ -20,6 +20,7 @@ Version =  '0.0.1' # 07Nov13
 
 import RPi.GPIO as GPIO
 import time
+import os
 
 class GPIOController :
 
@@ -45,12 +46,14 @@ class GPIOController :
         self.PUNUSED = 8
         self.PSONAR = 16
         self.PULTRA = 32
+        self.PSERVOD = 64
 
         self.INVERT = False
 
         self.PWMFREQ = 100
 
         self.pinUse = [self.PUNUSED] * self.numOfPins
+        self.servodPins = None
         
         self.pwmRef = [None] * self.numOfPins
         
@@ -158,5 +161,19 @@ class GPIOController :
     def pinRead(self, pin):
         #print "pin",pin ,"set to", self.pinUse[pin]
         return GPIO.input(pin)
+        
+    def startServod(self, pins):
+        print ("Starting servod")
+        os.system("sudo pkill -f servod")
+        for pin in pins:
+            self.pinUse[pin] = self.PSERVOD
+        os.system('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        self.servodPins = pins
 
+    def pinServod(self, pin, value):
+        #print ("echo " + str(self.servodPins.index(pin)) + "=" + str(value) + " > /dev/servoblaster")
+        os.system("echo " + str(self.servodPins.index(pin)) + "=" + str(value) + " > /dev/servoblaster")
+        
+    def stopServod(self):
+        os.system("sudo pkill -f servod")
 #### End of main program
