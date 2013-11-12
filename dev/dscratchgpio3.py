@@ -466,9 +466,9 @@ class ScratchSender(threading.Thread):
 
             if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
                 for pin in range(sghGC.numOfPins):
-                    if sghGC.pinUse[pin] == sghGC.ULTRA:
+                    if sghGC.pinUse[pin] == sghGC.PULTRA:
                         distance = sghGC.pinSonar(pin) # do a ping
-                        sghGC.pinUse[pin] = sghGC.ULTRA # reset pin use back from sonar to ultra
+                        sghGC.pinUse[pin] = sghGC.PULTRA # reset pin use back from sonar to ultra
                         sensor_name = 'ultra' + str(pin)
                         if ADDON_PRESENT[2] == True:
                             if pin == 13:
@@ -1055,15 +1055,15 @@ class ScratchListener(threading.Thread):
                     #print "panoffset" , panoffset, "tilt",tiltoffset
                     moveServos = False
 
-                    if self.dVFindValue('tiltoffset'):
+                    if self.vFindValue('tiltoffset'):
                         tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
                         moveServos = True
 
-                    if self.dVFindValue('panoffset'):
+                    if self.vFindValue('panoffset'):
                         panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
                         moveServos = True
                         
-                    if self.dVFindValue('tilt'):
+                    if self.vFindValue('tilt'):
                         #print "tilt command rcvd"
                         if self.valueIsNumeric:
                             tilt = int(self.valueNumeric) 
@@ -1072,7 +1072,7 @@ class ScratchListener(threading.Thread):
                         elif self.value == "off":
                             os.system("echo " + "0" + "=0 > /dev/servoblaster")
                     else:
-                        if self.dVFindValue('servoa'):
+                        if self.vFindValue('servoa'):
                             #print "tilt command rcvd"
                             if self.valueIsNumeric:
                                 tilt = int(self.valueNumeric) 
@@ -1081,7 +1081,7 @@ class ScratchListener(threading.Thread):
                             elif self.value == "off":
                                 os.system("echo " + "0" + "=0 > /dev/servoblaster")
                                 
-                    if self.dVFindValue('pan'):
+                    if self.vFindValue('pan'):
                         #print "pan command rcvd"
                         if self.valueIsNumeric:
                             pan = int(self.valueNumeric) 
@@ -1090,7 +1090,7 @@ class ScratchListener(threading.Thread):
                         elif self.value == "off":
                             os.system("echo " + "1" + "=0 > /dev/servoblaster")
                     else:
-                        if self.dVFindValue('servob'):
+                        if self.vFindValue('servob'):
                             #print "pan command rcvd"
                             if self.valueIsNumeric:
                                 pan = int(self.valueNumeric) 
@@ -1116,7 +1116,7 @@ class ScratchListener(threading.Thread):
                     #check for motor variable commands
                     motorList = [['motora',21,26],['motorb',19,24]]
                     for listLoop in range(0,2):
-                        if self.dVFindValue(motorList[listLoop][0]):
+                        if self.vFindValue(motorList[listLoop][0]):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             if svalue > 0:
                                 sghGC.pinUpdate(motorList[listLoop][2],1)
@@ -1131,13 +1131,13 @@ class ScratchListener(threading.Thread):
 
                     if (pcaPWM != None):
                         for i in range(0, 16): # go thru servos on PCA Board
-                            if self.dVFindValue('servo' + str(i + 1)):
+                            if self.vFindValue('servo' + str(i + 1)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
                                 #print i, svalue
                                 pcaPWM.setPWM(i, 0, svalue)
                                 
                         for i in range(0, 16): # go thru PowerPWM on PCA Board
-                            if self.dVFindValue('power' + str(i + 1)):
+                            if self.vFindValue('power' + str(i + 1)):
                                 svalue = int(self.valueNueric) if self.valueIsNumeric else 0
                                 svalue = min(4095,max(((svalue * 4096) /100),0))
                                 pcaPWM.setPWM(i, 0, svalue)

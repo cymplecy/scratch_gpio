@@ -43,22 +43,13 @@ class GPIOController :
         self.POUTPUT = 1
         self.PPWM = 2
         self.PUNUSED = 8
-        self.SONAR = 16
-        self.ULTRA = 32
+        self.PSONAR = 16
+        self.PULTRA = 32
 
         self.INVERT = False
 
         self.PWMFREQ = 100
-        #self.PIN_NUM = [11,12,13,15,16,18,22, 7, 3, 5,24,26,19,21,23, 8,10]
-        #self.PIN_USE = [self.POUTPUT, self.POUTPUT, self.POUTPUT, self.POUTPUT, self.POUTPUT, self.POUTPUT, self.PINPUT, self.PINPUT, self.PUNUSED, self.PUNUSED, self.PINPUT, self.PINPUT, self.PINPUT, self.PINPUT, self.PINPUT, self.PINPUT, self.PINPUT]
 
-        #self.PINS = len(self.PIN_NUM)
-        #self.PIN_NUM_LOOKUP=[int] * 27
-
-        #for i in range(self.PINS):
-            #self.PIN_NUM_LOOKUP[self.PIN_NUM[i]] = i
-            #print i, PIN_NUM[i
-            
         self.pinUse = [self.PUNUSED] * self.numOfPins
         
         self.pwmRef = [None] * self.numOfPins
@@ -111,14 +102,13 @@ class GPIOController :
                 print 'pin' , pin , ' changed to digital out from PWM' 
 
     def pinSonar(self, pin):
-        self.pinUse[pin] = self.SONAR
+        self.pinUse[pin] = self.PSONAR
         GPIO.setup(pin,GPIO.OUT)
         ti = time.time()
         # setup a list to hold 3 values and then do 3 distance calcs and store them
         #print 'sonar started'
         distlist = [0.0,0.0,0.0]
         ts=time.time()
-        print
         for k in range(3):
             #print "sonar pulse" , k
             GPIO.output(pin, 1)    # Send Pulse high
