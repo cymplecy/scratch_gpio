@@ -741,23 +741,23 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                     
                             if ADDON[i] == "motorpitx":
-                                #print "addon " + ADDON[i] + " declared"
-                                self.index_pin_update(PIN_NUM_LOOKUP[21], 0)
-                                self.index_pin_update(PIN_NUM_LOOKUP[19], 0)
-                                self.index_pin_update(PIN_NUM_LOOKUP[16], 0)
-                                self.index_pin_update(PIN_NUM_LOOKUP[18], 0)
+                            
+                                sghGC.pinUse[11] = sghGC.POUTPUT #Out2 
+                                sghGC.pinUse[15] = sghGC.POUTPUT #Out1
+                                sghGC.pinUse[16] = sghGC.POUTPUT #Motor2 B
+                                sghGC.pinUse[18] = sghGC.POUTPUT #Motor2 A
+                                sghGC.pinUse[19] = sghGC.POUTPUT #Motor1
+                                sghGC.pinUse[21] = sghGC.POUTPUT #Motor1
+                                sghGC.pinUse[22] = sghGC.POUTPUT #Motr 2 Enable
+                                sghGC.pinUse[23] = sghGC.POUTPUT #Motor1 Enable
                                 
-                                pin=PIN_NUM_LOOKUP[13]
-                                PIN_USE[pin] = PINPUT
-                                GPIO.setup(13,GPIO.IN,pull_up_down=GPIO.PUD_UP)
-                                
-                                #setup servo2 for pin 10
-                                pin=PIN_NUM_LOOKUP[10]
-                                PIN_USE[pin] = POUTPUT
-                                GPIO.setup(10,GPIO.OUT)
-                                os.system("sudo pkill -f sghservod")
+                                sghGC.pinUse[13] = sghGC.PINPUT #Motor1 Enable
+                                sghGC.pinUse[7]  = sghGC.PINPUT #Motor1 Enable
 
-                                os.system('ps -ef | grep -v grep | grep "./servodmotorpitx" || ./servodmotorpitx--idle-timeout=20000')
+                                sghGC.setPinMode()
+                                sghGC.startServod([12,10]) # servos
+                                print "MotorPiTx setup"
+
                                 
                             if ADDON[i] == "gpio":
                                 sghGC.pinUse[11] = sghGC.POUTPUT
@@ -849,80 +849,86 @@ class ScratchListener(threading.Thread):
                 elif ADDON_PRESENT[2] == True:
                     #do MotorPiTx stuff
                     #check for motor variable commands
-                    if  'motor1 ' in dataraw:
-                        i = PIN_NUM_LOOKUP[23]
-                        tempValue = getValue('motor1', dataraw)
-                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                        if svalue > 0:
-                            #print "motor1 set forward" , svalue
-                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
-                            self.index_pin_update(PIN_NUM_LOOKUP[19],1)
-                        elif svalue < 0:
-                            #print "motor1 set backward", svalue
-                            self.index_pin_update(PIN_NUM_LOOKUP[21],1)
-                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
-                        else:
-                            #print "motor1 set neutral", svalue
-                            self.index_pin_update(PIN_NUM_LOOKUP[21],0)
-                            self.index_pin_update(PIN_NUM_LOOKUP[19],0)
-
-                        if PIN_USE[i] != PPWM:
-                            PIN_USE[i] = PPWM
-                            PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                            PWM_OUT[i].start(max(0,min(100,abs(svalue))))
-                        else:
-                            PWM_OUT[i].ChangeDutyCycle(max(0,min(100,abs(svalue))))
                     
-                    if  'motor2 ' in dataraw:
-                        i = PIN_NUM_LOOKUP[22]
-                        tempValue = getValue('motor2', dataraw)
-                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                    moveServos = False
 
-                        if svalue > 0:
-                            #print "motor2 set forward" , svalue
-                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
-                            self.index_pin_update(PIN_NUM_LOOKUP[16],1)
-                        elif svalue < 0:
-                            #print "motor2 set backward" , svalue
-                            self.index_pin_update(PIN_NUM_LOOKUP[18],1)
-                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
-                        else:
-                            #print "motor2 set neutral" , svalue
-                            self.index_pin_update(PIN_NUM_LOOKUP[18],0)
-                            self.index_pin_update(PIN_NUM_LOOKUP[16],0)
+                    if self.vFindValue('tiltoffset'):
+                        tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        moveServos = True
 
-                        if PIN_USE[i] != PPWM:
-                            PIN_USE[i] = PPWM
-                            PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                            PWM_OUT[i].start(max(0,min(100,abs(svalue))))
-                        else:
-                            PWM_OUT[i].ChangeDutyCycle(max(0,min(100,abs(svalue))))
-                            
+                    if self.vFindValue('panoffset'):
+                        panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        moveServos = True
                         
-                    servoDict = {'servo1': '0', 'tilt': '0', 'servo2': '1', 'pan': '1' }
-                    for key in servoDict:
-                        #print key , servoDict[key]
-                        checkStr = key
-                        if self.dVFind(checkStr):
-                            #print key , servoDict[key]
-                            tempValue = getValue(checkStr, dataraw)
-                            if isNumeric(tempValue):
-                                degrees = -1 * int(float(tempValue))
-                                #print "value" , degrees
-                                #print key
-                                if (key == 'servo1') or (key == 'tilt'):
-                                    degrees = min(60,max(degrees,-60))
-                                else:
-                                    degrees = min(90,max(degrees,-90))
-                                #print "convert" , degrees
-                                servodvalue = 50+ ((degrees + 90) * 200 / 180)
-                                #print "servod", servodvalue
+                    if self.vFindValue('tilt'):
+                        #print "tilt command rcvd"
+                        if self.valueIsNumeric:
+                            tilt = int(self.valueNumeric) 
+                            moveServos = True
+                            #print "tilt=", tilt
+                        elif self.value == "off":
+                            os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                    else:
+                        if self.vFindValue('servoa'):
+                            #print "tilt command rcvd"
+                            if self.valueIsNumeric:
+                                tilt = int(self.valueNumeric) 
+                                moveServos = True
+                                #print "tilt=", tilt
+                            elif self.value == "off":
+                                os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                                
+                    if self.vFindValue('pan'):
+                        #print "pan command rcvd"
+                        if self.valueIsNumeric:
+                            pan = int(self.valueNumeric) 
+                            moveServos = True
+                            #print "pan=", pan
+                        elif self.value == "off":
+                            os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                    else:
+                        if self.vFindValue('servob'):
+                            #print "pan command rcvd"
+                            if self.valueIsNumeric:
+                                pan = int(self.valueNumeric) 
+                                moveServos = True
+                                #print "pan=", pan
+                            elif self.value == "off":
+                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                   
+                    if moveServos == True:
+                        degrees = int(tilt + tiltoffset)
+                        degrees = min(80,max(degrees,-60))
+                        servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                        #print "sending", servodvalue, "to servod"
+                        #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                        sghGC.pinServod(12,servodvalue)
+                        #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
+                        degrees = int(pan + panoffset)
+                        degrees = min(90,max(degrees,-90))
+                        servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                        sghGC.pinServod(10,servodvalue)
+                        #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
 
-                                os.system("echo " + servoDict[key] + "=" + str(servodvalue) + " > /dev/servoblaster")
-                            elif tempValue == "off":
-                                #print key ,"servod off"
-                                os.system("echo " + servoDict[key] + "=0 > /dev/servoblaster")
 
+                    #check for motor variable commands
+                    motorList = [['motora',19,21,23],['motorb',18,16,22]]
+                    for listLoop in range(0,2):
+                        if self.vFindValue(motorList[listLoop][0]):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            if svalue > 0:
+                                sghGC.pinUpdate(motorList[listLoop][3],1) # set enable to 1
+                                sghGC.pinUpdate(motorList[listLoop][2],1)
+                                sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                            elif svalue < 0:
+                                sghGC.pinUpdate(motorList[listLoop][3],1) # set enable to 1                            
+                                sghGC.pinUpdate(motorList[listLoop][2],0)
+                                sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                            else:
+                                sghGC.pinUpdate(motorList[listLoop][3],0) # set enable to 0                            
+                                sghGC.pinUpdate(motorList[listLoop][1],0)
+                                sghGC.pinUpdate(motorList[listLoop][2],0)
+                                
                         
                 elif ((ADDON_PRESENT[3] == True) and (piglow != None)):
                     #do PiGlow stuff but make sure PiGlow physically detected                                  
@@ -1309,7 +1315,7 @@ class ScratchListener(threading.Thread):
                     self.bCheckAll() # Check for all off/on type broadcasrs
                     self.bLEDCheck(ladderOutputs) # Check for LED off/on type broadcasts
                             
-                elif ADDON_PRESENT[2] == True: # Boeeerb MotorPiTx
+                elif ADDON_PRESENT[2] == "somethin": # Boeeerb MotorPiTx
                     #Start using ultrasonic sensor on a pin    
                     if (('ultra1' in dataraw)):
                         physical_pin = 13

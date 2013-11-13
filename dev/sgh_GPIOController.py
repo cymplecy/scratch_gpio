@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-# GPIOController - control Raspberry Pi GPIO ports 
+# sgh_GPIOController - control Raspberry Pi GPIO ports using RPi.GPIO by Ben Crosten
+#                      and servod by Richard Hirst
 #Copyright (C) 2013 by Simon Walters 
 
 #This program is free software; you can redistribute it and/or
@@ -16,7 +17,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.0.1' # 07Nov13
+Version =  '0.1.0' # 12Nov13
 
 import RPi.GPIO as GPIO
 import time
@@ -103,6 +104,7 @@ class GPIOController :
                 GPIO.setup(pin,GPIO.OUT)
                 GPIO.output(pin, int(value)) # set output to 1 ot 0
                 print 'pin' , pin , ' changed to digital out from PWM' 
+        print ("pin",pin, "set to", value)
 
     def pinSonar(self, pin):
         self.pinUse[pin] = self.PSONAR
