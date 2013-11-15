@@ -81,30 +81,35 @@ class GPIOController :
         if type == "pwm": # 
             if self.pinUse[pin] == self.PPWM: # if already active as PWM 
                 self.pwmRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
+                print ("pin",pin, "set to", value)
             else:
                 self.pinUse[pin] = self.PPWM # set pin use as PWM
                 if self.pwmRef[pin] == None: #if not used previously used for PWM then 
                     self.pwmRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance 
                 self.pwmRef[pin].start(max(0,min(100,abs(value)))) # update PWM value
                 print 'pin' , pin , ' changed to PWM' 
+                print ("pin",pin, "set to", value)
         else:
             if self.INVERT == True: # Invert data value (useful for 7 segment common anode displays)
                 if self.pinUse[pin] == self.POUTPUT:
                     value = abs(value - 1)
             if (self.pinUse[pin] == self.POUTPUT): # if already an output
                 GPIO.output(pin, int(value)) # set output to 1 ot 0
+                print ("pin",pin, "set to", value)
             elif (self.pinUse[pin] == self.PINPUT): # if pin is an input
                 self.pinUse[pin] = self.POUTPUT # switch it to output
                 GPIO.setup(pin,GPIO.OUT)
                 GPIO.output(pin, int(value)) # set output to 1 ot 0
                 print 'pin' , pin , ' changed to digital out from input' 
+                print ("pin",pin, "set to", value)
             elif (self.pinUse[pin] == self.PPWM): #if pin in use for PWM
                 self.pinUse[pin] = self.POUTPUT # switch it to output
                 self.pwmRef[pin].stop() # stop PWM from running
                 GPIO.setup(pin,GPIO.OUT)
                 GPIO.output(pin, int(value)) # set output to 1 ot 0
                 print 'pin' , pin , ' changed to digital out from PWM' 
-        print ("pin",pin, "set to", value)
+                print ("pin",pin, "set to", value)
+        
 
     def pinSonar(self, pin):
         self.pinUse[pin] = self.PSONAR
@@ -147,6 +152,7 @@ class GPIOController :
         tf = time.time() - ts
         distance = sorted(distlist)[1] # sort the list and pick middle value as best distance
         
+        
         #print "total time " , tf
         #for k in range(5):
             #print distlist[k]
@@ -178,4 +184,5 @@ class GPIOController :
         
     def stopServod(self):
         os.system("sudo pkill -f servod")
+
 #### End of main program

@@ -387,6 +387,7 @@ class ScratchSender(threading.Thread):
                     #print PIN_NUM[i] , pin_value
                     #print "broadcast"
                     self.broadcast_pin_update(pin, pin_value)
+                    
                                      
     def broadcast_pin_update(self, pin, value):
         #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
@@ -876,7 +877,7 @@ class ScratchListener(threading.Thread):
                                 moveServos = True
                                 #print "tilt=", tilt
                             elif self.value == "off":
-                                os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                                sghGC.pinServod(12,"off")
                                 
                     if self.vFindValue('pan'):
                         #print "pan command rcvd"
@@ -894,38 +895,50 @@ class ScratchListener(threading.Thread):
                                 moveServos = True
                                 #print "pan=", pan
                             elif self.value == "off":
-                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                                sghGC.pinServod(10,"off")
                    
                     if moveServos == True:
                         degrees = int(tilt + tiltoffset)
                         degrees = min(80,max(degrees,-60))
                         servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                        #print "sending", servodvalue, "to servod"
-                        #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
                         sghGC.pinServod(12,servodvalue)
-                        #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
                         degrees = int(pan + panoffset)
                         degrees = min(90,max(degrees,-90))
                         servodvalue = 50+ ((90 - degrees) * 200 / 180)
                         sghGC.pinServod(10,servodvalue)
-                        #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
+
 
 
                     #check for motor variable commands
-                    motorList = [['motora',19,21,23],['motorb',18,16,22]]
+                    motorList = [['motor1',19,21,23],['motor2',18,16,22]]
                     for listLoop in range(0,2):
                         if self.vFindValue(motorList[listLoop][0]):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            # Simple way if all 3 pins are made available - just pwm enable line
+                            # if svalue > 0:
+                                # sghGC.pinUpdate(motorList[listLoop][1],1) 
+                                # sghGC.pinUpdate(motorList[listLoop][2],0)
+                                # sghGC.pinUpdate(motorList[listLoop][3],(svalue),"pwm")
+                            # elif svalue < 0:
+                                # sghGC.pinUpdate(motorList[listLoop][1],0)                    
+                                # sghGC.pinUpdate(motorList[listLoop][2],1)
+                                # sghGC.pinUpdate(motorList[listLoop][3],(svalue),"pwm")
+                            # else:
+                                # sghGC.pinUpdate(motorList[listLoop][3],0)                      
+                                # sghGC.pinUpdate(motorList[listLoop][1],0)
+                                # sghGC.pinUpdate(motorList[listLoop][2],0)
+                                
+                            # This technique can be used if enabel is held high by hardware
                             if svalue > 0:
-                                sghGC.pinUpdate(motorList[listLoop][3],1) # set enable to 1
-                                sghGC.pinUpdate(motorList[listLoop][2],1)
-                                sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
-                            elif svalue < 0:
-                                sghGC.pinUpdate(motorList[listLoop][3],1) # set enable to 1                            
-                                sghGC.pinUpdate(motorList[listLoop][2],0)
                                 sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                sghGC.pinUpdate(motorList[listLoop][2],0)
+                                sghGC.pinUpdate(motorList[listLoop][3],1)# set enable to 1
+                            elif svalue < 0:
+                                sghGC.pinUpdate(motorList[listLoop][1],0)            
+                                sghGC.pinUpdate(motorList[listLoop][2],(svalue),"pwm")   
+                                sghGC.pinUpdate(motorList[listLoop][3],1) # set enable to 1
                             else:
-                                sghGC.pinUpdate(motorList[listLoop][3],0) # set enable to 0                            
+                                sghGC.pinUpdate(motorList[listLoop][3],0)                      
                                 sghGC.pinUpdate(motorList[listLoop][1],0)
                                 sghGC.pinUpdate(motorList[listLoop][2],0)
                                 
@@ -1315,25 +1328,31 @@ class ScratchListener(threading.Thread):
                     self.bCheckAll() # Check for all off/on type broadcasrs
                     self.bLEDCheck(ladderOutputs) # Check for LED off/on type broadcasts
                             
-                elif ADDON_PRESENT[2] == "somethin": # Boeeerb MotorPiTx
-                    #Start using ultrasonic sensor on a pin    
-                    if (('ultra1' in dataraw)):
-                        physical_pin = 13
-                        i = PIN_NUM_LOOKUP[physical_pin]
-                        PIN_USE[i] = PINPUT
-                        GPIO.setup(physical_pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
-                        #print dataraw
-                        self.index_pin_update(i,1)
-                        print 'start pinging on', str(physical_pin)
-                        ULTRA_IN_USE[i] = True
+                elif ADDON_PRESENT[2] == True: # Boeeerb MotorPiTx
+
+                    if ('sonar1') in dataraw:
+                        distance = sghGC.pinSonar(13)
+                        #print'Distance:',distance,'cm'
+                        sensor_name = 'sonar' + str(13)
+                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
                         
-                    if (('ultra2' in dataraw)):
-                        physical_pin = 7
-                        i = PIN_NUM_LOOKUP[physical_pin]
-                        #print dataraw
-                        self.index_pin_update(i,1)
-                        print 'start pinging on', str(physical_pin)
-                        ULTRA_IN_USE[i] = True
+                    if ('sonar2') in dataraw:
+                        distance = sghGC.pinSonar(7)
+                        #print'Distance:',distance,'cm'
+                        sensor_name = 'sonar' + str(7)
+                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)                        
+                        
+                    if self.dFind('ultra1'):
+                        print 'start pinging on', str(13)
+                        sghGC.pinUse[13] = sghGC.PULTRA
+                        
+                    if self.dFind('ultra2'):
+                        print 'start pinging on', str(7)
+                        sghGC.pinUse[7] = sghGC.PULTRA
                         
                 elif ((ADDON_PRESENT[3] == True) and (piglow != None)): # Pimoroni PiGlow
                 
