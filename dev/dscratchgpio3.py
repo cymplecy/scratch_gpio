@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.1.08' # 07Nov13
+Version =  '3.1.09' # 16Nov13
 
 
 
@@ -30,6 +30,7 @@ import datetime as dt
 import shlex
 import os
 import math
+import re
 import sgh_GPIOController
 import sgh_PiGlow
 
@@ -400,7 +401,9 @@ class ScratchSender(threading.Thread):
         self.scratch_socket.send(b + cmd)
 
     def run(self):
-        time.sleep(2)
+        global firstRun
+        while firstRun:
+            time.sleep(1)
         last_bit_pattern=0L
         print sghGC.pinUse
         for pin in range(sghGC.numOfPins):
@@ -418,7 +421,7 @@ class ScratchSender(threading.Thread):
             for pin in range(sghGC.numOfPins):
                 #print pin
                 if (sghGC.pinUse[pin] == sghGC.PINPUT):
-                    #print 'pin' , pin , sghGC.pinRead(pin)
+                    #print 'trying to read pin' , pin 
                     pin_bit_pattern += sghGC.pinRead(pin) << pin
                 else:
                     pin_bit_pattern += 1 << pin
@@ -641,11 +644,11 @@ class ScratchListener(threading.Thread):
         time.sleep(delay)
 
     def run(self):
-        global cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
+        global firstRun,cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
                steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness, \
                    compass
 
-        firstRun = True #Used for testing in overcoming Scratch "bug/feature"
+        #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
 
         #semi global variables used for servos in PiRoCon
@@ -662,12 +665,24 @@ class ScratchListener(threading.Thread):
             try:
                 #print "try reading socket"
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
-                dataraw = data[4:].lower() # convert all to lowercase
+                dataraw = data.lower() #[4:].lower() # convert all to lowercase
+                print "RAW"
+                print dataraw
                 #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
-
+                
+                datarawList = list(dataraw)
+                print datarawList
+                for m in re.finditer( 'broadcast', dataraw ):
+                    print( 'bdcast found', m.start(), m.end() )
+                    datarawList[(m.start()-4):(m.start())] = [" "," "," "," "]
+                    
+                print datarawList
+                dataraw = ''.join(datarawList)
+                
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
                     self.dataraw = dataraw
+                    print "Sanitised"
                     print dataraw
 
                 #print 'Cycle trace' , cycle_trace
@@ -692,13 +707,14 @@ class ScratchListener(threading.Thread):
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if firstRun == True:
+                anyAddOns = False
                 if 'sensor-update' in dataraw:
                     #print "this data ignored" , dataraw
                     firstRunData = dataraw
                     #dataraw = ''
                     #firstRun = False
                     
-                    anyAddOns = False
+                    
                     for i in range(NUMOF_ADDON):
                         #print "checking for " , ("addon " + ADDON[i]) 
                         ADDON_PRESENT[i] = False
@@ -773,24 +789,25 @@ class ScratchListener(threading.Thread):
                                 sghGC.startServod([18,22]) # servos
                                 print "pirocon setup"
                                                       
-                    if anyAddOns == False:
-                        print "no AddOns Declared"
-                        sghGC.pinUse[11] = sghGC.POUTPUT
-                        sghGC.pinUse[12] = sghGC.POUTPUT
-                        sghGC.pinUse[13] = sghGC.POUTPUT
-                        sghGC.pinUse[15] = sghGC.POUTPUT
-                        sghGC.pinUse[16] = sghGC.POUTPUT
-                        sghGC.pinUse[18] = sghGC.POUTPUT
-                        sghGC.pinUse[7]  = sghGC.PINPUT
-                        sghGC.pinUse[22] = sghGC.PINPUT
-                        sghGC.setPinMode()
+                if anyAddOns == False:
+                    print "no AddOns Declared"
+                    sghGC.pinUse[11] = sghGC.POUTPUT
+                    sghGC.pinUse[12] = sghGC.POUTPUT
+                    sghGC.pinUse[13] = sghGC.POUTPUT
+                    sghGC.pinUse[15] = sghGC.POUTPUT
+                    sghGC.pinUse[16] = sghGC.POUTPUT
+                    sghGC.pinUse[18] = sghGC.POUTPUT
+                    sghGC.pinUse[7]  = sghGC.PINPUT
+                    sghGC.pinUse[22] = sghGC.PINPUT
+                    sghGC.setPinMode()
+                    
                         
-                    firstRun = False
+                firstRun = False
 
 
             #If outputs need globally inverting (7 segment common anode needs it)
             if ('invert' in dataraw):
-                INVERT = True
+                sghGC.INVERT = True
                 
             #Change pins from input to output if more needed
             if ('config' in dataraw):
@@ -1384,6 +1401,7 @@ class ScratchListener(threading.Thread):
                 else: # Plain GPIO Broadcast processing
 
                     self.bCheckAll() # Check for all off/on type broadcasrs
+                    self.bpinCheck() # Check for pin off/on type broadcasts
                                 
                     #check pins
                     for pin in range(sghGC.numOfPins):
@@ -1402,35 +1420,30 @@ class ScratchListener(threading.Thread):
                         if self.dFind('ultra' + str(pin)):
                             print 'start pinging on', str(pin)
                             sghGC.pinUse[pin] = sghGC.PULTRA
-                            #ULTRA_IN_USE[i] = True
-#                            tempTotal = 0
-#                            for k in range(PINS):
-#                                if ULTRA_IN_USE[k] == True:
-#                                    tempTotal += 1
-#                            ultraTotalInUse = tempTotal
-                         
+                       
                                       
                     #end of normal pin checking
 
-                if 'pinpattern' in dataraw:
+                if self.dFind('pinpattern'):
                     #print 'Found pinpattern broadcast'
                     #print dataraw
-                    num_of_bits = PINS
-                    outputall_pos = dataraw.find('pinpattern')
-                    sensor_value = dataraw[(outputall_pos+10):].split()
-                    sensor_value[0] = sensor_value[0][:-1]                    
-                    #print sensor_value[0]
-                    bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-num_of_bits:]
-                    #print 'bit_pattern %s' % bit_pattern
+                    #num_of_bits = PINS
+                    outputall_pos = self.dataraw.find('pinpattern')
+                    sensor_value = self.dataraw[(outputall_pos+10):].split()
+                    print sensor_value
+                    #sensor_value[0] = sensor_value[0][:-1]                    
+                    print sensor_value[0]
+                    bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-sghGC.numOfPins:]
+                    print 'bit_pattern %s' % bit_pattern
                     j = 0
-                    for i in range(PINS):
-                    #bit_state = ((2**i) & sensor_value) >> i
-                    #print 'dummy pin %d state %d' % (i, bit_state)
-                        if (PIN_USE[i] == 1):
+                    for pin in range(sghGC.numOfPins):
+                        bit_state = ((2**pin) & sensor_value[0]) >> pin
+                        print 'dummy pin %d state %d' % (pin, bit_state)
+                        if (sghGC.pinUse[pin] == sghGC.POUTPUT):
                             if bit_pattern[-(j+1)] == '0':
-                                self.index_pin_update(i,0)
+                                sghGC.pinUpdate(pin,0)
                             else:
-                                self.index_pin_update(i,1)
+                                sghGC.pinUpdate(pin,0)
                             j = j + 1
                              
 
@@ -1583,6 +1596,7 @@ PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
 BUFFER_SIZE = 240 #used to be 100
 SOCKET_TIMEOUT = 1
+firstRun = True
 
 
 

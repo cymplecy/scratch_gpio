@@ -109,6 +109,12 @@ class GPIOController :
                 GPIO.output(pin, int(value)) # set output to 1 ot 0
                 print 'pin' , pin , ' changed to digital out from PWM' 
                 print ("pin",pin, "set to", value)
+            elif (self.pinUse[pin] == self.PUNUSED): # if pin is not allocated
+                self.pinUse[pin] = self.POUTPUT # switch it to output
+                GPIO.setup(pin,GPIO.OUT)
+                GPIO.output(pin, int(value)) # set output to 1 ot 0
+                print 'pin' , pin , ' changed to digital out from unused' 
+                print ("pin",pin, "set to", value)
         
 
     def pinSonar(self, pin):
