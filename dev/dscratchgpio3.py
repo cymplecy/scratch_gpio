@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.1.09' # 16Nov13
+Version =  '3.1.10' # 16Nov13
 
 
 
@@ -496,34 +496,34 @@ class ScratchListener(threading.Thread):
         sensor_value = self.dataraw[(outputall_pos+1+len(searchString)):].split()
         return sensor_value[0]
         
-    def dFind(self,searchStr):
+    def bfind(self,searchStr):
         return (searchStr in self.dataraw)
         
-    def dFindOn(self,searchStr):
-        return (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high'))
+    def bfindOn(self,searchStr):
+        return (self.bfind(searchStr + 'on') or self.bfind(searchStr + 'high'))
         
-    def dFindOff(self,searchStr):
-        return (self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low'))
+    def bfindOff(self,searchStr):
+        return (self.bfind(searchStr + 'off') or self.bfind(searchStr + 'low'))
         
-    def dFindOnOff(self,searchStr):
+    def bfindOnOff(self,searchStr):
         self.OnOrOff = None
-        if (self.dFind(searchStr + 'on') or self.dFind(searchStr + 'high')):
+        if (self.bfind(searchStr + 'on') or self.bfind(searchStr + 'high')):
             self.OnOrOff = 1
             return True
-        elif (self.dFind(searchStr + 'off') or self.dFind(searchStr + 'low')):
+        elif (self.bfind(searchStr + 'off') or self.bfind(searchStr + 'low')):
             self.OnOrOff = 0
             return True
         else:
             return False
             
     # def dRtnOnOff(self,searchStr):
-        # if self.dFindOn(searchStr):
+        # if self.bfindOn(searchStr):
             # return 1
         # else:
             # return 0
 
     def bCheckAll(self):
-        if self.dFindOnOff('all'):
+        if self.bfindOnOff('all'):
             for pin in range(sghGC.numOfPins):
                 #print pin
                 if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
@@ -532,12 +532,12 @@ class ScratchListener(threading.Thread):
 
     def bpinCheck(self):
         for pin in range(sghGC.numOfPins):
-            if self.dFindOnOff('pin' + str(pin)):
+            if self.bfindOnOff('pin' + str(pin)):
                 sghGC.pinUpdate(pin,self.OnOrOff)
 
     def bLEDCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
-            if self.dFindOnOff('led' + str(led)):
+            if self.bfindOnOff('led' + str(led)):
                 sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
         
     def vFind(self,searchStr):
@@ -1213,26 +1213,18 @@ class ScratchListener(threading.Thread):
 
 
                     #Use bit pattern to control ports
-                    checkStr = 'pinpattern'
-                    if  (checkStr + ' ') in dataraw:
-                        #print 'Found pinpattern'
-                        num_of_bits = PINS
-                        svalue = getValue(checkStr, dataraw)
-                        #print sensor_value[0]
-                        bit_pattern = ('00000000000000000000000000'+svalue)[-num_of_bits:]
-                        #print 'bit_pattern %s' % bit_pattern
+                    if self.vFindValue('pinpattern'):
+                        svalue = self.value
+                        bit_pattern = ('00000000000000000000000000'+svalue)[-sghGC.numOfPins:]
                         j = 0
-                        for i in range(PINS):
-                        #bit_state = ((2**i) & sensor_value) >> i
-                        #print 'dummy pin %d state %d' % (i, bit_state)
-                            if (PIN_USE[i] == POUTPUT):
+                        for pin in range(sghGC.numOfPins):
+                            if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                                #print "pin" , bit_pattern[-(j+1)]
                                 if bit_pattern[-(j+1)] == '0':
-                                    self.index_pin_update(i,0)
+                                    sghGC.pinUpdate(pin,0)
                                 else:
-                                    self.index_pin_update(i,1)
-                                j = j + 1
-
-                                           
+                                    sghGC.pinUpdate(pin,1)
+                                j = j + 1                   
 
 
 
@@ -1326,17 +1318,17 @@ class ScratchListener(threading.Thread):
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)                        
                         
-                    if self.dFind('ultra1'):
+                    if self.bfind('ultra1'):
                         print 'start pinging on', str(13)
                         sghGC.pinUse[13] = sghGC.PULTRA
                         
-                    if self.dFind('ultra2'):
+                    if self.bfind('ultra2'):
                         print 'start pinging on', str(7)
                         sghGC.pinUse[7] = sghGC.PULTRA
                         
                 elif ((ADDON_PRESENT[3] == True) and (piglow != None)): # Pimoroni PiGlow
                 
-                    if self.dFindOnOff('all'):
+                    if self.bfindOnOff('all'):
                         for i in range(1,19):
                             PiGlow_Values[i-1] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
@@ -1345,19 +1337,19 @@ class ScratchListener(threading.Thread):
                     for i in range(1,19):
                         #check_broadcast = str(i) + 'on'
                         #print check_broadcast
-                        if self.dFindOnOff('led'+str(i)):
+                        if self.bfindOnOff('led'+str(i)):
                             #print dataraw
                             PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
 
-                        if self.dFindOnOff('light'+str(i)):
+                        if self.bfindOnOff('light'+str(i)):
                             #print dataraw
                             PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
                             
                     pcolours = ['red','orange','yellow','green','blue','white']
                     for i in range(len(pcolours)):
-                        if self.dFindOnOff(pcolours[i]):
+                        if self.bfindOnOff(pcolours[i]):
                             #print dataraw
                             PiGlow_Values[PiGlow_Lookup[i+0]] = PiGlow_Brightness * self.OnOrOff
                             PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness * self.OnOrOff
@@ -1365,7 +1357,7 @@ class ScratchListener(threading.Thread):
                             piglow.update_pwm_values(PiGlow_Values)
                                                        
                     for i in range(1,4):
-                        if self.dFindOnOff('leg'+str(i)):
+                        if self.bfindOnOff('leg'+str(i)):
                             #print dataraw
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
@@ -1375,7 +1367,7 @@ class ScratchListener(threading.Thread):
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
                             
-                        if self.dFindOnOff('arm'+str(i)):
+                        if self.bfindOnOff('arm'+str(i)):
                             #print dataraw
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
@@ -1395,7 +1387,7 @@ class ScratchListener(threading.Thread):
                     #print ("Berry broadcast processing")                    
                     self.bCheckAll() # Check for all off/on type broadcasts
                     self.bLEDCheck(berryOutputs) # Check for LED off/on type broadcasts
-                    if self.dFindOnOff('buzzer'):
+                    if self.bfindOnOff('buzzer'):
                         sghGC.pinUpdate(24,self.OnOrOff)                                         
    
                 else: # Plain GPIO Broadcast processing
@@ -1405,7 +1397,7 @@ class ScratchListener(threading.Thread):
                                 
                     #check pins
                     for pin in range(sghGC.numOfPins):
-                        if self.dFindOnOff('pin' + str(pin)):
+                        if self.bfindOnOff('pin' + str(pin)):
                             sghGC.pinUpdate(pin,self.OnOrOff)
 
                         if ('sonar' + str(pin)) in dataraw:
@@ -1417,33 +1409,32 @@ class ScratchListener(threading.Thread):
                             self.send_scratch_command(bcast_str)
                             
                         #Start using ultrasonic sensor on a pin    
-                        if self.dFind('ultra' + str(pin)):
+                        if self.bfind('ultra' + str(pin)):
                             print 'start pinging on', str(pin)
                             sghGC.pinUse[pin] = sghGC.PULTRA
                        
                                       
                     #end of normal pin checking
 
-                if self.dFind('pinpattern'):
+                if self.bfind('pinpattern'):
                     #print 'Found pinpattern broadcast'
                     #print dataraw
                     #num_of_bits = PINS
                     outputall_pos = self.dataraw.find('pinpattern')
                     sensor_value = self.dataraw[(outputall_pos+10):].split()
-                    print sensor_value
+                    #print sensor_value
                     #sensor_value[0] = sensor_value[0][:-1]                    
-                    print sensor_value[0]
+                    #print sensor_value[0]
                     bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-sghGC.numOfPins:]
-                    print 'bit_pattern %s' % bit_pattern
+                    #print 'bit_pattern %s' % bit_pattern
                     j = 0
                     for pin in range(sghGC.numOfPins):
-                        bit_state = ((2**pin) & sensor_value[0]) >> pin
-                        print 'dummy pin %d state %d' % (pin, bit_state)
                         if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                            #print "pin" , bit_pattern[-(j+1)]
                             if bit_pattern[-(j+1)] == '0':
                                 sghGC.pinUpdate(pin,0)
                             else:
-                                sghGC.pinUpdate(pin,0)
+                                sghGC.pinUpdate(pin,1)
                             j = j + 1
                              
 
