@@ -79,6 +79,8 @@ class GPIOController :
 
     def pinUpdate(self, pin, value,type = 'plain'):
         if type == "pwm": # 
+            if self.INVERT == True: # Invert data value (needed for active low devices)
+                value = 100 - abs(value)
             if self.pinUse[pin] == self.PPWM: # if already active as PWM 
                 self.pwmRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
                 print ("pin",pin, "set to", value)

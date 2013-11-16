@@ -381,6 +381,9 @@ class ScratchSender(threading.Thread):
             #do berryclip stuff
             if pin == 26:
                 sensor_name = "switch"
+        elif ADDON_PRESENT[8] == True:
+            #do pixxxxx stuff
+            sensor_name = "switch" + str(1 + [19,21].index(pin))
         else:
             sensor_name = "pin" + str(pin)
         #if ADDON_PRESENT[5] == True:
@@ -650,6 +653,7 @@ class ScratchListener(threading.Thread):
 
         #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
+        anyAddOns = None
 
         #semi global variables used for servos in PiRoCon
         panoffset = 0
@@ -666,24 +670,24 @@ class ScratchListener(threading.Thread):
                 #print "try reading socket"
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
                 dataraw = data.lower() #[4:].lower() # convert all to lowercase
-                print "RAW"
-                print dataraw
+                #print "RAW"
+                #print dataraw
                 #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
                 
                 datarawList = list(dataraw)
-                print datarawList
+                #print datarawList
                 for m in re.finditer( 'broadcast', dataraw ):
-                    print( 'bdcast found', m.start(), m.end() )
+                    #print( 'bdcast found', m.start(), m.end() )
                     datarawList[(m.start()-4):(m.start())] = [" "," "," "," "]
                     
-                print datarawList
+                #print datarawList
                 dataraw = ''.join(datarawList)
                 
                 if len(dataraw) > 0:
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
                     self.dataraw = dataraw
-                    print "Sanitised"
-                    print dataraw
+                    #print "Sanitised"
+                    #print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -706,7 +710,7 @@ class ScratchListener(threading.Thread):
             
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
-            if firstRun == True:
+            if (firstRun == True) or (anyAddOns == False):
                 anyAddOns = False
                 if 'sensor-update' in dataraw:
                     #print "this data ignored" , dataraw
@@ -788,6 +792,18 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 sghGC.startServod([18,22]) # servos
                                 print "pirocon setup"
+                                
+                            if ADDON[i] == "pixxxxx":
+                                print "pixxxxx detected"
+                                sghGC.INVERT = True
+                                pixxxxxOutputs = [7,11,12,13,15,16,18,22, 24, 26, 8,10]
+                                pixxxxxInputs = [19,21]
+                                for pin in pixxxxxOutputs:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                for pin in pixxxxxInputs:
+                                    sghGC.pinUse[pin] = sghGC.PINPUT
+                                sghGC.setPinMode()
+
                                                       
                 if anyAddOns == False:
                     print "no AddOns Declared"
@@ -1142,6 +1158,13 @@ class ScratchListener(threading.Thread):
                                 pcaPWM.setPWM(i, 0, svalue)
                                 
                     ######### End of PiRoCon Variable handling
+                elif ADDON_PRESENT[8] == True:
+                    #do pixxxxx stuff
+
+                    self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+
+                    self.vLEDCheck(pixxxxxOutputs)
+
                                                             
                 else:   #normal variable processing with no add on board
                     
@@ -1212,31 +1235,6 @@ class ScratchListener(threading.Thread):
                                 PWM_OUT[i].ChangeDutyCycle(max(0,min(100,svalue)))
 
 
-                    #Use bit pattern to control ports
-                    if self.vFindValue('pinpattern'):
-                        svalue = self.value
-                        bit_pattern = ('00000000000000000000000000'+svalue)[-sghGC.numOfPins:]
-                        j = 0
-                        for pin in range(sghGC.numOfPins):
-                            if (sghGC.pinUse[pin] == sghGC.POUTPUT):
-                                #print "pin" , bit_pattern[-(j+1)]
-                                if bit_pattern[-(j+1)] == '0':
-                                    sghGC.pinUpdate(pin,0)
-                                else:
-                                    sghGC.pinUpdate(pin,1)
-                                j = j + 1                   
-
-
-
-                    checkStr = 'stepdelay'
-                    if  (checkStr + ' ') in dataraw:
-                        #print "MotorA Received"
-                        #print "stepper status" , stepperInUse[STEPPERA]
-                        tempValue = getValue(checkStr, dataraw)
-                        if isNumeric(tempValue):
-                            step_delay = int(float(tempValue))
-                            print 'step delay changed to', step_delay
-
                     if  'positiona' in dataraw:
                         #print "positiona" , dataraw
                         if (stepperInUse[STEPPERA] == True):
@@ -1288,7 +1286,30 @@ class ScratchListener(threading.Thread):
                                     #else:
                                     #    turnBStep = 0
             
-                            
+                #Use bit pattern to control ports
+                if self.vFindValue('pinpattern'):
+                    svalue = self.value 
+                    bit_pattern = ('00000000000000000000000000'+svalue)[-sghGC.numOfPins:]
+                    j = 0
+                    onSense = '1' if sghGC.INVERT else '0' # change to look for 0 if invert on
+                    onSense = '0'
+                    for pin in range(sghGC.numOfPins):
+                        if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                            #print "pin" , bit_pattern[-(j+1)]
+                            if bit_pattern[-(j+1)] == onSense:
+                                sghGC.pinUpdate(pin,0)
+                            else:
+                                sghGC.pinUpdate(pin,1)
+                            j = j + 1                   
+
+                checkStr = 'stepdelay'
+                if  (checkStr + ' ') in dataraw:
+                    #print "MotorA Received"
+                    #print "stepper status" , stepperInUse[STEPPERA]
+                    tempValue = getValue(checkStr, dataraw)
+                    if isNumeric(tempValue):
+                        step_delay = int(float(tempValue))
+                        print 'step delay changed to', step_delay
 
 ### Check for Broadcast type messages being received
             if 'broadcast' in dataraw:
@@ -1388,7 +1409,12 @@ class ScratchListener(threading.Thread):
                     self.bCheckAll() # Check for all off/on type broadcasts
                     self.bLEDCheck(berryOutputs) # Check for LED off/on type broadcasts
                     if self.bfindOnOff('buzzer'):
-                        sghGC.pinUpdate(24,self.OnOrOff)                                         
+                        sghGC.pinUpdate(24,self.OnOrOff)
+                
+                if ADDON_PRESENT[8] == True: # pixxxxx
+                    #do pixxxxx stuff
+                    self.bCheckAll() # Check for all off/on type broadcasrs
+                    self.bLEDCheck(pixxxxxOutputs) # Check for LED off/on type broadcasts
    
                 else: # Plain GPIO Broadcast processing
 
@@ -1565,7 +1591,7 @@ STEPPERC=2
 stepperInUse = [False,False,False]
 BIG_NUM = 2123456789
 
-ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon'] #define addons
+ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon','pixxxxx'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
 ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled list
 for i in range(NUMOF_ADDON): # set all addons to diabled
