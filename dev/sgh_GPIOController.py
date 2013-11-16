@@ -152,7 +152,6 @@ class GPIOController :
         tf = time.time() - ts
         distance = sorted(distlist)[1] # sort the list and pick middle value as best distance
         
-        
         #print "total time " , tf
         #for k in range(5):
             #print distlist[k]

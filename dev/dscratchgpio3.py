@@ -31,47 +31,20 @@ import shlex
 import os
 import math
 import sgh_GPIOController
+import sgh_PiGlow
 
 try:
     from Adafruit_PWM_Servo_Driver import PWM
 except:
     pass
 #try and inport smbus but don't worry if not installed
-try:
-    from smbus import SMBus
-except:
-    pass
+#try:
+#    from smbus import SMBus
+#except:
+#    pass
 
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 
-class PiGlow:
-    i2c_addr = 0x54 # fixed i2c address of SN3218 ic
-    bus = None
-
-    def __init__(self, i2c_bus=1):
-        #print "init"
-        #print i2c_bus
-        #self.bus = smbus.SMBus(i2c_bus)
-        self.bus = SMBus(i2c_bus)
-        self.enable_output()
-        self.enable_leds()
-
-    def enable_output(self):
-        self.write_i2c(CMD_ENABLE_OUTPUT, 0x01)
-
-    def enable_leds(self):
-        self.write_i2c(CMD_ENABLE_LEDS, [0xFF, 0xFF, 0xFF])
-
-    def update_pwm_values(self, values):
-        #print "update pwm"
-        self.write_i2c(CMD_SET_PWM_VALUES, values)
-        self.write_i2c(CMD_UPDATE, 0xFF)
-
-    def write_i2c(self, reg_addr, value):
-        if not isinstance(value, list):
-            value = [value];
-        self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
-#### end PiGlow ###############################################################
 
 class Compass:
 
@@ -742,7 +715,6 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                     
                             if ADDON[i] == "motorpitx":
-                            
                                 sghGC.pinUse[11] = sghGC.POUTPUT #Out2 
                                 sghGC.pinUse[15] = sghGC.POUTPUT #Out1
                                 sghGC.pinUse[16] = sghGC.POUTPUT #Motor2 B
@@ -759,7 +731,11 @@ class ScratchListener(threading.Thread):
                                 sghGC.startServod([12,10]) # servos
                                 print "MotorPiTx setup"
 
-                                
+                            if ADDON[i] == "piglow":                                
+                                PiGlow_Values = [0] * 18
+                                PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
+                                PiGlow_Brightness = 255  
+
                             if ADDON[i] == "gpio":
                                 sghGC.pinUse[11] = sghGC.POUTPUT
                                 sghGC.pinUse[12] = sghGC.POUTPUT
@@ -908,7 +884,6 @@ class ScratchListener(threading.Thread):
                         sghGC.pinServod(10,servodvalue)
 
 
-
                     #check for motor variable commands
                     motorList = [['motor1',19,21,23],['motor2',18,16,22]]
                     for listLoop in range(0,2):
@@ -944,23 +919,19 @@ class ScratchListener(threading.Thread):
                                 
                         
                 elif ((ADDON_PRESENT[3] == True) and (piglow != None)):
-                    #do PiGlow stuff but make sure PiGlow physically detected                                  
+                    #do PiGlow stuff but make sure PiGlow physically detected             
+                 
                     #check LEDS
                     for i in range(1,19):
-                        checkStr = 'led' + str(i)
-                        if ((checkStr + ' ') in dataraw):
-                            tempValue = getValue(checkStr, dataraw)
-                            #print tempValue
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if self.vFindValue('led' + str(i)):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             svalue= min(255,max(svalue,0))
                             PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
                             piglow.update_pwm_values(PiGlow_Values)
+                            
                     for i in range(1,4):
-                        checkStr = 'leg' + str(i)
-                        if ((checkStr + ' ') in dataraw):
-                            tempValue = getValue(checkStr, dataraw)
-                            #print tempValue
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if self.vFindValue('leg' + str(i)):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             svalue= min(255,max(svalue,0))
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
@@ -970,11 +941,8 @@ class ScratchListener(threading.Thread):
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
                             piglow.update_pwm_values(PiGlow_Values)
                             
-                        checkStr = 'arm' + str(i)
-                        if ((checkStr + ' ') in dataraw):
-                            tempValue = getValue(checkStr, dataraw)
-                            #print tempValue
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if self.vFindValue('arm' + str(i)):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             svalue= min(255,max(svalue,0))
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
@@ -986,10 +954,8 @@ class ScratchListener(threading.Thread):
                             
                     pcolours = ['red','orange','yellow','green','blue','white']
                     for i in range(len(pcolours)):
-                        checkStr = pcolours[i]
-                        if ((checkStr + ' ') in dataraw):
-                            tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        if self.vFindValue(pcolours[i]):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             svalue= min(255,max(svalue,0))
                             PiGlow_Values[PiGlow_Lookup[i+0]] = svalue
                             PiGlow_Values[PiGlow_Lookup[i+6]] = svalue
@@ -998,10 +964,10 @@ class ScratchListener(threading.Thread):
                         
                             
                     #Use bit pattern to control leds
-                    if 'ledpattern' in dataraw:
+                    if self.vFindValue('ledpattern'):
                         #print 'Found ledpattern'
                         num_of_bits = 18
-                        bit_pattern = ('00000000000000000000000000'+getValue('ledpattern', dataraw))[-num_of_bits:]
+                        bit_pattern = ('00000000000000000000000000' + self.value)[-num_of_bits:]
                         #print 'led_pattern %s' % bit_pattern
                         j = 0
                         for i in range(18):
@@ -1015,11 +981,8 @@ class ScratchListener(threading.Thread):
                         
                         piglow.update_pwm_values(PiGlow_Values)
                         
-                    if (('bright' + ' ') in dataraw):
-                        tempValue = getValue('bright', dataraw)
-                        #print tempValue
-                        #print isNumeric(tempValue)
-                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                    if self.vFindValue('bright'):
+                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                         svalue= min(255,max(svalue,0))
                         PiGlow_Brightness = svalue
                         
@@ -1165,7 +1128,7 @@ class ScratchListener(threading.Thread):
                                                             
                 else:   #normal variable processing with no add on board
                     
-                    self.vCheckAll("allpins") # check All On/Off/High/Low/1/0
+                    self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
  
                     self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
                                 
@@ -1356,95 +1319,53 @@ class ScratchListener(threading.Thread):
                         
                 elif ((ADDON_PRESENT[3] == True) and (piglow != None)): # Pimoroni PiGlow
                 
-                    if (('allon' in dataraw) or ('allhigh' in dataraw)):
+                    if self.dFindOnOff('all'):
                         for i in range(1,19):
-                            PiGlow_Values[i-1] = PiGlow_Brightness
+                            PiGlow_Values[i-1] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
-                            
-                    if (('alloff' in dataraw) or ('alllow' in dataraw)):
-                        for i in range(1,19):
-                            PiGlow_Values[i-1] = 0
-                            piglow.update_pwm_values(PiGlow_Values)
-  
+                             
                     #check LEDS
                     for i in range(1,19):
                         #check_broadcast = str(i) + 'on'
                         #print check_broadcast
-                        if (('led' + str(i)+'high' in dataraw) or ('led' + str(i)+'on' in dataraw)):
+                        if self.dFindOnOff('led'+str(i)):
                             #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
 
-                        if (('led' + str(i)+'low' in dataraw) or ('led' + str(i)+'off' in dataraw)):
+                        if self.dFindOnOff('light'+str(i)):
                             #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i-1]] = 0
-                            piglow.update_pwm_values(PiGlow_Values)
-                            
-                        if (('light' + str(i)+'high' in dataraw) or ('light' + str(i)+'on' in dataraw)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness
-                            piglow.update_pwm_values(PiGlow_Values)
-
-                        if (('light' + str(i)+'low' in dataraw) or ('light' + str(i)+'off' in dataraw)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i-1]] = 0
+                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
                             
                     pcolours = ['red','orange','yellow','green','blue','white']
                     for i in range(len(pcolours)):
-                        if ((pcolours[i]+'high' in dataraw) or (pcolours[i]+'on' in dataraw)):
+                        if self.dFindOnOff(pcolours[i]):
                             #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i+0]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[i+12]] = PiGlow_Brightness
+                            PiGlow_Values[PiGlow_Lookup[i+0]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[i+12]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
-                            
-                        if ((pcolours[i]+'low' in dataraw) or (pcolours[i]+'off' in dataraw)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i+0]] = 0
-                            PiGlow_Values[PiGlow_Lookup[i+6]] = 0
-                            PiGlow_Values[PiGlow_Lookup[i+12]] = 0
-                            piglow.update_pwm_values(PiGlow_Values)
-                            
+                                                       
                     for i in range(1,4):
-                        if (('leg'+str(i)+'high' in dataraw) or ('leg'+str(i)+'on' in dataraw)):
+                        if self.dFindOnOff('leg'+str(i)):
                             #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness
-                            piglow.update_pwm_values(PiGlow_Values)
-
-                        if (('leg'+str(i)+'low' in dataraw) or ('leg'+str(i)+'off' in dataraw)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
                             
-                        if (('arm'+str(i)+'high' in dataraw) or ('arm'+str(i)+'on' in dataraw)):
+                        if self.dFindOnOff('arm'+str(i)):
                             #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness
-                            piglow.update_pwm_values(PiGlow_Values)
-
-                        if (('arm'+str(i)+'low' in dataraw) or ('arm'+str(i)+'off' in dataraw)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = 0
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = 0
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
+                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
 
                 elif ADDON_PRESENT[5] == True: # gPiO
@@ -1663,21 +1584,18 @@ DEFAULT_HOST = '127.0.0.1'
 BUFFER_SIZE = 240 #used to be 100
 SOCKET_TIMEOUT = 1
 
-CMD_ENABLE_OUTPUT = 0x00
-CMD_ENABLE_LEDS = 0x13
-CMD_SET_PWM_VALUES = 0x01
-CMD_UPDATE = 0x16
-PiGlow_Values = [0] * 18
-PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
-PiGlow_Brightness = 255
+
+
 
 piglow = None
 try:
-    if GPIO.RPI_REVISION == 1:
-        piglow = PiGlow(0)
+    if sghGC.getPiRevision() == 1:
+        print "Rev1 Board" 
+        piglow = sgh_PiGlow.PiGlow(0)
+        print piglow
     else:
-        piglow = PiGlow(1)
-    piglow.update_pwm_values(PiGlow_Values)
+        piglow = sgh_PiGlow.PiGlow(1)
+    piglow.update_pwm_values()#PiGlow_Values)
 except:
     print "No PiGlow Detected"
     
@@ -1726,8 +1644,6 @@ cycle_trace = 'start'
 
 
 sghGC.setPinMode()
-# setup a fade across the 18 LEDs of values ranging from 0 - 255
-values = [0x01,0x02,0x04,0x08,0x10,0x18,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xA0,0xC0,0xE0,0xFF]
 
 while True:
 
