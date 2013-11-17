@@ -33,11 +33,9 @@ import math
 import re
 import sgh_GPIOController
 import sgh_PiGlow
+from Adafruit_PWM_Servo_Driver import PWM
+from sgh_PCF8591P import sgh_PCF8591P
 
-try:
-    from Adafruit_PWM_Servo_Driver import PWM
-except:
-    pass
 #try and inport smbus but don't worry if not installed
 #try:
 #    from smbus import SMBus
@@ -1310,6 +1308,12 @@ class ScratchListener(threading.Thread):
                     if isNumeric(tempValue):
                         step_delay = int(float(tempValue))
                         print 'step delay changed to', step_delay
+                        
+                
+                if pcfSensor != None: #if PCF ADC found
+                    if self.vFindValue('dac'):
+                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        pcfSensor.writeDAC(svalue)
 
 ### Check for Broadcast type messages being received
             if 'broadcast' in dataraw:
@@ -1426,7 +1430,7 @@ class ScratchListener(threading.Thread):
                         if self.bfindOnOff('pin' + str(pin)):
                             sghGC.pinUpdate(pin,self.OnOrOff)
 
-                        if ('sonar' + str(pin)) in dataraw:
+                        if self.bfind('sonar' + str(pin)):
                             distance = sghGC.pinSonar(pin)
                             #print'Distance:',distance,'cm'
                             sensor_name = 'sonar' + str(pin)
@@ -1441,6 +1445,40 @@ class ScratchListener(threading.Thread):
                        
                                       
                     #end of normal pin checking
+                    if ('steppera' in dataraw) or ('turna' in dataraw):
+                        if (stepperInUse[STEPPERA] == False):
+                            print "StepperA Stasrting"
+                            steppera = StepperControl(11,12,13,15,step_delay)
+                            steppera.start()
+                            stepperInUse[STEPPERA] = True
+                            turnAStep = 0
+                            steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                        else:
+                            steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                            
+
+                    if ('stepperb' in dataraw):
+                        if (stepperInUse[STEPPERB] == False):
+                            print "StepperB Stasrting"
+                            stepperb = StepperControl(16,18,22,7,step_delay)
+                            stepperb.start()
+                            stepperInUse[STEPPERB] = True
+                            turnBStep = 0
+                            stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                        else:
+                            stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                            
+                    if ('stepperc' in dataraw):
+                        if (stepperInUse[STEPPERC] == False):
+                            print "StepperC Stasrting"
+                            stepperc = StepperControl(24,26,19,21,step_delay)
+                            stepperc.start()
+                            stepperInUse[STEPPERC] = True
+                            turnCStep = 0 #reset turn variale
+                            stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                        else:
+                            stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                    
 
                 if self.bfind('pinpattern'):
                     #print 'Found pinpattern broadcast'
@@ -1463,41 +1501,15 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(pin,1)
                             j = j + 1
                              
-
-                if ('steppera' in dataraw) or ('turna' in dataraw):
-                    if (stepperInUse[STEPPERA] == False):
-                        print "StepperA Stasrting"
-                        steppera = StepperControl(11,12,13,15,step_delay)
-                        steppera.start()
-                        stepperInUse[STEPPERA] = True
-                        turnAStep = 0
-                        steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                    else:
-                        steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                        
-
-                if ('stepperb' in dataraw):
-                    if (stepperInUse[STEPPERB] == False):
-                        print "StepperB Stasrting"
-                        stepperb = StepperControl(16,18,22,7,step_delay)
-                        stepperb.start()
-                        stepperInUse[STEPPERB] = True
-                        turnBStep = 0
-                        stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                    else:
-                        stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                        
-                if ('stepperc' in dataraw):
-                    if (stepperInUse[STEPPERC] == False):
-                        print "StepperC Stasrting"
-                        stepperc = StepperControl(24,26,19,21,step_delay)
-                        stepperc.start()
-                        stepperInUse[STEPPERC] = True
-                        turnCStep = 0 #reset turn variale
-                        stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                    else:
-                        stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-
+                if pcfSensor != None: #if PCF ADC found
+                    for channel in range(1,5): #loop thru all 4 inputs
+                        if self.bfind('adc'+str(channel)):
+                            adc = pcfSensor.readADC(channel - 1) # get each value
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'adc'+str(channel)
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)
 
                 if  '1coil' in dataraw:
                     print "1coil broadcast"
@@ -1650,8 +1662,18 @@ try:
 except:
     print "No pcaPwm Detected"
     
+pcfSensor = None
+try:
+    if sghGC.getPiRevision() == 1:
+        pcfSensor = sgh_PCF8591P(0) #i2c, 0x48)
+    else:
+        pcfSensor = sgh_PCF8591P(1) #i2c, 0x48)
+    print "PCF8591P Detected"
+except:
+    print "No PCF8591 Detected"
+    
 #If I2C then don't uses pins 3 and 5
-if ((piglow != None) or (compass != None) or (pcaPWM != None)):
+if ((piglow != None) or (compass != None) or (pcaPWM != None) or (pcfSensor != None)):
     print "I2C device detected"
     #pins = sghGC.PIN_NUM
 else:
