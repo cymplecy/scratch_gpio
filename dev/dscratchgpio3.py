@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.1.10' # 16Nov13
+Version =  '3.1.11' # 18Nov13
 
 
 
@@ -131,43 +131,18 @@ class Compass:
                
 ### End Compasss ###################################################################################################
 
-
-
-def isNumeric(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-    
-def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
-    
-def xgetValue(searchString, dataString):
-    outputall_pos = dataString.find((searchString + ' '))
-    sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
-    return sensor_value[0]
-    
-
-def sign(number):return cmp(number,0)
-
-
-def parse_data(dataraw, search_string):
-    outputall_pos = dataraw.find(search_string)
-    return dataraw[(outputall_pos + 1 + search_string.length):].split()
-    
-        
 #----------------------------- STEPPER CONTROL --------------
-class StepperControl(threading.Thread):
-    def __init__(self,pinA,pinB,pinC,pinD,step_delay):
+class sghStepper(threading.Thread):
+    def __init__(self,pins,step_delay):
         #self.stepper_num = stepper_num # find which stepper a or b
-        #self.step_delay = step_delay
+        self.step_delay = step_delay
         self.stepperSpeed = 0 #stepp speed dset to 0 when thread created
         self.steps = BIG_NUM # default to psuedo infinte number of turns
         self.terminated = False
         self.toTerminate = False
         threading.Thread.__init__(self)
         self._stop = threading.Event()
-        self.pins = [PIN_NUM_LOOKUP[pinA],PIN_NUM_LOOKUP[pinB],PIN_NUM_LOOKUP[pinC],PIN_NUM_LOOKUP[pinD]]
+        self.pins = pins
         self.slow_start = self.steps
         self.steps_start = self.steps
         self.paused = False
@@ -198,79 +173,79 @@ class StepperControl(threading.Thread):
         lstepMode = stepMode[stepType]
         #print stepMode[stepType]
         if lstepMode == '1Coil':
-            self.index_pin_update(d,0)
-            self.index_pin_update(a,1)
+            sghGC.pinUpdate(d,0)
+            sghGC.pinUpdate(a,1)
             time.sleep(delay)
 
             
-            self.index_pin_update(b,1)
-            self.index_pin_update(a,0)
+            sghGC.pinUpdate(b,1)
+            sghGC.pinUpdate(a,0)
             time.sleep(delay)
             
             
-            self.index_pin_update(c,1)
-            self.index_pin_update(b,0)
+            sghGC.pinUpdate(c,1)
+            sghGC.pinUpdate(b,0)
             time.sleep(delay)
             
             
-            self.index_pin_update(d,1)
-            self.index_pin_update(c,0)
+            sghGC.pinUpdate(d,1)
+            sghGC.pinUpdate(c,0)
             time.sleep(delay)
             
         elif lstepMode == '2Coil':
-            self.index_pin_update(d,0)
-            self.index_pin_update(c,0)
-            self.index_pin_update(a,1)
-            self.index_pin_update(b,1)
+            sghGC.pinUpdate(d,0)
+            sghGC.pinUpdate(c,0)
+            sghGC.pinUpdate(a,1)
+            sghGC.pinUpdate(b,1)
 
             time.sleep(delay)
 
-            self.index_pin_update(a,0)
-            self.index_pin_update(c,1)
+            sghGC.pinUpdate(a,0)
+            sghGC.pinUpdate(c,1)
             time.sleep(delay)
             
-            self.index_pin_update(b,0)
-            self.index_pin_update(d,1)
+            sghGC.pinUpdate(b,0)
+            sghGC.pinUpdate(d,1)
             time.sleep(delay)
             
-            self.index_pin_update(c,0)
-            self.index_pin_update(a,1)
+            sghGC.pinUpdate(c,0)
+            sghGC.pinUpdate(a,1)
             time.sleep(delay)
             
         elif lstepMode == 'HalfStep':
-            self.index_pin_update(d,0) 
-            self.index_pin_update(a,1)
+            sghGC.pinUpdate(d,0) 
+            sghGC.pinUpdate(a,1)
             time.sleep(delay)
 
 
-            self.index_pin_update(b,1)
+            sghGC.pinUpdate(b,1)
             time.sleep(delay)
 
-            self.index_pin_update(a,0)
+            sghGC.pinUpdate(a,0)
             time.sleep(delay)
             
-            self.index_pin_update(c,1)
+            sghGC.pinUpdate(c,1)
             time.sleep(delay)
 
-            self.index_pin_update(b,0)
+            sghGC.pinUpdate(b,0)
             time.sleep(delay)
 
-            self.index_pin_update(d,1)
+            sghGC.pinUpdate(d,1)
             time.sleep(delay)
 
-            self.index_pin_update(c,0)
+            sghGC.pinUpdate(c,0)
             time.sleep(delay)
             
-            self.index_pin_update(a,1)
+            sghGC.pinUpdate(a,1)
             time.sleep(delay)
 
     def pause(self):
-        self.index_pin_update(self.pins[0],0)
-        self.index_pin_update(self.pins[1],0)
-        self.index_pin_update(self.pins[2],0)
-        self.index_pin_update(self.pins[3],0)
+        sghGC.pinUpdate(self.pins[0],0)
+        sghGC.pinUpdate(self.pins[1],0)
+        sghGC.pinUpdate(self.pins[2],0)
+        sghGC.pinUpdate(self.pins[3],0)
         self.paused = True
-        print PIN_NUM[self.pins[0]], "pause method run"
+        print self.pins[0], "pause method run"
 
 
 
@@ -323,6 +298,33 @@ class StepperControl(threading.Thread):
 
         self.terminated = True
     ####### end of Stepper Class
+
+
+
+def isNumeric(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+    
+def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
+    
+def xgetValue(searchString, dataString):
+    outputall_pos = dataString.find((searchString + ' '))
+    sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
+    return sensor_value[0]
+    
+
+def sign(number):return cmp(number,0)
+
+
+def parse_data(dataraw, search_string):
+    outputall_pos = dataraw.find(search_string)
+    return dataraw[(outputall_pos + 1 + search_string.length):].split()
+    
+        
+
 
 
 class MyError(Exception):
@@ -627,22 +629,22 @@ class ScratchListener(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-    def step_coarse(self,a,b,c,d,delay):
-        self.index_pin_update(a,1)
-        self.index_pin_update(d,0)
-        time.sleep(delay)
+    def stepperUpdate(self, pins, value,stepDelay = 0.003):
+        print "pin" , pins , "value" , value
+        if sghGC.pinRef[pins[0]] == type(sghStepper): # if already active as Stepper 
+            sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value)))) # just update Stepper value
+            print ("pin",pins, "set to", value)
+        else:
+            print "Stepper set up on" , pins
+            #sghGC.pinUse[pins[0]] = sghGC.PSTEPPER # set pin use as Stepper
+            #sghGC.pinUse[pins[0]] = sghGC.PSTEPPER # set pin use as Stepper
+            if sghGC.pinRef[pins[0]] == None: #if not already in use for Stepper then 
+                sghGC.pinRef[pins[0]] = sghStepper(pins,stepDelay) # create new Stepper instance 
+            sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value))),BIG_NUM) # update Stepper value
+            sghGC.pinRef[pins[0]].start() # update Stepper value                
+            print 'pin' , pins , ' changed to Stepper' 
+            print ("pins",pins, "set to", value)                
 
-        self.index_pin_update(b,1)
-        self.index_pin_update(a,0)
-        time.sleep(delay)
-        
-        self.index_pin_update(c,1)
-        self.index_pin_update(b,0)
-        time.sleep(delay)
-        
-        self.index_pin_update(d,1)
-        self.index_pin_update(c,0)
-        time.sleep(delay)
 
     def run(self):
         global firstRun,cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
@@ -1169,120 +1171,95 @@ class ScratchListener(threading.Thread):
                     self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
  
                     self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
+                    
                                 
-                    checkStr = 'motora'
-                    if  (checkStr + ' ') in dataraw:
-                        #print "MotorA Received"
-                        #print "stepper status" , stepperInUse[STEPPERA]
-                        tempValue = getValue(checkStr, dataraw)
-                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                        #print "MotorA" , svalue
-                        if (stepperInUse[STEPPERA] == True):
-                            #print "Stepper A in operation"
-                            #print "send change to motora as a stepper" , sensor_value[0]
-                            steppera.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                            
-                        else:
-                            i = PIN_NUM_LOOKUP[11] # assume motora is connected to Pin11
-                            if PIN_USE[i] != PPWM:
-                                PIN_USE[i] = PPWM
-                                PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                                PWM_OUT[i].start(max(0,min(100,svalue)))
+                    motorList = [['motora',11],['motorb',12]]
+                    for listLoop in range(0,2):
+                        if self.vFindValue(motorList[listLoop][0]):
+                            if self.valueIsNumeric:
+                                sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
                             else:
-                                PWM_OUT[i].ChangeDutyCycle(max(0,min(100,svalue)))
-
-
-                    checkStr = 'motorb'
-                    if  (checkStr + ' ') in dataraw:
-                        #print "MotorA Received"
-                        #print "stepper status" , stepperInUse[STEPPERA]
-                        tempValue = getValue(checkStr, dataraw)
-                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                        if (stepperInUse[STEPPERB] == True):
-                            #print "Stepper B in operation"
-                            #print "send change to motorb as a stepper" , sensor_value[0]
-                            stepperb.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                            
-                        else:
-                            i = PIN_NUM_LOOKUP[12] # assume motorb is connected to Pin11
-                            if PIN_USE[i] != PPWM:
-                                PIN_USE[i] = PPWM
-                                PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                                PWM_OUT[i].start(max(0,min(100,svalue)))
+                                sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
+                                
+                    stepperList = [['steppera',[11,12,13,15]],['stepperb',[16,18,22,7]]]
+                    for listLoop in range(0,2):
+                        if self.vFindValue(stepperList[listLoop][0]):
+                            if self.valueIsNumeric:
+                                self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
                             else:
-                                PWM_OUT[i].ChangeDutyCycle(max(0,min(100,svalue)))
+                                self.stepperUpdate(stepperList[listLoop][1],0)
 
-                    checkStr = 'motorc'
-                    if  (checkStr + ' ') in dataraw:
-                        #print "MotorA Received"
-                        #print "stepper status" , stepperInUse[STEPPERA]
-                        tempValue = getValue(checkStr, dataraw)
-                        svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                        if (stepperInUse[STEPPERC] == True):
-                            #print "Stepper C in operation"
-                            #print "send change to motorc as a stepper" , sensor_value[0]
-                            stepperc.changeSpeed(max(-100,min(100,svalue)),2123456789)
+                    # checkStr = 'motorc'
+                    # if  (checkStr + ' ') in dataraw:
+                        # #print "MotorA Received"
+                        # #print "stepper status" , stepperInUse[STEPPERA]
+                        # tempValue = getValue(checkStr, dataraw)
+                        # svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                        # if (stepperInUse[STEPPERC] == True):
+                            # #print "Stepper C in operation"
+                            # #print "send change to motorc as a stepper" , sensor_value[0]
+                            # stepperc.changeSpeed(max(-100,min(100,svalue)),2123456789)
                             
-                        else:
-                            i = PIN_NUM_LOOKUP[13] # assume motorc is connected to Pin13
-                            if PIN_USE[i] != PPWM:
-                                PIN_USE[i] = PPWM
-                                PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                                PWM_OUT[i].start(max(0,min(100,svalue)))
-                            else:
-                                PWM_OUT[i].ChangeDutyCycle(max(0,min(100,svalue)))
+                        # else:
+                            # i = PIN_NUM_LOOKUP[13] # assume motorc is connected to Pin13
+                            # if PIN_USE[i] != PPWM:
+                                # PIN_USE[i] = PPWM
+                                # PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
+                                # PWM_OUT[i].start(max(0,min(100,svalue)))
+                            # else:
+                                # PWM_OUT[i].ChangeDutyCycle(max(0,min(100,svalue)))
 
 
-                    if  'positiona' in dataraw:
-                        #print "positiona" , dataraw
-                        if (stepperInUse[STEPPERA] == True):
-                            outputall_pos = dataraw.find('positiona')
-                            sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
-                            if isNumeric(sensor_value[0]):
-                                #if int(float(sensor_value[0])) != 0:s
-                                if 'steppera' in dataraw:
-                                    turnAStep = int(float(sensor_value[0]))
-                                else:
-                                    steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
-                                    turnAStep = int(float(sensor_value[0]))
-                                    #else:
-                                    #    turnAStep = 0
+                    # if  'positiona' in dataraw:
+                        # #print "positiona" , dataraw
+                        # if (stepperInUse[STEPPERA] == True):
+                            # outputall_pos = dataraw.find('positiona')
+                            # sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
+                            # if isNumeric(sensor_value[0]):
+                                # #if int(float(sensor_value[0])) != 0:s
+                                # if 'steppera' in dataraw:
+                                    # turnAStep = int(float(sensor_value[0]))
+                                # else:
+                                    # steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
+                                    # turnAStep = int(float(sensor_value[0]))
+                                    # #else:
+                                    # #    turnAStep = 0
                                                 
-                    if  'positionb' in dataraw:
-                        #print "positionb" , dataraw
-                        if (stepperInUse[STEPPERB] == True):
-                            outputall_pos = dataraw.find('positionb')
-                            sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
-                            #print "sensor" , sensor_value[0]
-                            if isNumeric(sensor_value[0]):
-                                #if int(float(sensor_value[0])) != 0:
-                                if 'stepperb' in dataraw:
-                                    turnBStep = int(float(sensor_value[0]))
-                                    #print "stepperb found"
-                                else:
-                                    #print "change posb" , sensor_value[0]
-                                    stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
-                                    turnBStep = int(float(sensor_value[0]))
-                                    #else:
-                                    #    turnBStep = 0
+                    # if  'positionb' in dataraw:
+                        # #print "positionb" , dataraw
+                        # if (stepperInUse[STEPPERB] == True):
+                            # outputall_pos = dataraw.find('positionb')
+                            # sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
+                            # #print "sensor" , sensor_value[0]
+                            # if isNumeric(sensor_value[0]):
+                                # #if int(float(sensor_value[0])) != 0:
+                                # if 'stepperb' in dataraw:
+                                    # turnBStep = int(float(sensor_value[0]))
+                                    # #print "stepperb found"
+                                # else:
+                                    # #print "change posb" , sensor_value[0]
+                                    # stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
+                                    # turnBStep = int(float(sensor_value[0]))
+                                    # #else:
+                                    # #    turnBStep = 0
 
-                    if  'positionc' in dataraw:
-                        print "positionc" , dataraw
-                        if (stepperInUse[STEPPERC] == True):
-                            outputall_pos = dataraw.find('positionc')
-                            sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
-                            #print "sensor" , sensor_value[0]
-                            if isNumeric(sensor_value[0]):
-                                #if int(float(sensor_value[0])) != 0:
-                                if 'stepperc' in dataraw:
-                                    turnCStep = int(float(sensor_value[0]))
-                                    #print "stepperb found"
-                                else:
-                                    #print "change posb" , sensor_value[0]
-                                    stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
-                                    turnCStep = int(float(sensor_value[0]))
-                                    #else:
-                                    #    turnBStep = 0
+                    # if  'positionc' in dataraw:
+                        # print "positionc" , dataraw
+                        # if (stepperInUse[STEPPERC] == True):
+                            # outputall_pos = dataraw.find('positionc')
+                            # sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
+                            # #print "sensor" , sensor_value[0]
+                            # if isNumeric(sensor_value[0]):
+                                # #if int(float(sensor_value[0])) != 0:
+                                # if 'stepperc' in dataraw:
+                                    # turnCStep = int(float(sensor_value[0]))
+                                    # #print "stepperb found"
+                                # else:
+                                    # #print "change posb" , sensor_value[0]
+                                    # stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
+                                    # turnCStep = int(float(sensor_value[0]))
+                                    # #else:
+                                    # #    turnBStep = 0
             
                 #Use bit pattern to control ports
                 if self.vFindValue('pinpattern'):
@@ -1570,7 +1547,13 @@ def cleanup_threads(threads):
     for pin in range(sghGC.numOfPins):
         if sghGC.pinUse[pin] == sghGC.PPWM:
             print "Stopping ", pin
-            sghGC.pwmRef[pin].stop()
+            sghGC.pinRef[pin].stop()
+            print "Stopped ", pin
+            
+    for pin in range(sghGC.numOfPins):
+        if sghGC.pinUse[pin] == type(sghStepper):
+            print "Stopping stepper ", pin
+            sghGC.pinRef[pin].stop()
             print "Stopped ", pin
             
     if (stepperInUse[STEPPERA] == True):

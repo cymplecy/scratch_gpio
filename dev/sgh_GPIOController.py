@@ -22,6 +22,10 @@ Version =  '0.1.0' # 12Nov13
 import RPi.GPIO as GPIO
 import time
 import os
+import datetime as dt
+import threading
+
+BIG_NUM = 2123456789
 
 class GPIOController :
 
@@ -48,6 +52,7 @@ class GPIOController :
         self.PSONAR = 16
         self.PULTRA = 32
         self.PSERVOD = 64
+        self.PSTEPPER = 128
 
         self.INVERT = False
 
@@ -56,7 +61,7 @@ class GPIOController :
         self.pinUse = [self.PUNUSED] * self.numOfPins
         self.servodPins = None
         
-        self.pwmRef = [None] * self.numOfPins
+        self.pinRef = [None] * self.numOfPins
         
         #self.ULTRA_IN_USE = [False] * self.PINS
         #self.ultraTotalInUse = 0
@@ -77,21 +82,21 @@ class GPIOController :
                 print 'setting pin' , pin , ' to in' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
 
-    def pinUpdate(self, pin, value,type = 'plain'):
+    def pinUpdate(self, pin, value,type = 'plain',stepDelay = 0.003):
         if type == "pwm": # 
             if self.INVERT == True: # Invert data value (needed for active low devices)
                 value = 100 - abs(value)
             if self.pinUse[pin] == self.PPWM: # if already active as PWM 
-                self.pwmRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
+                self.pinRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
                 print ("pin",pin, "set to", value)
             else:
                 self.pinUse[pin] = self.PPWM # set pin use as PWM
-                if self.pwmRef[pin] == None: #if not used previously used for PWM then 
-                    self.pwmRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance 
-                self.pwmRef[pin].start(max(0,min(100,abs(value)))) # update PWM value
+                if self.pinRef[pin] == None: #if not used previously used for PWM then 
+                    self.pinRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance 
+                self.pinRef[pin].start(max(0,min(100,abs(value)))) # update PWM value
                 print 'pin' , pin , ' changed to PWM' 
-                print ("pin",pin, "set to", value)
-        else:
+                print ("pin",pin, "set to", value)              
+        elif type == "plain":
             if self.INVERT == True: # Invert data value (useful for 7 segment common anode displays)
                 if self.pinUse[pin] == self.POUTPUT:
                     value = abs(value - 1)
@@ -106,9 +111,10 @@ class GPIOController :
                 print ("pin",pin, "set to", value)
             elif (self.pinUse[pin] == self.PPWM): #if pin in use for PWM
                 self.pinUse[pin] = self.POUTPUT # switch it to output
-                self.pwmRef[pin].stop() # stop PWM from running
+                self.pinRef[pin].stop() # stop PWM from running
+                self.pinRef[pin] = None
                 GPIO.setup(pin,GPIO.OUT)
-                GPIO.output(pin, int(value)) # set output to 1 ot 0
+                GPIO.output(pin, int(value)) # set output to 1 or 0
                 print 'pin' , pin , ' changed to digital out from PWM' 
                 print ("pin",pin, "set to", value)
             elif (self.pinUse[pin] == self.PUNUSED): # if pin is not allocated
@@ -191,5 +197,9 @@ class GPIOController :
         
     def stopServod(self):
         os.system("sudo pkill -f servod")
+        
+
+
 
 #### End of main program
+
