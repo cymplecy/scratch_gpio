@@ -154,10 +154,12 @@ class sghStepper(threading.Thread):
 
 
     def stop(self):
+        print "Stop Stepper command given"
         self.toTerminate = True
         while self.terminated == False:
         # Just wait
             time.sleep(0.01)
+        print "Stepper stopped"
 
 
     def changeSpeed(self, stepperSpeed,steps):
@@ -639,6 +641,7 @@ class ScratchListener(threading.Thread):
             #sghGC.pinUse[pins[0]] = sghGC.PSTEPPER # set pin use as Stepper
             #sghGC.pinUse[pins[0]] = sghGC.PSTEPPER # set pin use as Stepper
             if sghGC.pinRef[pins[0]] == None: #if not already in use for Stepper then 
+                print ("New Stepper instance started", pins)
                 sghGC.pinRef[pins[0]] = sghStepper(pins,stepDelay) # create new Stepper instance 
             sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value))),BIG_NUM) # update Stepper value
             sghGC.pinRef[pins[0]].start() # update Stepper value                
@@ -1538,38 +1541,38 @@ def create_socket(host, port):
     return scratch_sock
 
 def cleanup_threads(threads):
+    print ("cleanup threads started")
     for thread in threads:
         thread.stop()
 
     for thread in threads:
         thread.join()
 
+        
     for pin in range(sghGC.numOfPins):
-        if sghGC.pinUse[pin] == sghGC.PPWM:
+        try:
             print "Stopping ", pin
             sghGC.pinRef[pin].stop()
             print "Stopped ", pin
+        except:
+            continue
             
-    for pin in range(sghGC.numOfPins):
-        if sghGC.pinUse[pin] == type(sghStepper):
-            print "Stopping stepper ", pin
-            sghGC.pinRef[pin].stop()
-            print "Stopped ", pin
-            
-    if (stepperInUse[STEPPERA] == True):
-        print "stopping stepperA"
-        steppera.stop()
-        print "stepperA stopped"
+    # if (stepperInUse[STEPPERA] == True):
+        # print "stopping stepperA"
+        # steppera.stop()
+        # print "stepperA stopped"
         
-    if (stepperInUse[STEPPERB] == True):
-        print "stopping stepperB"
-        stepperb.stop()
-        print "stepperB stopped"
+    # if (stepperInUse[STEPPERB] == True):
+        # print "stopping stepperB"
+        # stepperb.stop()
+        # print "stepperB stopped"
             
-    if (stepperInUse[STEPPERC] == True):
-        print "stopping stepperC"
-        stepperc.stop()
-        print "stepperC stopped"
+    # if (stepperInUse[STEPPERC] == True):
+        # print "stopping stepperC"
+        # stepperc.stop()
+        # print "stepperC stopped"
+
+    print ("cleanup threads finished")
 
         
 ######### Main Program Here
@@ -1721,9 +1724,12 @@ while True:
 
         time.sleep(0.1)
     except KeyboardInterrupt:
+        print ("Keyboard Interrupt")
         cleanup_threads((listener,sender))
         sghGC.stopServod()
+        print ("servod stopped")
         sghGC.cleanup()
+        print ("Pin Cleanup done")
         sys.exit()
         print "CleanUp complete"
         
