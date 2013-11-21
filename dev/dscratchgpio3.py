@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.1.11' # 18Nov13
+Version =  '3.2.00' # 21Nov13
 
 
 
@@ -492,10 +492,8 @@ class ScratchListener(threading.Thread):
 
 
     def run(self):
-        global firstRun,cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
-               steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness, \
-                   compass
-        
+        global firstRun,cycle_trace,step_delay,stepType,INVERT, \
+               Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass
 
         #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -1035,66 +1033,23 @@ class ScratchListener(threading.Thread):
                             else:
                                 self.stepperUpdate(stepperList[listLoop][1],0)
                                 
+                             
                     stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
                     for listLoop in range(0,2):
                         if self.vFindValue(stepperList[listLoop][0]):
                             if self.valueIsNumeric:
-                                self.stepperUpdate(stepperList[listLoop][1],10,self.valueNumeric)
+                                try:
+                                    direction = int(10 * sign(int(self.valueNumeric)) - turn[stepperList[listLoop][1][0]])
+                                    steps = abs(int(self.valueNumeric) -turn(stepperList[listLoop][1][0]))
+                                except:
+                                    direction = int(10 * sign(int(self.valueNumeric)))
+                                    steps = abs(int(self.valueNumeric))
+                                    continue
+                                self.stepperUpdate(stepperList[listLoop][1],direction,steps)
+                                turn[stepperList[listLoop][1][0]] = self.valueIsNumeric
                             else:
                                 self.stepperUpdate(stepperList[listLoop][1],0)                                
-                                
 
-
-                    # if  'positiona' in dataraw:
-                        # #print "positiona" , dataraw
-                        # if (stepperInUse[STEPPERA] == True):
-                            # outputall_pos = dataraw.find('positiona')
-                            # sensor_value = dataraw[(outputall_pos+1+len('positiona')):].split()
-                            # if isNumeric(sensor_value[0]):
-                                # #if int(float(sensor_value[0])) != 0:s
-                                # if 'steppera' in dataraw:
-                                    # turnAStep = int(float(sensor_value[0]))
-                                # else:
-                                    # steppera.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnAStep)),abs(int(float(sensor_value[0])) - turnAStep))
-                                    # turnAStep = int(float(sensor_value[0]))
-                                    # #else:
-                                    # #    turnAStep = 0
-                                                
-                    # if  'positionb' in dataraw:
-                        # #print "positionb" , dataraw
-                        # if (stepperInUse[STEPPERB] == True):
-                            # outputall_pos = dataraw.find('positionb')
-                            # sensor_value = dataraw[(outputall_pos+1+len('positionb')):].split()
-                            # #print "sensor" , sensor_value[0]
-                            # if isNumeric(sensor_value[0]):
-                                # #if int(float(sensor_value[0])) != 0:
-                                # if 'stepperb' in dataraw:
-                                    # turnBStep = int(float(sensor_value[0]))
-                                    # #print "stepperb found"
-                                # else:
-                                    # #print "change posb" , sensor_value[0]
-                                    # stepperb.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnBStep)),abs(int(float(sensor_value[0])) - turnBStep))
-                                    # turnBStep = int(float(sensor_value[0]))
-                                    # #else:
-                                    # #    turnBStep = 0
-
-                    # if  'positionc' in dataraw:
-                        # print "positionc" , dataraw
-                        # if (stepperInUse[STEPPERC] == True):
-                            # outputall_pos = dataraw.find('positionc')
-                            # sensor_value = dataraw[(outputall_pos+1+len('positionc')):].split()
-                            # #print "sensor" , sensor_value[0]
-                            # if isNumeric(sensor_value[0]):
-                                # #if int(float(sensor_value[0])) != 0:
-                                # if 'stepperc' in dataraw:
-                                    # turnCStep = int(float(sensor_value[0]))
-                                    # #print "stepperb found"
-                                # else:
-                                    # #print "change posb" , sensor_value[0]
-                                    # stepperc.changeSpeed(int(100 * sign(int(float(sensor_value[0])) - turnCStep)),abs(int(float(sensor_value[0])) - turnCStep))
-                                    # turnCStep = int(float(sensor_value[0]))
-                                    # #else:
-                                    # #    turnBStep = 0
             
                 #Use bit pattern to control ports
                 if self.vFindValue('pinpattern'):
