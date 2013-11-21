@@ -33,6 +33,7 @@ import math
 import re
 import sgh_GPIOController
 import sgh_PiGlow
+import sgh_Stepper
 from Adafruit_PWM_Servo_Driver import PWM
 from sgh_PCF8591P import sgh_PCF8591P
 
@@ -131,203 +132,26 @@ class Compass:
                
 ### End Compasss ###################################################################################################
 
-#----------------------------- STEPPER CONTROL --------------
-class sghStepper(threading.Thread):
-    def __init__(self,pins,step_delay):
-        #self.stepper_num = stepper_num # find which stepper a or b
-        self.step_delay = step_delay
-        self.stepperSpeed = 0 #stepp speed dset to 0 when thread created
-        self.steps = BIG_NUM # default to psuedo infinte number of turns
-        self.terminated = False
-        self.toTerminate = False
-        threading.Thread.__init__(self)
-        self._stop = threading.Event()
-        self.pins = pins
-        self.slow_start = self.steps
-        self.steps_start = self.steps
-        self.paused = False
-        self.pause_start_time = dt.datetime.now()
-
-    def start(self):
-        self.thread = threading.Thread(None, self.run, None, (), {})
-        self.thread.start()
-
-
-    def stop(self):
-        print "Stop Stepper command given"
-        self.toTerminate = True
-        while self.terminated == False:
-        # Just wait
-            time.sleep(0.01)
-        print "Stepper stopped"
-
-
-    def changeSpeed(self, stepperSpeed,steps):
-        self.stepperSpeed = int(stepperSpeed)
-        self.steps = int(steps)
-        self.steps_start = self.steps
-        self.slow_start = self.steps - int(min(64,max(1,int(float(self.steps)*0.8))))
-        if self.steps > (BIG_NUM / 2):
-            self.slow_start = self.steps - 64       
-            
-    def step_coarse(self,a,b,c,d,delay):
-        global stepType
-        lstepMode = stepMode[stepType]
-        #print stepMode[stepType]
-        if lstepMode == '1Coil':
-            sghGC.pinUpdate(d,0)
-            sghGC.pinUpdate(a,1)
-            time.sleep(delay)
-
-            
-            sghGC.pinUpdate(b,1)
-            sghGC.pinUpdate(a,0)
-            time.sleep(delay)
-            
-            
-            sghGC.pinUpdate(c,1)
-            sghGC.pinUpdate(b,0)
-            time.sleep(delay)
-            
-            
-            sghGC.pinUpdate(d,1)
-            sghGC.pinUpdate(c,0)
-            time.sleep(delay)
-            
-        elif lstepMode == '2Coil':
-            sghGC.pinUpdate(d,0)
-            sghGC.pinUpdate(c,0)
-            sghGC.pinUpdate(a,1)
-            sghGC.pinUpdate(b,1)
-
-            time.sleep(delay)
-
-            sghGC.pinUpdate(a,0)
-            sghGC.pinUpdate(c,1)
-            time.sleep(delay)
-            
-            sghGC.pinUpdate(b,0)
-            sghGC.pinUpdate(d,1)
-            time.sleep(delay)
-            
-            sghGC.pinUpdate(c,0)
-            sghGC.pinUpdate(a,1)
-            time.sleep(delay)
-            
-        elif lstepMode == 'HalfStep':
-            sghGC.pinUpdate(d,0) 
-            sghGC.pinUpdate(a,1)
-            time.sleep(delay)
-
-
-            sghGC.pinUpdate(b,1)
-            time.sleep(delay)
-
-            sghGC.pinUpdate(a,0)
-            time.sleep(delay)
-            
-            sghGC.pinUpdate(c,1)
-            time.sleep(delay)
-
-            sghGC.pinUpdate(b,0)
-            time.sleep(delay)
-
-            sghGC.pinUpdate(d,1)
-            time.sleep(delay)
-
-            sghGC.pinUpdate(c,0)
-            time.sleep(delay)
-            
-            sghGC.pinUpdate(a,1)
-            time.sleep(delay)
-
-    def pause(self):
-        sghGC.pinUpdate(self.pins[0],0)
-        sghGC.pinUpdate(self.pins[1],0)
-        sghGC.pinUpdate(self.pins[2],0)
-        sghGC.pinUpdate(self.pins[3],0)
-        self.paused = True
-        print self.pins[0], "pause method run"
-
-
-
-
-    def run(self):
-        #time.sleep(2) # just wait till board likely to be up and running
-        self.pause_start_time = dt.datetime.now()
-        while self.toTerminate == False:
-            #print self.pins[0],self.pins[1],self.pins[2],self.pins[3]
-
-            if (self.steps > 0):
-                self.steps = self.steps - 1
-                self.local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
-                if self.local_stepper_value != 0: #if stepper_value non-zero
-                    self.currentStepDelay = step_delay * 100 / abs(self.local_stepper_value)
-                    if self.steps < (self.steps_start - self.slow_start) :
-                        self.currentStepDelay = self.currentStepDelay *  (3.0 - (((self.steps) / float(self.steps_start - self.slow_start)))*2.0)
-                        #print 2.0 - ((self.steps) / float(self.steps_start - self.slow_start))
-                    if (self.slow_start < self.steps):
-                        #print 2.0 - ((self.steps_start - self.steps) / float(self.steps_start - self.slow_start))
-                        self.currentStepDelay = self.currentStepDelay * (3.0 - (((self.steps_start - self.steps) / float(self.steps_start - self.slow_start)))*2.0)
-                    #print self.steps, self.currentStepDelay
-                    if self.local_stepper_value > 0: # if positive value
-                        self.step_coarse(self.pins[0],self.pins[1],self.pins[2],self.pins[3],self.currentStepDelay) #step forward
-                    else:
-                        self.step_coarse(self.pins[3],self.pins[2],self.pins[1],self.pins[0],self.currentStepDelay) #step forward
-##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
-##                        time.sleep(10*self.step_delay*((100/abs(local_stepper_value))-1))
-                    self.pause_start_time = dt.datetime.now()
-                    self.paused = False
-                    #print PIN_NUM[self.pins[0]],self.pause_start_time
-                else:
-                    if ((dt.datetime.now() - self.pause_start_time).seconds > 10) and (self.paused == False):
-                        self.pause()
-                        #print PIN_NUM[self.pins[0]], "paused inner"
-                        #print PIN_NUM[self.pins[0]], self.paused
-                    #else:
-                        #if self.paused == False:
-                            #print PIN_NUM[self.pins[0]], "inner" ,(dt.datetime.now() - self.pause_start_time).seconds
-                    time.sleep(0.1) # sleep if stepper value is zero
-            else:
-                if ((dt.datetime.now() - self.pause_start_time).seconds > 10) and (self.paused == False):
-                    self.pause()
-                    #print PIN_NUM[self.pins[0]], "paused outer"
-                    #print PIN_NUM[self.pins[0]], self.paused
-                #else:
-                    #if self.paused == False:
-                        #print PIN_NUM[self.pins[0]], "outer" ,(dt.datetime.now() - self.pause_start_time).seconds
-                time.sleep(0.1) # sleep if stepper value is zero
-
-        self.terminated = True
-    ####### end of Stepper Class
-
-
-
 def isNumeric(s):
     try:
         float(s)
         return True
     except ValueError:
         return False
-    
+        
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
-    
+
 def xgetValue(searchString, dataString):
     outputall_pos = dataString.find((searchString + ' '))
     sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
     return sensor_value[0]
     
-
 def sign(number):return cmp(number,0)
-
 
 def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
     
-        
-
-
 
 class MyError(Exception):
     def __init__(self, value):
@@ -544,6 +368,24 @@ class ScratchListener(threading.Thread):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
             if self.bfindOnOff('led' + str(led)):
                 sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
+                
+    def bFindValue(self,searchStr):
+        print "searching for ", searchStr 
+        self.value = None
+        self.valueNumeric = None
+        self.valueIsNumeric = False
+        if self.bfind(searchStr):
+            #print "found"
+            sensor_value = self.dataraw[(self.dataraw.find((searchStr)) + 0 + len(searchStr)):].split()
+            self.value = sensor_value[0]
+            #print self.value
+            if isNumeric(self.value):
+                self.valueNumeric = float(self.value)
+                self.valueIsNumeric = True
+                #print "numeric" , self.valueNumeric
+            return True
+        else:
+            return False                
         
     def vFind(self,searchStr):
         return ((searchStr + ' ') in self.dataraw)
@@ -631,10 +473,10 @@ class ScratchListener(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-    def stepperUpdate(self, pins, value,stepDelay = 0.003):
+    def stepperUpdate(self, pins, value,steps=2123456789,stepDelay = 0.003):
         print "pin" , pins , "value" , value
-        if sghGC.pinRef[pins[0]] == type(sghStepper): # if already active as Stepper 
-            sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value)))) # just update Stepper value
+        if sghGC.pinRef[pins[0]] == type(sgh_Stepper.sghStepper): # if already active as Stepper 
+            sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value))),steps) # just update Stepper value
             print ("pin",pins, "set to", value)
         else:
             print "Stepper set up on" , pins
@@ -642,8 +484,8 @@ class ScratchListener(threading.Thread):
             #sghGC.pinUse[pins[0]] = sghGC.PSTEPPER # set pin use as Stepper
             if sghGC.pinRef[pins[0]] == None: #if not already in use for Stepper then 
                 print ("New Stepper instance started", pins)
-                sghGC.pinRef[pins[0]] = sghStepper(pins,stepDelay) # create new Stepper instance 
-            sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value))),BIG_NUM) # update Stepper value
+                sghGC.pinRef[pins[0]] = sgh_Stepper.sghStepper(sghGC,pins,stepDelay) # create new Stepper instance 
+            sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value))),steps) # update Stepper value
             sghGC.pinRef[pins[0]].start() # update Stepper value                
             print 'pin' , pins , ' changed to Stepper' 
             print ("pins",pins, "set to", value)                
@@ -653,6 +495,7 @@ class ScratchListener(threading.Thread):
         global firstRun,cycle_trace,turnAStep,turnBStep,turnCStep,step_delay,stepType,INVERT, \
                steppera,stepperb,stepperc,Ultra,ultraTotalInUse,piglow,PiGlow_Brightness, \
                    compass
+        
 
         #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -690,7 +533,7 @@ class ScratchListener(threading.Thread):
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
                     self.dataraw = dataraw
                     #print "Sanitised"
-                    #print dataraw
+                    print dataraw
 
                 #print 'Cycle trace' , cycle_trace
                 if len(dataraw) == 0:
@@ -1191,26 +1034,15 @@ class ScratchListener(threading.Thread):
                                 self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
                             else:
                                 self.stepperUpdate(stepperList[listLoop][1],0)
-
-                    # checkStr = 'motorc'
-                    # if  (checkStr + ' ') in dataraw:
-                        # #print "MotorA Received"
-                        # #print "stepper status" , stepperInUse[STEPPERA]
-                        # tempValue = getValue(checkStr, dataraw)
-                        # svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                        # if (stepperInUse[STEPPERC] == True):
-                            # #print "Stepper C in operation"
-                            # #print "send change to motorc as a stepper" , sensor_value[0]
-                            # stepperc.changeSpeed(max(-100,min(100,svalue)),2123456789)
-                            
-                        # else:
-                            # i = PIN_NUM_LOOKUP[13] # assume motorc is connected to Pin13
-                            # if PIN_USE[i] != PPWM:
-                                # PIN_USE[i] = PPWM
-                                # PWM_OUT[i] = GPIO.PWM(PIN_NUM[i],100)
-                                # PWM_OUT[i].start(max(0,min(100,svalue)))
-                            # else:
-                                # PWM_OUT[i].ChangeDutyCycle(max(0,min(100,svalue)))
+                                
+                    stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
+                    for listLoop in range(0,2):
+                        if self.vFindValue(stepperList[listLoop][0]):
+                            if self.valueIsNumeric:
+                                self.stepperUpdate(stepperList[listLoop][1],10,self.valueNumeric)
+                            else:
+                                self.stepperUpdate(stepperList[listLoop][1],0)                                
+                                
 
 
                     # if  'positiona' in dataraw:
@@ -1425,40 +1257,48 @@ class ScratchListener(threading.Thread):
                        
                                       
                     #end of normal pin checking
-                    if ('steppera' in dataraw) or ('turna' in dataraw):
-                        if (stepperInUse[STEPPERA] == False):
-                            print "StepperA Stasrting"
-                            steppera = StepperControl(11,12,13,15,step_delay)
-                            steppera.start()
-                            stepperInUse[STEPPERA] = True
-                            turnAStep = 0
-                            steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                        else:
-                            steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                    # if ('steppera' in dataraw) or ('turna' in dataraw):
+                        # if (stepperInUse[STEPPERA] == False):
+                            # print "StepperA Stasrting"
+                            # steppera = StepperControl(11,12,13,15,step_delay)
+                            # steppera.start()
+                            # stepperInUse[STEPPERA] = True
+                            # turnAStep = 0
+                            # steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                        # else:
+                            # steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
                             
 
-                    if ('stepperb' in dataraw):
-                        if (stepperInUse[STEPPERB] == False):
-                            print "StepperB Stasrting"
-                            stepperb = StepperControl(16,18,22,7,step_delay)
-                            stepperb.start()
-                            stepperInUse[STEPPERB] = True
-                            turnBStep = 0
-                            stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                        else:
-                            stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                    # if ('stepperb' in dataraw):
+                        # if (stepperInUse[STEPPERB] == False):
+                            # print "StepperB Stasrting"
+                            # stepperb = StepperControl(16,18,22,7,step_delay)
+                            # stepperb.start()
+                            # stepperInUse[STEPPERB] = True
+                            # turnBStep = 0
+                            # stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                        # else:
+                            # stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
                             
-                    if ('stepperc' in dataraw):
-                        if (stepperInUse[STEPPERC] == False):
-                            print "StepperC Stasrting"
-                            stepperc = StepperControl(24,26,19,21,step_delay)
-                            stepperc.start()
-                            stepperInUse[STEPPERC] = True
-                            turnCStep = 0 #reset turn variale
-                            stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                    # if ('stepperc' in dataraw):
+                        # if (stepperInUse[STEPPERC] == False):
+                            # print "StepperC Stasrting"
+                            # stepperc = StepperControl(24,26,19,21,step_delay)
+                            # stepperc.start()
+                            # stepperInUse[STEPPERC] = True
+                            # turnCStep = 0 #reset turn variale
+                            # stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                        # else:
+                            # stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
+                            
+                stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
+                for listLoop in range(0,2):
+                    print ("loop" , listLoop)
+                    if self.bFindValue(stepperList[listLoop][0]):
+                        if self.valueIsNumeric:
+                            self.stepperUpdate(stepperList[listLoop][1],10,self.valueNumeric)
                         else:
-                            stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                    
+                            self.stepperUpdate(stepperList[listLoop][1],0)                            
 
                 if self.bfind('pinpattern'):
                     #print 'Found pinpattern broadcast'
@@ -1556,21 +1396,6 @@ def cleanup_threads(threads):
             print "Stopped ", pin
         except:
             continue
-            
-    # if (stepperInUse[STEPPERA] == True):
-        # print "stopping stepperA"
-        # steppera.stop()
-        # print "stepperA stopped"
-        
-    # if (stepperInUse[STEPPERB] == True):
-        # print "stopping stepperB"
-        # stepperb.stop()
-        # print "stepperB stopped"
-            
-    # if (stepperInUse[STEPPERC] == True):
-        # print "stopping stepperC"
-        # stepperc.stop()
-        # print "stepperC stopped"
 
     print ("cleanup threads finished")
 
@@ -1583,11 +1408,6 @@ def cleanup_threads(threads):
 sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
-STEPPERA=0
-STEPPERB=1
-STEPPERC=2
-stepperInUse = [False,False,False]
-BIG_NUM = 2123456789
 
 ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon','pixxxxx'] #define addons
 NUMOF_ADDON = len(ADDON) # find number of addons
@@ -1599,13 +1419,13 @@ for i in range(NUMOF_ADDON): # set all addons to diabled
 turnAStep = 0
 turnBStep = 0
 turnCStep = 0
-stepMode = ['1Coil','2Coil','HalfStep']
-stepModeDelay = [0.0025,0.0025,0.0013]
-stepType = 2
-if stepType == 2:
-    step_delay = 0.0013 # use smaller dealy fro halfstep mode
-else:
-    step_delay = 0.003
+# stepMode = ['1Coil','2Coil','HalfStep']
+# stepModeDelay = [0.0025,0.0025,0.0013]
+# stepType = 2
+# if stepType == 2:
+    # step_delay = 0.0013 # use smaller dealy fro halfstep mode
+# else:
+    # step_delay = 0.003
 
 PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
