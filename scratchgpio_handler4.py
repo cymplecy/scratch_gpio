@@ -46,6 +46,9 @@ from sgh_PCF8591P import sgh_PCF8591P
 #import RPi.GPIO as GPIO
 
 
+
+
+
 class Compass:
 
     __scales = {
@@ -499,6 +502,8 @@ class ScratchListener(threading.Thread):
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
                Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass
+        
+
 
         #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -558,7 +563,7 @@ class ScratchListener(threading.Thread):
             except:
                 print "Unknown error occured with receiving data"
                 continue
-            
+
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if (firstRun == True) or (anyAddOns == False):
@@ -1429,9 +1434,9 @@ else:
     #PIN_NUM = sghGC.PIN_NUM
 
  
-ULTRA_IN_USE = [False] * sghGC.numOfPins
-ultraTotalInUse = 0
-ultraSleep = 1.0
+# ULTRA_IN_USE = [False] * sghGC.numOfPins
+# ultraTotalInUse = 0
+# ultraSleep = 1.0
 
 
 if __name__ == '__main__':
