@@ -88,7 +88,7 @@ class GPIOController :
                 value = 100 - abs(value)
             if self.pinUse[pin] == self.PPWM: # if already active as PWM 
                 self.pinRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
-                print ("pin",pin, "set to", value)
+                #print ("pin",pin, "set to", value)
             else:
                 self.pinUse[pin] = self.PPWM # set pin use as PWM
                 if self.pinRef[pin] == None: #if not used previously used for PWM then 
@@ -102,7 +102,7 @@ class GPIOController :
                     value = abs(value - 1)
             if (self.pinUse[pin] == self.POUTPUT): # if already an output
                 GPIO.output(pin, int(value)) # set output to 1 ot 0
-                print ("pin",pin, "set to", value)
+                #print ("pin",pin, "set to", value)
             elif (self.pinUse[pin] == self.PINPUT): # if pin is an input
                 self.pinUse[pin] = self.POUTPUT # switch it to output
                 GPIO.setup(pin,GPIO.OUT)

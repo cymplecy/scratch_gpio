@@ -223,7 +223,7 @@ class ScratchSender(threading.Thread):
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         if "piringo" in ADDON:
             bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("Down","Up")[value == 1])
-        print 'sending: %s' % bcast_str
+        #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
         if "motorpitx" in ADDON:
             bcast_str = 'broadcast "%s%s"' % (sensor_name,("Off","On")[value == 1])
@@ -483,8 +483,10 @@ class ScratchListener(threading.Thread):
 
     def stepperUpdate(self, pins, value,steps=2123456789,stepDelay = 0.003):
         print "pin" , pins , "value" , value
-        if sghGC.pinRef[pins[0]] == type(sgh_Stepper.sghStepper): # if already active as Stepper 
+        print "Stepper type", sgh_Stepper.sghStepper, "this one", type(sghGC.pinRef[pins[0]])
+        if type(sghGC.pinRef[pins[0]]) == sgh_Stepper.sghStepper: # if already active as Stepper 
             sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value))),steps) # just update Stepper value
+            print "stepper updated"
             print ("pin",pins, "set to", value)
         else:
             print "Stepper set up on" , pins
@@ -672,6 +674,7 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUse[7]  = sghGC.PINPUT
                     sghGC.pinUse[22] = sghGC.PINPUT
                     sghGC.setPinMode()
+                    anyAddOns = True
                     
                         
                 firstRun = False
@@ -1056,10 +1059,10 @@ class ScratchListener(threading.Thread):
                                 print stepperList[listLoop][1][0]
                                 try:
                                     print ("Trying to see if turn prev set")
-                                    direction = int(10 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
+                                    direction = int(100 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
                                     steps = abs(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]])
                                 except:
-                                    direction = int(10 * sign(int(self.valueNumeric)))
+                                    direction = int(100 * sign(int(self.valueNumeric)))
                                     steps = abs(int(self.valueNumeric))
                                     turn = [None] * sghGC.numOfPins
                                     pass
