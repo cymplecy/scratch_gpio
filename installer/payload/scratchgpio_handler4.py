@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '3.2.01' # 21Nov13
+Version =  '3.2.02' # 21Nov13
 
 
 
@@ -44,6 +44,9 @@ from sgh_PCF8591P import sgh_PCF8591P
 #    pass
 
 #import RPi.GPIO as GPIO
+
+
+
 
 
 class Compass:
@@ -190,25 +193,26 @@ class ScratchSender(threading.Thread):
                     
                                      
     def broadcast_pin_update(self, pin, value):
+        print ADDON 
         #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         #self.send_scratch_command(bcast_str)   
-        if ADDON_PRESENT[1] == True:
+        if "ladder" in ADDON:
             #do ladderboard stuff
             sensor_name = "switch" + str([0,21,19,24,26].index(pin))
-        elif ADDON_PRESENT[2] == True:
+        elif "motorpitx" in ADDON:
             #do MotorPiTx stuff
             if pin == 13:
                 sensor_name = "input1"
             if pin == 7:
                 sensor_name = "input2"
-        elif ADDON_PRESENT[6] == True:
+        elif "berry" in ADDON:
             #do berryclip stuff
             if pin == 26:
                 sensor_name = "switch"
-        elif ADDON_PRESENT[8] == True:
-            #do pixxxxx stuff
+        elif "piringo" in ADDON:
+            #do PiRingo stuff
             sensor_name = "switch" + str(1 + [19,21].index(pin))
         else:
             sensor_name = "pin" + str(pin)
@@ -217,12 +221,16 @@ class ScratchSender(threading.Thread):
             #if not(PIN_NUM[pin_index] in [7,8,10,22]):
             #    return
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
+        if "piringo" in ADDON:
+            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("Down","Up")[value == 1])
         #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
-        if ADDON_PRESENT[2] == True:
+        if "motorpitx" in ADDON:
             bcast_str = 'broadcast "%s%s"' % (sensor_name,("Off","On")[value == 1])
             #print 'sending: %s' % bcast_str
             self.send_scratch_command(bcast_str)
+        
+
         
     def send_scratch_command(self, cmd):
         n = len(cmd)
@@ -238,9 +246,9 @@ class ScratchSender(threading.Thread):
         for pin in range(sghGC.numOfPins):
             if (sghGC.pinUse[pin] == sghGC.PINPUT):
                 self.broadcast_pin_update(pin, sghGC.pinRead(pin))
-                last_bit_pattern += sghGC.pinRead(pin) << i
+                last_bit_pattern += sghGC.pinRead(pin) << pin
             else:
-                last_bit_pattern += 1 << i
+                last_bit_pattern += 1 << pin
             #print 'lbp %s' % bin(last_bit_pattern)
 
         last_bit_pattern = last_bit_pattern ^ -1
@@ -276,7 +284,7 @@ class ScratchSender(threading.Thread):
                         distance = sghGC.pinSonar(pin) # do a ping
                         sghGC.pinUse[pin] = sghGC.PULTRA # reset pin use back from sonar to ultra
                         sensor_name = 'ultra' + str(pin)
-                        if ADDON_PRESENT[2] == True:
+                        if "motorpitx" in ADDON:
                             if pin == 13:
                                 sensor_name = "ultra1"
                             if pin == 7:
@@ -475,8 +483,10 @@ class ScratchListener(threading.Thread):
 
     def stepperUpdate(self, pins, value,steps=2123456789,stepDelay = 0.003):
         print "pin" , pins , "value" , value
-        if sghGC.pinRef[pins[0]] == type(sgh_Stepper.sghStepper): # if already active as Stepper 
+        print "Stepper type", sgh_Stepper.sghStepper, "this one", type(sghGC.pinRef[pins[0]])
+        if type(sghGC.pinRef[pins[0]]) == sgh_Stepper.sghStepper: # if already active as Stepper 
             sghGC.pinRef[pins[0]].changeSpeed(max(0,min(100,abs(value))),steps) # just update Stepper value
+            print "stepper updated"
             print ("pin",pins, "set to", value)
         else:
             print "Stepper set up on" , pins
@@ -494,6 +504,8 @@ class ScratchListener(threading.Thread):
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
                Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass
+        
+
 
         #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -553,7 +565,7 @@ class ScratchListener(threading.Thread):
             except:
                 print "Unknown error occured with receiving data"
                 continue
-            
+
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             if (firstRun == True) or (anyAddOns == False):
@@ -564,15 +576,15 @@ class ScratchListener(threading.Thread):
                     #dataraw = ''
                     #firstRun = False
                     
-                    
-                    for i in range(NUMOF_ADDON):
+                    if self.vFindValue("addon"):
+                        ADDON.append(self.value)
+                        print ADDON
+                    for i in range(len(ADDON)):
                         #print "checking for " , ("addon " + ADDON[i]) 
-                        ADDON_PRESENT[i] = False
                         if ("addon " + ADDON[i]) in firstRunData:
                             print "addon " + ADDON[i] + " declared"
-                            ADDON_PRESENT[i] = True
                             anyAddOns = True
-                            if ADDON[i] == "ladder":
+                            if self.value == "ladder":
                                 ladderOutputs = [11,12,13,15,16,18,22, 7, 5, 3]
                                 for pin in ladderOutputs:
                                     sghGC.pinUse[pin] = sghGC.POUTPUT
@@ -639,14 +651,14 @@ class ScratchListener(threading.Thread):
                                 sghGC.startServod([18,22]) # servos
                                 print "pirocon setup"
                                 
-                            if ADDON[i] == "pixxxxx":
-                                print "pixxxxx detected"
+                            if ADDON[i] == "piringo":
+                                print "piringo detected"
                                 sghGC.INVERT = True
-                                pixxxxxOutputs = [7,11,12,13,15,16,18,22, 24, 26, 8,10]
-                                pixxxxxInputs = [19,21]
-                                for pin in pixxxxxOutputs:
+                                piringoOutputs = [7,11,12,13,15,16,18,22, 24, 26, 8,10]
+                                piringoInputs = [19,21]
+                                for pin in piringoOutputs:
                                     sghGC.pinUse[pin] = sghGC.POUTPUT
-                                for pin in pixxxxxInputs:
+                                for pin in piringoInputs:
                                     sghGC.pinUse[pin] = sghGC.PINPUT
                                 sghGC.setPinMode()
 
@@ -662,6 +674,7 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUse[7]  = sghGC.PINPUT
                     sghGC.pinUse[22] = sghGC.PINPUT
                     sghGC.setPinMode()
+                    anyAddOns = True
                     
                         
                 firstRun = False
@@ -695,14 +708,14 @@ class ScratchListener(threading.Thread):
                 #print "sensor-update rcvd" , dataraw
                            
               
-                if ADDON_PRESENT[1] == True:
+                if "ladder" in ADDON:
                     #do ladderboard stuff
 
                     self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
                     self.vLEDCheck(ladderOutputs)
                                     
-                elif ADDON_PRESENT[2] == True:
+                elif "motorpitx" in ADDON:
                     #do MotorPiTx stuff
                     #check for motor variable commands
                     
@@ -797,7 +810,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(motorList[listLoop][2],0)
                                 
                         
-                elif ((ADDON_PRESENT[3] == True) and (piglow != None)):
+                elif (("piglow" in ADDON) and (piglow != None)):
                     #do PiGlow stuff but make sure PiGlow physically detected             
                  
                     #check LEDS
@@ -865,7 +878,7 @@ class ScratchListener(threading.Thread):
                         svalue= min(255,max(svalue,0))
                         PiGlow_Brightness = svalue
                         
-                elif ADDON_PRESENT[5] == True:
+                elif "gpio" in ADDON:
                     #do gPiO stuff
                     
                     self.vAllCheck("allpins") # check Allpins On/Off/High/Low/1/0
@@ -899,7 +912,7 @@ class ScratchListener(threading.Thread):
 
                     ######### End of gPiO Variable handling
                    
-                elif ADDON_PRESENT[6] == True:
+                elif "berry" in ADDON:
                     #do BerryClip stuff
                     self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
@@ -910,7 +923,7 @@ class ScratchListener(threading.Thread):
 
                     ######### End of BerryClip Variable handling
                     
-                elif ADDON_PRESENT[7] == True:
+                elif "pirocon" in ADDON:
                     #do PiRoCon stuff
                     #print "panoffset" , panoffset, "tilt",tiltoffset
                     moveServos = False
@@ -1004,12 +1017,12 @@ class ScratchListener(threading.Thread):
                                 pcaPWM.setPWM(i, 0, svalue)
                                 
                     ######### End of PiRoCon Variable handling
-                elif ADDON_PRESENT[8] == True:
-                    #do pixxxxx stuff
+                elif "piringo" in ADDON:
+                    #do piringo stuff
 
                     self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
-                    self.vLEDCheck(pixxxxxOutputs)
+                    self.vLEDCheck(piringoOutputs)
 
                                                             
                 else:   #normal variable processing with no add on board
@@ -1038,7 +1051,7 @@ class ScratchListener(threading.Thread):
                              
                     stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
                     for listLoop in range(0,2):
-                        print ("look for steppers") 
+                        #print ("look for steppers") 
                         if self.vFindValue(stepperList[listLoop][0]):
                             print ("Found stepper",stepperList[listLoop][0])
                             if self.valueIsNumeric:
@@ -1046,10 +1059,10 @@ class ScratchListener(threading.Thread):
                                 print stepperList[listLoop][1][0]
                                 try:
                                     print ("Trying to see if turn prev set")
-                                    direction = int(10 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
+                                    direction = int(100 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
                                     steps = abs(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]])
                                 except:
-                                    direction = int(10 * sign(int(self.valueNumeric)))
+                                    direction = int(100 * sign(int(self.valueNumeric)))
                                     steps = abs(int(self.valueNumeric))
                                     turn = [None] * sghGC.numOfPins
                                     pass
@@ -1103,13 +1116,13 @@ class ScratchListener(threading.Thread):
             if 'broadcast' in dataraw:
                 #print 'broadcast in data:' , dataraw
 
-                if ADDON_PRESENT[1] == True: # Gordon's Ladder Board
+                if "ladder" in ADDON: # Gordon's Ladder Board
                     #do ladderboard stuff
                     #print ("Ladder broadcast processing")                    
                     self.bCheckAll() # Check for all off/on type broadcasrs
                     self.bLEDCheck(ladderOutputs) # Check for LED off/on type broadcasts
                             
-                elif ADDON_PRESENT[2] == True: # Boeeerb MotorPiTx
+                elif "motorpitx" in ADDON: # Boeeerb MotorPiTx
 
                     if ('sonar1') in dataraw:
                         distance = sghGC.pinSonar(13)
@@ -1135,7 +1148,7 @@ class ScratchListener(threading.Thread):
                         print 'start pinging on', str(7)
                         sghGC.pinUse[7] = sghGC.PULTRA
                         
-                elif ((ADDON_PRESENT[3] == True) and (piglow != None)): # Pimoroni PiGlow
+                elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
                 
                     if self.bfindOnOff('all'):
                         for i in range(1,19):
@@ -1186,12 +1199,12 @@ class ScratchListener(threading.Thread):
                             PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
                             piglow.update_pwm_values(PiGlow_Values)
 
-                elif ADDON_PRESENT[5] == True: # gPiO
+                elif "gpio" in ADDON: # gPiO
                     #print ("gPiO broadcast processing")
                     self.bCheckAll() # Check for all off/on type broadcasts
                     self.bpinCheck() # Check for pin off/on type broadcasts
                 
-                elif ADDON_PRESENT[6] == True: # BerryClip
+                elif "berry" in ADDON: # BerryClip
 
                     #print ("Berry broadcast processing")                    
                     self.bCheckAll() # Check for all off/on type broadcasts
@@ -1199,10 +1212,10 @@ class ScratchListener(threading.Thread):
                     if self.bfindOnOff('buzzer'):
                         sghGC.pinUpdate(24,self.OnOrOff)
                 
-                if ADDON_PRESENT[8] == True: # pixxxxx
-                    #do pixxxxx stuff
+                if "piringo" in ADDON: # piringo
+                    #do piringo stuff
                     self.bCheckAll() # Check for all off/on type broadcasrs
-                    self.bLEDCheck(pixxxxxOutputs) # Check for LED off/on type broadcasts
+                    self.bLEDCheck(piringoOutputs) # Check for LED off/on type broadcasts
    
                 else: # Plain GPIO Broadcast processing
 
@@ -1229,43 +1242,11 @@ class ScratchListener(threading.Thread):
                        
                                       
                     #end of normal pin checking
-                    # if ('steppera' in dataraw) or ('turna' in dataraw):
-                        # if (stepperInUse[STEPPERA] == False):
-                            # print "StepperA Stasrting"
-                            # steppera = StepperControl(11,12,13,15,step_delay)
-                            # steppera.start()
-                            # stepperInUse[STEPPERA] = True
-                            # turnAStep = 0
-                            # steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                        # else:
-                            # steppera.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                            
 
-                    # if ('stepperb' in dataraw):
-                        # if (stepperInUse[STEPPERB] == False):
-                            # print "StepperB Stasrting"
-                            # stepperb = StepperControl(16,18,22,7,step_delay)
-                            # stepperb.start()
-                            # stepperInUse[STEPPERB] = True
-                            # turnBStep = 0
-                            # stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                        # else:
-                            # stepperb.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                            
-                    # if ('stepperc' in dataraw):
-                        # if (stepperInUse[STEPPERC] == False):
-                            # print "StepperC Stasrting"
-                            # stepperc = StepperControl(24,26,19,21,step_delay)
-                            # stepperc.start()
-                            # stepperInUse[STEPPERC] = True
-                            # turnCStep = 0 #reset turn variale
-                            # stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
-                        # else:
-                            # stepperc.changeSpeed(max(-100,min(100,int(float(0)))),2123456789)
                             
                 stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
                 for listLoop in range(0,2):
-                    print ("loop" , listLoop)
+                    #print ("loop" , listLoop)
                     if self.bFindValue(stepperList[listLoop][0]):
                         if self.valueIsNumeric:
                             self.stepperUpdate(stepperList[listLoop][1],10,self.valueNumeric)
@@ -1381,16 +1362,13 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 
-ADDON = ['Normal','Ladder','MotorPiTx','PiGlow','Compass','gPiO','Berry','pirocon','pixxxxx'] #define addons
-NUMOF_ADDON = len(ADDON) # find number of addons
-ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled list
-for i in range(NUMOF_ADDON): # set all addons to diabled
-    ADDON_PRESENT[i] = False
-    ADDON[i] = ADDON[i].lower()
+ADDON = [] #normal','ladder','motorpitx','piglow','compass','gpio','berry','pirocon','piringo'] #define addons
+# NUMOF_ADDON = len(ADDON) # find number of addons
+# ADDON_PRESENT = [False] * NUMOF_ADDON # create an enabled/disabled list
+# for i in range(NUMOF_ADDON): # set all addons to diabled
+    # ADDON_PRESENT[i] = False
+    # ADDON[i] = ADDON[i].lower()
     
-turnAStep = 0
-turnBStep = 0
-turnCStep = 0
 # stepMode = ['1Coil','2Coil','HalfStep']
 # stepModeDelay = [0.0025,0.0025,0.0013]
 # stepType = 2
@@ -1459,9 +1437,9 @@ else:
     #PIN_NUM = sghGC.PIN_NUM
 
  
-ULTRA_IN_USE = [False] * sghGC.numOfPins
-ultraTotalInUse = 0
-ultraSleep = 1.0
+# ULTRA_IN_USE = [False] * sghGC.numOfPins
+# ultraTotalInUse = 0
+# ultraSleep = 1.0
 
 
 if __name__ == '__main__':

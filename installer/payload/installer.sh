@@ -83,7 +83,8 @@ echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scrat
 echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/scratchgpio4/scratchgpio4.sh
 echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/scratchgpio4/scratchgpio4.sh
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/scratchgpio4/scratchgpio4.sh
-echo "sudo ps aux | grep 'python.*scratchgpio_handler4.py' | grep -v grep | awk '{print \$2}' | xargs sudo kill -9 " >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4.sh
 echo "cd $HDIR/scratchgpio4" >> $HDIR/scratchgpio4/scratchgpio4.sh
 echo "sudo python scratchgpio_handler4.py &" >> $HDIR/scratchgpio4/scratchgpio4.sh
 echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio4/scratchgpio4.sh

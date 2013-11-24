@@ -63,7 +63,7 @@ class sghStepper(threading.Thread):
             self.slow_start = self.steps - 64       
             
     def step_coarse(self,a,b,c,d,delay):
-        #print stepMode[stepType]
+        #print self.lstepMode
         if self.lstepMode == '1coil':
             self.sghGC.pinUpdate(d,0)
             self.sghGC.pinUpdate(a,1)
