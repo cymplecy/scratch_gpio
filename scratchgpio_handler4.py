@@ -191,6 +191,11 @@ class ScratchSender(threading.Thread):
                     #print "broadcast"
                     self.broadcast_pin_update(pin, pin_value)
                     
+        #print sghGC.encoderCount
+        bcast_str = 'sensor-update "%s" %s' %  ("motoracount",str(float(sghGC.pinCount[11])))
+        #print 'sending: %s' % bcast_str
+        self.send_scratch_command(bcast_str)
+                    
                                      
     def broadcast_pin_update(self, pin, value):
         print ADDON 
@@ -272,6 +277,7 @@ class ScratchSender(threading.Thread):
 
                 try:
                     self.broadcast_changed_pins(changed_pins, pin_bit_pattern)
+
                 except Exception as e:
                     print e
                     break
@@ -649,7 +655,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
                                 sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
-                                sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
+                                sghGC.pinUse[11] = sghGC.PCOUNT #ObsRight
                                 sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
 
@@ -1287,6 +1293,16 @@ class ScratchListener(threading.Thread):
                             #print'Distance:',distance,'cm'
                             sensor_name = 'adc'+str(channel)
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)
+                            
+                if self.bfind("readcount"): #update pin count values
+                    print ("readcount broadcast")
+                    for pin in range(sghGC.numOfPins): #loop thru all pins
+                        if self.bfind('readcount'+str(pin)):
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'motorcount'+str(pin)
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)
 
