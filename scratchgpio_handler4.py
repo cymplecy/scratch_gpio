@@ -510,6 +510,27 @@ class ScratchListener(threading.Thread):
             print ("pins",pins, "set to", value)  
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
         
+    def stopTurn(self,hPin1,hPin2,countingPin,count):
+        startCount = sghGC.pinCount[countingPin]
+        while (sghGC.pinCount[countingPin] - startCount) < count:
+            time.sleep(0.01)
+            sghGC.pinUpdate(hPin1,0)
+            sghGC.pinUpdate(hPin2,0)
+        print ("Turn Stopped",countingPin)
+        
+    def stopTurnDual(self,motorList,count):
+        countingPin = motorList[1][3]
+        startCount = sghGC.pinCount[countingPin]
+        while (sghGC.pinCount[countingPin] - startCount) < count:
+            time.sleep(0.01)
+            
+        for listLoop in range(0,2):
+            sghGC.pinUpdate(motorList[listLoop][1],0)
+            sghGC.pinUpdate(motorList[listLoop][2],0)
+        time.sleep(0.5)
+        print ("Dual Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))        
+
+        
 
 
     def run(self):
@@ -1305,6 +1326,55 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)
+                 
+            
+                motorList = [['turna',21,26,7],['turnb',19,24,11]]
+                for listLoop in range(0,2):
+                    if self.bFindValue(motorList[listLoop][0]):
+                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        if svalue > 0:
+                            sghGC.pinUpdate(motorList[listLoop][2],1)
+                            sghGC.pinUpdate(motorList[listLoop][1],(100-100),"pwm")
+                        elif svalue < 0:
+                            sghGC.pinUpdate(motorList[listLoop][2],0)
+                            sghGC.pinUpdate(motorList[listLoop][1],(100),"pwm")
+                        turnThread = threading.Thread(target=self.stopTurn, args=[motorList[listLoop][1],motorList[listLoop][2],     
+                                                        motorList[listLoop][3],abs(svalue*36)])
+                        turnThread.start()
+                        
+                if self.bFindValue("forward"):
+                    motorList = [['turna',21,26,7],['turnb',19,24,11]]
+                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                    if svalue > 0:
+                        sghGC.pinUpdate(motorList[0][2],1)
+                        sghGC.pinUpdate(motorList[0][1],(100-50),"pwm")
+                        sghGC.pinUpdate(motorList[1][2],1)
+                        sghGC.pinUpdate(motorList[1][1],(100-50),"pwm")                        
+                    elif svalue < 0:
+                        sghGC.pinUpdate(motorList[0][2],0)
+                        sghGC.pinUpdate(motorList[0][1],(50),"pwm")
+                        sghGC.pinUpdate(motorList[1][2],0)
+                        sghGC.pinUpdate(motorList[1][1],(50),"pwm")                          
+                    turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
+                    turnDualThread.start()
+                    
+                if self.bFindValue("backward"):
+                    motorList = [['turna',21,26,7],['turnb',19,24,11]]
+                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                    svalue = svalue * -1
+                    if svalue > 0:
+                        sghGC.pinUpdate(motorList[0][2],1)
+                        sghGC.pinUpdate(motorList[0][1],(100-50),"pwm")
+                        sghGC.pinUpdate(motorList[1][2],1)
+                        sghGC.pinUpdate(motorList[1][1],(100-50),"pwm")                        
+                    elif svalue < 0:
+                        sghGC.pinUpdate(motorList[0][2],0)
+                        sghGC.pinUpdate(motorList[0][1],(50),"pwm")
+                        sghGC.pinUpdate(motorList[1][2],0)
+                        sghGC.pinUpdate(motorList[1][1],(50),"pwm")                        
+                    turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
+                    turnDualThread.start()                    
+                
 
                 if  '1coil' in dataraw:
                     print "1coil broadcast"
