@@ -16,20 +16,8 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.0.1' # 15Nov13
+Version =  '0.0.2' # 25Nov13
 
-
-
-# import threading
-# import socket
-# import time
-# import sys
-# import struct
-# import datetime as dt
-# import shlex
-# import os
-# import math
-# import sgh_GPIOController
 
 #try and inport smbus but don't worry if not installed
 try:
@@ -47,7 +35,7 @@ class PiGlow:
     bus = None
 
     def __init__(self, i2c_bus=1):
-        print "init"
+        print "PiGlow init"
         print i2c_bus
         #self.bus = smbus.SMBus(i2c_bus)
         self.bus = SMBus(i2c_bus)

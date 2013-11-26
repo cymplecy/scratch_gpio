@@ -16,7 +16,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.0.2' # 20Nov13
+Version =  '0.1.0' # 26Nov13
 
 import time
 import threading
@@ -155,6 +155,7 @@ class sghStepper(threading.Thread):
                     #print self.steps, self.currentStepDelay
                     if self.local_stepper_value > 0: # if positive value
                         self.step_coarse(self.pins[0],self.pins[1],self.pins[2],self.pins[3],self.currentStepDelay) #step forward
+                        #print dt.datetime.now()
                     else:
                         self.step_coarse(self.pins[3],self.pins[2],self.pins[1],self.pins[0],self.currentStepDelay) #step forward
 ##                    if abs(local_stepper_value) != 100: # Only introduce delay if motor not full speed
