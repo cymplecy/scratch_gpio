@@ -29,7 +29,7 @@ class sgh_PCF8591P:
 
     # Constructor
     def __init__(self, busNum):
-        #print "init PCF8591"
+        print "init PCF8591"
         if busNum == 0:
             self.__bus = SMBus(0) # on a Rev 1 board
             #print "bus 0"
@@ -37,6 +37,8 @@ class sgh_PCF8591P:
             self.__bus = SMBus(1) # on a Rev 2 board
         self.__addr = self.__checkI2Caddress(0x48)
         self.__DACEnabled = 0x00
+        print self.readADC() # dummy call to raise exception if no chip presnt on the i2c bus
+        print "PCF8591 init completed"
         
         # self.__bus = __i2cBus
         # self.__addr = self.__checkI2Caddress(__addr)
