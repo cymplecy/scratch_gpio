@@ -198,7 +198,7 @@ class ScratchSender(threading.Thread):
                     
                                      
     def broadcast_pin_update(self, pin, value):
-        print ADDON 
+        #print ADDON 
         #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
@@ -519,7 +519,7 @@ class ScratchListener(threading.Thread):
         print ("Turn Stopped",countingPin)
         
     def stopTurnDual(self,motorList,count):
-        countingPin = motorList[1][3]
+        countingPin = motorList[0][3]
         startCount = sghGC.pinCount[countingPin]
         while (sghGC.pinCount[countingPin] - startCount) < count:
             time.sleep(0.01)
@@ -669,16 +669,20 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 
-                            if ADDON[i] == "pirocon":
+                            if "pirocon" in ADDON:
 
                                 sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
                                 sghGC.pinUse[21] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
                                 sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
-                                sghGC.pinUse[11] = sghGC.PCOUNT #ObsRight
+                                sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
                                 sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
+                                
+                                #if "pirocon2" in ADDON:
+                                sghGC.pinUse[7]  = sghGC.PCOUNT 
+                                sghGC.pinUse[11] = sghGC.PCOUNT 
 
                                 sghGC.setPinMode()
                                 sghGC.startServod([18,22]) # servos
@@ -1244,8 +1248,67 @@ class ScratchListener(threading.Thread):
                     self.bLEDCheck(berryOutputs) # Check for LED off/on type broadcasts
                     if self.bfindOnOff('buzzer'):
                         sghGC.pinUpdate(24,self.OnOrOff)
+                        
+                elif "pirocon" in ADDON: # pirocon         
+
+                    self.bCheckAll() # Check for all off/on type broadcasrs
+                    self.bpinCheck() # Check for pin off/on type broadcasts
+                                
+                    #check pins
+                    for pin in range(sghGC.numOfPins):
+                        if self.bfindOnOff('pin' + str(pin)):
+                            sghGC.pinUpdate(pin,self.OnOrOff)
+
+                        if self.bfind('sonar' + str(pin)):
+                            distance = sghGC.pinSonar(pin)
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'sonar' + str(pin)
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)
+                            
+                        #Start using ultrasonic sensor on a pin    
+                        if self.bfind('ultra' + str(pin)):
+                            print 'start pinging on', str(pin)
+                            sghGC.pinUse[pin] = sghGC.PULTRA
+
                 
-                if "piringo" in ADDON: # piringo
+                    motorList = [['turna',21,26,7],['turnb',19,24,11]]
+                    motorSpeed = 100
+                    for listLoop in range(0,2):
+                        if self.bFindValue(motorList[listLoop][0]):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            if svalue > 0:
+                                sghGC.pinUpdate(motorList[listLoop][2],1)
+                                sghGC.pinUpdate(motorList[listLoop][1],(100-100),"pwm")
+                            elif svalue < 0:
+                                sghGC.pinUpdate(motorList[listLoop][2],0)
+                                sghGC.pinUpdate(motorList[listLoop][1],(100),"pwm")
+                            turnThread = threading.Thread(target=self.stopTurn, args=[motorList[listLoop][1],motorList[listLoop][2],     
+                                                            motorList[listLoop][3],abs(svalue*36)])
+                            turnThread.start()
+                            
+                    if self.bFindValue("move"):
+                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
+                        turnDualThread.start()                        
+                        if svalue > 0:
+                            sghGC.pinUpdate(motorList[0][2],1)
+                            sghGC.pinUpdate(motorList[0][1],(100-motorSpeed),"pwm")
+                            sghGC.pinUpdate(motorList[1][2],1)
+                            sghGC.pinUpdate(motorList[1][1],(100-motorSpeed),"pwm")                        
+                        elif svalue < 0:
+                            sghGC.pinUpdate(motorList[0][2],0)
+                            sghGC.pinUpdate(motorList[0][1],(motorSpeed),"pwm")
+                            sghGC.pinUpdate(motorList[1][2],0)
+                            sghGC.pinUpdate(motorList[1][1],(motorSpeed),"pwm")   
+
+                        
+          
+                
+                        
+                
+                elif "piringo" in ADDON: # piringo
                     #do piringo stuff
                     self.bCheckAll() # Check for all off/on type broadcasrs
                     self.bLEDCheck(piringoOutputs) # Check for LED off/on type broadcasts
@@ -1328,53 +1391,6 @@ class ScratchListener(threading.Thread):
                             self.send_scratch_command(bcast_str)
                  
             
-                motorList = [['turna',21,26,7],['turnb',19,24,11]]
-                for listLoop in range(0,2):
-                    if self.bFindValue(motorList[listLoop][0]):
-                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        if svalue > 0:
-                            sghGC.pinUpdate(motorList[listLoop][2],1)
-                            sghGC.pinUpdate(motorList[listLoop][1],(100-100),"pwm")
-                        elif svalue < 0:
-                            sghGC.pinUpdate(motorList[listLoop][2],0)
-                            sghGC.pinUpdate(motorList[listLoop][1],(100),"pwm")
-                        turnThread = threading.Thread(target=self.stopTurn, args=[motorList[listLoop][1],motorList[listLoop][2],     
-                                                        motorList[listLoop][3],abs(svalue*36)])
-                        turnThread.start()
-                        
-                if self.bFindValue("forward"):
-                    motorList = [['turna',21,26,7],['turnb',19,24,11]]
-                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                    if svalue > 0:
-                        sghGC.pinUpdate(motorList[0][2],1)
-                        sghGC.pinUpdate(motorList[0][1],(100-50),"pwm")
-                        sghGC.pinUpdate(motorList[1][2],1)
-                        sghGC.pinUpdate(motorList[1][1],(100-50),"pwm")                        
-                    elif svalue < 0:
-                        sghGC.pinUpdate(motorList[0][2],0)
-                        sghGC.pinUpdate(motorList[0][1],(50),"pwm")
-                        sghGC.pinUpdate(motorList[1][2],0)
-                        sghGC.pinUpdate(motorList[1][1],(50),"pwm")                          
-                    turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
-                    turnDualThread.start()
-                    
-                if self.bFindValue("backward"):
-                    motorList = [['turna',21,26,7],['turnb',19,24,11]]
-                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                    svalue = svalue * -1
-                    if svalue > 0:
-                        sghGC.pinUpdate(motorList[0][2],1)
-                        sghGC.pinUpdate(motorList[0][1],(100-50),"pwm")
-                        sghGC.pinUpdate(motorList[1][2],1)
-                        sghGC.pinUpdate(motorList[1][1],(100-50),"pwm")                        
-                    elif svalue < 0:
-                        sghGC.pinUpdate(motorList[0][2],0)
-                        sghGC.pinUpdate(motorList[0][1],(50),"pwm")
-                        sghGC.pinUpdate(motorList[1][2],0)
-                        sghGC.pinUpdate(motorList[1][1],(50),"pwm")                        
-                    turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
-                    turnDualThread.start()                    
-                
 
                 if  '1coil' in dataraw:
                     print "1coil broadcast"
