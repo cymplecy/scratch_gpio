@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.04' # 28Nov13
+Version =  '4.0.05' # 28Nov13
 
 
 
@@ -965,12 +965,12 @@ class ScratchListener(threading.Thread):
                                 #print motorList[listLoop]
                                 #print "motor set forward" , svalue
                                 self.pinUpdate(motorList[listLoop][2],1)
-                                self.pinUpdate(motorList[listLoop][1],(100-svalue),type="pwm")
+                                self.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
                             elif svalue < 0:
                                 #print motorList[listLoop]
                                 #print "motor set backward", svalue
                                 self.pinUpdate(motorList[listLoop][2],0)
-                                self.pinUpdate(motorList[listLoop][1],(svalue),type="pwm")
+                                self.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
                             else:
                                 #print svalue, "zero"
                                 self.pinUpdate(motorList[listLoop][1],0)
@@ -1089,8 +1089,33 @@ class ScratchListener(threading.Thread):
                     self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
                     self.vLEDCheck(piringoOutputs)
+                    
+                    
+                elif "pibrella" in ADDON: # PiBrella
+           
+                    #self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
-                                                            
+                    cLed = [["redpower",13],["amberpower",11],["greenpower",7]]
+                    for i in range(0,3):
+                        if self.vFindValue(cLed[i][0]):
+                            if self.valueIsNumeric:
+                                sghGC.pinUpdate(cLed[i][1],self.valueNumeric,"pwm")
+                            else:
+                                sghGC.pinUpdate(cLed[i][1],0)
+                                
+                    oLed = [["powere",15],["powerf",16],["powerg",18],["powerh",22]]
+                    for i in range(0,4):
+                        if self.vFindValue(oLed[i][0]):
+                            if self.valueIsNumeric:
+                                sghGC.pinUpdate(oLed[i][1],self.valueNumeric,"pwm")
+                            else:
+                                sghGC.pinUpdate(oLed[i][1],0)        
+                                
+                    if self.vFindValue("beep"):
+                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
+                        beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.2])
+                        beepThread.start()
+                        
                 else:   #normal variable processing with no add on board
                     
                     self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
