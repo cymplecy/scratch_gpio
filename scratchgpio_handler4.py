@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.02' # 28Nov13
+Version =  '4.0.03' # 28Nov13
 
 
 
@@ -219,6 +219,12 @@ class ScratchSender(threading.Thread):
         elif "piringo" in ADDON:
             #do PiRingo stuff
             sensor_name = "switch" + str(1 + [19,21].index(pin))
+        elif "pibrella" in ADDON:
+            #print pin
+            #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
+            sensor_name = "In" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
+            if sensor_name == "InE":
+                sensor_name = "switch"
         else:
             sensor_name = "pin" + str(pin)
         # 
@@ -259,7 +265,7 @@ class ScratchSender(threading.Thread):
 
         last_bit_pattern = last_bit_pattern ^ -1
         while not self.stopped():
-            time.sleep(1) # be kind to cpu  :)
+            time.sleep(0.01) # be kind to cpu  :)
             #print "sender running"
             pin_bit_pattern = 0
             for pin in range(sghGC.numOfPins):
@@ -393,7 +399,11 @@ class ScratchListener(threading.Thread):
         if self.bfind(searchStr):
             #print "found"
             sensor_value = self.dataraw[(self.dataraw.find((searchStr)) + 0 + len(searchStr)):].split()
-            self.value = sensor_value[0]
+            try:
+                self.value = sensor_value[0]
+            except IndexError:
+                self.value = ""
+                pass
             #print self.value
             if isNumeric(self.value):
                 self.valueNumeric = float(self.value)
@@ -534,7 +544,16 @@ class ScratchListener(threading.Thread):
             sghGC.pinUpdate(motorList[listLoop][1],0)
             sghGC.pinUpdate(motorList[listLoop][2],0)
         time.sleep(0.5)
-        print ("Dual Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))        
+        print ("Dual Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))    
+
+    def beep(self,pin,freq,duration):
+        startCount = time.time()
+        while (time.time() - startCount) < (duration * 1.0):
+            sghGC.pinUpdate(pin,1)
+            time.sleep(1.0/(freq *2))
+            sghGC.pinUpdate(pin,0)
+            time.sleep(1.0/(freq *2))
+        print ("Beep Stopped")        
 
         
 
@@ -571,7 +590,7 @@ class ScratchListener(threading.Thread):
                 #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
                 
                 datarawList = list(dataraw)
-                #print datarawList
+                #print "datarawlist:",datarawList
                 for m in re.finditer( 'broadcast', dataraw ):
                     #print( 'bdcast found', m.start(), m.end() )
                     datarawList[(m.start()-4):(m.start())] = [" "," "," "," "]
@@ -693,7 +712,6 @@ class ScratchListener(threading.Thread):
                         if "encoders" in ADDON:
                             sghGC.pinUse[7]  = sghGC.PCOUNT 
                             sghGC.pinUse[11] = sghGC.PCOUNT 
-
                         sghGC.setPinMode()
                         sghGC.startServod([18,22]) # servos
                         print "pirocon setup"
@@ -710,6 +728,17 @@ class ScratchListener(threading.Thread):
                             sghGC.pinUse[pin] = sghGC.PINPUT # set switches as inputs
                         sghGC.setPinMode() # execute pin assignment
                         anyAddOns = True # add on declared
+                        
+                    if "pibrella" in ADDON:
+                        pibrellaOutputs = [7,11,13,15,16,18,22,12]
+                        for pin in pibrellaOutputs:
+                            sghGC.pinUse[pin] = sghGC.POUTPUT
+                        pibrellaInputs = [21,26,24,19,23]
+                        for pin in pibrellaInputs:
+                            sghGC.pinUse[pin] = sghGC.PINPUTDOWN
+
+                        sghGC.setPinMode()
+                        anyAddOns = True                        
 
             if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                 print "no AddOns Declared"
@@ -1142,8 +1171,8 @@ class ScratchListener(threading.Thread):
                         pcfSensor.writeDAC(svalue)
 
 ### Check for Broadcast type messages being received
-            if 'broadcast' in dataraw:
-                #print 'broadcast in data:' , dataraw
+            if 'broadcast' in self.dataraw:
+                #print 'broadcast:' , self.dataraw
                 
                 if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     print "no AddOns Declared"
@@ -1335,6 +1364,29 @@ class ScratchListener(threading.Thread):
                     #do piringo stuff
                     self.bCheckAll() # Check for all off/on type broadcasrs
                     self.bLEDCheck(piringoOutputs) # Check for LED off/on type broadcasts
+                    
+                elif "pibrella" in ADDON: # BerryClip
+
+                    #print ("PiBrella broadcast processing")                    
+                    self.bCheckAll() # Check for all off/on type broadcasts
+                    #self.bLEDCheck(berryOutputs) # Check for LED off/on type broadcasts
+                    cLed = [["red",13],["amber",11],["green",7]]
+                    for i in range(0,3):
+                        if self.bfindOnOff(cLed[i][0]):
+                            #print cLed[i][0]
+                            sghGC.pinUpdate(cLed[i][1],self.OnOrOff)
+                            
+                    oLed = [["e",15],["f",16],["g",18],["h",22]]
+                    for i in range(0,4):
+                        if self.bfindOnOff("output" + oLed[i][0]):
+                            print oLed[i][0]
+                            sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
+
+                    if self.bFindValue("beep"):
+                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
+                        beepThread = threading.Thread(target=self.beep, args=[12,svalue,1])
+                        beepThread.start()       
+                            
    
                 else: # Plain GPIO Broadcast processing
 

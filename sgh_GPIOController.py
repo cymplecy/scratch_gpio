@@ -54,6 +54,7 @@ class GPIOController :
         self.PSERVOD = 64
         self.PSTEPPER = 128
         self.PCOUNT = 256
+        self.PINPUTDOWN = 512
 
         self.INVERT = False
 
@@ -86,18 +87,18 @@ class GPIOController :
                 print 'setting pin' , pin , ' to out' 
                 GPIO.setup(pin,GPIO.OUT)
             elif (self.pinUse[pin] == self.PINPUT):
-                print 'setting pin' , pin , ' to in' 
+                print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+            elif (self.pinUse[pin] == self.PINPUTDOWN):
+                print 'setting pin' , pin , ' to in with pull down' 
+                GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+                self.pinUse[pin] = self.PINPUT
             elif (self.pinUse[pin] == self.PCOUNT):
                 print 'setting pin' , pin , ' to count' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                 GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback)  # add rising edge detection on a channel
 
-
-
-
-
-
+                
     def pinUpdate(self, pin, value,type = 'plain',stepDelay = 0.003):
         try:
             #print pin,value,type,self.pinUse[pin]
