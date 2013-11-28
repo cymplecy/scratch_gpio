@@ -1384,7 +1384,7 @@ class ScratchListener(threading.Thread):
 
                     if self.bFindValue("beep"):
                         svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
-                        beepThread = threading.Thread(target=self.beep, args=[12,svalue,1])
+                        beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.3])
                         beepThread.start()       
                             
    
