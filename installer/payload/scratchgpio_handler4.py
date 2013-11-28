@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.03' # 28Nov13
+Version =  '4.0.04' # 28Nov13
 
 
 
@@ -585,6 +585,7 @@ class ScratchListener(threading.Thread):
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
                 #print "RAW:", data
                 datalower = data.lower()
+                #print "RAW Lower:",datalower
                 dataraw = "    "+data[4:].lower() # convert all to lowercase
 
                 #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
@@ -638,8 +639,12 @@ class ScratchListener(threading.Thread):
                 if self.vFindValue("addon"):
                     #print "data:",datalower
                     #print "self.dataraw",self.dataraw
-                    ADDON = datalower[(datalower.find(("addon"))):].split('"')[2] # parse orig data to get space separated list of addons
-                    print (ADDON, " declared")
+                    try:
+                        ADDON = datalower[(datalower.find(("addon"))):].split('"')[2] # parse orig data to get space separated list of addons
+                        print (ADDON, " declared")
+                    except IndexError:
+                        ADDON = "qwerty"
+                        pass
 
                     if "ladder" in ADDON:
                         ladderOutputs = [11,12,13,15,16,18,22, 7, 5, 3]
