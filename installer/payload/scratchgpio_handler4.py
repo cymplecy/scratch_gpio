@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.01' # 28Nov13
+Version =  '4.0.02' # 28Nov13
 
 
 
@@ -246,7 +246,7 @@ class ScratchSender(threading.Thread):
         global firstRun,ADDON
         # while firstRun:
             # print "first run running"
-            # time.sleep(1)
+        time.sleep(2)
         last_bit_pattern=0L
         print sghGC.pinUse
         for pin in range(sghGC.numOfPins):
@@ -259,7 +259,7 @@ class ScratchSender(threading.Thread):
 
         last_bit_pattern = last_bit_pattern ^ -1
         while not self.stopped():
-            time.sleep(0.01) # be kind to cpu  :)
+            time.sleep(1) # be kind to cpu  :)
             #print "sender running"
             pin_bit_pattern = 0
             for pin in range(sghGC.numOfPins):
@@ -451,13 +451,16 @@ class ScratchListener(threading.Thread):
 
     def vPinCheck(self):
         for pin in range(sghGC.numOfPins):
+            
             if self.vFindValue('pin' + str(pin)):
+                
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric)
                 else:
                     sghGC.pinUpdate(pin,0)
                     
             if self.vFindValue('power' + str(pin)):
+                print pin , "found"
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                 else:
@@ -544,7 +547,7 @@ class ScratchListener(threading.Thread):
 
         #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
-        anyAddOns = None
+        anyAddOns = False
 
         #semi global variables used for servos in PiRoCon
         panoffset = 0
@@ -606,7 +609,7 @@ class ScratchListener(threading.Thread):
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             #if (firstRun == True) or (anyAddOns == False):
-            anyAddOns = False
+            
             if 'sensor-update' in dataraw:
                 #print "this data ignored" , dataraw
                 firstRunData = dataraw
