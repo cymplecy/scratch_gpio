@@ -244,8 +244,9 @@ class ScratchSender(threading.Thread):
 
     def run(self):
         global firstRun,ADDON
-        while firstRun:
-            time.sleep(1)
+        # while firstRun:
+            # print "first run running"
+            # time.sleep(1)
         last_bit_pattern=0L
         print sghGC.pinUse
         for pin in range(sghGC.numOfPins):
@@ -259,6 +260,7 @@ class ScratchSender(threading.Thread):
         last_bit_pattern = last_bit_pattern ^ -1
         while not self.stopped():
             time.sleep(0.01) # be kind to cpu  :)
+            #print "sender running"
             pin_bit_pattern = 0
             for pin in range(sghGC.numOfPins):
                 #print pin
@@ -587,10 +589,11 @@ class ScratchListener(threading.Thread):
                     #tell outer loop that Scratch has disconnected
                     if cycle_trace == 'running':
                         cycle_trace = 'disconnected'
+                        print "cycle_trace has changed to" ,cycle_trace
                         break
 
             except (KeyboardInterrupt, SystemExit):
-                #print "reraise error"
+                print "reraise error"
                 raise
             except socket.timeout:
                 #print "No data received: socket timeout"
@@ -705,17 +708,17 @@ class ScratchListener(threading.Thread):
                         sghGC.setPinMode() # execute pin assignment
                         anyAddOns = True # add on declared
 
-                if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
-                    print "no AddOns Declared"
-                    sghGC.pinUse[11] = sghGC.POUTPUT
-                    sghGC.pinUse[12] = sghGC.POUTPUT
-                    sghGC.pinUse[13] = sghGC.POUTPUT
-                    sghGC.pinUse[15] = sghGC.POUTPUT
-                    sghGC.pinUse[16] = sghGC.POUTPUT
-                    sghGC.pinUse[18] = sghGC.POUTPUT
-                    sghGC.pinUse[7]  = sghGC.PINPUT
-                    sghGC.pinUse[22] = sghGC.PINPUT
-                    sghGC.setPinMode()
+            if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
+                print "no AddOns Declared"
+                sghGC.pinUse[11] = sghGC.POUTPUT
+                sghGC.pinUse[12] = sghGC.POUTPUT
+                sghGC.pinUse[13] = sghGC.POUTPUT
+                sghGC.pinUse[15] = sghGC.POUTPUT
+                sghGC.pinUse[16] = sghGC.POUTPUT
+                sghGC.pinUse[18] = sghGC.POUTPUT
+                sghGC.pinUse[7]  = sghGC.PINPUT
+                sghGC.pinUse[22] = sghGC.PINPUT
+                sghGC.setPinMode()
                         
                 firstRun = False
 
@@ -1138,6 +1141,21 @@ class ScratchListener(threading.Thread):
 ### Check for Broadcast type messages being received
             if 'broadcast' in dataraw:
                 #print 'broadcast in data:' , dataraw
+                
+                if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
+                    print "no AddOns Declared"
+                    sghGC.pinUse[11] = sghGC.POUTPUT
+                    sghGC.pinUse[12] = sghGC.POUTPUT
+                    sghGC.pinUse[13] = sghGC.POUTPUT
+                    sghGC.pinUse[15] = sghGC.POUTPUT
+                    sghGC.pinUse[16] = sghGC.POUTPUT
+                    sghGC.pinUse[18] = sghGC.POUTPUT
+                    sghGC.pinUse[7]  = sghGC.PINPUT
+                    sghGC.pinUse[22] = sghGC.PINPUT
+                    sghGC.setPinMode()
+                            
+                    firstRun = False
+                
                 if self.bfind("stepper"):
                     print ("Stepper declared")
                     steppersInUse = True
@@ -1423,6 +1441,7 @@ class ScratchListener(threading.Thread):
 
 
             if 'stop handler' in dataraw:
+                print "stop handler msg setn from Scratch"
                 cleanup_threads((listener, sender))
                 sys.exit()
 
@@ -1449,10 +1468,11 @@ def cleanup_threads(threads):
     print ("cleanup threads started")
     for thread in threads:
         thread.stop()
-
+    print "Threads told to stop"
+    
     for thread in threads:
         thread.join()
-
+    print "Waiting for join on main threads to complete"
         
     for pin in range(sghGC.numOfPins):
         try:
@@ -1556,7 +1576,9 @@ while True:
     if (cycle_trace == 'disconnected'):
         print "Scratch disconnected"
         cleanup_threads((listener, sender))
+        print "Thread cleanup done after disconnect"
         sghGC.stopServod()
+        print "servod stopped afer disconnect"
         time.sleep(1)
         cycle_trace = 'start'
 
