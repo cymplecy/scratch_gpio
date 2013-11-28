@@ -53,6 +53,7 @@ class GPIOController :
         self.PULTRA = 32
         self.PSERVOD = 64
         self.PSTEPPER = 128
+        self.PCOUNT = 256
 
         self.INVERT = False
 
@@ -62,6 +63,7 @@ class GPIOController :
         self.servodPins = None
         
         self.pinRef = [None] * self.numOfPins
+        self.pinCount = [0] * self.numOfPins
         
         #self.ULTRA_IN_USE = [False] * self.PINS
         #self.ultraTotalInUse = 0
@@ -71,6 +73,11 @@ class GPIOController :
             print "Debug enabled"
         # End init
     
+    def my_callback(self,pin):
+        self.pinCount[pin] +=1
+        #print('Edge detected on channel',channel,self.encoderCount) 
+        
+
     #Procedure to set pin mode for each pin
     def setPinMode(self):
         for pin in range(self.numOfPins):
@@ -81,6 +88,15 @@ class GPIOController :
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+            elif (self.pinUse[pin] == self.PCOUNT):
+                print 'setting pin' , pin , ' to count' 
+                GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+                GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback)  # add rising edge detection on a channel
+
+
+
+
+
 
     def pinUpdate(self, pin, value,type = 'plain',stepDelay = 0.003):
         if type == "pwm": # 
