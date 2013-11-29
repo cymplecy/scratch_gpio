@@ -41,7 +41,8 @@ class GPIOController :
         GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings(False)
         GPIO.cleanup()
-        print "Board Revision" , self.getPiRevision()
+        self.piRevision = self.getPiRevision()
+        print "Board Revision" , self.piRevision
 
         #Set some constants and initialise lists
         self.numOfPins = 27 #there are actually 26 but python can't count properly :)
@@ -65,6 +66,14 @@ class GPIOController :
         
         self.pinRef = [None] * self.numOfPins
         self.pinCount = [0] * self.numOfPins
+        self.gpioLookup = [0] * self.numOfPins
+        if self.piRevision == 1:
+        #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
+        #                     [ 3, 5,99,99, 7,99,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
+            self.gpioLookup = [99,99,99, 0,99, 1,99, 4,14,99,15,17,18,21,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
+        else:                #[99,99, 2,99, 7, 3,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
+            self.gpioLookup = [99,99,99, 2,99, 3,99, 4,14,99,15,17,18,27,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
+        
         
         #self.ULTRA_IN_USE = [False] * self.PINS
         #self.ultraTotalInUse = 0
@@ -114,6 +123,7 @@ class GPIOController :
                         sghGC.pinRef[pin].stop()
                     except:
                         pass
+                    GPIO.setup(pin,GPIO.OUT)
                     self.pinRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance
                     print "type of pwm:" ,self.pinRef[pin]
                     self.pinRef[pin].start(max(0,min(100,abs(value)))) # update PWM value

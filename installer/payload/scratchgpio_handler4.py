@@ -385,6 +385,9 @@ class ScratchListener(threading.Thread):
         for pin in range(sghGC.numOfPins):
             if self.bfindOnOff('pin' + str(pin)):
                 sghGC.pinUpdate(pin,self.OnOrOff)
+            if self.bfindOnOff('gpio' + str(sghGC.gpioLookup[pin])):
+                sghGC.pinUpdate(pin,self.OnOrOff)
+                #print pin
 
     def bLEDCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
@@ -461,22 +464,34 @@ class ScratchListener(threading.Thread):
 
     def vPinCheck(self):
         for pin in range(sghGC.numOfPins):
-            
+            #print "checking pin" ,pin
             if self.vFindValue('pin' + str(pin)):
-                
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric)
                 else:
                     sghGC.pinUpdate(pin,0)
                     
             if self.vFindValue('power' + str(pin)):
-                print pin , "found"
+                #print pin , "found"
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(pin,0,type="pwm")
                     
             if self.vFindValue('motor' + str(pin)):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
+                else:
+                    sghGC.pinUpdate(pin,0,type="pwm")
+                    
+            if self.vFindValue('gpio' + str(sghGC.gpioLookup[pin])):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pin,self.valueNumeric)
+                else:
+                    sghGC.pinUpdate(pin,0)
+                    
+            if self.vFindValue('gpiopower' + str(sghGC.gpioLookup[pin])):
+                #print pin , "found"
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                 else:
@@ -1093,7 +1108,9 @@ class ScratchListener(threading.Thread):
                     
                 elif "pibrella" in ADDON: # PiBrella
            
-                    #self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+                    self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
+ 
+                    self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
 
                     cLed = [["redpower",13],["amberpower",11],["greenpower",7]]
                     for i in range(0,3):
@@ -1399,7 +1416,8 @@ class ScratchListener(threading.Thread):
 
                     #print ("PiBrella broadcast processing")                    
                     self.bCheckAll() # Check for all off/on type broadcasts
-                    #self.bLEDCheck(berryOutputs) # Check for LED off/on type broadcasts
+                    self.bpinCheck() # Check for pin off/on type broadcasts
+                    
                     cLed = [["red",13],["amber",11],["green",7]]
                     for i in range(0,3):
                         if self.bfindOnOff(cLed[i][0]):
