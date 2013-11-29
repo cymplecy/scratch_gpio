@@ -36,6 +36,7 @@ import sgh_PiGlow
 import sgh_Stepper
 from Adafruit_PWM_Servo_Driver import PWM
 from sgh_PCF8591P import sgh_PCF8591P
+from sgh_Adafruit_8x8 import sgh_EightByEight
 
 #try and inport smbus but don't worry if not installed
 #try:
@@ -44,9 +45,6 @@ from sgh_PCF8591P import sgh_PCF8591P
 #    pass
 
 #import RPi.GPIO as GPIO
-
-
-
 
 
 class Compass:
@@ -252,7 +250,7 @@ class ScratchSender(threading.Thread):
         global firstRun,ADDON
         # while firstRun:
             # print "first run running"
-        time.sleep(2)
+        time.sleep(5)
         last_bit_pattern=0L
         print sghGC.pinUse
         for pin in range(sghGC.numOfPins):
@@ -1514,8 +1512,76 @@ class ScratchListener(threading.Thread):
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
-                 
-            
+                                
+                if AdaMatrix != None: #Matrix connected
+                    if self.bfind("alloff"):
+                        AdaMatrix.clear()
+                    if self.bfind("sweep"):
+                        for y in range(0, 8):
+                            for x in range(0, 8):
+                                AdaMatrix.setPixel((7-x),y)
+                                time.sleep(0.05)
+                    
+                    for ym in range(0,8):
+                        for xm in range(0,8):
+                        
+                            if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
+                                AdaMatrix.setPixel((7 - xm),ym)
+                                
+                            if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
+                                AdaMatrix.clearPixel((7 - xm),ym)
+                        
+                        # if self.bFindValue("matrixon"):
+                            # #print self.value
+                            # xPos = int(self.value[0:1])
+                            # yPos = int(self.value[2:3])
+                            # AdaMatrix.setPixel((7 - xPos),yPos)
+                            
+                        # if self.bFindValue("matrixoff"):
+                            # #print self.value
+                            # xPos = int(self.value[0:1])
+                            # yPos = int(self.value[2:3])
+                            # AdaMatrix.clearPixel((7 - xPos),yPos)        
+                            
+                    if self.bFindValue("brightness"):
+                        if self.valueIsNumeric:
+                            AdaMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
+                        else:
+                            AdaMatrix.setBrightness(15)
+                            
+                    if self.bFindValue('matrixpattern'):
+                        bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
+                        #print 'bit_pattern %s' % bit_pattern
+                        for j in range(0,64):
+                            ym = j // 8
+                            xm = j - (8 * ym)
+                            if bit_pattern[j] == '0':
+                                AdaMatrix.clearPixel((7 - xm),ym)
+                            else:
+                                AdaMatrix.setPixel((7 - xm),ym)
+                            j = j + 1
+                            
+                    if self.bFindValue('scrollleft'):
+                        AdaMatrix.scroll("left")
+                    if self.bFindValue('scrollright'):
+                        print "scrollr" 
+                        AdaMatrix.scroll("right")                        
+                            
+                            
+                            
+                    rowList = ['a','b','c','d','e','f','g','h']
+                    for i in range(0,8):
+                        if self.bFindValue('row'+rowList[i]):
+                            bit_pattern = (self.value + "00000000")[0:8]
+                            #print 'bit_pattern %s' % bit_pattern
+                            for j in range(0,8):
+                                ym = i
+                                xm = j
+                                if bit_pattern[(j)] == '0':
+                                    AdaMatrix.clearPixel((7 - xm),ym)
+                                else:
+                                    AdaMatrix.setPixel((7 - xm),ym)
+               
 
                 if  '1coil' in dataraw:
                     print "1coil broadcast"
@@ -1600,7 +1666,7 @@ ADDON = ""
  
 PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
-BUFFER_SIZE = 240 #used to be 100
+BUFFER_SIZE = 1024 #used to be 100
 SOCKET_TIMEOUT = 1
 firstRun = True
 
@@ -1648,18 +1714,14 @@ try:
 except:
     print "No PCF8591 Detected"
     
-#If I2C then don't uses pins 3 and 5
-if ((piglow != None) or (compass != None) or (pcaPWM != None) or (pcfSensor != None)):
-    print "I2C device detected"
-    #pins = sghGC.PIN_NUM
-else:
-    print "No I2C Device Detected"
-    #PIN_NUM = sghGC.PIN_NUM
-
- 
-# ULTRA_IN_USE = [False] * sghGC.numOfPins
-# ultraTotalInUse = 0
-# ultraSleep = 1.0
+AdaMatrix = None
+try:
+    AdaMatrix = sgh_EightByEight(address=0x70)
+    print AdaMatrix
+    print "AdaMatrix Detected"
+except:
+    print "No AdaMatrix Detected"
+    
 
 
 if __name__ == '__main__':
