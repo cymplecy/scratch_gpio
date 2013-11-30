@@ -1561,14 +1561,6 @@ class ScratchListener(threading.Thread):
                                 AdaMatrix.setPixel((7 - xm),ym)
                             j = j + 1
                             
-                    if self.bFindValue('scrollleft'):
-                        AdaMatrix.scroll("left")
-                    if self.bFindValue('scrollright'):
-                        print "scrollr" 
-                        AdaMatrix.scroll("right")                        
-                            
-                            
-                            
                     rowList = ['a','b','c','d','e','f','g','h']
                     for i in range(0,8):
                         if self.bFindValue('row'+rowList[i]):
@@ -1581,6 +1573,24 @@ class ScratchListener(threading.Thread):
                                     AdaMatrix.clearPixel((7 - xm),ym)
                                 else:
                                     AdaMatrix.setPixel((7 - xm),ym)
+                                    
+                    colList = ['a','b','c','d','e','f','g','h']
+                    for i in range(0,8):
+                        if self.bFindValue('col'+rowList[i]):
+                            bit_pattern = (self.value + "00000000")[0:8]
+                            for j in range(0,8):
+                                ym = j
+                                xm = i
+                                if bit_pattern[(j)] == '0':
+                                    AdaMatrix.clearPixel((7 - xm),ym)
+                                else:
+                                    AdaMatrix.setPixel((7 - xm),ym)       
+
+                    if self.bFindValue('scrollleft'):
+                        AdaMatrix.scroll("left")
+                    if self.bFindValue('scrollright'):
+                        print "scrollr" 
+                        AdaMatrix.scroll("right")    
                
 
                 if  '1coil' in dataraw:
