@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.05' # 28Nov13
+Version =  '4.0.06' # 30Nov13
 
 
 
@@ -34,10 +34,12 @@ import re
 import sgh_GPIOController
 import sgh_PiGlow
 import sgh_Stepper
-from Adafruit_PWM_Servo_Driver import PWM
-from sgh_PCF8591P import sgh_PCF8591P
-from sgh_Adafruit_8x8 import sgh_EightByEight
-
+try:
+	from Adafruit_PWM_Servo_Driver import PWM
+	from sgh_PCF8591P import sgh_PCF8591P
+	from sgh_Adafruit_8x8 import sgh_EightByEight
+except:
+	pass
 #try and inport smbus but don't worry if not installed
 #try:
 #    from smbus import SMBus
