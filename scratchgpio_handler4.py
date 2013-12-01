@@ -597,74 +597,48 @@ class ScratchListener(threading.Thread):
             #print lcount
             try:
                 #print "try reading socket"
+                BUFFER_SIZE = 8192
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
-                print len(data)
-                print "RAW:", data
+                #print len(data)
+                #print "RAW:", data
                 
-                if len(data) > 0:
+                if len(data) > 0: # Connection still valid so process the data received
+                
                     dataIn = data
                     dataOut = ""
-                    while len(dataIn) > 0:
+                    dataList = []
+                    dataPrefix = ""
+                    dataListItem = ""
+                    while len(dataIn) > 0: # loop thru data and remove size information to produce a space delimited string
                         size = struct.unpack(">L", dataIn[0:4])[0]
                         #print size
                         if size > 0:
                             #print dataIn[4:size + 4]
-                            dataOut = dataOut + dataIn[4:size + 4] + " "
+                            dataOut = dataOut + dataIn[4:size + 4].lower() + " "
+                            dataMsg = dataIn[4:size + 4].lower()
+                            if dataMsg[0:2] == "br":
+                                if dataPrefix == "br":
+                                    dataList[-1] = dataList[-1] + " "+ dataMsg[10:]
+                                else:
+                                    dataList.append(dataMsg)
+                                    dataPrefix = "br"
+                            else:
+                                if dataPrefix == "se":
+                                    dataList[-1] = dataList[-1] + dataMsg[10:]
+                                else:
+                                    dataList.append(dataMsg)
+                                    dataPrefix = "se"
+                                    
                             dataIn = dataIn[size+4:]
-                        
-                    print
-                    print dataOut
-                    print
-                    dataraw = dataOut.lower()
-                    #print size
-                    #print "RAW Lower:",datalower
-                    # dataraw = "    "+data[4:].lower() # convert all to lowercase
-
-                    # #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
-                    
-                    # datarawList = list(dataraw)
-                    # #print "datarawlist:",datarawList
-                    # for m in re.finditer( 'broadcast', dataraw ):
-                        # #print( 'bdcast found', m.start(), m.end() )
-                        # datarawList[(m.start()-4):(m.start())] = [" "," "," "," "]
-                    # for m in re.finditer( 'sensor-update', dataraw ):
-                        # #print( 'bdcast found', m.start(), m.end() )
-                        # datarawList[(m.start()-4):(m.start())] = [" "," "," "," "]
-                        
-                    # #print datarawList
-                    # dataraw = ''.join(datarawList)
+                    #print
+                    #print "datalist:" ,dataList
+                    #for i in dataList:
+                    #    print i
+                    #print
                 
-                
-                    dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
-                    print "Sanitised"
-                    print dataraw
-
-                    dataraw2 = dataraw.split(' ')
-                    #print dataraw2
-                    su = ""
-                    br = ""
-                    flag = "su"
-                    for item in dataraw2:
-                        if item == "sensor-update":
-                            flag = "su"
-                            item = ""
-                        if item == "broadcast":
-                            flag = "br"
-                            item = ""
-                        if flag == "su":
-                            su = su + str(item) + " "
-                        else:
-                            br = br + str(item) + " "
-                    #print "br:", br
-                    #print "su:", su
-                    dataraw = ""
-                    if su != "":
-                        dataraw = "sensor-update "+ su
-                    if br != "":
-                        dataraw = dataraw + " broadcast "+ br
-                    #print dataraw
+                    #dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataOut)])
                     
-                    self.dataraw = dataraw
+                    #self.dataraw = dataraw
                 
                 #print 'Cycle trace' , cycle_trace
                 if len(data) == 0:
@@ -690,583 +664,127 @@ class ScratchListener(threading.Thread):
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             #if (firstRun == True) or (anyAddOns == False):
-            
-            if 'sensor-update' in dataraw:
-                #print "this data ignored" , dataraw
-                firstRunData = dataraw
-                #dataraw = ''
-                #firstRun = False
-                
-                if self.vFindValue("addon"):
-                    #print "data:",datalower
-                    #print "self.dataraw",self.dataraw
-                    try:
-                        ADDON = datalower[(datalower.find(("addon"))):].split('"')[2] # parse orig data to get space separated list of addons
-                        print (ADDON, " declared")
-                    except IndexError:
-                        ADDON = "qwerty"
-                        pass
+            for dataItem in dataList:
+                dataraw = dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
+                self.dataraw = dataraw
+                #print "Loop processing"
+                #print self.dataraw
+                #print
+                if 'sensor-update' in dataraw:
+                    #print "this data ignored" , dataraw
+                    firstRunData = dataraw
+                    #dataraw = ''
+                    #firstRun = False
+                    
+                    if self.vFindValue("addon"):
+                        #print "data:",datalower
+                        #print "self.dataraw",self.dataraw
+                        try:
+                            ADDON = datalower[(datalower.find(("addon"))):].split('"')[2] # parse orig data to get space separated list of addons
+                            print (ADDON, " declared")
+                        except IndexError:
+                            ADDON = "qwerty"
+                            pass
 
-                    if "ladder" in ADDON:
-                        ladderOutputs = [11,12,13,15,16,18,22, 7, 5, 3]
-                        for pin in ladderOutputs:
-                            sghGC.pinUse[pin] = sghGC.POUTPUT
-                        for pin in [24,26,19,21]:
-                            sghGC.pinUse[pin] = sghGC.PINPUT
-                        sghGC.setPinMode()
-                        anyAddOns = True
+                        if "ladder" in ADDON:
+                            ladderOutputs = [11,12,13,15,16,18,22, 7, 5, 3]
+                            for pin in ladderOutputs:
+                                sghGC.pinUse[pin] = sghGC.POUTPUT
+                            for pin in [24,26,19,21]:
+                                sghGC.pinUse[pin] = sghGC.PINPUT
+                            sghGC.setPinMode()
+                            anyAddOns = True
+                                
+                        if "motorpitx" in ADDON:
+                            sghGC.pinUse[11] = sghGC.POUTPUT #Out2 
+                            sghGC.pinUse[15] = sghGC.POUTPUT #Out1
+                            sghGC.pinUse[16] = sghGC.POUTPUT #Motor2 B
+                            sghGC.pinUse[18] = sghGC.POUTPUT #Motor2 A
+                            sghGC.pinUse[19] = sghGC.POUTPUT #Motor1
+                            sghGC.pinUse[21] = sghGC.POUTPUT #Motor1
+                            sghGC.pinUse[22] = sghGC.POUTPUT #Motr 2 Enable
+                            sghGC.pinUse[23] = sghGC.POUTPUT #Motor1 Enable
                             
-                    if "motorpitx" in ADDON:
-                        sghGC.pinUse[11] = sghGC.POUTPUT #Out2 
-                        sghGC.pinUse[15] = sghGC.POUTPUT #Out1
-                        sghGC.pinUse[16] = sghGC.POUTPUT #Motor2 B
-                        sghGC.pinUse[18] = sghGC.POUTPUT #Motor2 A
-                        sghGC.pinUse[19] = sghGC.POUTPUT #Motor1
-                        sghGC.pinUse[21] = sghGC.POUTPUT #Motor1
-                        sghGC.pinUse[22] = sghGC.POUTPUT #Motr 2 Enable
-                        sghGC.pinUse[23] = sghGC.POUTPUT #Motor1 Enable
-                        
-                        sghGC.pinUse[13] = sghGC.PINPUT #Motor1 Enable
-                        sghGC.pinUse[7]  = sghGC.PINPUT #Motor1 Enable
+                            sghGC.pinUse[13] = sghGC.PINPUT #Motor1 Enable
+                            sghGC.pinUse[7]  = sghGC.PINPUT #Motor1 Enable
 
-                        sghGC.setPinMode()
-                        sghGC.startServod([12,10]) # servos
-                        print "MotorPiTx setup"
-                        anyAddOns = True
+                            sghGC.setPinMode()
+                            sghGC.startServod([12,10]) # servos
+                            print "MotorPiTx setup"
+                            anyAddOns = True
 
-                    if "piglow" in ADDON:                                
-                        PiGlow_Values = [0] * 18
-                        PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
-                        PiGlow_Brightness = 255  
-                        anyAddOns = True
+                        if "piglow" in ADDON:                                
+                            PiGlow_Values = [0] * 18
+                            PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
+                            PiGlow_Brightness = 255  
+                            anyAddOns = True
 
-                    if "gpio" in ADDON:
-                        sghGC.pinUse[11] = sghGC.POUTPUT
-                        sghGC.pinUse[12] = sghGC.POUTPUT
-                        sghGC.pinUse[13] = sghGC.POUTPUT
-                        sghGC.pinUse[15] = sghGC.POUTPUT                                
-                        sghGC.pinUse[16] = sghGC.POUTPUT
-                        sghGC.pinUse[18] = sghGC.POUTPUT
-                        sghGC.pinUse[7]  = sghGC.PINPUT
-                        sghGC.pinUse[8]  = sghGC.PINPUT
-                        sghGC.pinUse[10] = sghGC.PINPUT
-                        sghGC.pinUse[22] = sghGC.PINPUT                                 
-                        sghGC.setPinMode()
-                        print  "gPiO setup"
-                        anyAddOns = True
-                                                       
-                    if "berry" in ADDON:
-                        berryOutputs = [7,11,15,19,21,23,24]
-                        for pin in berryOutputs:
-                            sghGC.pinUse[pin] = sghGC.POUTPUT
-                        sghGC.pinUse[26] = sghGC.PINPUT
+                        if "gpio" in ADDON:
+                            sghGC.pinUse[11] = sghGC.POUTPUT
+                            sghGC.pinUse[12] = sghGC.POUTPUT
+                            sghGC.pinUse[13] = sghGC.POUTPUT
+                            sghGC.pinUse[15] = sghGC.POUTPUT                                
+                            sghGC.pinUse[16] = sghGC.POUTPUT
+                            sghGC.pinUse[18] = sghGC.POUTPUT
+                            sghGC.pinUse[7]  = sghGC.PINPUT
+                            sghGC.pinUse[8]  = sghGC.PINPUT
+                            sghGC.pinUse[10] = sghGC.PINPUT
+                            sghGC.pinUse[22] = sghGC.PINPUT                                 
+                            sghGC.setPinMode()
+                            print  "gPiO setup"
+                            anyAddOns = True
+                                                           
+                        if "berry" in ADDON:
+                            berryOutputs = [7,11,15,19,21,23,24]
+                            for pin in berryOutputs:
+                                sghGC.pinUse[pin] = sghGC.POUTPUT
+                            sghGC.pinUse[26] = sghGC.PINPUT
 
-                        sghGC.setPinMode()
-                        anyAddOns = True
-                        
-                    if "pirocon" in ADDON:
-
-                        sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
-                        sghGC.pinUse[21] = sghGC.POUTPUT #MotorB
-                        sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
-                        sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
-                        sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
-                        sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
-                        sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
-                        sghGC.pinUse[13] = sghGC.PINPUT #LFRight
-                        
-                        if "encoders" in ADDON:
-                            sghGC.pinUse[7]  = sghGC.PCOUNT 
-                            sghGC.pinUse[11] = sghGC.PCOUNT 
-                        sghGC.setPinMode()
-                        sghGC.startServod([18,22]) # servos
-                        print "pirocon setup"
-                        anyAddOns = True
-                        
-                    if "piringo" in ADDON:
-                        print "piringo detected"
-                        sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
-                        piringoOutputs = [7,11,12,13,15,16,18,22, 24, 26, 8,10] # these are pins used for LEDS for PiRingo
-                        piringoInputs = [19,21] # These are the pins connected to the switches
-                        for pin in piringoOutputs:
-                            sghGC.pinUse[pin] = sghGC.POUTPUT # set leds as outputs
-                        for pin in piringoInputs:
-                            sghGC.pinUse[pin] = sghGC.PINPUT # set switches as inputs
-                        sghGC.setPinMode() # execute pin assignment
-                        anyAddOns = True # add on declared
-                        
-                    if "pibrella" in ADDON:
-                        pibrellaOutputs = [7,11,13,15,16,18,22,12]
-                        for pin in pibrellaOutputs:
-                            sghGC.pinUse[pin] = sghGC.POUTPUT
-                        pibrellaInputs = [21,26,24,19,23]
-                        for pin in pibrellaInputs:
-                            sghGC.pinUse[pin] = sghGC.PINPUTDOWN
-
-                        sghGC.setPinMode()
-                        anyAddOns = True                        
-
-            if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
-                print "no AddOns Declared"
-                sghGC.pinUse[11] = sghGC.POUTPUT
-                sghGC.pinUse[12] = sghGC.POUTPUT
-                sghGC.pinUse[13] = sghGC.POUTPUT
-                sghGC.pinUse[15] = sghGC.POUTPUT
-                sghGC.pinUse[16] = sghGC.POUTPUT
-                sghGC.pinUse[18] = sghGC.POUTPUT
-                sghGC.pinUse[7]  = sghGC.PINPUT
-                sghGC.pinUse[22] = sghGC.PINPUT
-                sghGC.setPinMode()
-                        
-                firstRun = False
-
-
-            #If outputs need globally inverting (7 segment common anode needs it - PiRingo etc)
-            if ('invert' in self.dataraw):
-                sghGC.INVERT = True
-                
-            #Change pins from input to output if more needed
-            if ('config' in dataraw):
-                for i in range(PINS):
-                    #check_broadcast = str(i) + 'on'
-                    #print check_broadcast
-                    physical_pin = PIN_NUM[i]
-                    if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
-                        if PIN_USE[i] == PINPUT:                           # check to see if it is an input at moment
-                            GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
-                            print 'pin' , PIN_NUM[i] , ' out'
-                            PIN_USE[i] = POUTPUT
-                    if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
-                        if PIN_USE[i] != PINPUT:                                         # check to see if it not an input already
-                            GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
-                            print 'pin' , PIN_NUM[i] , ' in'
-                            PIN_USE[i] = PINPUT
+                            sghGC.setPinMode()
+                            anyAddOns = True
                             
-### Check for AddOn boards being declared
-                
-            #Listen for Variable changes
-            if 'sensor-update' in dataraw:
-                #print "sensor-update rcvd" , dataraw
-                           
-              
-                if "ladder" in ADDON:
-                    #do ladderboard stuff
+                        if "pirocon" in ADDON:
 
-                    self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
-
-                    self.vLEDCheck(ladderOutputs)
-                                    
-                elif "motorpitx" in ADDON:
-                    #do MotorPiTx stuff
-                    #check for motor variable commands
-                    
-                    moveServos = False
-
-                    if self.vFindValue('tiltoffset'):
-                        tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        moveServos = True
-
-                    if self.vFindValue('panoffset'):
-                        panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        moveServos = True
-                        
-                    if self.vFindValue('tilt'):
-                        #print "tilt command rcvd"
-                        if self.valueIsNumeric:
-                            tilt = int(self.valueNumeric) 
-                            moveServos = True
-                            #print "tilt=", tilt
-                        elif self.value == "off":
-                            os.system("echo " + "0" + "=0 > /dev/servoblaster")
-                    else:
-                        if self.vFindValue('servoa'):
-                            #print "tilt command rcvd"
-                            if self.valueIsNumeric:
-                                tilt = int(self.valueNumeric) 
-                                moveServos = True
-                                #print "tilt=", tilt
-                            elif self.value == "off":
-                                sghGC.pinServod(12,"off")
-                                
-                    if self.vFindValue('pan'):
-                        #print "pan command rcvd"
-                        if self.valueIsNumeric:
-                            pan = int(self.valueNumeric) 
-                            moveServos = True
-                            #print "pan=", pan
-                        elif self.value == "off":
-                            os.system("echo " + "1" + "=0 > /dev/servoblaster")
-                    else:
-                        if self.vFindValue('servob'):
-                            #print "pan command rcvd"
-                            if self.valueIsNumeric:
-                                pan = int(self.valueNumeric) 
-                                moveServos = True
-                                #print "pan=", pan
-                            elif self.value == "off":
-                                sghGC.pinServod(10,"off")
-                   
-                    if moveServos == True:
-                        degrees = int(tilt + tiltoffset)
-                        degrees = min(80,max(degrees,-60))
-                        servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                        sghGC.pinServod(12,servodvalue)
-                        degrees = int(pan + panoffset)
-                        degrees = min(90,max(degrees,-90))
-                        servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                        sghGC.pinServod(10,servodvalue)
-
-
-                    #check for motor variable commands
-                    motorList = [['motor1',19,21,23],['motor2',18,16,22]]
-                    for listLoop in range(0,2):
-                        if self.vFindValue(motorList[listLoop][0]):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            # This technique can be used if enabel is held high by hardware
-                            if svalue > 0:
-                                sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
-                                sghGC.pinUpdate(motorList[listLoop][2],0)
-                                sghGC.pinUpdate(motorList[listLoop][3],1)# set enable to 1
-                            elif svalue < 0:
-                                sghGC.pinUpdate(motorList[listLoop][1],0)            
-                                sghGC.pinUpdate(motorList[listLoop][2],(svalue),"pwm")   
-                                sghGC.pinUpdate(motorList[listLoop][3],1) # set enable to 1
-                            else:
-                                sghGC.pinUpdate(motorList[listLoop][3],0)                      
-                                sghGC.pinUpdate(motorList[listLoop][1],0)
-                                sghGC.pinUpdate(motorList[listLoop][2],0)
-                                
-                        
-                elif (("piglow" in ADDON) and (piglow != None)):
-                    #do PiGlow stuff but make sure PiGlow physically detected             
-                 
-                    #check LEDS
-                    for i in range(1,19):
-                        if self.vFindValue('led' + str(i)):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue= min(255,max(svalue,0))
-                            PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
-                            piglow.update_pwm_values(PiGlow_Values)
+                            sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                            sghGC.pinUse[21] = sghGC.POUTPUT #MotorB
+                            sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
+                            sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                            sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
+                            sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
+                            sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
+                            sghGC.pinUse[13] = sghGC.PINPUT #LFRight
                             
-                    for i in range(1,4):
-                        if self.vFindValue('leg' + str(i)):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue= min(255,max(svalue,0))
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
-                            piglow.update_pwm_values(PiGlow_Values)
+                            if "encoders" in ADDON:
+                                sghGC.pinUse[7]  = sghGC.PCOUNT 
+                                sghGC.pinUse[11] = sghGC.PCOUNT 
+                            sghGC.setPinMode()
+                            sghGC.startServod([18,22]) # servos
+                            print "pirocon setup"
+                            anyAddOns = True
                             
-                        if self.vFindValue('arm' + str(i)):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue= min(255,max(svalue,0))
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
-                            piglow.update_pwm_values(PiGlow_Values)
+                        if "piringo" in ADDON:
+                            print "piringo detected"
+                            sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                            piringoOutputs = [7,11,12,13,15,16,18,22, 24, 26, 8,10] # these are pins used for LEDS for PiRingo
+                            piringoInputs = [19,21] # These are the pins connected to the switches
+                            for pin in piringoOutputs:
+                                sghGC.pinUse[pin] = sghGC.POUTPUT # set leds as outputs
+                            for pin in piringoInputs:
+                                sghGC.pinUse[pin] = sghGC.PINPUT # set switches as inputs
+                            sghGC.setPinMode() # execute pin assignment
+                            anyAddOns = True # add on declared
                             
-                    pcolours = ['red','orange','yellow','green','blue','white']
-                    for i in range(len(pcolours)):
-                        if self.vFindValue(pcolours[i]):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue= min(255,max(svalue,0))
-                            PiGlow_Values[PiGlow_Lookup[i+0]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[i+6]] = svalue
-                            PiGlow_Values[PiGlow_Lookup[i+12]] = svalue
-                            piglow.update_pwm_values(PiGlow_Values)
-                        
-                            
-                    #Use bit pattern to control leds
-                    if self.vFindValue('ledpattern'):
-                        #print 'Found ledpattern'
-                        num_of_bits = 18
-                        bit_pattern = ('00000000000000000000000000' + self.value)[-num_of_bits:]
-                        #print 'led_pattern %s' % bit_pattern
-                        j = 0
-                        for i in range(18):
-                        #bit_state = ((2**i) & sensor_value) >> i
-                        #print 'dummy pin %d state %d' % (i, bit_state)
-                            if bit_pattern[-(j+1)] == '0':
-                                PiGlow_Values[PiGlow_Lookup[i]] = 0
-                            else:
-                                PiGlow_Values[PiGlow_Lookup[i]] = 1
-                            j = j + 1
-                        
-                        piglow.update_pwm_values(PiGlow_Values)
-                        
-                    if self.vFindValue('bright'):
-                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        svalue= min(255,max(svalue,0))
-                        PiGlow_Brightness = svalue
-                        
-                elif "gpio" in ADDON:
-                    #do gPiO stuff
-                    
-                    self.vAllCheck("allpins") # check Allpins On/Off/High/Low/1/0
- 
-                    self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
-                            
-                    #check for motor variable commands
-                    motorList = [['motora',11,12],['motorb',13,15]]
-                    #motorList = [['motora',21,26],['motorb',19,24]]
-                    for listLoop in range(0,2):
-                        #print motorList[listLoop]
-                        checkStr = motorList[listLoop][0]
-                        if self.vFind(checkStr):
-                            tempValue = getValue(checkStr, dataraw)
-                            svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                            #print "svalue", svalue
-                            if svalue > 0:
-                                #print motorList[listLoop]
-                                #print "motor set forward" , svalue
-                                self.pinUpdate(motorList[listLoop][2],1)
-                                self.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
-                            elif svalue < 0:
-                                #print motorList[listLoop]
-                                #print "motor set backward", svalue
-                                self.pinUpdate(motorList[listLoop][2],0)
-                                self.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
-                            else:
-                                #print svalue, "zero"
-                                self.pinUpdate(motorList[listLoop][1],0)
-                                self.pinUpdate(motorList[listLoop][2],0)
+                        if "pibrella" in ADDON:
+                            pibrellaOutputs = [7,11,13,15,16,18,22,12]
+                            for pin in pibrellaOutputs:
+                                sghGC.pinUse[pin] = sghGC.POUTPUT
+                            pibrellaInputs = [21,26,24,19,23]
+                            for pin in pibrellaInputs:
+                                sghGC.pinUse[pin] = sghGC.PINPUTDOWN
 
-                    ######### End of gPiO Variable handling
-                   
-                elif "berry" in ADDON:
-                    #do BerryClip stuff
-                    self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+                            sghGC.setPinMode()
+                            anyAddOns = True                        
 
-                    self.vLEDCheck(berryOutputs) # check All LEDS On/Off/High/Low/1/0
-                                
-                    if self.vFindOnOff('buzzer'):
-                        self.index_pin_update(24,self.valueNumeric)
-
-                    ######### End of BerryClip Variable handling
-                    
-                elif "pirocon" in ADDON:
-                    #do PiRoCon stuff
-                    #print "panoffset" , panoffset, "tilt",tiltoffset
-                    moveServos = False
-
-                    if self.vFindValue('tiltoffset'):
-                        tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        moveServos = True
-
-                    if self.vFindValue('panoffset'):
-                        panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        moveServos = True
-                        
-                    if self.vFindValue('tilt'):
-                        #print "tilt command rcvd"
-                        if self.valueIsNumeric:
-                            tilt = int(self.valueNumeric) 
-                            moveServos = True
-                            #print "tilt=", tilt
-                        elif self.value == "off":
-                            os.system("echo " + "0" + "=0 > /dev/servoblaster")
-                    else:
-                        if self.vFindValue('servoa'):
-                            #print "tilt command rcvd"
-                            if self.valueIsNumeric:
-                                tilt = int(self.valueNumeric) 
-                                moveServos = True
-                                #print "tilt=", tilt
-                            elif self.value == "off":
-                                os.system("echo " + "0" + "=0 > /dev/servoblaster")
-                                
-                    if self.vFindValue('pan'):
-                        #print "pan command rcvd"
-                        if self.valueIsNumeric:
-                            pan = int(self.valueNumeric) 
-                            moveServos = True
-                            #print "pan=", pan
-                        elif self.value == "off":
-                            os.system("echo " + "1" + "=0 > /dev/servoblaster")
-                    else:
-                        if self.vFindValue('servob'):
-                            #print "pan command rcvd"
-                            if self.valueIsNumeric:
-                                pan = int(self.valueNumeric) 
-                                moveServos = True
-                                #print "pan=", pan
-                            elif self.value == "off":
-                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
-                   
-                    if moveServos == True:
-                        degrees = int(tilt + tiltoffset)
-                        degrees = min(80,max(degrees,-60))
-                        servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                        #print "sending", servodvalue, "to servod"
-                        #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
-                        sghGC.pinServod(18,servodvalue)
-                        #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
-                        degrees = int(pan + panoffset)
-                        degrees = min(90,max(degrees,-90))
-                        servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                        sghGC.pinServod(22,servodvalue)
-                        #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
-
-
-                    #check for motor variable commands
-                    motorList = [['motora',21,26],['motorb',19,24]]
-                    for listLoop in range(0,2):
-                        if self.vFindValue(motorList[listLoop][0]):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            if svalue > 0:
-                                sghGC.pinUpdate(motorList[listLoop][2],1)
-                                sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
-                            elif svalue < 0:
-                                sghGC.pinUpdate(motorList[listLoop][2],0)
-                                sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
-                            else:
-                                sghGC.pinUpdate(motorList[listLoop][1],0)
-                                sghGC.pinUpdate(motorList[listLoop][2],0)
-                    
-
-                    if (pcaPWM != None):
-                        for i in range(0, 16): # go thru servos on PCA Board
-                            if self.vFindValue('servo' + str(i + 1)):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
-                                #print i, svalue
-                                pcaPWM.setPWM(i, 0, svalue)
-                                
-                        for i in range(0, 16): # go thru PowerPWM on PCA Board
-                            if self.vFindValue('power' + str(i + 1)):
-                                svalue = int(self.valueNueric) if self.valueIsNumeric else 0
-                                svalue = min(4095,max(((svalue * 4096) /100),0))
-                                pcaPWM.setPWM(i, 0, svalue)
-                                
-                    ######### End of PiRoCon Variable handling
-                elif "piringo" in ADDON:
-                    #do piringo stuff
-
-                    self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
-
-                    self.vLEDCheck(piringoOutputs)
-                    
-                    
-                elif "pibrella" in ADDON: # PiBrella
-           
-                    self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
- 
-                    self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
-
-                    cLed = [["redpower",13],["amberpower",11],["greenpower",7]]
-                    for i in range(0,3):
-                        if self.vFindValue(cLed[i][0]):
-                            if self.valueIsNumeric:
-                                sghGC.pinUpdate(cLed[i][1],self.valueNumeric,"pwm")
-                            else:
-                                sghGC.pinUpdate(cLed[i][1],0)
-                                
-                    oLed = [["powere",15],["powerf",16],["powerg",18],["powerh",22]]
-                    for i in range(0,4):
-                        if self.vFindValue(oLed[i][0]):
-                            if self.valueIsNumeric:
-                                sghGC.pinUpdate(oLed[i][1],self.valueNumeric,"pwm")
-                            else:
-                                sghGC.pinUpdate(oLed[i][1],0)        
-                                
-                    if self.vFindValue("beep"):
-                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
-                        beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.2])
-                        beepThread.start()
-                        
-                else:   #normal variable processing with no add on board
-                    
-                    self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
- 
-                    self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
-                    
-                    if steppersInUse == True:
-                        stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
-                        for listLoop in range(0,2):
-                            if self.vFindValue(stepperList[listLoop][0]):
-                                if self.valueIsNumeric:
-                                    self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
-                                else:
-                                    self.stepperUpdate(stepperList[listLoop][1],0)
-                                 
-                        stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
-                        for listLoop in range(0,2):
-                            #print ("look for steppers") 
-                            if self.vFindValue(stepperList[listLoop][0]):
-                                print ("Found stepper",stepperList[listLoop][0])
-                                if self.valueIsNumeric:
-                                    print ("value =",self.value)
-                                    print stepperList[listLoop][1][0]
-                                    try:
-                                        print ("Trying to see if turn prev set")
-                                        direction = int(100 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
-                                        steps = abs(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]])
-                                    except:
-                                        direction = int(100 * sign(int(self.valueNumeric)))
-                                        steps = abs(int(self.valueNumeric))
-                                        turn = [None] * sghGC.numOfPins
-                                        pass
-                                    print ("direction and steps",direction,steps)
-                                    self.stepperUpdate(stepperList[listLoop][1],direction,steps)
-                                    turn[stepperList[listLoop][1][0]] = self.valueNumeric
-                                    print ("position set to :",turn[stepperList[listLoop][1][0]])
-                                else:
-                                    self.stepperUpdate(stepperList[listLoop][1],0)
-                                    try:
-                                        turn[stepperList[listLoop][1][0]] = 0
-                                    except:
-                                        turn = [None] * sghGC.numOfPins
-                                        turn[stepperList[listLoop][1][0]] = 0
-                                        pass
-                    else:       
-                        motorList = [['motora',11],['motorb',12]]
-                        for listLoop in range(0,2):
-                            if self.vFindValue(motorList[listLoop][0]):
-                                if self.valueIsNumeric:
-                                    sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
-                                else:
-                                    sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
-                                            
-                #Use bit pattern to control ports
-                if self.vFindValue('pinpattern'):
-                    svalue = self.value 
-                    bit_pattern = ('00000000000000000000000000'+svalue)[-sghGC.numOfPins:]
-                    j = 0
-                    onSense = '1' if sghGC.INVERT else '0' # change to look for 0 if invert on
-                    onSense = '0'
-                    for pin in range(sghGC.numOfPins):
-                        if (sghGC.pinUse[pin] == sghGC.POUTPUT):
-                            #print "pin" , bit_pattern[-(j+1)]
-                            if bit_pattern[-(j+1)] == onSense:
-                                sghGC.pinUpdate(pin,0)
-                            else:
-                                sghGC.pinUpdate(pin,1)
-                            j = j + 1                   
-
-                checkStr = 'stepdelay'
-                if  (checkStr + ' ') in dataraw:
-                    #print "MotorA Received"
-                    #print "stepper status" , stepperInUse[STEPPERA]
-                    tempValue = getValue(checkStr, dataraw)
-                    if isNumeric(tempValue):
-                        step_delay = int(float(tempValue))
-                        print 'step delay changed to', step_delay
-                        
-                
-                if pcfSensor != None: #if PCF ADC found
-                    if self.vFindValue('dac'):
-                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        pcfSensor.writeDAC(svalue)
-
-### Check for Broadcast type messages being received
-            if 'broadcast' in self.dataraw:
-                #print 'broadcast:' , self.dataraw
-                
                 if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     print "no AddOns Declared"
                     sghGC.pinUse[11] = sghGC.POUTPUT
@@ -1280,414 +798,875 @@ class ScratchListener(threading.Thread):
                     sghGC.setPinMode()
                             
                     firstRun = False
-                
-                if self.bfind("stepper"):
-                    print ("Stepper declared")
-                    steppersInUse = True
 
-                if "ladder" in ADDON: # Gordon's Ladder Board
-                    #do ladderboard stuff
-                    #print ("Ladder broadcast processing")                    
-                    self.bCheckAll() # Check for all off/on type broadcasrs
-                    self.bLEDCheck(ladderOutputs) # Check for LED off/on type broadcasts
-                            
-                elif "motorpitx" in ADDON: # Boeeerb MotorPiTx
 
-                    if ('sonar1') in dataraw:
-                        distance = sghGC.pinSonar(13)
-                        #print'Distance:',distance,'cm'
-                        sensor_name = 'sonar' + str(13)
-                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                        #print 'sending: %s' % bcast_str
-                        self.send_scratch_command(bcast_str)
-                        
-                    if ('sonar2') in dataraw:
-                        distance = sghGC.pinSonar(7)
-                        #print'Distance:',distance,'cm'
-                        sensor_name = 'sonar' + str(7)
-                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                        #print 'sending: %s' % bcast_str
-                        self.send_scratch_command(bcast_str)                        
-                        
-                    if self.bfind('ultra1'):
-                        print 'start pinging on', str(13)
-                        sghGC.pinUse[13] = sghGC.PULTRA
-                        
-                    if self.bfind('ultra2'):
-                        print 'start pinging on', str(7)
-                        sghGC.pinUse[7] = sghGC.PULTRA
-                        
-                elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
-                
-                    if self.bfindOnOff('all'):
-                        for i in range(1,19):
-                            PiGlow_Values[i-1] = PiGlow_Brightness * self.OnOrOff
-                            piglow.update_pwm_values(PiGlow_Values)
-                             
-                    #check LEDS
-                    for i in range(1,19):
+                #If outputs need globally inverting (7 segment common anode needs it - PiRingo etc)
+                if ('invert' in self.dataraw):
+                    sghGC.INVERT = True
+                    
+                #Change pins from input to output if more needed
+                if ('config' in dataraw):
+                    for i in range(PINS):
                         #check_broadcast = str(i) + 'on'
                         #print check_broadcast
-                        if self.bfindOnOff('led'+str(i)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
-                            piglow.update_pwm_values(PiGlow_Values)
+                        physical_pin = PIN_NUM[i]
+                        if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
+                            if PIN_USE[i] == PINPUT:                           # check to see if it is an input at moment
+                                GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
+                                print 'pin' , PIN_NUM[i] , ' out'
+                                PIN_USE[i] = POUTPUT
+                        if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
+                            if PIN_USE[i] != PINPUT:                                         # check to see if it not an input already
+                                GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
+                                print 'pin' , PIN_NUM[i] , ' in'
+                                PIN_USE[i] = PINPUT
+                                
+    ### Check for AddOn boards being declared
+                    
+                #Listen for Variable changes
+                if 'sensor-update' in dataraw:
+                    #print "sensor-update rcvd" , dataraw
+                               
+                  
+                    if "ladder" in ADDON:
+                        #do ladderboard stuff
 
-                        if self.bfindOnOff('light'+str(i)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
-                            piglow.update_pwm_values(PiGlow_Values)
-                            
-                    pcolours = ['red','orange','yellow','green','blue','white']
-                    for i in range(len(pcolours)):
-                        if self.bfindOnOff(pcolours[i]):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[i+0]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[i+12]] = PiGlow_Brightness * self.OnOrOff
-                            piglow.update_pwm_values(PiGlow_Values)
-                                                       
-                    for i in range(1,4):
-                        if self.bfindOnOff('leg'+str(i)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
-                            piglow.update_pwm_values(PiGlow_Values)
-                            
-                        if self.bfindOnOff('arm'+str(i)):
-                            #print dataraw
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
-                            PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
-                            piglow.update_pwm_values(PiGlow_Values)
+                        self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
-                elif "gpio" in ADDON: # gPiO
-                    #print ("gPiO broadcast processing")
-                    self.bCheckAll() # Check for all off/on type broadcasts
-                    self.bpinCheck() # Check for pin off/on type broadcasts
-                
-                elif "berry" in ADDON: # BerryClip
-
-                    #print ("Berry broadcast processing")                    
-                    self.bCheckAll() # Check for all off/on type broadcasts
-                    self.bLEDCheck(berryOutputs) # Check for LED off/on type broadcasts
-                    if self.bfindOnOff('buzzer'):
-                        sghGC.pinUpdate(24,self.OnOrOff)
+                        self.vLEDCheck(ladderOutputs)
+                                        
+                    elif "motorpitx" in ADDON:
+                        #do MotorPiTx stuff
+                        #check for motor variable commands
                         
-                elif "pirocon" in ADDON: # pirocon         
+                        moveServos = False
 
-                    self.bCheckAll() # Check for all off/on type broadcasrs
-                    self.bpinCheck() # Check for pin off/on type broadcasts
-                                
-                    #check pins
-                    for pin in range(sghGC.numOfPins):
-                        if self.bfindOnOff('pin' + str(pin)):
-                            sghGC.pinUpdate(pin,self.OnOrOff)
+                        if self.vFindValue('tiltoffset'):
+                            tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            moveServos = True
 
-                        if self.bfind('sonar' + str(pin)):
-                            distance = sghGC.pinSonar(pin)
-                            #print'Distance:',distance,'cm'
-                            sensor_name = 'sonar' + str(pin)
-                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                            #print 'sending: %s' % bcast_str
-                            self.send_scratch_command(bcast_str)
+                        if self.vFindValue('panoffset'):
+                            panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            moveServos = True
                             
-                        #Start using ultrasonic sensor on a pin    
-                        if self.bfind('ultra' + str(pin)):
-                            print 'start pinging on', str(pin)
-                            sghGC.pinUse[pin] = sghGC.PULTRA
-
-                
-                    motorSpeed = 100
-                    motorList = [['turnr',21,26,7],['turnl',19,24,11]]
-                    
-                    # for listLoop in range(0,2):
-                        # if self.bFindValue(motorList[listLoop][0]):
-                            # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            # turnThread = threading.Thread(target=self.stopTurn, args=[motorList[listLoop][1],motorList[listLoop][2],     
-                                                            # motorList[listLoop][3],abs(svalue*36)])
-                            # turnThread.start()                            
-                            # if svalue > 0:
-                                # sghGC.pinUpdate(motorList[listLoop][2],1)
-                                # sghGC.pinUpdate(motorList[listLoop][1],(100-motorSpeed),"pwm")
-                            # elif svalue < 0:
-                                # sghGC.pinUpdate(motorList[listLoop][2],0)
-                                # sghGC.pinUpdate(motorList[listLoop][1],(motorSpeed),"pwm")
-
-                            
-                    if self.bFindValue("move"):
-                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
-                        turnDualThread.start()                        
-                        if svalue > 0:
-                            sghGC.pinUpdate(motorList[0][2],1)
-                            sghGC.pinUpdate(motorList[0][1],(100-motorSpeed),"pwm")
-                            sghGC.pinUpdate(motorList[1][2],1)
-                            sghGC.pinUpdate(motorList[1][1],(100-motorSpeed),"pwm")                        
-                        elif svalue < 0:
-                            sghGC.pinUpdate(motorList[0][2],0)
-                            sghGC.pinUpdate(motorList[0][1],(motorSpeed),"pwm")
-                            sghGC.pinUpdate(motorList[1][2],0)
-                            sghGC.pinUpdate(motorList[1][1],(motorSpeed),"pwm")   
-                            
-                    if self.bFindValue("turn"):
-                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
-                        turnDualThread.start()                        
-                        if svalue > 0:
-                            sghGC.pinUpdate(motorList[0][2],1)
-                            sghGC.pinUpdate(motorList[0][1],(100-motorSpeed),"pwm")
-                            sghGC.pinUpdate(motorList[1][2],0)
-                            sghGC.pinUpdate(motorList[1][1],(motorSpeed),"pwm")                               
-                        elif svalue < 0:
-                            sghGC.pinUpdate(motorList[0][2],0)
-                            sghGC.pinUpdate(motorList[0][1],(motorSpeed),"pwm")
-                            sghGC.pinUpdate(motorList[1][2],1)
-                            sghGC.pinUpdate(motorList[1][1],(100-motorSpeed),"pwm")                             
-
-                
-                elif "piringo" in ADDON: # piringo
-                    #do piringo stuff
-                    self.bCheckAll() # Check for all off/on type broadcasrs
-                    self.bLEDCheck(piringoOutputs) # Check for LED off/on type broadcasts
-                    
-                elif "pibrella" in ADDON: # BerryClip
-
-                    #print ("PiBrella broadcast processing")                    
-                    self.bCheckAll() # Check for all off/on type broadcasts
-                    self.bpinCheck() # Check for pin off/on type broadcasts
-                    
-                    cLed = [["red",13],["amber",11],["green",7]]
-                    for i in range(0,3):
-                        if self.bfindOnOff(cLed[i][0]):
-                            #print cLed[i][0]
-                            sghGC.pinUpdate(cLed[i][1],self.OnOrOff)
-                            
-                    oLed = [["e",15],["f",16],["g",18],["h",22]]
-                    for i in range(0,4):
-                        if self.bfindOnOff("output" + oLed[i][0]):
-                            print oLed[i][0]
-                            sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
-
-                    if self.bFindValue("beep"):
-                        svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
-                        beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.3])
-                        beepThread.start()       
-                            
-   
-                else: # Plain GPIO Broadcast processing
-
-                    self.bCheckAll() # Check for all off/on type broadcasrs
-                    self.bpinCheck() # Check for pin off/on type broadcasts
-                                
-                    #check pins
-                    for pin in range(sghGC.numOfPins):
-                        if self.bfindOnOff('pin' + str(pin)):
-                            sghGC.pinUpdate(pin,self.OnOrOff)
-
-                        if self.bfind('sonar' + str(pin)):
-                            distance = sghGC.pinSonar(pin)
-                            #print'Distance:',distance,'cm'
-                            sensor_name = 'sonar' + str(pin)
-                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                            #print 'sending: %s' % bcast_str
-                            self.send_scratch_command(bcast_str)
-                            
-                        #Start using ultrasonic sensor on a pin    
-                        if self.bfind('ultra' + str(pin)):
-                            print 'start pinging on', str(pin)
-                            sghGC.pinUse[pin] = sghGC.PULTRA
-                       
-                                      
-                    #end of normal pin checking
-
-                            
-                stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
-                for listLoop in range(0,2):
-                    #print ("loop" , listLoop)
-                    if self.bFindValue(stepperList[listLoop][0]):
-                        if self.valueIsNumeric:
-                            self.stepperUpdate(stepperList[listLoop][1],10,self.valueNumeric)
+                        if self.vFindValue('tilt'):
+                            #print "tilt command rcvd"
+                            if self.valueIsNumeric:
+                                tilt = int(self.valueNumeric) 
+                                moveServos = True
+                                #print "tilt=", tilt
+                            elif self.value == "off":
+                                os.system("echo " + "0" + "=0 > /dev/servoblaster")
                         else:
-                            self.stepperUpdate(stepperList[listLoop][1],0)                            
+                            if self.vFindValue('servoa'):
+                                #print "tilt command rcvd"
+                                if self.valueIsNumeric:
+                                    tilt = int(self.valueNumeric) 
+                                    moveServos = True
+                                    #print "tilt=", tilt
+                                elif self.value == "off":
+                                    sghGC.pinServod(12,"off")
+                                    
+                        if self.vFindValue('pan'):
+                            #print "pan command rcvd"
+                            if self.valueIsNumeric:
+                                pan = int(self.valueNumeric) 
+                                moveServos = True
+                                #print "pan=", pan
+                            elif self.value == "off":
+                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                        else:
+                            if self.vFindValue('servob'):
+                                #print "pan command rcvd"
+                                if self.valueIsNumeric:
+                                    pan = int(self.valueNumeric) 
+                                    moveServos = True
+                                    #print "pan=", pan
+                                elif self.value == "off":
+                                    sghGC.pinServod(10,"off")
+                       
+                        if moveServos == True:
+                            degrees = int(tilt + tiltoffset)
+                            degrees = min(80,max(degrees,-60))
+                            servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            sghGC.pinServod(12,servodvalue)
+                            degrees = int(pan + panoffset)
+                            degrees = min(90,max(degrees,-90))
+                            servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            sghGC.pinServod(10,servodvalue)
 
-                if self.bfind('pinpattern'):
-                    #print 'Found pinpattern broadcast'
-                    #print dataraw
-                    #num_of_bits = PINS
-                    outputall_pos = self.dataraw.find('pinpattern')
-                    sensor_value = self.dataraw[(outputall_pos+10):].split()
-                    #print sensor_value
-                    #sensor_value[0] = sensor_value[0][:-1]                    
-                    #print sensor_value[0]
-                    bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-sghGC.numOfPins:]
-                    #print 'bit_pattern %s' % bit_pattern
-                    j = 0
-                    for pin in range(sghGC.numOfPins):
-                        if (sghGC.pinUse[pin] == sghGC.POUTPUT):
-                            #print "pin" , bit_pattern[-(j+1)]
-                            if bit_pattern[-(j+1)] == '0':
-                                sghGC.pinUpdate(pin,0)
-                            else:
-                                sghGC.pinUpdate(pin,1)
-                            j = j + 1
-                             
-                if pcfSensor != None: #if PCF ADC found
-                    for channel in range(1,5): #loop thru all 4 inputs
-                        if self.bfind('adc'+str(channel)):
-                            adc = pcfSensor.readADC(channel - 1) # get each value
+
+                        #check for motor variable commands
+                        motorList = [['motor1',19,21,23],['motor2',18,16,22]]
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                # This technique can be used if enabel is held high by hardware
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][3],1)# set enable to 1
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)            
+                                    sghGC.pinUpdate(motorList[listLoop][2],(svalue),"pwm")   
+                                    sghGC.pinUpdate(motorList[listLoop][3],1) # set enable to 1
+                                else:
+                                    sghGC.pinUpdate(motorList[listLoop][3],0)                      
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    
+                            
+                    elif (("piglow" in ADDON) and (piglow != None)):
+                        #do PiGlow stuff but make sure PiGlow physically detected             
+                     
+                        #check LEDS
+                        for i in range(1,19):
+                            if self.vFindValue('led' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+                                
+                        for i in range(1,4):
+                            if self.vFindValue('leg' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+                                
+                            if self.vFindValue('arm' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+                                
+                        pcolours = ['red','orange','yellow','green','blue','white']
+                        for i in range(len(pcolours)):
+                            if self.vFindValue(pcolours[i]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[i+0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[i+6]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[i+12]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+                            
+                                
+                        #Use bit pattern to control leds
+                        if self.vFindValue('ledpattern'):
+                            #print 'Found ledpattern'
+                            num_of_bits = 18
+                            bit_pattern = ('00000000000000000000000000' + self.value)[-num_of_bits:]
+                            #print 'led_pattern %s' % bit_pattern
+                            j = 0
+                            for i in range(18):
+                            #bit_state = ((2**i) & sensor_value) >> i
+                            #print 'dummy pin %d state %d' % (i, bit_state)
+                                if bit_pattern[-(j+1)] == '0':
+                                    PiGlow_Values[PiGlow_Lookup[i]] = 0
+                                else:
+                                    PiGlow_Values[PiGlow_Lookup[i]] = 1
+                                j = j + 1
+                            
+                            piglow.update_pwm_values(PiGlow_Values)
+                            
+                        if self.vFindValue('bright'):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            svalue= min(255,max(svalue,0))
+                            PiGlow_Brightness = svalue
+                            
+                    elif "gpio" in ADDON:
+                        #do gPiO stuff
+                        
+                        self.vAllCheck("allpins") # check Allpins On/Off/High/Low/1/0
+     
+                        self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
+                                
+                        #check for motor variable commands
+                        motorList = [['motora',11,12],['motorb',13,15]]
+                        #motorList = [['motora',21,26],['motorb',19,24]]
+                        for listLoop in range(0,2):
+                            #print motorList[listLoop]
+                            checkStr = motorList[listLoop][0]
+                            if self.vFind(checkStr):
+                                tempValue = getValue(checkStr, dataraw)
+                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
+                                #print "svalue", svalue
+                                if svalue > 0:
+                                    #print motorList[listLoop]
+                                    #print "motor set forward" , svalue
+                                    self.pinUpdate(motorList[listLoop][2],1)
+                                    self.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                elif svalue < 0:
+                                    #print motorList[listLoop]
+                                    #print "motor set backward", svalue
+                                    self.pinUpdate(motorList[listLoop][2],0)
+                                    self.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                else:
+                                    #print svalue, "zero"
+                                    self.pinUpdate(motorList[listLoop][1],0)
+                                    self.pinUpdate(motorList[listLoop][2],0)
+
+                        ######### End of gPiO Variable handling
+                       
+                    elif "berry" in ADDON:
+                        #do BerryClip stuff
+                        self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+
+                        self.vLEDCheck(berryOutputs) # check All LEDS On/Off/High/Low/1/0
+                                    
+                        if self.vFindOnOff('buzzer'):
+                            self.index_pin_update(24,self.valueNumeric)
+
+                        ######### End of BerryClip Variable handling
+                        
+                    elif "pirocon" in ADDON:
+                        #do PiRoCon stuff
+                        #print "panoffset" , panoffset, "tilt",tiltoffset
+                        moveServos = False
+
+                        if self.vFindValue('tiltoffset'):
+                            tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            moveServos = True
+
+                        if self.vFindValue('panoffset'):
+                            panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            moveServos = True
+                            
+                        if self.vFindValue('tilt'):
+                            #print "tilt command rcvd"
+                            if self.valueIsNumeric:
+                                tilt = int(self.valueNumeric) 
+                                moveServos = True
+                                #print "tilt=", tilt
+                            elif self.value == "off":
+                                os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                        else:
+                            if self.vFindValue('servoa'):
+                                #print "tilt command rcvd"
+                                if self.valueIsNumeric:
+                                    tilt = int(self.valueNumeric) 
+                                    moveServos = True
+                                    #print "tilt=", tilt
+                                elif self.value == "off":
+                                    os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                                    
+                        if self.vFindValue('pan'):
+                            #print "pan command rcvd"
+                            if self.valueIsNumeric:
+                                pan = int(self.valueNumeric) 
+                                moveServos = True
+                                #print "pan=", pan
+                            elif self.value == "off":
+                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                        else:
+                            if self.vFindValue('servob'):
+                                #print "pan command rcvd"
+                                if self.valueIsNumeric:
+                                    pan = int(self.valueNumeric) 
+                                    moveServos = True
+                                    #print "pan=", pan
+                                elif self.value == "off":
+                                    os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                       
+                        if moveServos == True:
+                            degrees = int(tilt + tiltoffset)
+                            degrees = min(80,max(degrees,-60))
+                            servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            #print "sending", servodvalue, "to servod"
+                            #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                            sghGC.pinServod(18,servodvalue)
+                            #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
+                            degrees = int(pan + panoffset)
+                            degrees = min(90,max(degrees,-90))
+                            servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            sghGC.pinServod(22,servodvalue)
+                            #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
+
+
+                        #check for motor variable commands
+                        motorList = [['motora',21,26],['motorb',19,24]]
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                else:
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                        
+
+                        if (pcaPWM != None):
+                            for i in range(0, 16): # go thru servos on PCA Board
+                                if self.vFindValue('servo' + str(i + 1)):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
+                                    #print i, svalue
+                                    pcaPWM.setPWM(i, 0, svalue)
+                                    
+                            for i in range(0, 16): # go thru PowerPWM on PCA Board
+                                if self.vFindValue('power' + str(i + 1)):
+                                    svalue = int(self.valueNueric) if self.valueIsNumeric else 0
+                                    svalue = min(4095,max(((svalue * 4096) /100),0))
+                                    pcaPWM.setPWM(i, 0, svalue)
+                                    
+                        ######### End of PiRoCon Variable handling
+                    elif "piringo" in ADDON:
+                        #do piringo stuff
+
+                        self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+
+                        self.vLEDCheck(piringoOutputs)
+                        
+                        
+                    elif "pibrella" in ADDON: # PiBrella
+               
+                        self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
+     
+                        self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
+
+                        cLed = [["redpower",13],["amberpower",11],["greenpower",7]]
+                        for i in range(0,3):
+                            if self.vFindValue(cLed[i][0]):
+                                if self.valueIsNumeric:
+                                    sghGC.pinUpdate(cLed[i][1],self.valueNumeric,"pwm")
+                                else:
+                                    sghGC.pinUpdate(cLed[i][1],0)
+                                    
+                        oLed = [["powere",15],["powerf",16],["powerg",18],["powerh",22]]
+                        for i in range(0,4):
+                            if self.vFindValue(oLed[i][0]):
+                                if self.valueIsNumeric:
+                                    sghGC.pinUpdate(oLed[i][1],self.valueNumeric,"pwm")
+                                else:
+                                    sghGC.pinUpdate(oLed[i][1],0)        
+                                    
+                        if self.vFindValue("beep"):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
+                            beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.2])
+                            beepThread.start()
+                            
+                    else:   #normal variable processing with no add on board
+                        
+                        self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
+     
+                        self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
+                        
+                        if steppersInUse == True:
+                            stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
+                            for listLoop in range(0,2):
+                                if self.vFindValue(stepperList[listLoop][0]):
+                                    if self.valueIsNumeric:
+                                        self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
+                                    else:
+                                        self.stepperUpdate(stepperList[listLoop][1],0)
+                                     
+                            stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
+                            for listLoop in range(0,2):
+                                #print ("look for steppers") 
+                                if self.vFindValue(stepperList[listLoop][0]):
+                                    print ("Found stepper",stepperList[listLoop][0])
+                                    if self.valueIsNumeric:
+                                        print ("value =",self.value)
+                                        print stepperList[listLoop][1][0]
+                                        try:
+                                            print ("Trying to see if turn prev set")
+                                            direction = int(100 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
+                                            steps = abs(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]])
+                                        except:
+                                            direction = int(100 * sign(int(self.valueNumeric)))
+                                            steps = abs(int(self.valueNumeric))
+                                            turn = [None] * sghGC.numOfPins
+                                            pass
+                                        print ("direction and steps",direction,steps)
+                                        self.stepperUpdate(stepperList[listLoop][1],direction,steps)
+                                        turn[stepperList[listLoop][1][0]] = self.valueNumeric
+                                        print ("position set to :",turn[stepperList[listLoop][1][0]])
+                                    else:
+                                        self.stepperUpdate(stepperList[listLoop][1],0)
+                                        try:
+                                            turn[stepperList[listLoop][1][0]] = 0
+                                        except:
+                                            turn = [None] * sghGC.numOfPins
+                                            turn[stepperList[listLoop][1][0]] = 0
+                                            pass
+                        else:       
+                            motorList = [['motora',11],['motorb',12]]
+                            for listLoop in range(0,2):
+                                if self.vFindValue(motorList[listLoop][0]):
+                                    if self.valueIsNumeric:
+                                        sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
+                                    else:
+                                        sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
+                                                
+                    #Use bit pattern to control ports
+                    if self.vFindValue('pinpattern'):
+                        svalue = self.value 
+                        bit_pattern = ('00000000000000000000000000'+svalue)[-sghGC.numOfPins:]
+                        j = 0
+                        onSense = '1' if sghGC.INVERT else '0' # change to look for 0 if invert on
+                        onSense = '0'
+                        for pin in range(sghGC.numOfPins):
+                            if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                                #print "pin" , bit_pattern[-(j+1)]
+                                if bit_pattern[-(j+1)] == onSense:
+                                    sghGC.pinUpdate(pin,0)
+                                else:
+                                    sghGC.pinUpdate(pin,1)
+                                j = j + 1                   
+
+                    checkStr = 'stepdelay'
+                    if  (checkStr + ' ') in dataraw:
+                        #print "MotorA Received"
+                        #print "stepper status" , stepperInUse[STEPPERA]
+                        tempValue = getValue(checkStr, dataraw)
+                        if isNumeric(tempValue):
+                            step_delay = int(float(tempValue))
+                            print 'step delay changed to', step_delay
+                            
+                    
+                    if pcfSensor != None: #if PCF ADC found
+                        if self.vFindValue('dac'):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            pcfSensor.writeDAC(svalue)
+
+    ### Check for Broadcast type messages being received
+                if 'broadcast' in self.dataraw:
+                    #print 'broadcast:' , self.dataraw
+                    
+                    if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
+                        print "no AddOns Declared"
+                        sghGC.pinUse[11] = sghGC.POUTPUT
+                        sghGC.pinUse[12] = sghGC.POUTPUT
+                        sghGC.pinUse[13] = sghGC.POUTPUT
+                        sghGC.pinUse[15] = sghGC.POUTPUT
+                        sghGC.pinUse[16] = sghGC.POUTPUT
+                        sghGC.pinUse[18] = sghGC.POUTPUT
+                        sghGC.pinUse[7]  = sghGC.PINPUT
+                        sghGC.pinUse[22] = sghGC.PINPUT
+                        sghGC.setPinMode()
+                                
+                        firstRun = False
+                    
+                    if self.bfind("stepper"):
+                        print ("Stepper declared")
+                        steppersInUse = True
+
+                    if "ladder" in ADDON: # Gordon's Ladder Board
+                        #do ladderboard stuff
+                        #print ("Ladder broadcast processing")                    
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bLEDCheck(ladderOutputs) # Check for LED off/on type broadcasts
+                                
+                    elif "motorpitx" in ADDON: # Boeeerb MotorPiTx
+
+                        if ('sonar1') in dataraw:
+                            distance = sghGC.pinSonar(13)
                             #print'Distance:',distance,'cm'
-                            sensor_name = 'adc'+str(channel)
-                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
+                            sensor_name = 'sonar' + str(13)
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)
                             
-                if self.bfind("readcount"): #update pin count values
-                    for pin in range(sghGC.numOfPins): #loop thru all pins
-                        if sghGC.pinUse[pin] == sghGC.PCOUNT:
-                            if self.bfind('readcount'+str(pin)):
-                                #print ('readcount'+str(pin))
-                                #print (sghGC.pinCount[pin])
+                        if ('sonar2') in dataraw:
+                            distance = sghGC.pinSonar(7)
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'sonar' + str(7)
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)                        
+                            
+                        if self.bfind('ultra1'):
+                            print 'start pinging on', str(13)
+                            sghGC.pinUse[13] = sghGC.PULTRA
+                            
+                        if self.bfind('ultra2'):
+                            print 'start pinging on', str(7)
+                            sghGC.pinUse[7] = sghGC.PULTRA
+                            
+                    elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
+                    
+                        if self.bfindOnOff('all'):
+                            for i in range(1,19):
+                                PiGlow_Values[i-1] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+                                 
+                        #check LEDS
+                        for i in range(1,19):
+                            #check_broadcast = str(i) + 'on'
+                            #print check_broadcast
+                            if self.bfindOnOff('led'+str(i)):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                            if self.bfindOnOff('light'+str(i)):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+                                
+                        pcolours = ['red','orange','yellow','green','blue','white']
+                        for i in range(len(pcolours)):
+                            if self.bfindOnOff(pcolours[i]):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[i+0]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[i+12]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+                                                           
+                        for i in range(1,4):
+                            if self.bfindOnOff('leg'+str(i)):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+                                
+                            if self.bfindOnOff('arm'+str(i)):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                    elif "gpio" in ADDON: # gPiO
+                        #print ("gPiO broadcast processing")
+                        self.bCheckAll() # Check for all off/on type broadcasts
+                        self.bpinCheck() # Check for pin off/on type broadcasts
+                    
+                    elif "berry" in ADDON: # BerryClip
+
+                        #print ("Berry broadcast processing")                    
+                        self.bCheckAll() # Check for all off/on type broadcasts
+                        self.bLEDCheck(berryOutputs) # Check for LED off/on type broadcasts
+                        if self.bfindOnOff('buzzer'):
+                            sghGC.pinUpdate(24,self.OnOrOff)
+                            
+                    elif "pirocon" in ADDON: # pirocon         
+
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bpinCheck() # Check for pin off/on type broadcasts
+                                    
+                        #check pins
+                        for pin in range(sghGC.numOfPins):
+                            if self.bfindOnOff('pin' + str(pin)):
+                                sghGC.pinUpdate(pin,self.OnOrOff)
+
+                            if self.bfind('sonar' + str(pin)):
+                                distance = sghGC.pinSonar(pin)
                                 #print'Distance:',distance,'cm'
-                                sensor_name = 'motorcount'+str(pin)
-                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
+                                sensor_name = 'sonar' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
                                 
-                origdataraw = self.dataraw
-                if AdaMatrix != None: #Matrix connected
-                    #print self.dataraw
-                    #print
-                    self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:]
-                    print self.dataraw
-                    #print
-                    #print self.dataraw.split('broadcast')
-                    broadcastList = self.dataraw.split(' ')
-                    for broadcastListLoop in broadcastList:
-                        self.dataraw = str(broadcastListLoop)
-                        #print self.dataraw
-                        if self.bfind("alloff"):
-                            AdaMatrix.clear()
-                        if self.bfind("sweep"):
-                            for y in range(0, 8):
-                                for x in range(0, 8):
-                                    AdaMatrix.setPixel((7-x),y)
-                                    time.sleep(0.05)
+                            #Start using ultrasonic sensor on a pin    
+                            if self.bfind('ultra' + str(pin)):
+                                print 'start pinging on', str(pin)
+                                sghGC.pinUse[pin] = sghGC.PULTRA
+
+                    
+                        motorSpeed = 100
+                        motorList = [['turnr',21,26,7],['turnl',19,24,11]]
                         
-                        for ym in range(0,8):
-                            for xm in range(0,8):
-                            
-                                if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
-                                    AdaMatrix.setPixel((7 - xm),ym)
+                        # for listLoop in range(0,2):
+                            # if self.bFindValue(motorList[listLoop][0]):
+                                # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                # turnThread = threading.Thread(target=self.stopTurn, args=[motorList[listLoop][1],motorList[listLoop][2],     
+                                                                # motorList[listLoop][3],abs(svalue*36)])
+                                # turnThread.start()                            
+                                # if svalue > 0:
+                                    # sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    # sghGC.pinUpdate(motorList[listLoop][1],(100-motorSpeed),"pwm")
+                                # elif svalue < 0:
+                                    # sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    # sghGC.pinUpdate(motorList[listLoop][1],(motorSpeed),"pwm")
+
+                                
+                        if self.bFindValue("move"):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
+                            turnDualThread.start()                        
+                            if svalue > 0:
+                                sghGC.pinUpdate(motorList[0][2],1)
+                                sghGC.pinUpdate(motorList[0][1],(100-motorSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[1][2],1)
+                                sghGC.pinUpdate(motorList[1][1],(100-motorSpeed),"pwm")                        
+                            elif svalue < 0:
+                                sghGC.pinUpdate(motorList[0][2],0)
+                                sghGC.pinUpdate(motorList[0][1],(motorSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[1][2],0)
+                                sghGC.pinUpdate(motorList[1][1],(motorSpeed),"pwm")   
+                                
+                        if self.bFindValue("turn"):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
+                            turnDualThread.start()                        
+                            if svalue > 0:
+                                sghGC.pinUpdate(motorList[0][2],1)
+                                sghGC.pinUpdate(motorList[0][1],(100-motorSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[1][2],0)
+                                sghGC.pinUpdate(motorList[1][1],(motorSpeed),"pwm")                               
+                            elif svalue < 0:
+                                sghGC.pinUpdate(motorList[0][2],0)
+                                sghGC.pinUpdate(motorList[0][1],(motorSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[1][2],1)
+                                sghGC.pinUpdate(motorList[1][1],(100-motorSpeed),"pwm")                             
+
+                    
+                    elif "piringo" in ADDON: # piringo
+                        #do piringo stuff
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bLEDCheck(piringoOutputs) # Check for LED off/on type broadcasts
+                        
+                    elif "pibrella" in ADDON: # BerryClip
+
+                        #print ("PiBrella broadcast processing")                    
+                        self.bCheckAll() # Check for all off/on type broadcasts
+                        self.bpinCheck() # Check for pin off/on type broadcasts
+                        
+                        cLed = [["red",13],["amber",11],["green",7]]
+                        for i in range(0,3):
+                            if self.bfindOnOff(cLed[i][0]):
+                                #print cLed[i][0]
+                                sghGC.pinUpdate(cLed[i][1],self.OnOrOff)
+                                
+                        oLed = [["e",15],["f",16],["g",18],["h",22]]
+                        for i in range(0,4):
+                            if self.bfindOnOff("output" + oLed[i][0]):
+                                print oLed[i][0]
+                                sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
+
+                        if self.bFindValue("beep"):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
+                            beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.3])
+                            beepThread.start()       
+                                
+       
+                    else: # Plain GPIO Broadcast processing
+
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bpinCheck() # Check for pin off/on type broadcasts
                                     
-                                if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
-                                    AdaMatrix.clearPixel((7 - xm),ym)
-                            
-                            # if self.bFindValue("matrixon"):
-                                # #print self.value
-                                # xPos = int(self.value[0:1])
-                                # yPos = int(self.value[2:3])
-                                # AdaMatrix.setPixel((7 - xPos),yPos)
+                        #check pins
+                        for pin in range(sghGC.numOfPins):
+                            if self.bfindOnOff('pin' + str(pin)):
+                                sghGC.pinUpdate(pin,self.OnOrOff)
+
+                            if self.bfind('sonar' + str(pin)):
+                                distance = sghGC.pinSonar(pin)
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'sonar' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                                #print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)
                                 
-                            # if self.bFindValue("matrixoff"):
-                                # #print self.value
-                                # xPos = int(self.value[0:1])
-                                # yPos = int(self.value[2:3])
-                                # AdaMatrix.clearPixel((7 - xPos),yPos)        
+                            #Start using ultrasonic sensor on a pin    
+                            if self.bfind('ultra' + str(pin)):
+                                print 'start pinging on', str(pin)
+                                sghGC.pinUse[pin] = sghGC.PULTRA
+                           
+                                          
+                        #end of normal pin checking
+
                                 
-                        if self.bFindValue("brightness"):
+                    stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
+                    for listLoop in range(0,2):
+                        #print ("loop" , listLoop)
+                        if self.bFindValue(stepperList[listLoop][0]):
                             if self.valueIsNumeric:
-                                AdaMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
+                                self.stepperUpdate(stepperList[listLoop][1],10,self.valueNumeric)
                             else:
-                                AdaMatrix.setBrightness(15)
-                                
-                        if self.bFindValue('matrixpattern'):
-                            bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
-                            #print 'bit_pattern %s' % bit_pattern
-                            for j in range(0,64):
-                                ym = j // 8
-                                xm = j - (8 * ym)
-                                if bit_pattern[j] == '0':
-                                    AdaMatrix.clearPixel((7 - xm),ym)
+                                self.stepperUpdate(stepperList[listLoop][1],0)                            
+
+                    if self.bfind('pinpattern'):
+                        #print 'Found pinpattern broadcast'
+                        #print dataraw
+                        #num_of_bits = PINS
+                        outputall_pos = self.dataraw.find('pinpattern')
+                        sensor_value = self.dataraw[(outputall_pos+10):].split()
+                        #print sensor_value
+                        #sensor_value[0] = sensor_value[0][:-1]                    
+                        #print sensor_value[0]
+                        bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-sghGC.numOfPins:]
+                        #print 'bit_pattern %s' % bit_pattern
+                        j = 0
+                        for pin in range(sghGC.numOfPins):
+                            if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                                #print "pin" , bit_pattern[-(j+1)]
+                                if bit_pattern[-(j+1)] == '0':
+                                    sghGC.pinUpdate(pin,0)
                                 else:
-                                    AdaMatrix.setPixel((7 - xm),ym)
+                                    sghGC.pinUpdate(pin,1)
                                 j = j + 1
+                                 
+                    if pcfSensor != None: #if PCF ADC found
+                        for channel in range(1,5): #loop thru all 4 inputs
+                            if self.bfind('adc'+str(channel)):
+                                adc = pcfSensor.readADC(channel - 1) # get each value
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'adc'+str(channel)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
+                                #print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)
                                 
-                        rowList = ['a','b','c','d','e','f','g','h']
-                        for i in range(0,8):
-                            if self.bFindValue('row'+rowList[i]):
-                                bit_pattern = (self.value + "00000000")[0:8]
+                    if self.bfind("readcount"): #update pin count values
+                        for pin in range(sghGC.numOfPins): #loop thru all pins
+                            if sghGC.pinUse[pin] == sghGC.PCOUNT:
+                                if self.bfind('readcount'+str(pin)):
+                                    #print ('readcount'+str(pin))
+                                    #print (sghGC.pinCount[pin])
+                                    #print'Distance:',distance,'cm'
+                                    sensor_name = 'motorcount'+str(pin)
+                                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
+                                    #print 'sending: %s' % bcast_str
+                                    self.send_scratch_command(bcast_str)
+                                    
+                    origdataraw = self.dataraw
+                    if AdaMatrix != None: #Matrix connected
+                        #print self.dataraw
+                        #print
+                        self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:]
+                        #print self.dataraw
+                        #print
+                        #print self.dataraw.split('broadcast')
+                        broadcastList = self.dataraw.split(' ')
+                        for broadcastListLoop in broadcastList:
+                            self.dataraw = str(broadcastListLoop)
+                            #print self.dataraw
+                            if self.bfind("alloff"):
+                                AdaMatrix.clear()
+                            if self.bfind("sweep"):
+                                for y in range(0, 8):
+                                    for x in range(0, 8):
+                                        AdaMatrix.setPixel((7-x),y)
+                                        time.sleep(0.05)
+                            
+                            for ym in range(0,8):
+                                for xm in range(0,8):
+                                
+                                    if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
+                                        AdaMatrix.setPixel((7 - xm),ym)
+                                        
+                                    if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
+                                        AdaMatrix.clearPixel((7 - xm),ym)
+                                
+                                # if self.bFindValue("matrixon"):
+                                    # #print self.value
+                                    # xPos = int(self.value[0:1])
+                                    # yPos = int(self.value[2:3])
+                                    # AdaMatrix.setPixel((7 - xPos),yPos)
+                                    
+                                # if self.bFindValue("matrixoff"):
+                                    # #print self.value
+                                    # xPos = int(self.value[0:1])
+                                    # yPos = int(self.value[2:3])
+                                    # AdaMatrix.clearPixel((7 - xPos),yPos)        
+                                    
+                            if self.bFindValue("brightness"):
+                                if self.valueIsNumeric:
+                                    AdaMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
+                                else:
+                                    AdaMatrix.setBrightness(15)
+                                    
+                            if self.bFindValue('matrixpattern'):
+                                bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
                                 #print 'bit_pattern %s' % bit_pattern
-                                for j in range(0,8):
-                                    ym = i
-                                    xm = j
-                                    if bit_pattern[(j)] == '0':
+                                for j in range(0,64):
+                                    ym = j // 8
+                                    xm = j - (8 * ym)
+                                    if bit_pattern[j] == '0':
                                         AdaMatrix.clearPixel((7 - xm),ym)
                                     else:
                                         AdaMatrix.setPixel((7 - xm),ym)
-                                        
-                        colList = ['a','b','c','d','e','f','g','h']
-                        for i in range(0,8):
-                            if self.bFindValue('col'+rowList[i]):
-                                #print self.value
-                                bit_pattern = (self.value + "00000000")[0:8]
-                                for j in range(0,8):
-                                    ym = j
-                                    xm = i
-                                    if bit_pattern[(j)] == '0':
-                                        AdaMatrix.clearPixel((7 - xm),ym)
-                                    else:
-                                        AdaMatrix.setPixel((7 - xm),ym)       
+                                    j = j + 1
+                                    
+                            rowList = ['a','b','c','d','e','f','g','h']
+                            for i in range(0,8):
+                                if self.bFindValue('row'+rowList[i]):
+                                    bit_pattern = (self.value + "00000000")[0:8]
+                                    #print 'bit_pattern %s' % bit_pattern
+                                    for j in range(0,8):
+                                        ym = i
+                                        xm = j
+                                        if bit_pattern[(j)] == '0':
+                                            AdaMatrix.clearPixel((7 - xm),ym)
+                                        else:
+                                            AdaMatrix.setPixel((7 - xm),ym)
+                                            
+                            colList = ['a','b','c','d','e','f','g','h']
+                            for i in range(0,8):
+                                if self.bFindValue('col'+rowList[i]):
+                                    #print self.value
+                                    bit_pattern = (self.value + "00000000")[0:8]
+                                    for j in range(0,8):
+                                        ym = j
+                                        xm = i
+                                        if bit_pattern[(j)] == '0':
+                                            AdaMatrix.clearPixel((7 - xm),ym)
+                                        else:
+                                            AdaMatrix.setPixel((7 - xm),ym)       
 
-                        if self.bFindValue('scrollleft'):
-                            AdaMatrix.scroll("left")
-                        if self.bFindValue('scrollright'):
-                            print "scrollr" 
-                            AdaMatrix.scroll("right")    
-                            
-                self.dataraw = origdataraw
-               
+                            if self.bFindValue('scrollleft'):
+                                AdaMatrix.scroll("left")
+                            if self.bFindValue('scrollright'):
+                                print "scrollr" 
+                                AdaMatrix.scroll("right")    
+                                
+                    self.dataraw = origdataraw
+                   
 
-                if  '1coil' in dataraw:
-                    print "1coil broadcast"
-                    stepType = 0
-                    print "step mode" ,stepMode[stepType]
-                    step_delay = 0.0025
+                    if  '1coil' in dataraw:
+                        print "1coil broadcast"
+                        stepType = 0
+                        print "step mode" ,stepMode[stepType]
+                        step_delay = 0.0025
 
-                if  '2coil' in dataraw:
-                    print "2coil broadcast"
-                    stepType = 1
-                    print "step mode" ,stepMode[stepType]
-                    step_delay = 0.0025
-                    
-                if  'halfstep' in dataraw:
-                    print "halfstep broadcast"
-                    stepType = 2
-                    print "step mode" ,stepMode[stepType]
-                    step_delay = 0.0013
-                    
-                if "version" in dataraw:
-                    bcast_str = 'sensor-update "%s" %d' % ("Version", int(Version * 1000))
-                    #print 'sending: %s' % bcast_str
-                    self.send_scratch_command(bcast_str)
+                    if  '2coil' in dataraw:
+                        print "2coil broadcast"
+                        stepType = 1
+                        print "step mode" ,stepMode[stepType]
+                        step_delay = 0.0025
+                        
+                    if  'halfstep' in dataraw:
+                        print "halfstep broadcast"
+                        stepType = 2
+                        print "step mode" ,stepMode[stepType]
+                        step_delay = 0.0013
+                        
+                    if "version" in dataraw:
+                        bcast_str = 'sensor-update "%s" %d' % ("Version", int(Version * 1000))
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
 
-                #end of broadcast check
+                    #end of broadcast check
 
 
-            if 'stop handler' in dataraw:
-                print "stop handler msg setn from Scratch"
-                cleanup_threads((listener, sender))
-                sys.exit()
+                if 'stop handler' in dataraw:
+                    print "stop handler msg setn from Scratch"
+                    cleanup_threads((listener, sender))
+                    sys.exit()
 
-            #else:
-                #print 'received something: %s' % dataraw
+                #else:
+                    #print 'received something: %s' % dataraw
 ###  End of  ScratchListner Class
 
 def create_socket(host, port):
