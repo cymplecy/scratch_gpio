@@ -309,19 +309,18 @@ class ScratchSender(threading.Thread):
                         self.send_scratch_command(bcast_str)
                         self.time_last_ping = time.time()
     
-            # if (time.time() - self.time_last_compass) > 0.25:
-                # #print "time up"
-                # #print ADDON_PRESENT[4]
-                # #print compass
-                # #If Compass board truely present
-                # if ((ADDON_PRESENT[4] == True) and (compass != None)):
-                    # #print "compass code"
-                    # heading = compass.heading()
-                    # sensor_name = 'heading'
-                    # bcast_str = 'sensor-update "%s" %d' % (sensor_name, heading)
-                    # #print 'sending: %s' % bcast_str
-                    # self.send_scratch_command(bcast_str)
-                # self.time_last_compass = time.time()
+            if (time.time() - self.time_last_compass) > 0.25:
+                #print "time up"
+                #print compass
+                #If Compass board truely present
+                if (("compass" in ADDON) and (compass != None)):
+                    #print "compass code"
+                    heading = compass.heading()
+                    sensor_name = 'heading'
+                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, heading)
+                    #print 'sending: %s' % bcast_str
+                    self.send_scratch_command(bcast_str)
+                self.time_last_compass = time.time()
 
             #time.sleep(1)
 
@@ -670,9 +669,9 @@ class ScratchListener(threading.Thread):
                 #print "Loop processing"
                 #print self.dataraw
                 #print
-                if 'sensor-update' in dataraw:
+                if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
-                    firstRunData = dataraw
+                    firstRunData = self.dataraw
                     #dataraw = ''
                     #firstRun = False
                     
@@ -680,7 +679,7 @@ class ScratchListener(threading.Thread):
                         #print "data:",datalower
                         #print "self.dataraw",self.dataraw
                         try:
-                            ADDON = datalower[(datalower.find(("addon"))):].split('"')[2] # parse orig data to get space separated list of addons
+                            ADDON = self.value # datalower[(datalower.find(("addon"))):].split('"')[2] # parse orig data to get space separated list of addons
                             print (ADDON, " declared")
                         except IndexError:
                             ADDON = "qwerty"
@@ -824,7 +823,7 @@ class ScratchListener(threading.Thread):
     ### Check for AddOn boards being declared
                     
                 #Listen for Variable changes
-                if 'sensor-update' in dataraw:
+                if 'sensor-update' in self.dataraw:
                     #print "sensor-update rcvd" , dataraw
                                
                   
