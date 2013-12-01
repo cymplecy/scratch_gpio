@@ -224,7 +224,7 @@ class GPIOController :
             return GPIO.input(pin)
         except:
             print "Some error reading pin" ,pin
-            pass
+            return 0
         
     def startServod(self, pins):
         print ("Starting servod")

@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.06' # 30Nov13
+Version =  '4.0.07' # 30Nov13
 
 
 
@@ -252,7 +252,7 @@ class ScratchSender(threading.Thread):
         global firstRun,ADDON
         # while firstRun:
             # print "first run running"
-        time.sleep(5)
+        #time.sleep(5)
         last_bit_pattern=0L
         print sghGC.pinUse
         for pin in range(sghGC.numOfPins):
@@ -598,30 +598,76 @@ class ScratchListener(threading.Thread):
             try:
                 #print "try reading socket"
                 data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
-                #print "RAW:", data
-                datalower = data.lower()
-                #print "RAW Lower:",datalower
-                dataraw = "    "+data[4:].lower() # convert all to lowercase
+                print len(data)
+                print "RAW:", data
+                
+                if len(data) > 0:
+                    dataIn = data
+                    dataOut = ""
+                    while len(dataIn) > 0:
+                        size = struct.unpack(">L", dataIn[0:4])[0]
+                        #print size
+                        if size > 0:
+                            #print dataIn[4:size + 4]
+                            dataOut = dataOut + dataIn[4:size + 4] + " "
+                            dataIn = dataIn[size+4:]
+                        
+                    print
+                    print dataOut
+                    print
+                    dataraw = dataOut.lower()
+                    #print size
+                    #print "RAW Lower:",datalower
+                    # dataraw = "    "+data[4:].lower() # convert all to lowercase
 
-                #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
-                
-                datarawList = list(dataraw)
-                #print "datarawlist:",datarawList
-                for m in re.finditer( 'broadcast', dataraw ):
-                    #print( 'bdcast found', m.start(), m.end() )
-                    datarawList[(m.start()-4):(m.start())] = [" "," "," "," "]
+                    # #print 'Received from scratch-Length: %d, Data: %s' % (len(dataraw), dataraw)
                     
-                #print datarawList
-                dataraw = ''.join(datarawList)
+                    # datarawList = list(dataraw)
+                    # #print "datarawlist:",datarawList
+                    # for m in re.finditer( 'broadcast', dataraw ):
+                        # #print( 'bdcast found', m.start(), m.end() )
+                        # datarawList[(m.start()-4):(m.start())] = [" "," "," "," "]
+                    # for m in re.finditer( 'sensor-update', dataraw ):
+                        # #print( 'bdcast found', m.start(), m.end() )
+                        # datarawList[(m.start()-4):(m.start())] = [" "," "," "," "]
+                        
+                    # #print datarawList
+                    # dataraw = ''.join(datarawList)
                 
-                if len(dataraw) > 0:
+                
                     dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataraw)])
-                    self.dataraw = dataraw
-                    #print "Sanitised"
+                    print "Sanitised"
                     print dataraw
 
+                    dataraw2 = dataraw.split(' ')
+                    #print dataraw2
+                    su = ""
+                    br = ""
+                    flag = "su"
+                    for item in dataraw2:
+                        if item == "sensor-update":
+                            flag = "su"
+                            item = ""
+                        if item == "broadcast":
+                            flag = "br"
+                            item = ""
+                        if flag == "su":
+                            su = su + str(item) + " "
+                        else:
+                            br = br + str(item) + " "
+                    #print "br:", br
+                    #print "su:", su
+                    dataraw = ""
+                    if su != "":
+                        dataraw = "sensor-update "+ su
+                    if br != "":
+                        dataraw = dataraw + " broadcast "+ br
+                    #print dataraw
+                    
+                    self.dataraw = dataraw
+                
                 #print 'Cycle trace' , cycle_trace
-                if len(dataraw) == 0:
+                if len(data) == 0:
                     #This is probably due to client disconnecting
                     #I'd like the program to retry connecting to the client
                     #tell outer loop that Scratch has disconnected
@@ -638,7 +684,7 @@ class ScratchListener(threading.Thread):
                 continue
             except:
                 print "Unknown error occured with receiving data"
-                #raise
+                raise
                 continue
 
             #print "data being processed:" , dataraw
@@ -1515,84 +1561,98 @@ class ScratchListener(threading.Thread):
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
                                 
+                origdataraw = self.dataraw
                 if AdaMatrix != None: #Matrix connected
-                    if self.bfind("alloff"):
-                        AdaMatrix.clear()
-                    if self.bfind("sweep"):
-                        for y in range(0, 8):
-                            for x in range(0, 8):
-                                AdaMatrix.setPixel((7-x),y)
-                                time.sleep(0.05)
-                    
-                    for ym in range(0,8):
-                        for xm in range(0,8):
+                    #print self.dataraw
+                    #print
+                    self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:]
+                    print self.dataraw
+                    #print
+                    #print self.dataraw.split('broadcast')
+                    broadcastList = self.dataraw.split(' ')
+                    for broadcastListLoop in broadcastList:
+                        self.dataraw = str(broadcastListLoop)
+                        #print self.dataraw
+                        if self.bfind("alloff"):
+                            AdaMatrix.clear()
+                        if self.bfind("sweep"):
+                            for y in range(0, 8):
+                                for x in range(0, 8):
+                                    AdaMatrix.setPixel((7-x),y)
+                                    time.sleep(0.05)
                         
-                            if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
-                                AdaMatrix.setPixel((7 - xm),ym)
+                        for ym in range(0,8):
+                            for xm in range(0,8):
+                            
+                                if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
+                                    AdaMatrix.setPixel((7 - xm),ym)
+                                    
+                                if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
+                                    AdaMatrix.clearPixel((7 - xm),ym)
+                            
+                            # if self.bFindValue("matrixon"):
+                                # #print self.value
+                                # xPos = int(self.value[0:1])
+                                # yPos = int(self.value[2:3])
+                                # AdaMatrix.setPixel((7 - xPos),yPos)
                                 
-                            if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
-                                AdaMatrix.clearPixel((7 - xm),ym)
-                        
-                        # if self.bFindValue("matrixon"):
-                            # #print self.value
-                            # xPos = int(self.value[0:1])
-                            # yPos = int(self.value[2:3])
-                            # AdaMatrix.setPixel((7 - xPos),yPos)
-                            
-                        # if self.bFindValue("matrixoff"):
-                            # #print self.value
-                            # xPos = int(self.value[0:1])
-                            # yPos = int(self.value[2:3])
-                            # AdaMatrix.clearPixel((7 - xPos),yPos)        
-                            
-                    if self.bFindValue("brightness"):
-                        if self.valueIsNumeric:
-                            AdaMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
-                        else:
-                            AdaMatrix.setBrightness(15)
-                            
-                    if self.bFindValue('matrixpattern'):
-                        bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
-                        #print 'bit_pattern %s' % bit_pattern
-                        for j in range(0,64):
-                            ym = j // 8
-                            xm = j - (8 * ym)
-                            if bit_pattern[j] == '0':
-                                AdaMatrix.clearPixel((7 - xm),ym)
+                            # if self.bFindValue("matrixoff"):
+                                # #print self.value
+                                # xPos = int(self.value[0:1])
+                                # yPos = int(self.value[2:3])
+                                # AdaMatrix.clearPixel((7 - xPos),yPos)        
+                                
+                        if self.bFindValue("brightness"):
+                            if self.valueIsNumeric:
+                                AdaMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
                             else:
-                                AdaMatrix.setPixel((7 - xm),ym)
-                            j = j + 1
-                            
-                    rowList = ['a','b','c','d','e','f','g','h']
-                    for i in range(0,8):
-                        if self.bFindValue('row'+rowList[i]):
-                            bit_pattern = (self.value + "00000000")[0:8]
+                                AdaMatrix.setBrightness(15)
+                                
+                        if self.bFindValue('matrixpattern'):
+                            bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
                             #print 'bit_pattern %s' % bit_pattern
-                            for j in range(0,8):
-                                ym = i
-                                xm = j
-                                if bit_pattern[(j)] == '0':
+                            for j in range(0,64):
+                                ym = j // 8
+                                xm = j - (8 * ym)
+                                if bit_pattern[j] == '0':
                                     AdaMatrix.clearPixel((7 - xm),ym)
                                 else:
                                     AdaMatrix.setPixel((7 - xm),ym)
-                                    
-                    colList = ['a','b','c','d','e','f','g','h']
-                    for i in range(0,8):
-                        if self.bFindValue('col'+rowList[i]):
-                            bit_pattern = (self.value + "00000000")[0:8]
-                            for j in range(0,8):
-                                ym = j
-                                xm = i
-                                if bit_pattern[(j)] == '0':
-                                    AdaMatrix.clearPixel((7 - xm),ym)
-                                else:
-                                    AdaMatrix.setPixel((7 - xm),ym)       
+                                j = j + 1
+                                
+                        rowList = ['a','b','c','d','e','f','g','h']
+                        for i in range(0,8):
+                            if self.bFindValue('row'+rowList[i]):
+                                bit_pattern = (self.value + "00000000")[0:8]
+                                #print 'bit_pattern %s' % bit_pattern
+                                for j in range(0,8):
+                                    ym = i
+                                    xm = j
+                                    if bit_pattern[(j)] == '0':
+                                        AdaMatrix.clearPixel((7 - xm),ym)
+                                    else:
+                                        AdaMatrix.setPixel((7 - xm),ym)
+                                        
+                        colList = ['a','b','c','d','e','f','g','h']
+                        for i in range(0,8):
+                            if self.bFindValue('col'+rowList[i]):
+                                #print self.value
+                                bit_pattern = (self.value + "00000000")[0:8]
+                                for j in range(0,8):
+                                    ym = j
+                                    xm = i
+                                    if bit_pattern[(j)] == '0':
+                                        AdaMatrix.clearPixel((7 - xm),ym)
+                                    else:
+                                        AdaMatrix.setPixel((7 - xm),ym)       
 
-                    if self.bFindValue('scrollleft'):
-                        AdaMatrix.scroll("left")
-                    if self.bFindValue('scrollright'):
-                        print "scrollr" 
-                        AdaMatrix.scroll("right")    
+                        if self.bFindValue('scrollleft'):
+                            AdaMatrix.scroll("left")
+                        if self.bFindValue('scrollright'):
+                            print "scrollr" 
+                            AdaMatrix.scroll("right")    
+                            
+                self.dataraw = origdataraw
                
 
                 if  '1coil' in dataraw:
@@ -1678,7 +1738,7 @@ ADDON = ""
  
 PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
-BUFFER_SIZE = 1024 #used to be 100
+BUFFER_SIZE = 8192 #used to be 100
 SOCKET_TIMEOUT = 1
 firstRun = True
 
