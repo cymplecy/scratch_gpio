@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.07' # 30Nov13
+Version =  '4.0.09' # 3Dec13
 
 
 
@@ -164,6 +164,7 @@ class MyError(Exception):
         return repr(self.value)
 
 class ScratchSender(threading.Thread):
+
     def __init__(self, socket):
         threading.Thread.__init__(self)
         self.scratch_socket = socket
@@ -171,6 +172,8 @@ class ScratchSender(threading.Thread):
         self.time_last_ping = 0.0
         self.time_last_compass = 0.0
         self.distlist = [0.0,0.0,0.0]
+        
+        
 
 
     def stop(self):
@@ -203,6 +206,8 @@ class ScratchSender(threading.Thread):
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         #self.send_scratch_command(bcast_str)   
+        
+        #Normal action is to just send updates to pin values but this can be modified if known addon in use
         if "ladder" in ADDON:
             #do ladderboard stuff
             sensor_name = "switch" + str([0,21,19,24,26].index(pin))
@@ -249,7 +254,7 @@ class ScratchSender(threading.Thread):
         self.scratch_socket.send(b + cmd)
 
     def run(self):
-        global firstRun,ADDON
+        global firstRun,ADDON,compass
         # while firstRun:
             # print "first run running"
         #time.sleep(5)
@@ -268,13 +273,17 @@ class ScratchSender(threading.Thread):
             time.sleep(0.01) # be kind to cpu  :)
             #print "sender running"
             pin_bit_pattern = 0
-            for pin in range(sghGC.numOfPins):
-                #print pin
-                if (sghGC.pinUse[pin] == sghGC.PINPUT):
-                    #print 'trying to read pin' , pin 
-                    pin_bit_pattern += sghGC.pinRead(pin) << pin
-                else:
-                    pin_bit_pattern += 1 << pin
+            with lock:
+                #print "lOCKED"
+                for pin in range(sghGC.numOfPins):
+                    #print pin
+                    if (sghGC.pinUse[pin] == sghGC.PINPUT):
+                        #print 'trying to read pin' , pin 
+                        pin_bit_pattern += sghGC.pinRead(pin) << pin
+                    else:
+                        pin_bit_pattern += 1 << pin
+            
+            #print "unlocked"
                 #print bin(pin_bit_pattern) , pin_bit_pattern
             #print bin(pin_bit_pattern) , pin_bit_pattern
             # if there is a change in the input pins
@@ -313,7 +322,7 @@ class ScratchSender(threading.Thread):
                 #print "time up"
                 #print compass
                 #If Compass board truely present
-                if (("compass" in ADDON) and (compass != None)):
+                if (compass != None):
                     #print "compass code"
                     heading = compass.heading()
                     sensor_name = 'heading'
@@ -581,6 +590,7 @@ class ScratchListener(threading.Thread):
         #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
         anyAddOns = False
+        ADDON = ""
 
         #semi global variables used for servos in PiRoCon
         panoffset = 0
@@ -591,31 +601,43 @@ class ScratchListener(threading.Thread):
         
         #This is main listening routine
         lcount = 0
+        dataPrevious = ""
         while not self.stopped():
             #lcount += 1
             #print lcount
             try:
                 #print "try reading socket"
-                BUFFER_SIZE = 8192
-                data = self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket
+                BUFFER_SIZE = 512 # This size will accomdate normal Scratch Control 'droid app sensor updates
+                data = dataPrevious + self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket plus any data not yet processed
                 #print len(data)
                 #print "RAW:", data
                 
                 if len(data) > 0: # Connection still valid so process the data received
                 
-                    dataIn = data
-                    dataOut = ""
-                    dataList = []
-                    dataPrefix = ""
-                    dataListItem = ""
-                    while len(dataIn) > 0: # loop thru data and remove size information to produce a space delimited string
-                        size = struct.unpack(">L", dataIn[0:4])[0]
-                        #print size
+                    dataIn = data 
+                    #dataOut = ""
+                    dataList = [] # used to hold series of broadcasts or sensor updates
+                    dataPrefix = "" # data to be re-added onto front of incoming data
+                    while len(dataIn) > 0: # loop thru data 
+                        if len(dataIn) < 4:  #If whole length not received then break out of loop
+                            #print "<4 chrs received"
+                            dataPrevious = dataIn # store data and tag it onto next data read
+                            break
+                        sizeInfo = dataIn[0:4]
+                        size = struct.unpack(">L", sizeInfo)[0] # get size of Scratch msg
+                        #print "size:", size
                         if size > 0:
                             #print dataIn[4:size + 4]
-                            dataOut = dataOut + dataIn[4:size + 4].lower() + " "
-                            dataMsg = dataIn[4:size + 4].lower()
-                            if dataMsg[0:2] == "br":
+                            #dataOut = dataOut + dataIn[4:size + 4].lower() + " "
+                            dataMsg = dataIn[4:size + 4].lower() # turn msg into lower case
+                            #print "msg:",dataMsg
+                            if len(dataMsg) < size: # if msg recieved is too small
+                                #print "half msg found"
+                                #print size, len(dataMsg)
+                                dataPrevious = dataIn # store data and tag it onto next data read
+                                break
+                            dataPrevious = "" # no data needs tagging to next read
+                            if dataMsg[0:2] == "br": # removed redundant "broadcast" and "sensor-update" txt
                                 if dataPrefix == "br":
                                     dataList[-1] = dataList[-1] + " "+ dataMsg[10:]
                                 else:
@@ -628,20 +650,15 @@ class ScratchListener(threading.Thread):
                                     dataList.append(dataMsg)
                                     dataPrefix = "se"
                                     
-                            dataIn = dataIn[size+4:]
-                    #print
-                    #print "datalist:" ,dataList
-                    #for i in dataList:
-                    #    print i
-                    #print
-                
-                    #dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataOut)])
-                    
-                    #self.dataraw = dataraw
+                            dataIn = dataIn[size+4:] # cut data down that's been processed
+                            
+                    #print "previous:", dataPrevious
+                   
+
                 
                 #print 'Cycle trace' , cycle_trace
                 if len(data) == 0:
-                    #This is probably due to client disconnecting
+                    #This is due to client disconnecting or user loading new Scratch program so temp disconnect
                     #I'd like the program to retry connecting to the client
                     #tell outer loop that Scratch has disconnected
                     if cycle_trace == 'running':
@@ -659,10 +676,13 @@ class ScratchListener(threading.Thread):
                 print "Unknown error occured with receiving data"
                 raise
                 continue
-
+            
+            #At this point dataList[] contains a series of strings either broadcast or sensor-updates
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             #if (firstRun == True) or (anyAddOns == False):
+            #print 
+            #print dataList
             for dataItem in dataList:
                 dataraw = dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 self.dataraw = dataraw
@@ -676,15 +696,23 @@ class ScratchListener(threading.Thread):
                     #firstRun = False
                     
                     if self.vFindValue("addon"):
+                        ADDON = self.value
+                        print (ADDON, " declared")
+                        
+                        print "set pins to default"
+                        sghGC.pinUse[11] = sghGC.POUTPUT
+                        sghGC.pinUse[12] = sghGC.POUTPUT
+                        sghGC.pinUse[13] = sghGC.POUTPUT
+                        sghGC.pinUse[15] = sghGC.POUTPUT
+                        sghGC.pinUse[16] = sghGC.POUTPUT
+                        sghGC.pinUse[18] = sghGC.POUTPUT
+                        sghGC.pinUse[7]  = sghGC.PINPUT
+                        sghGC.pinUse[22] = sghGC.PINPUT
+                        sghGC.setPinMode()
                         #print "data:",datalower
                         #print "self.dataraw",self.dataraw
-                        try:
-                            ADDON = self.value # datalower[(datalower.find(("addon"))):].split('"')[2] # parse orig data to get space separated list of addons
-                            print (ADDON, " declared")
-                        except IndexError:
-                            ADDON = "qwerty"
-                            pass
-
+                        
+                        
                         if "ladder" in ADDON:
                             ladderOutputs = [11,12,13,15,16,18,22, 7, 5, 3]
                             for pin in ladderOutputs:
@@ -1713,12 +1741,14 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
+
  
 PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
 BUFFER_SIZE = 8192 #used to be 100
-SOCKET_TIMEOUT = 1
+SOCKET_TIMEOUT = 2
 firstRun = True
+lock = threading.Lock()
 
 piglow = None
 try:
@@ -1802,7 +1832,7 @@ while True:
         print 'Starting to connect...' ,
         the_socket = create_socket(host, PORT)
         print 'Connected!'
-        the_socket.settimeout(SOCKET_TIMEOUT)
+        the_socket.settimeout(SOCKET_TIMEOUT) #removed 3dec13 to see what happens
         listener = ScratchListener(the_socket)
 #        steppera = StepperControl(11,12,13,15,step_delay)
 #        stepperb = StepperControl(16,18,22,7,step_delay)
