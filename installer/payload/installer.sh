@@ -71,6 +71,9 @@ cp sgh_Stepper.py $HDIR/scratchgpio4
 cp sgh_servod $HDIR/scratchgpio4
 cp killsgh.sh $HDIR/scratchgpio4
 
+cp sgh_Adafruit_8x8.py $HDIR/scratchgpio4
+cp sgh_Adafruit_LEDBackpack.py $HDIR/scratchgpio4
+
 chown -R $USERID:$GROUPID $HDIR/scratchgpio4
 chmod +x sgh_servod
 chmod +x killsgh.sh
