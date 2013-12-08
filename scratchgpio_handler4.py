@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.09' # 3Dec13
+Version =  '4.0.10' # 6Dec13
 
 
 
@@ -570,12 +570,14 @@ class ScratchListener(threading.Thread):
         print ("Dual Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))    
 
     def beep(self,pin,freq,duration):
+        if sghGC.pinUse != sghGC.PPWM:
+            sghGC.pinUpdate(pin,0,"pwm")
         startCount = time.time()
+        sghGC.pinFreq(pin,freq)
+        sghGC.pinUpdate(pin,50,"pwm")
         while (time.time() - startCount) < (duration * 1.0):
-            sghGC.pinUpdate(pin,1)
-            time.sleep(1.0/(freq *2))
-            sghGC.pinUpdate(pin,0)
-            time.sleep(1.0/(freq *2))
+            time.sleep(0.01)
+        sghGC.pinUpdate(pin,0,"pwm")
         print ("Beep Stopped")        
 
         
@@ -609,8 +611,8 @@ class ScratchListener(threading.Thread):
                 #print "try reading socket"
                 BUFFER_SIZE = 512 # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket plus any data not yet processed
-                #print len(data)
-                #print "RAW:", data
+                print len(data)
+                print "RAW:", data
                 
                 if len(data) > 0: # Connection still valid so process the data received
                 
@@ -674,7 +676,7 @@ class ScratchListener(threading.Thread):
                 continue
             except:
                 print "Unknown error occured with receiving data"
-                raise
+                #raise
                 continue
             
             #At this point dataList[] contains a series of strings either broadcast or sensor-updates
@@ -682,12 +684,12 @@ class ScratchListener(threading.Thread):
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             #if (firstRun == True) or (anyAddOns == False):
             #print 
-            #print dataList
+            #print "dataList:",dataList
             for dataItem in dataList:
                 dataraw = dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 self.dataraw = dataraw
-                #print "Loop processing"
-                #print self.dataraw
+                print "Loop processing"
+                print self.dataraw
                 #print
                 if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
@@ -1479,11 +1481,12 @@ class ScratchListener(threading.Thread):
                         oLed = [["e",15],["f",16],["g",18],["h",22]]
                         for i in range(0,4):
                             if self.bfindOnOff("output" + oLed[i][0]):
-                                print oLed[i][0]
+                                #print oLed[i][0]
                                 sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
 
                         if self.bFindValue("beep"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
+                            #print svalue
                             beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.3])
                             beepThread.start()       
                                 
@@ -1659,7 +1662,26 @@ class ScratchListener(threading.Thread):
                                 AdaMatrix.scroll("right")    
                                 
                     self.dataraw = origdataraw
-                   
+                    
+                    if self.bfind('time'):
+                        now = dt.datetime.now()
+                        #print now
+                        fulldatetime = now.strftime('%Y%m%d%H%M%S')
+                        sensor_name = 'fulldatetime'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, fulldatetime)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
+                        hrs = now.strftime('%H')
+                        sensor_name = 'hours'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, hrs)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
+                        minutes = now.strftime('%M')
+                        sensor_name = 'minutes'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, minutes)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
+                    
 
                     if  '1coil' in dataraw:
                         print "1coil broadcast"
