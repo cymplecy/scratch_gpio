@@ -17,8 +17,6 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.1.0' # 12Nov13
-
 import RPi.GPIO as GPIO
 import time
 import os
@@ -162,6 +160,8 @@ class GPIOController :
             print "mistake made in trying to update an invalid pin"
             pass
         
+    def pinFreq(self, pin, freq):
+        self.pinRef[pin].ChangeFrequency(freq)
 
     def pinSonar(self, pin):
         self.pinUse[pin] = self.PSONAR

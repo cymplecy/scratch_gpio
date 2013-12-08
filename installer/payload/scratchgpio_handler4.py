@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.09' # 3Dec13
+Version =  '4.0.10' # 6Dec13
 
 
 
@@ -570,12 +570,14 @@ class ScratchListener(threading.Thread):
         print ("Dual Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))    
 
     def beep(self,pin,freq,duration):
+        if sghGC.pinUse != sghGC.PPWM:
+            sghGC.pinUpdate(pin,0,"pwm")
         startCount = time.time()
+        sghGC.pinFreq(pin,freq)
+        sghGC.pinUpdate(pin,50,"pwm")
         while (time.time() - startCount) < (duration * 1.0):
-            sghGC.pinUpdate(pin,1)
-            time.sleep(1.0/(freq *2))
-            sghGC.pinUpdate(pin,0)
-            time.sleep(1.0/(freq *2))
+            time.sleep(0.01)
+        sghGC.pinUpdate(pin,0,"pwm")
         print ("Beep Stopped")        
 
         
@@ -609,8 +611,8 @@ class ScratchListener(threading.Thread):
                 #print "try reading socket"
                 BUFFER_SIZE = 512 # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket plus any data not yet processed
-                #print len(data)
-                #print "RAW:", data
+                print len(data)
+                print "RAW:", data
                 
                 if len(data) > 0: # Connection still valid so process the data received
                 
@@ -674,7 +676,7 @@ class ScratchListener(threading.Thread):
                 continue
             except:
                 print "Unknown error occured with receiving data"
-                raise
+                #raise
                 continue
             
             #At this point dataList[] contains a series of strings either broadcast or sensor-updates
@@ -682,12 +684,12 @@ class ScratchListener(threading.Thread):
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             #if (firstRun == True) or (anyAddOns == False):
             #print 
-            #print dataList
+            #print "dataList:",dataList
             for dataItem in dataList:
                 dataraw = dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 self.dataraw = dataraw
-                #print "Loop processing"
-                #print self.dataraw
+                print "Loop processing"
+                print self.dataraw
                 #print
                 if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
@@ -810,7 +812,15 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[pin] = sghGC.PINPUTDOWN
 
                             sghGC.setPinMode()
-                            anyAddOns = True                        
+                            anyAddOns = True      
+
+                        if "rgbled" in ADDON:
+                            rgbOutputs = [12,16,18,22,7,11,13,15]
+                            for pin in rgbOutputs:
+                                sghGC.pinUse[pin] = sghGC.POUTPUT
+
+                            sghGC.setPinMode()
+                            anyAddOns = True                               
 
                 if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     print "no AddOns Declared"
@@ -1185,6 +1195,34 @@ class ScratchListener(threading.Thread):
                             beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.2])
                             beepThread.start()
                             
+                    elif "rgbled" in ADDON: # RGB-LED by Meltwater/rsstab/tim cox
+               
+                        self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
+     
+                        self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
+                        
+
+                        # cLed = [["redpower",13],["amberpower",11],["greenpower",7]]
+                        # for i in range(0,3):
+                            # if self.vFindValue(cLed[i][0]):
+                                # if self.valueIsNumeric:
+                                    # sghGC.pinUpdate(cLed[i][1],self.valueNumeric,"pwm")
+                                # else:
+                                    # sghGC.pinUpdate(cLed[i][1],0)
+                                    
+                        # oLed = [["powere",15],["powerf",16],["powerg",18],["powerh",22]]
+                        # for i in range(0,4):
+                            # if self.vFindValue(oLed[i][0]):
+                                # if self.valueIsNumeric:
+                                    # sghGC.pinUpdate(oLed[i][1],self.valueNumeric,"pwm")
+                                # else:
+                                    # sghGC.pinUpdate(oLed[i][1],0)        
+                                    
+                        # if self.vFindValue("beep"):
+                            # svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
+                            # beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.2])
+                            # beepThread.start()
+                            
                     else:   #normal variable processing with no add on board
                         
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
@@ -1479,13 +1517,54 @@ class ScratchListener(threading.Thread):
                         oLed = [["e",15],["f",16],["g",18],["h",22]]
                         for i in range(0,4):
                             if self.bfindOnOff("output" + oLed[i][0]):
-                                print oLed[i][0]
+                                #print oLed[i][0]
                                 sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
 
                         if self.bFindValue("beep"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
+                            #print svalue
                             beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.3])
-                            beepThread.start()       
+                            beepThread.start()     
+
+                    elif "rgbled" in ADDON: # rgb-led
+
+                        #print ("rgb-led broadcast processing")            
+                        if self.bfindOnOff("all"):
+                            for loop in range(0,5):
+                                sghGC.pinUpdate(rgbOutputs[loop],1 - self.OnOrOff)
+                            for loop in range(5,8):
+                                sghGC.pinUpdate(rgbOutputs[loop],self.OnOrOff)
+
+                        rgbList = rgbOutputs[0:5]
+                        for listLoop in rgbList:
+                            if self.bfindOnOff("led"+str(1+rgbList.index(listLoop))):
+                                sghGC.pinUpdate(rgbOutputs[rgbList.index(listLoop)],1-self.OnOrOff)
+                        
+                        
+                        rgbList = ["red","green","blue"]
+                        for listLoop in rgbList:
+                            if self.bfindOnOff(listLoop):
+                                print listLoop , "found",
+                                sghGC.pinUpdate(rgbOutputs[5+rgbList.index(listLoop)],self.OnOrOff)
+
+                        
+                        # cLed = [["red",13],["amber",11],["green",7]]
+                        # for i in range(0,3):
+                            # if self.bfindOnOff(cLed[i][0]):
+                                #print cLed[i][0]
+                                # sghGC.pinUpdate(cLed[i][1],self.OnOrOff)
+                                
+                        # oLed = [["e",15],["f",16],["g",18],["h",22]]
+                        # for i in range(0,4):
+                            # if self.bfindOnOff("output" + oLed[i][0]):
+                                #print oLed[i][0]
+                                # sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
+
+                        # if self.bFindValue("beep"):
+                            # svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
+                            #print svalue
+                            # beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.3])
+                            # beepThread.start()   
                                 
        
                     else: # Plain GPIO Broadcast processing
@@ -1659,7 +1738,26 @@ class ScratchListener(threading.Thread):
                                 AdaMatrix.scroll("right")    
                                 
                     self.dataraw = origdataraw
-                   
+                    
+                    if self.bfind('gettime'):
+                        now = dt.datetime.now()
+                        #print now
+                        fulldatetime = now.strftime('%Y%m%d%H%M%S')
+                        sensor_name = 'fulldatetime'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, fulldatetime)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
+                        hrs = now.strftime('%H')
+                        sensor_name = 'hours'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, hrs)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
+                        minutes = now.strftime('%M')
+                        sensor_name = 'minutes'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, minutes)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
+                    
 
                     if  '1coil' in dataraw:
                         print "1coil broadcast"
