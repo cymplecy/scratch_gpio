@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.10' # 6Dec13
+Version =  '4.0.11' # 11Dec13
 
 
 
@@ -227,9 +227,14 @@ class ScratchSender(threading.Thread):
         elif "pibrella" in ADDON:
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
-            sensor_name = "In" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
-            if sensor_name == "InE":
-                sensor_name = "switch"
+            try:
+                sensor_name = "In" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
+                if sensor_name == "InE":
+                    sensor_name = "switch"
+            except:
+                print "pibrella input out of range"
+                sensor_name = "pin" + str(pin)
+                pass
         else:
             sensor_name = "pin" + str(pin)
         # 
@@ -262,13 +267,14 @@ class ScratchSender(threading.Thread):
         print sghGC.pinUse
         for pin in range(sghGC.numOfPins):
             if (sghGC.pinUse[pin] == sghGC.PINPUT):
-                self.broadcast_pin_update(pin, sghGC.pinRead(pin))
+                #self.broadcast_pin_update(pin, sghGC.pinRead(pin))
                 last_bit_pattern += sghGC.pinRead(pin) << pin
             else:
                 last_bit_pattern += 1 << pin
             #print 'lbp %s' % bin(last_bit_pattern)
 
         last_bit_pattern = last_bit_pattern ^ -1
+        lastPinUpdateTime = 0
         while not self.stopped():
             time.sleep(0.01) # be kind to cpu  :)
             #print "sender running"
@@ -300,6 +306,13 @@ class ScratchSender(threading.Thread):
                     break
 
             last_bit_pattern = pin_bit_pattern
+            
+            if (time.time() - lastPinUpdateTime)  > 2:
+                #print int(time.time())
+                lastPinUpdateTime = time.time()
+                for pin in range(sghGC.numOfPins):
+                    if (sghGC.pinUse[pin] == sghGC.PINPUT):
+                        self.broadcast_pin_update(pin, sghGC.pinRead(pin))
 
             if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
                 for pin in range(sghGC.numOfPins):
@@ -349,7 +362,7 @@ class ScratchListener(threading.Thread):
         n = len(cmd)
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
-        
+                       
     def getValue(self,searchString):
         outputall_pos = self.dataraw.find((searchString + ' '))
         sensor_value = self.dataraw[(outputall_pos+1+len(searchString)):].split()
@@ -570,6 +583,7 @@ class ScratchListener(threading.Thread):
         print ("Dual Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))    
 
     def beep(self,pin,freq,duration):
+        print freq
         if sghGC.pinUse != sghGC.PPWM:
             sghGC.pinUpdate(pin,0,"pwm")
         startCount = time.time()
@@ -600,7 +614,20 @@ class ScratchListener(threading.Thread):
         pan = 0
         tilt = 0
         steppersInUse = None
+        beepDuration = 0.5
+        beepNote = 60
         
+        print "set pins to default"
+        sghGC.pinUse[11] = sghGC.POUTPUT
+        sghGC.pinUse[12] = sghGC.POUTPUT
+        sghGC.pinUse[13] = sghGC.POUTPUT
+        sghGC.pinUse[15] = sghGC.POUTPUT
+        sghGC.pinUse[16] = sghGC.POUTPUT
+        sghGC.pinUse[18] = sghGC.POUTPUT
+        sghGC.pinUse[7]  = sghGC.PINPUT
+        sghGC.pinUse[22] = sghGC.PINPUT
+        sghGC.setPinMode()
+                        
         #This is main listening routine
         lcount = 0
         dataPrevious = ""
@@ -688,8 +715,8 @@ class ScratchListener(threading.Thread):
             for dataItem in dataList:
                 dataraw = dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 self.dataraw = dataraw
-                print "Loop processing"
-                print self.dataraw
+                #print "Loop processing"
+                #print self.dataraw
                 #print
                 if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
@@ -701,16 +728,16 @@ class ScratchListener(threading.Thread):
                         ADDON = self.value
                         print (ADDON, " declared")
                         
-                        print "set pins to default"
-                        sghGC.pinUse[11] = sghGC.POUTPUT
-                        sghGC.pinUse[12] = sghGC.POUTPUT
-                        sghGC.pinUse[13] = sghGC.POUTPUT
-                        sghGC.pinUse[15] = sghGC.POUTPUT
-                        sghGC.pinUse[16] = sghGC.POUTPUT
-                        sghGC.pinUse[18] = sghGC.POUTPUT
-                        sghGC.pinUse[7]  = sghGC.PINPUT
-                        sghGC.pinUse[22] = sghGC.PINPUT
-                        sghGC.setPinMode()
+                        # print "set pins to default"
+                        # sghGC.pinUse[11] = sghGC.POUTPUT
+                        # sghGC.pinUse[12] = sghGC.POUTPUT
+                        # sghGC.pinUse[13] = sghGC.POUTPUT
+                        # sghGC.pinUse[15] = sghGC.POUTPUT
+                        # sghGC.pinUse[16] = sghGC.POUTPUT
+                        # sghGC.pinUse[18] = sghGC.POUTPUT
+                        # sghGC.pinUse[7]  = sghGC.PINPUT
+                        # sghGC.pinUse[22] = sghGC.PINPUT
+                        # sghGC.setPinMode()
                         #print "data:",datalower
                         #print "self.dataraw",self.dataraw
                         
@@ -1191,9 +1218,16 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(oLed[i][1],0)        
                                     
                         if self.vFindValue("beep"):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
-                            beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.2])
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
+                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
                             beepThread.start()
+                            
+                        if self.vFindValue("beepnote"):
+                            beepNote = max(12,int(self.valueNumeric)) if self.valueIsNumeric else 60
+                   
+                        if self.vFindValue("beepduration"):
+                            beepDuration = max(0.125,int(self.valueNumeric)) if self.valueIsNumeric else 0.5
+                           
                             
                     elif "rgbled" in ADDON: # RGB-LED by Meltwater/rsstab/tim cox
                
@@ -1518,10 +1552,8 @@ class ScratchListener(threading.Thread):
                                 #print oLed[i][0]
                                 sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
 
-                        if self.bFindValue("beep"):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 1000
-                            #print svalue
-                            beepThread = threading.Thread(target=self.beep, args=[12,svalue,0.3])
+                        if self.bfind("beep"):
+                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0), beepDuration])
                             beepThread.start()     
 
                     elif "rgbled" in ADDON: # rgb-led
