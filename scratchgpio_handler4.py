@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.0.11' # 11Dec13
+Version =  '4.0.12' # 11Dec13
 
 
 
@@ -869,21 +869,14 @@ class ScratchListener(threading.Thread):
                     sghGC.INVERT = True
                     
                 #Change pins from input to output if more needed
-                if ('config' in dataraw):
-                    for i in range(PINS):
-                        #check_broadcast = str(i) + 'on'
-                        #print check_broadcast
-                        physical_pin = PIN_NUM[i]
-                        if 'config' + str(physical_pin)+'out' in dataraw: # change pin to output from input
-                            if PIN_USE[i] == PINPUT:                           # check to see if it is an input at moment
-                                GPIO.setup(PIN_NUM[i],GPIO.OUT)           # make it an output
-                                print 'pin' , PIN_NUM[i] , ' out'
-                                PIN_USE[i] = POUTPUT
-                        if 'config' + str(physical_pin)+'in' in dataraw:                # change pin to input from output
-                            if PIN_USE[i] != PINPUT:                                         # check to see if it not an input already
-                                GPIO.setup(PIN_NUM[i],GPIO.IN,pull_up_down=GPIO.PUD_UP) # make it an input
-                                print 'pin' , PIN_NUM[i] , ' in'
-                                PIN_USE[i] = PINPUT
+                if self.bfind('config'):
+                    for pin in sghGC.validPins:
+                        #print "checking pin" ,pin
+                        if self.bFindValue('config' + str(pin)):
+                            if self.value == "in":
+                                sghGC.pinUse[pin] = sghGC.PINPUT
+                            else:
+                                sghGC.pinUse[pin] = sghGC.POUTPUT
                                 
     ### Check for AddOn boards being declared
                     
@@ -1500,13 +1493,13 @@ class ScratchListener(threading.Thread):
                                 
                         if self.bFindValue("move"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
+                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*37)])
                             turnDualThread.start()                        
                             if svalue > 0:
                                 sghGC.pinUpdate(motorList[0][2],1)
-                                sghGC.pinUpdate(motorList[0][1],(100-motorSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[0][1],(30-motorSpeed),"pwm")
                                 sghGC.pinUpdate(motorList[1][2],1)
-                                sghGC.pinUpdate(motorList[1][1],(100-motorSpeed),"pwm")                        
+                                sghGC.pinUpdate(motorList[1][1],(30-motorSpeed),"pwm")                        
                             elif svalue < 0:
                                 sghGC.pinUpdate(motorList[0][2],0)
                                 sghGC.pinUpdate(motorList[0][1],(motorSpeed),"pwm")
