@@ -579,7 +579,7 @@ class ScratchListener(threading.Thread):
         for listLoop in range(0,2):
             sghGC.pinUpdate(motorList[listLoop][1],0)
             sghGC.pinUpdate(motorList[listLoop][2],0)
-        time.sleep(0.5)
+        #time.sleep(0.5)
         print ("Dual Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))    
 
     def beep(self,pin,freq,duration):
@@ -1493,7 +1493,7 @@ class ScratchListener(threading.Thread):
                                 
                         if self.bFindValue("move"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*37)])
+                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue)])
                             turnDualThread.start()                        
                             if svalue > 0:
                                 sghGC.pinUpdate(motorList[0][2],1)
