@@ -106,7 +106,7 @@ class GPIOController :
                 print 'setting pin' , pin , ' to count' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                 try: # add event callback but use try block jsut in case its already set
-                    GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback,bouncetime=20)  # add rising edge detection on a channel
+                    GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback,bouncetime=2)  # add rising edge detection on a channel
                 except:
                     pass
                 
