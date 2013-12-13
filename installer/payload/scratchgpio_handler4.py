@@ -357,6 +357,8 @@ class ScratchListener(threading.Thread):
         self.valueNumeric = None
         self.valueIsNumeric = None
         self.OnOrOff = None
+        self.encoderDiff = 0
+        self.turnSpeed = 100
         
     def send_scratch_command(self, cmd):
         n = len(cmd)
@@ -561,16 +563,23 @@ class ScratchListener(threading.Thread):
             print ("pins",pins, "set to", value)  
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
         
-    def stopTurn(self,hPin1,hPin2,countingPin,count):
-        print hPin1,hPin2,countingPin,count
+    def stopTurn(self,motorList,count):
+        print "EncoderDiff:",self.encoderDiff
+        count = count + self.encoderDiff
+        countingPin = motorList[0][3]
         startCount = sghGC.pinCount[countingPin]
         while (sghGC.pinCount[countingPin] - startCount) < count:
             time.sleep(0.01)
-        sghGC.pinUpdate(hPin1,0)
-        sghGC.pinUpdate(hPin2,0)
-        print ("Turn Stopped",countingPin)
+        for listLoop in range(0,2):
+            sghGC.pinUpdate(motorList[listLoop][1],0)
+            sghGC.pinUpdate(motorList[listLoop][2],0)
+        print ("Turn Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))  
+        self.encoderDiff = count - (sghGC.pinCount[countingPin] - startCount)
+        print "Diff:" , self.encoderDiff
         
     def stopTurnDual(self,motorList,count):
+        print "EncoderDiff:",self.encoderDiff
+        count = count + self.encoderDiff
         countingPin = motorList[0][3]
         startCount = sghGC.pinCount[countingPin]
         while (sghGC.pinCount[countingPin] - startCount) < count:
@@ -580,7 +589,9 @@ class ScratchListener(threading.Thread):
             sghGC.pinUpdate(motorList[listLoop][1],0)
             sghGC.pinUpdate(motorList[listLoop][2],0)
         time.sleep(0.5)
-        print ("Dual Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))    
+        print ("Move Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))  
+        self.encoderDiff = count - (sghGC.pinCount[countingPin] - startCount)
+        print "Diff:" , self.encoderDiff        
 
     def beep(self,pin,freq,duration):
         print freq
@@ -1474,52 +1485,34 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[pin] = sghGC.PULTRA
 
                     
-                        motorSpeed = 100
                         motorList = [['turnr',21,26,7],['turnl',19,24,11]]
-                        
-                        # for listLoop in range(0,2):
-                            # if self.bFindValue(motorList[listLoop][0]):
-                                # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                # turnThread = threading.Thread(target=self.stopTurn, args=[motorList[listLoop][1],motorList[listLoop][2],     
-                                                                # motorList[listLoop][3],abs(svalue*36)])
-                                # turnThread.start()                            
-                                # if svalue > 0:
-                                    # sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    # sghGC.pinUpdate(motorList[listLoop][1],(100-motorSpeed),"pwm")
-                                # elif svalue < 0:
-                                    # sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    # sghGC.pinUpdate(motorList[listLoop][1],(motorSpeed),"pwm")
-
-                                
+                                                       
                         if self.bFindValue("move"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*37)])
-                            turnDualThread.start()                        
-                            if svalue > 0:
-                                sghGC.pinUpdate(motorList[0][2],1)
-                                sghGC.pinUpdate(motorList[0][1],(30-motorSpeed),"pwm")
-                                sghGC.pinUpdate(motorList[1][2],1)
-                                sghGC.pinUpdate(motorList[1][1],(30-motorSpeed),"pwm")                        
-                            elif svalue < 0:
-                                sghGC.pinUpdate(motorList[0][2],0)
-                                sghGC.pinUpdate(motorList[0][1],(motorSpeed),"pwm")
-                                sghGC.pinUpdate(motorList[1][2],0)
-                                sghGC.pinUpdate(motorList[1][1],(motorSpeed),"pwm")   
+                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue)])
+                            turnDualThread.start()
+                            for listLoop in range(0,2):
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-self.turnSpeed),"pwm")
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(self.turnSpeed),"pwm")
                                 
                         if self.bFindValue("turn"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue*36)])
+                            turnDualThread = threading.Thread(target=self.stopTurn, args=[motorList,abs(svalue)])
                             turnDualThread.start()                        
                             if svalue > 0:
                                 sghGC.pinUpdate(motorList[0][2],1)
-                                sghGC.pinUpdate(motorList[0][1],(100-motorSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[0][1],(100-self.turnSpeed),"pwm")
                                 sghGC.pinUpdate(motorList[1][2],0)
-                                sghGC.pinUpdate(motorList[1][1],(motorSpeed),"pwm")                               
+                                sghGC.pinUpdate(motorList[1][1],(self.turnSpeed),"pwm")                               
                             elif svalue < 0:
                                 sghGC.pinUpdate(motorList[0][2],0)
-                                sghGC.pinUpdate(motorList[0][1],(motorSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[0][1],(self.turnSpeed),"pwm")
                                 sghGC.pinUpdate(motorList[1][2],1)
-                                sghGC.pinUpdate(motorList[1][1],(100-motorSpeed),"pwm")                             
+                                sghGC.pinUpdate(motorList[1][1],(100-self.turnSpeed),"pwm")                             
 
                     
                     elif "piringo" in ADDON: # piringo
