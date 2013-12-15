@@ -236,6 +236,8 @@ class GPIOController :
         for pin in pins:
             self.pinUse[pin] = self.PSERVOD
         os.system('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        print ('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        
         self.servodPins = pins
 
     def pinServod(self, pin, value):

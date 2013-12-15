@@ -643,7 +643,7 @@ class ScratchListener(threading.Thread):
         lcount = 0
         dataPrevious = ""
         
-        self.send_scratch_command("broadcast Scratch-StartClicked")
+        
         
         while not self.stopped():
             #lcount += 1
@@ -737,7 +737,10 @@ class ScratchListener(threading.Thread):
                     firstRunData = self.dataraw
                     #dataraw = ''
                     #firstRun = False
-                    
+                    if self.vFindValue("autostart"):
+                        if self.value == "true":
+                            self.send_scratch_command("broadcast Scratch-StartClicked")
+                        
                     if self.vFindValue("addon"):
                         ADDON = self.value
                         print (ADDON, " declared")
