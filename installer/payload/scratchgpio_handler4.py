@@ -863,15 +863,15 @@ class ScratchListener(threading.Thread):
                             sghGC.setPinMode()
                             anyAddOns = True
                         
-                        if "rtpicon" in ADDON:
+                        if "rtkmotorcon" in ADDON:
 
-                            sghGC.pinUse[11] = sghGC.POUTPUT #MotorA 
-                            sghGC.pinUse[12] = sghGC.POUTPUT #MotorB
-                            sghGC.pinUse[15] = sghGC.POUTPUT #MotorA 
-                            sghGC.pinUse[16] = sghGC.POUTPUT #MotorB
+                            sghGC.pinUse[11] = sghGC.POUTPUT #Motor1 
+                            sghGC.pinUse[12] = sghGC.POUTPUT #Motor1
+                            sghGC.pinUse[15] = sghGC.POUTPUT #Motor2 
+                            sghGC.pinUse[16] = sghGC.POUTPUT #Motor2
 
                             sghGC.setPinMode()
-                            print "RTPiCon setup"
+                            print "rtkmotorcon setup"
                             anyAddOns = True                            
 
                 if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
@@ -1273,7 +1273,7 @@ class ScratchListener(threading.Thread):
                                 print listLoop , "found",
                                 sghGC.pinUpdate(rgbOutputs[5+rgbList.index(listLoop)],self.valueNumeric)
                                                             
-                    elif "rtpicon" in ADDON:  
+                    elif "rtkmotorcon" in ADDON:  
                         #check for motor variable commands
                         motorList = [['motor1',11,12],['motor2',15,16]]
                         for listLoop in range(0,2):
