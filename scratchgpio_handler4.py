@@ -861,7 +861,18 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[pin] = sghGC.POUTPUT
 
                             sghGC.setPinMode()
-                            anyAddOns = True                               
+                            anyAddOns = True
+                        
+                        if "rtpicon" in ADDON:
+
+                            sghGC.pinUse[11] = sghGC.POUTPUT #MotorA 
+                            sghGC.pinUse[12] = sghGC.POUTPUT #MotorB
+                            sghGC.pinUse[15] = sghGC.POUTPUT #MotorA 
+                            sghGC.pinUse[16] = sghGC.POUTPUT #MotorB
+
+                            sghGC.setPinMode()
+                            print "RTPiCon setup"
+                            anyAddOns = True                            
 
                 if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     print "no AddOns Declared"
@@ -1262,6 +1273,22 @@ class ScratchListener(threading.Thread):
                                 print listLoop , "found",
                                 sghGC.pinUpdate(rgbOutputs[5+rgbList.index(listLoop)],self.valueNumeric)
                                                             
+                    elif "rtpicon" in ADDON:  
+                        #check for motor variable commands
+                        motorList = [['motor1',11,12],['motor2',15,16]]
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                else:
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    
                     else:   #normal variable processing with no add on board
                         
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
