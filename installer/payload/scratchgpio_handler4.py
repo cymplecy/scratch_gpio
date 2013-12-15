@@ -642,6 +642,9 @@ class ScratchListener(threading.Thread):
         #This is main listening routine
         lcount = 0
         dataPrevious = ""
+        
+        self.send_scratch_command("broadcast Scratch-StartClicked")
+        
         while not self.stopped():
             #lcount += 1
             #print lcount
