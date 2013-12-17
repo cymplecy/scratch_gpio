@@ -594,15 +594,15 @@ class ScratchListener(threading.Thread):
         print "Diff:" , self.encoderDiff        
 
     def beep(self,pin,freq,duration):
-        print freq
-        if sghGC.pinUse != sghGC.PPWM:
-            sghGC.pinUpdate(pin,0,"pwm")
-        startCount = time.time()
-        sghGC.pinFreq(pin,freq)
-        sghGC.pinUpdate(pin,50,"pwm")
-        while (time.time() - startCount) < (duration * 1.0):
+        print freq 
+        if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
+            sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
+        startCount = time.time() #Get current time
+        sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
+        sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
+        while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
             time.sleep(0.01)
-        sghGC.pinUpdate(pin,0,"pwm")
+        sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
         print ("Beep Stopped")        
 
         
@@ -1239,8 +1239,15 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(oLed[i][1],0)        
                                     
                         if self.vFindValue("beep"):
+                            try:
+                                bn,bd = self.value.split(",")
+                            except:
+                                bn = "60"
+                                bd = "1"
+                            bn = int(float(bn))
+                            bd = int(float(bd))
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
-                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
+                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((bn - 69)/12.0),bd])
                             beepThread.start()
                             
                         if self.vFindValue("beepnote"):
