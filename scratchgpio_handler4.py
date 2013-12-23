@@ -254,6 +254,8 @@ class ScratchSender(threading.Thread):
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         if ("piringo" in ADDON) or ("pidie" in ADDON):
             bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("Down","Up")[value == 1])
+        if ("fishdish" in ADDON):
+            bcast_str = 'sensor-update "switch" %s' %  (("Up","Down")[value == 1])
         #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
         if "motorpitx" in ADDON:
@@ -920,7 +922,17 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUse[pin] = sghGC.PINPUT
 
                                 sghGC.setPinMode()
-                                anyAddOns = True                                 
+                                anyAddOns = True 
+                                
+                        if "fishdish" in ADDON:
+                            with lock:
+                                fishOutputs = [7,15,21,24]
+                                for pin in fishOutputs:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                sghGC.pinUse[26] = sghGC.PINPUT
+
+                                sghGC.setPinMode()
+                                anyAddOns = True
 
                 if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     with lock:
@@ -1353,6 +1365,15 @@ class ScratchListener(threading.Thread):
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
                         self.vLEDCheck(pidieOutputs)
+                        
+                    elif "fishdish" in ADDON:
+                        #do fishdish stuff
+                        self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+
+                        self.vLEDCheck(fishOutputs) # check All LEDS On/Off/High/Low/1/0
+                                    
+                        if self.vFindOnOff('buzzer'):
+                            self.index_pin_update(24,self.valueNumeric)
                                     
                     else:   #normal variable processing with no add on board
                         
@@ -1663,7 +1684,22 @@ class ScratchListener(threading.Thread):
                         #do piringo stuff
                         self.bCheckAll() # Check for all off/on type broadcasrs
                         self.bLEDCheck(pidieOutputs) # Check for LED off/on type broadcasts
-                        self.bLEDPowerCheck(pidieOutputs) # Vary LED Brightness                                
+                        self.bLEDPowerCheck(pidieOutputs) # Vary LED Brightness            
+
+                    elif "fishdish" in ADDON: # fishdish
+                        #do piringo stuff
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bLEDCheck(fishOutputs) # Check for LED off/on type broadcasts
+                        self.bLEDPowerCheck(fishOutputs) # Vary LED Brightness       
+
+                        fishList = ["green","yellow","red"]
+                        for listLoop in fishList:
+                            if self.bfindOnOff(listLoop):
+                                print listLoop , "found",
+                                sghGC.pinUpdate(fishOutputs[fishList.index(listLoop)],self.OnOrOff)    
+                                
+                        if self.bfindOnOff('buzzer'):
+                            sghGC.pinUpdate(24,self.OnOrOff)                         
 
        
                     else: # Plain GPIO Broadcast processing
