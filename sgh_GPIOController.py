@@ -72,7 +72,7 @@ class GPIOController :
         else:                #[99,99, 2,99, 7, 3,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
             self.gpioLookup = [99,99,99, 2,99, 3,99, 4,14,99,15,17,18,27,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
             
-        self.validPins = [3,5,7,8,10,11,13,13,15,16,18,21,22,23,24,26]
+        self.validPins = [3,5,7,8,10,11,13,13,15,16,18,19,21,22,23,24,26]
         
         
         #self.ULTRA_IN_USE = [False] * self.PINS
@@ -134,7 +134,7 @@ class GPIOController :
                     #print ("pin",pin, "set to", value)              
             elif type == "plain":
                 if self.INVERT == True: # Invert data value (useful for 7 segment common anode displays)
-                    if self.pinUse[pin] == self.POUTPUT:
+                    if (self.pinUse[pin] == self.POUTPUT) or (self.pinUse[pin] == self.PPWM):
                         value = abs(value - 1)
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
@@ -143,23 +143,24 @@ class GPIOController :
                     self.pinUse[pin] = self.POUTPUT # switch it to output
                     GPIO.setup(pin,GPIO.OUT)
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
-                    #print 'pin' , pin , ' changed to digital out from input' 
-                    #print ("pin",pin, "set to", value)
+                    print 'pin' , pin , ' changed to digital out from input' 
+                    print ("pin",pin, "set to", value)
                 elif (self.pinUse[pin] == self.PPWM): #if pin in use for PWM
-                    self.pinUse[pin] = self.POUTPUT # switch it to output
                     self.pinRef[pin].stop() # stop PWM from running
                     self.pinRef[pin] = None
+                    time.sleep(0.1)
                     GPIO.setup(pin,GPIO.OUT)
                     GPIO.output(pin, int(value)) # set output to 1 or 0
-                    #print 'pin' , pin , ' changed to digital out from PWM' 
-                    #print ("pin",pin, "set to", value)
+                    self.pinUse[pin] = self.POUTPUT # switch it to output
+                    print 'pin' , pin , ' changed to digital out from PWM' 
+                    print ("pin",pin, "set to", value)
                 elif (self.pinUse[pin] == self.PUNUSED): # if pin is not allocated
                     self.pinUse[pin] = self.POUTPUT # switch it to output
                     GPIO.setup(pin,GPIO.OUT)
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
-                    #print 'pin' , pin , ' changed to digital out from unused' 
-                    #print ("pin",pin, "set to", value)
-            #print pin,value,type,self.pinUse[pin]
+                    print 'pin' , pin , ' changed to digital out from unused' 
+                    print ("pin",pin, "set to", value)
+            print pin,value,type,self.pinUse[pin]
         except ValueError:
             print "mistake made in trying to update an invalid pin"
             pass
