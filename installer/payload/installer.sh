@@ -9,6 +9,7 @@
 #Version H 24Mar13 - correct newline issues
 #Version 29Oct13 Add in Chown commands and extra Adafruit and servod files and alter gpio_scrath2.sh and bit of chmod +x make V3
 #Version 21Nov13 Change for ScratchGPIO V4
+#Version 26Dec13 Change for ScratchGPIO4plus
 f_exit(){
 echo ""
 echo "Usage:"
@@ -89,15 +90,33 @@ echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to 
 echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4.sh
 echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4.sh
 echo "cd $HDIR/scratchgpio4" >> $HDIR/scratchgpio4/scratchgpio4.sh
-echo "sudo python scratchgpio_handler4.py &" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "sudo python scratchgpio_handler4.py 127.0.0.1 standard &" >> $HDIR/scratchgpio4/scratchgpio4.sh
 echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio4/scratchgpio4.sh
 
 chmod +x $HDIR/scratchgpio4/scratchgpio4.sh
 chown -R $USERID:$GROUPID $HDIR/scratchgpio4/scratchgpio4.sh
+cp scratchgpio4.desktop $HDIR/Desktop
+
+#Instead of copying the scratchgpio4plus.sh file, we will generate it
+#Create a new file for scratchgpio4plus.sh
+echo "#!/bin/bash" > $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "cd $HDIR/scratchgpio4" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "sudo python scratchgpio_handler4.py &" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+
+chmod +x $HDIR/scratchgpio4/scratchgpio4plus.sh
+chown -R $USERID:$GROUPID $HDIR/scratchgpio4/scratchgpio4plus.sh
+cp scratchgpio4plus.desktop $HDIR/Desktop
 
 cp blink11.py $HDIR
 
-cp scratchgpio4.desktop $HDIR/Desktop
+
 
 
 mkdir -p $HDIR/Documents
