@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  '4.1.00' # 26Dec13
+Version =  'v4.1.01' # 27Dec13
 
 
 
@@ -2025,7 +2025,7 @@ class ScratchListener(threading.Thread):
                         step_delay = 0.0013
                         
                     if "version" in dataraw:
-                        bcast_str = 'sensor-update "%s" %d' % ("Version", int(Version * 1000))
+                        bcast_str = 'sensor-update "%s" %s' % ("Version", Version)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
 
