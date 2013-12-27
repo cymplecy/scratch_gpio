@@ -194,10 +194,7 @@ class ScratchSender(threading.Thread):
                     #print "broadcast changed pin"
                     self.broadcast_pin_update(pin, pin_value)
                     
-        #print sghGC.encoderCount
-        bcast_str = 'sensor-update "%s" %s' %  ("motoracount",str(float(sghGC.pinCount[11])))
-        #print 'sending: %s' % bcast_str
-        self.send_scratch_command(bcast_str)
+
                     
                                      
     def broadcast_pin_update(self, pin, value):
@@ -603,19 +600,23 @@ class ScratchListener(threading.Thread):
         print "Diff:" , self.encoderDiff
         
     def stopTurnDual(self,motorList,count):
-        print "EncoderDiff:",self.encoderDiff
-        count = count + self.encoderDiff
+        self.send_scratch_command('sensor-update "encoder" "turning"')
+        print "EncoderDiffMove:",self.encoderDiff
+        self.encoderDiff = int(self.encoderDiff * 1.0)
+        countwanted = count + self.encoderDiff
+        countattempted = int(1 * (count + int(1 * self.encoderDiff)))
         countingPin = motorList[0][3]
         startCount = sghGC.pinCount[countingPin]
-        while (sghGC.pinCount[countingPin] - startCount) < count:
+        while (sghGC.pinCount[countingPin] - startCount) < int(countattempted * 1):
             time.sleep(0.01)
             
         for listLoop in range(0,2):
             sghGC.pinUpdate(motorList[listLoop][1],0)
             sghGC.pinUpdate(motorList[listLoop][2],0)
         time.sleep(0.5)
+        self.send_scratch_command('sensor-update "encoder" "stopped"')
         print ("Move Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))  
-        self.encoderDiff = count - (sghGC.pinCount[countingPin] - startCount)
+        self.encoderDiff = int(1.0 * (countwanted - (sghGC.pinCount[countingPin] - startCount)))# + self.encoderDiff
         print "Diff:" , self.encoderDiff        
 
     def beep(self,pin,freq,duration):
@@ -767,7 +768,7 @@ class ScratchListener(threading.Thread):
             #if (firstRun == True) or (anyAddOns == False):
             #print 
             #print "dataList:",dataList
-            print "GPIOPLus" , GPIOPlus
+            #print "GPIOPLus" , GPIOPlus
             for dataItem in dataList:
                 dataraw = dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 self.dataraw = dataraw
@@ -1882,17 +1883,6 @@ class ScratchListener(threading.Thread):
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
                                 
-                    if self.bfind("readcount"): #update pin count values
-                        for pin in range(sghGC.numOfPins): #loop thru all pins
-                            if sghGC.pinUse[pin] == sghGC.PCOUNT:
-                                if self.bfind('readcount'+str(pin)):
-                                    #print ('readcount'+str(pin))
-                                    #print (sghGC.pinCount[pin])
-                                    #print'Distance:',distance,'cm'
-                                    sensor_name = 'motorcount'+str(pin)
-                                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
-                                    #print 'sending: %s' % bcast_str
-                                    self.send_scratch_command(bcast_str)
                                     
                     origdataraw = self.dataraw
                     if AdaMatrix != None: #Matrix connected
@@ -2005,7 +1995,19 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, minutes)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
-                    
+                        
+                    if self.bfind("readcount"): #update pin count values
+                        for pin in range(sghGC.numOfPins): #loop thru all pins
+                            if sghGC.pinUse[pin] == sghGC.PCOUNT:
+                                if self.bfind('readcount'+str(pin)):
+                                    #print ('readcount'+str(pin))
+                                    #print (sghGC.pinCount[pin])
+                                    #print'Distance:',distance,'cm'
+                                    sensor_name = 'count'+str(pin)
+                                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
+                                    #print 'sending: %s' % bcast_str
+                                    self.send_scratch_command(bcast_str)                        
+                                        
 
                     if  '1coil' in dataraw:
                         print "1coil broadcast"
