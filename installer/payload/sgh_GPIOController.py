@@ -17,8 +17,6 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.1.0' # 12Nov13
-
 import RPi.GPIO as GPIO
 import time
 import os
@@ -56,10 +54,15 @@ class GPIOController :
         self.PSTEPPER = 128
         self.PCOUNT = 256
         self.PINPUTDOWN = 512
+        self.PINPUTNONE = 1024
 
         self.INVERT = False
+        self.ledDim = 100
 
         self.PWMFREQ = 100
+       
+       
+       
 
         self.pinUse = [self.PUNUSED] * self.numOfPins
         self.servodPins = None
@@ -73,6 +76,8 @@ class GPIOController :
             self.gpioLookup = [99,99,99, 0,99, 1,99, 4,14,99,15,17,18,21,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
         else:                #[99,99, 2,99, 7, 3,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
             self.gpioLookup = [99,99,99, 2,99, 3,99, 4,14,99,15,17,18,27,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
+            
+        self.validPins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26]
         
         
         #self.ULTRA_IN_USE = [False] * self.PINS
@@ -87,10 +92,21 @@ class GPIOController :
         self.pinCount[pin] +=1
         #print('Edge detected on channel',channel,self.encoderCount) 
         
+    #reset pinmode
+    def resetPinMode(self):
+        for pin in self.validPins:
+            try:
+                self.pinRef[pin].stop() # stop PWM from running
+                self.pinRef[pin] = None
+                time.sleep(0.1)
+            except:
+                pass
+            self.pinUse[pin] = self.PUNUSED
+            
 
     #Procedure to set pin mode for each pin
     def setPinMode(self):
-        for pin in range(self.numOfPins):
+        for pin in self.validPins:
             #print pin
             if (self.pinUse[pin] == self.POUTPUT):
                 print 'setting pin' , pin , ' to out' 
@@ -102,13 +118,24 @@ class GPIOController :
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                 self.pinUse[pin] = self.PINPUT
+            elif (self.pinUse[pin] == self.PINPUTNONE):
+                print 'setting pin' , pin , ' to in with pull down' 
+                GPIO.setup(pin,GPIO.IN)
+                self.pinUse[pin] = self.PINPUT                
             elif (self.pinUse[pin] == self.PCOUNT):
                 print 'setting pin' , pin , ' to count' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-                GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback)  # add rising edge detection on a channel
-
+                try: # add event callback but use try block jsut in case its already set
+                    GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback,bouncetime=2)  # add rising edge detection on a channel
+                except:
+                    pass
+                    
+        print self.pinUse
                 
     def pinUpdate(self, pin, value,type = 'plain',stepDelay = 0.003):
+        if (self.ledDim < 100) and (type == 'plain'):
+            type = "pwm"
+            value = value * self.ledDim
         try:
             #print pin,value,type,self.pinUse[pin]
             if type == "pwm": # 
@@ -119,36 +146,38 @@ class GPIOController :
                     self.pinRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
                 except:
                     try:
-                        print ("Stopping previous instance")
+                        #print ("Stopping previous instance")
                         sghGC.pinRef[pin].stop()
                     except:
                         pass
                     GPIO.setup(pin,GPIO.OUT)
                     self.pinRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance
-                    print "type of pwm:" ,self.pinRef[pin]
+                    #print "type of pwm:" ,self.pinRef[pin]
                     self.pinRef[pin].start(max(0,min(100,abs(value)))) # update PWM value
                     self.pinUse[pin] = self.PPWM # set pin use as PWM
-                    print 'pin' , pin , ' changed to PWM' 
-                    print ("pin",pin, "set to", value)              
+                    #print 'pin' , pin , ' changed to PWM' 
+                    #print ("pin",pin, "set to", value)              
             elif type == "plain":
                 if self.INVERT == True: # Invert data value (useful for 7 segment common anode displays)
-                    if self.pinUse[pin] == self.POUTPUT:
+                    if (self.pinUse[pin] == self.POUTPUT) or (self.pinUse[pin] == self.PPWM):
                         value = abs(value - 1)
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
                     #print ("pin",pin, "set to", value)
                 elif (self.pinUse[pin] == self.PINPUT): # if pin is an input
                     self.pinUse[pin] = self.POUTPUT # switch it to output
+                    #GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                     GPIO.setup(pin,GPIO.OUT)
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
                     print 'pin' , pin , ' changed to digital out from input' 
                     print ("pin",pin, "set to", value)
                 elif (self.pinUse[pin] == self.PPWM): #if pin in use for PWM
-                    self.pinUse[pin] = self.POUTPUT # switch it to output
                     self.pinRef[pin].stop() # stop PWM from running
                     self.pinRef[pin] = None
+                    time.sleep(0.1)
                     GPIO.setup(pin,GPIO.OUT)
                     GPIO.output(pin, int(value)) # set output to 1 or 0
+                    self.pinUse[pin] = self.POUTPUT # switch it to output
                     print 'pin' , pin , ' changed to digital out from PWM' 
                     print ("pin",pin, "set to", value)
                 elif (self.pinUse[pin] == self.PUNUSED): # if pin is not allocated
@@ -162,6 +191,8 @@ class GPIOController :
             print "mistake made in trying to update an invalid pin"
             pass
         
+    def pinFreq(self, pin, freq):
+        self.pinRef[pin].ChangeFrequency(freq)
 
     def pinSonar(self, pin):
         self.pinUse[pin] = self.PSONAR
@@ -222,8 +253,9 @@ class GPIOController :
         #print pin ," being read"
         try:
             return GPIO.input(pin)
-        except:
+        except Exception,e: 
             print "Some error reading pin" ,pin
+            print str(e)
             return 0
         
     def startServod(self, pins):
@@ -232,6 +264,8 @@ class GPIOController :
         for pin in pins:
             self.pinUse[pin] = self.PSERVOD
         os.system('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        print ('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        
         self.servodPins = pins
 
     def pinServod(self, pin, value):
