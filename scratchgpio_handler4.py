@@ -585,39 +585,27 @@ class ScratchListener(threading.Thread):
             print ("pins",pins, "set to", value)  
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
         
-    def stopTurn(self,motorList,count):
-        print "EncoderDiff:",self.encoderDiff
-        count = count + self.encoderDiff
-        countingPin = motorList[0][3]
-        startCount = sghGC.pinCount[countingPin]
-        while (sghGC.pinCount[countingPin] - startCount) < count:
-            time.sleep(0.01)
-        for listLoop in range(0,2):
-            sghGC.pinUpdate(motorList[listLoop][1],0)
-            sghGC.pinUpdate(motorList[listLoop][2],0)
-        print ("Turn Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))  
-        self.encoderDiff = count - (sghGC.pinCount[countingPin] - startCount)
-        print "Diff:" , self.encoderDiff
         
-    def stopTurnDual(self,motorList,count):
-        self.send_scratch_command('sensor-update "encoder" "turning"')
+    def stopTurning(self,motorList,count):
+        self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
         print "EncoderDiffMove:",self.encoderDiff
-        self.encoderDiff = int(self.encoderDiff * 1.0)
-        countwanted = count + self.encoderDiff
-        countattempted = int(1 * (count + int(1 * self.encoderDiff)))
-        countingPin = motorList[0][3]
-        startCount = sghGC.pinCount[countingPin]
-        while (sghGC.pinCount[countingPin] - startCount) < int(countattempted * 1):
+        countwanted = count + self.encoderDiff # modifiy count based on previous result
+        countattempted = count + int(1.9 * self.encoderDiff) # allow for modified behaviour
+        countingPin = motorList[0][3] # use 1st motor counting pin only
+        startCount = sghGC.pinCount[countingPin] #remember initial count
+        turningStartTime = time.time() # used to timeout if necessary 
+        while ((sghGC.pinCount[countingPin] - startCount) < int(countattempted * 1) and ((time.time()-turningStartTime) < 10)):
+            #Just block until count acheived or timeout occurs
             time.sleep(0.01)
             
-        for listLoop in range(0,2):
+        for listLoop in range(0,2): # switch off both motors
             sghGC.pinUpdate(motorList[listLoop][1],0)
             sghGC.pinUpdate(motorList[listLoop][2],0)
-        time.sleep(0.5)
-        self.send_scratch_command('sensor-update "encoder" "stopped"')
+        time.sleep(0.5) #wait until motors have actually stopped
         print ("Move Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))  
-        self.encoderDiff = int(1.0 * (countwanted - (sghGC.pinCount[countingPin] - startCount)))# + self.encoderDiff
-        print "Diff:" , self.encoderDiff        
+        self.encoderDiff = 1 * (countwanted - (sghGC.pinCount[countingPin] - startCount)) #work out new error in position for next time
+        print "Diff:" , self.encoderDiff
+        self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
 
     def beep(self,pin,freq,duration):
         print freq 
@@ -929,8 +917,11 @@ class ScratchListener(threading.Thread):
                                 if "encoders" in ADDON:
                                     sghGC.pinUse[7]  = sghGC.PCOUNT 
                                     sghGC.pinUse[11] = sghGC.PCOUNT 
+                                    self.send_scratch_command('sensor-update "encoder" "stopped"') 
+                                    self.send_scratch_command('sensor-update "count7" "0"') 
                                 sghGC.setPinMode()
                                 sghGC.startServod([18,22]) # servos
+
                                 print "pirocon setup"
                                 anyAddOns = True
                             
@@ -1719,7 +1710,7 @@ class ScratchListener(threading.Thread):
                                                        
                         if self.bFindValue("move"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            turnDualThread = threading.Thread(target=self.stopTurnDual, args=[motorList,abs(svalue)])
+                            turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList,abs(svalue)])
                             turnDualThread.start()
                             for listLoop in range(0,2):
                                 if svalue > 0:
@@ -1731,7 +1722,7 @@ class ScratchListener(threading.Thread):
                                 
                         if self.bFindValue("turn"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            turnDualThread = threading.Thread(target=self.stopTurn, args=[motorList,abs(svalue)])
+                            turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList,abs(svalue)])
                             turnDualThread.start()                        
                             if svalue > 0:
                                 sghGC.pinUpdate(motorList[0][2],1)
@@ -2006,7 +1997,13 @@ class ScratchListener(threading.Thread):
                                     sensor_name = 'count'+str(pin)
                                     bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
                                     #print 'sending: %s' % bcast_str
-                                    self.send_scratch_command(bcast_str)                        
+                                    self.send_scratch_command(bcast_str)
+                                    
+                    if self.bfind("resetcount"): #update pin count values
+                        for pin in range(sghGC.numOfPins): #loop thru all pins
+                            if sghGC.pinUse[pin] == sghGC.PCOUNT:
+                                if self.bfind('resetcount'+str(pin)):
+                                    sghGC.pinCount[pin] = 0                                   
                                         
 
                     if  '1coil' in dataraw:
