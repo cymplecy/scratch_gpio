@@ -195,6 +195,8 @@ class GPIOController :
         self.pinRef[pin].ChangeFrequency(freq)
 
     def pinSonar(self, pin):
+        #print pin
+        #print self.pinUse[pin]         
         self.pinUse[pin] = self.PSONAR
         GPIO.setup(pin,GPIO.OUT)
         ti = time.time()

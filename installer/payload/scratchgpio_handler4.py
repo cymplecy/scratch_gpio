@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.01' # 27Dec13
+Version =  'v4.1.02' # 27Dec13
 
 
 
@@ -183,7 +183,7 @@ class ScratchSender(threading.Thread):
         return self._stop.isSet()
         
     def broadcast_changed_pins(self, changed_pin_map, pin_value_map):
-        for pin in range(sghGC.numOfPins):
+        for pin in sghGC.validPins:
             #print pin
             # if we care about this pin's value
             if (changed_pin_map >> pin) & 0b1:
@@ -277,7 +277,7 @@ class ScratchSender(threading.Thread):
         self.send_scratch_command('broadcast "SetPins"')
         #print sghGC.pinUse
         with lock:
-            for pin in range(sghGC.numOfPins):
+            for pin in sghGC.validPins:
                 if (sghGC.pinUse[pin] == sghGC.PINPUT):
                     #self.broadcast_pin_update(pin, sghGC.pinRead(pin))
                     last_bit_pattern += sghGC.pinRead(pin) << pin
@@ -293,7 +293,7 @@ class ScratchSender(threading.Thread):
             pin_bit_pattern = 0
             with lock:
                 #print "lOCKED"
-                for pin in range(sghGC.numOfPins):
+                for pin in sghGC.validPins:
                     #print pin
                     if (sghGC.pinUse[pin] == sghGC.PINPUT):
                         #print 'trying to read pin' , pin 
@@ -322,12 +322,12 @@ class ScratchSender(threading.Thread):
             if (time.time() - lastPinUpdateTime)  > 2:
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
-                for pin in range(sghGC.numOfPins):
+                for pin in sghGC.validPins:
                     if (sghGC.pinUse[pin] == sghGC.PINPUT):
                         self.broadcast_pin_update(pin, sghGC.pinRead(pin))
 
             if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
-                for pin in range(sghGC.numOfPins):
+                for pin in sghGC.validPins:
                     if sghGC.pinUse[pin] == sghGC.PULTRA:
                         distance = sghGC.pinSonar(pin) # do a ping
                         sghGC.pinUse[pin] = sghGC.PULTRA # reset pin use back from sonar to ultra
@@ -411,14 +411,14 @@ class ScratchListener(threading.Thread):
 
     def bCheckAll(self):
         if self.bfindOnOff('all'):
-            for pin in range(sghGC.numOfPins):
+            for pin in sghGC.validPins:
                 #print pin
                 if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
                     #print pin
                     sghGC.pinUpdate(pin,self.OnOrOff)
 
     def bpinCheck(self):
-        for pin in range(sghGC.numOfPins):
+        for pin in sghGC.validPins:
             if self.bfindOnOff('pin' + str(pin)):
                 sghGC.pinUpdate(pin,self.OnOrOff)
             if self.bfindOnOff('gpio' + str(sghGC.gpioLookup[pin])):
@@ -503,12 +503,12 @@ class ScratchListener(threading.Thread):
             
     def vAllCheck(self,searchStr):
         if self.vFindOnOff(searchStr):
-            for pin in range(sghGC.numOfPins):
+            for pin in sghGC.validPins:
                 if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
                     sghGC.pinUpdate(pin,self.valueNumeric)
 
     def vPinCheck(self):
-        for pin in range(sghGC.numOfPins):
+        for pin in sghGC.validPins:
             #print "checking pin" ,pin
             if self.vFindValue('pin' + str(pin)):
                 if self.valueIsNumeric:
@@ -1502,7 +1502,7 @@ class ScratchListener(threading.Thread):
                         j = 0
                         onSense = '1' if sghGC.INVERT else '0' # change to look for 0 if invert on
                         onSense = '0'
-                        for pin in range(sghGC.numOfPins):
+                        for pin in sghGC.validPins:
                             if (sghGC.pinUse[pin] == sghGC.POUTPUT):
                                 #print "pin" , bit_pattern[-(j+1)]
                                 if bit_pattern[-(j+1)] == onSense:
@@ -1688,7 +1688,7 @@ class ScratchListener(threading.Thread):
                         self.bpinCheck() # Check for pin off/on type broadcasts
                                     
                         #check pins
-                        for pin in range(sghGC.numOfPins):
+                        for pin in sghGC.validPins:
                             if self.bfindOnOff('pin' + str(pin)):
                                 sghGC.pinUpdate(pin,self.OnOrOff)
 
@@ -1813,11 +1813,12 @@ class ScratchListener(threading.Thread):
                         self.bpinCheck() # Check for pin off/on type broadcasts
                                     
                         #check pins
-                        for pin in range(sghGC.numOfPins):
+                        for pin in sghGC.validPins:
                             if self.bfindOnOff('pin' + str(pin)):
                                 sghGC.pinUpdate(pin,self.OnOrOff)
 
                             if self.bfind('sonar' + str(pin)):
+                                
                                 distance = sghGC.pinSonar(pin)
                                 #print'Distance:',distance,'cm'
                                 sensor_name = 'sonar' + str(pin)
@@ -1855,7 +1856,7 @@ class ScratchListener(threading.Thread):
                         bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-sghGC.numOfPins:]
                         #print 'bit_pattern %s' % bit_pattern
                         j = 0
-                        for pin in range(sghGC.numOfPins):
+                        for pin in sghGC.validPins:
                             if (sghGC.pinUse[pin] == sghGC.POUTPUT):
                                 #print "pin" , bit_pattern[-(j+1)]
                                 if bit_pattern[-(j+1)] == '0':
@@ -1988,7 +1989,7 @@ class ScratchListener(threading.Thread):
                         self.send_scratch_command(bcast_str)
                         
                     if self.bfind("readcount"): #update pin count values
-                        for pin in range(sghGC.numOfPins): #loop thru all pins
+                        for pin in sghGC.validPins: #loop thru all pins
                             if sghGC.pinUse[pin] == sghGC.PCOUNT:
                                 if self.bfind('readcount'+str(pin)):
                                     #print ('readcount'+str(pin))
@@ -2000,7 +2001,7 @@ class ScratchListener(threading.Thread):
                                     self.send_scratch_command(bcast_str)
                                     
                     if self.bfind("resetcount"): #update pin count values
-                        for pin in range(sghGC.numOfPins): #loop thru all pins
+                        for pin in sghGC.validPins: #loop thru all pins
                             if sghGC.pinUse[pin] == sghGC.PCOUNT:
                                 if self.bfind('resetcount'+str(pin)):
                                     sghGC.pinCount[pin] = 0                                   
@@ -2066,7 +2067,7 @@ def cleanup_threads(threads):
         thread.join()
     print "Waiting for join on main threads to complete"
         
-    for pin in range(sghGC.numOfPins):
+    for pin in sghGC.validPins:
         try:
             print "Stopping ", pin
             sghGC.pinRef[pin].stop()
