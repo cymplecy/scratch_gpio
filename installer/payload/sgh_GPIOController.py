@@ -69,6 +69,7 @@ class GPIOController :
         
         self.pinRef = [None] * self.numOfPins
         self.pinCount = [0] * self.numOfPins
+        self.countDirection = [1] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         if self.piRevision == 1:
         #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
@@ -89,7 +90,7 @@ class GPIOController :
         # End init
     
     def my_callback(self,pin):
-        self.pinCount[pin] +=1
+        self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
         #print('Edge detected on channel',channel,self.encoderCount) 
         
     #reset pinmode
