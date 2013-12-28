@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.02' # 27Dec13
+Version =  'v4.1.03' # 28Dec13
 
 
 
@@ -592,7 +592,7 @@ class ScratchListener(threading.Thread):
         startCount = sghGC.pinCount[countingPin] #remember initial count        
         print "EncoderDiffMove:",self.encoderDiff
         countwanted = startCount + count + self.encoderDiff # modifiy count based on previous result
-        countattempted = startCount + count + int(1.2 * self.encoderDiff) # allow for modified behaviour
+        countattempted = startCount + count + int(1.9 * self.encoderDiff) # allow for modified behaviour
         countingPin = motorList[0][3] # use 1st motor counting pin only
 
         print countwanted,countattempted
@@ -676,8 +676,8 @@ class ScratchListener(threading.Thread):
                 #print "try reading socket"
                 BUFFER_SIZE = 512 # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket plus any data not yet processed
-                print len(data)
-                print "RAW:", data
+                #print len(data)
+                #print "RAW:", data
                 
                 if "send-vars" in data:
                     #Reset if New project detected from Scratch
@@ -2010,7 +2010,8 @@ class ScratchListener(threading.Thread):
                         for pin in sghGC.validPins: #loop thru all pins
                             if sghGC.pinUse[pin] == sghGC.PCOUNT:
                                 if self.bfind('resetcount'+str(pin)):
-                                    sghGC.pinCount[pin] = 0                                   
+                                    sghGC.pinCount[pin] = 0
+                        self.diffEncoder = 0
                                         
 
                     if  '1coil' in dataraw:
