@@ -34,6 +34,7 @@ import re
 import sgh_GPIOController
 import sgh_PiGlow
 import sgh_Stepper
+import logging
 try:
 	from Adafruit_PWM_Servo_Driver import PWM
 	from sgh_PCF8591P import sgh_PCF8591P
@@ -586,21 +587,24 @@ class ScratchListener(threading.Thread):
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
         
         
-    def stopTurning(self,motorList,count):
+    def stopTurning(self,motorList,count,startCount):
         self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
-        countingPin = motorList[0][3] # use 1st motor counting pin only
-        startCount = sghGC.pinCount[countingPin] #remember initial count        
+        countingPin = motorList[0][3] # use 1st motor counting pin only  
         print "EncoderDiffMove:",self.encoderDiff
         countwanted = startCount + count + self.encoderDiff # modifiy count based on previous result
-        countattempted = startCount + count + int(1.9 * self.encoderDiff) # allow for modified behaviour
+        countattempted = startCount + count + int(1 * self.encoderDiff) # allow for modified behaviour
         countingPin = motorList[0][3] # use 1st motor counting pin only
 
         print countwanted,countattempted
         turningStartTime = time.time() # used to timeout if necessary 
-        while (sghGC.pinCount[countingPin]  < int(countattempted * 1) and ((time.time()-turningStartTime) < 10)):
-            #Just block until count acheived or timeout occurs
-            time.sleep(0.01)
-            
+        if count >= 0:
+            while (sghGC.pinCount[countingPin]  < int(countattempted * 1) and ((time.time()-turningStartTime) < 2)):
+                #Just block until count acheived or timeout occurs
+                time.sleep(0.01)
+        else:
+            while (sghGC.pinCount[countingPin]  > int(countattempted * 1) and ((time.time()-turningStartTime) < 2)):
+                #Just block until count acheived or timeout occurs
+                time.sleep(0.01)
         for listLoop in range(0,2): # switch off both motors
             sghGC.pinUpdate(motorList[listLoop][1],0)
             sghGC.pinUpdate(motorList[listLoop][2],0)
@@ -676,8 +680,8 @@ class ScratchListener(threading.Thread):
                 #print "try reading socket"
                 BUFFER_SIZE = 512 # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket plus any data not yet processed
-                #print len(data)
-                #print "RAW:", data
+                logging.debug(len(data)) 
+                logging.debug("RAW: %s", data)
                 
                 if "send-vars" in data:
                     #Reset if New project detected from Scratch
@@ -1716,7 +1720,11 @@ class ScratchListener(threading.Thread):
                                                        
                         if self.bFindValue("move"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList,abs(svalue)])
+                            
+                            sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
+                            print "sghdir" , sghGC.countDirection[motorList[0][3]]
+                            
+                            turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList,svalue,sghGC.pinCount[motorList[0][3]]])
                             turnDualThread.start()
                             for listLoop in range(0,2):
                                 if svalue > 0:
@@ -1728,7 +1736,7 @@ class ScratchListener(threading.Thread):
                                 
                         if self.bFindValue("turn"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList,abs(svalue)])
+                            turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList,svalue])
                             turnDualThread.start()                        
                             if svalue > 0:
                                 sghGC.pinUpdate(motorList[0][2],1)
@@ -2011,7 +2019,8 @@ class ScratchListener(threading.Thread):
                             if sghGC.pinUse[pin] == sghGC.PCOUNT:
                                 if self.bfind('resetcount'+str(pin)):
                                     sghGC.pinCount[pin] = 0
-                        self.diffEncoder = 0
+                        print "diff reset"
+                        self.encoderDiff = 0
                                         
 
                     if  '1coil' in dataraw:
@@ -2094,6 +2103,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
  
 PORT = 42001
