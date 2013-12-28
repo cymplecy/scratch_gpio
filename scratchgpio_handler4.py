@@ -588,13 +588,16 @@ class ScratchListener(threading.Thread):
         
     def stopTurning(self,motorList,count):
         self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
-        print "EncoderDiffMove:",self.encoderDiff
-        countwanted = count + self.encoderDiff # modifiy count based on previous result
-        countattempted = count + int(1.9 * self.encoderDiff) # allow for modified behaviour
         countingPin = motorList[0][3] # use 1st motor counting pin only
-        startCount = sghGC.pinCount[countingPin] #remember initial count
+        startCount = sghGC.pinCount[countingPin] #remember initial count        
+        print "EncoderDiffMove:",self.encoderDiff
+        countwanted = startCount + count + self.encoderDiff # modifiy count based on previous result
+        countattempted = startCount + count + int(1.2 * self.encoderDiff) # allow for modified behaviour
+        countingPin = motorList[0][3] # use 1st motor counting pin only
+
+        print countwanted,countattempted
         turningStartTime = time.time() # used to timeout if necessary 
-        while ((sghGC.pinCount[countingPin] - startCount) < int(countattempted * 1) and ((time.time()-turningStartTime) < 10)):
+        while (sghGC.pinCount[countingPin]  < int(countattempted * 1) and ((time.time()-turningStartTime) < 10)):
             #Just block until count acheived or timeout occurs
             time.sleep(0.01)
             
@@ -602,8 +605,11 @@ class ScratchListener(threading.Thread):
             sghGC.pinUpdate(motorList[listLoop][1],0)
             sghGC.pinUpdate(motorList[listLoop][2],0)
         time.sleep(0.5) #wait until motors have actually stopped
-        print ("Move Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))  
-        self.encoderDiff = 1 * (countwanted - (sghGC.pinCount[countingPin] - startCount)) #work out new error in position for next time
+        print ("Move Stopped",countingPin,(sghGC.pinCount[countingPin] - startCount))
+        if self.encoderDiff == 0:
+            self.encoderDiff = 1 * (countwanted - (sghGC.pinCount[countingPin])) #work out new error in position
+        else:
+            self.encoderDiff = 1 * (countwanted - (sghGC.pinCount[countingPin])) #work out new error in position
         print "Diff:" , self.encoderDiff
         self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
 
