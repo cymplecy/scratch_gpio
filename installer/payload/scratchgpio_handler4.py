@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.03' # 28Dec13
+Version =  'v4.1.04' # 29Dec13
 
 
 
@@ -681,7 +681,7 @@ class ScratchListener(threading.Thread):
         dataPrevious = ""
         
         
-        
+        #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
         while not self.stopped():
             #lcount += 1
             #print lcount
@@ -728,32 +728,32 @@ class ScratchListener(threading.Thread):
                                 if "alloff" in dataMsg:
                                     allSplit =  dataMsg.find("alloff")
                                     
-                                    logging.debug("AllOff found at: %d", dataMsg.find("alloff"))
-                                    logging.debug("Before: %s", dataMsg[0:allSplit-4])
-                                    logging.debug("After: %s", dataMsg[allSplit-4:])
-
+                                    logging.debug("Whole message:%s", dataIn)
+                                    #dataPrevious = dataIn # store data and tag it onto next data read
+                                    #break
                                 #print "half msg found"
                                 #print size, len(dataMsg)
                                 dataPrevious = dataIn # store data and tag it onto next data read
                                 #break
 
                             dataPrevious = "" # no data needs tagging to next read
-                            if dataMsg[0:2] == "br": # removed redundant "broadcast" and "sensor-update" txt
-                                if dataPrefix == "br":
-                                    dataList[-1] = dataList[-1] + " "+ dataMsg[10:]
-                                else:
-                                    dataList.append(dataMsg)
-                                    dataPrefix = "br"
+                            if ("alloff" in dataMsg) or ("allon" in dataMsg):
+                                dataList.append(dataMsg)
                             else:
-                                if dataPrefix == "se":
-                                    dataList[-1] = dataList[-1] + dataMsg[10:]
+                                if dataMsg[0:2] == "br": # removed redundant "broadcast" and "sensor-update" txt
+                                    if dataPrefix == "br":
+                                        dataList[-1] = dataList[-1] + " "+ dataMsg[10:]
+                                    else:
+                                        dataList.append(dataMsg)
+                                        dataPrefix = "br"
                                 else:
-                                    dataList.append(dataMsg)
-                                    dataPrefix = "se"
-                                                        
-                            if "alloff" in data:
-                                print dataMsg
-                                    
+                                    if dataPrefix == "se":
+                                        dataList[-1] = dataList[-1] + dataMsg[10:]
+                                    else:
+                                        dataList.append(dataMsg)
+                                        dataPrefix = "se"
+                              
+                                                                                            
                             dataIn = dataIn[size+4:] # cut data down that's been processed
                             
                     #print "previous:", dataPrevious
@@ -2222,6 +2222,7 @@ while True:
 
     if (cycle_trace == 'start'):
         ADDON = ""
+        INVERT = False
         # open the socket
         print 'Starting to connect...' ,
         the_socket = create_socket(host, PORT)
