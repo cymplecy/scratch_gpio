@@ -2126,7 +2126,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
  
 PORT = 42001
