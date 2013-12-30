@@ -1747,6 +1747,9 @@ class ScratchListener(threading.Thread):
 
                     
                         motorList = [['turnr',21,26,7],['turnl',19,24,11]]
+                        if "piroconb" in ADDON:
+                            logging.debug("PiRoConB Found:%s", ADDON)
+                            motorList = [['turnr',21,19,7],['turnl',26,24,11]]						
                                                        
                         if self.bFindValue("move"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
