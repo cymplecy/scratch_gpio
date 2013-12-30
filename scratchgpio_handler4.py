@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.04' # 29Dec13
+Version =  'v4.1.07' # 30Dec13
 
 
 
@@ -35,6 +35,7 @@ import sgh_GPIOController
 import sgh_PiGlow
 import sgh_Stepper
 import logging
+import subprocess
 try:
 	from Adafruit_PWM_Servo_Driver import PWM
 	from sgh_PCF8591P import sgh_PCF8591P
@@ -2044,6 +2045,18 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinCount[pin] = 0
                         print "diff reset"
                         self.encoderDiff = 0
+
+                    if self.bFind("getip"): #find ip address
+                        arg = 'ip route list'
+                        p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
+                        ipdata = p.communicate()
+                        split_data = ipdata[0].split()
+                        ipaddr = split_data[split_data.index('src')+1]
+                        logging.debug("IP:%s", ipaddr)
+                        sensor_name = 'ipaddress'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, "ip"+ipaddr)
+                        self.send_scratch_command(bcast_str)
+                                             
                                         
 
                     if  '1coil' in dataraw:
@@ -2126,7 +2139,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
  
 PORT = 42001
