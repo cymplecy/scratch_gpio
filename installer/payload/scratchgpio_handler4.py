@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.04' # 29Dec13
+Version =  'v4.1.07' # 30Dec13
 
 
 
@@ -35,6 +35,7 @@ import sgh_GPIOController
 import sgh_PiGlow
 import sgh_Stepper
 import logging
+import subprocess
 try:
 	from Adafruit_PWM_Servo_Driver import PWM
 	from sgh_PCF8591P import sgh_PCF8591P
@@ -937,8 +938,8 @@ class ScratchListener(threading.Thread):
                             with lock:
                                 sghGC.resetPinMode()
                                 sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
-                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorB
-                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
+                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorB (MotorA in v1.2)
+                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorA (MotorB in V1.2)
                                 sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
                                 sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
@@ -946,6 +947,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
                                 
                                 if "encoders" in ADDON:
+                                    logging.debug("Encoders Found:%s", ADDON)
                                     sghGC.pinUse[7]  = sghGC.PCOUNT 
                                     sghGC.pinUse[11] = sghGC.PCOUNT 
                                     self.send_scratch_command('sensor-update "encoder" "stopped"') 
@@ -1274,6 +1276,7 @@ class ScratchListener(threading.Thread):
                         
                     elif "pirocon" in ADDON:
                         #do PiRoCon stuff
+                        #logging.debug("Processing variables for PiRoCon")
                         #print "panoffset" , panoffset, "tilt",tiltoffset
                         moveServos = False
 
@@ -1338,6 +1341,10 @@ class ScratchListener(threading.Thread):
 
                         #check for motor variable commands
                         motorList = [['motora',21,26],['motorb',19,24]]
+                        if "piroconb" in ADDON:
+                            logging.debug("PiRoConB Found:%s", ADDON)
+                            motorList = [['motora',21,19],['motorb',26,24]]
+                        #logging.debug("ADDON:%s", ADDON)
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -2044,6 +2051,18 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinCount[pin] = 0
                         print "diff reset"
                         self.encoderDiff = 0
+
+                    if self.bFind("getip"): #find ip address
+                        arg = 'ip route list'
+                        p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
+                        ipdata = p.communicate()
+                        split_data = ipdata[0].split()
+                        ipaddr = split_data[split_data.index('src')+1]
+                        logging.debug("IP:%s", ipaddr)
+                        sensor_name = 'ipaddress'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, "ip"+ipaddr)
+                        self.send_scratch_command(bcast_str)
+                                             
                                         
 
                     if  '1coil' in dataraw:
@@ -2126,7 +2145,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 
  
 PORT = 42001

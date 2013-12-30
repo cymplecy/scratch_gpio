@@ -938,8 +938,8 @@ class ScratchListener(threading.Thread):
                             with lock:
                                 sghGC.resetPinMode()
                                 sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
-                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorB
-                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorA 
+                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorB (MotorA in v1.2)
+                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorA (MotorB in V1.2)
                                 sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
                                 sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
@@ -947,6 +947,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
                                 
                                 if "encoders" in ADDON:
+                                    logging.debug("Encoders Found:%s", ADDON)
                                     sghGC.pinUse[7]  = sghGC.PCOUNT 
                                     sghGC.pinUse[11] = sghGC.PCOUNT 
                                     self.send_scratch_command('sensor-update "encoder" "stopped"') 
@@ -1275,6 +1276,7 @@ class ScratchListener(threading.Thread):
                         
                     elif "pirocon" in ADDON:
                         #do PiRoCon stuff
+                        #logging.debug("Processing variables for PiRoCon")
                         #print "panoffset" , panoffset, "tilt",tiltoffset
                         moveServos = False
 
@@ -1339,6 +1341,10 @@ class ScratchListener(threading.Thread):
 
                         #check for motor variable commands
                         motorList = [['motora',21,26],['motorb',19,24]]
+                        if "piroconb" in ADDON:
+                            logging.debug("PiRoConB Found:%s", ADDON)
+                            motorList = [['motora',21,19],['motorb',26,24]]
+                        #logging.debug("ADDON:%s", ADDON)
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
