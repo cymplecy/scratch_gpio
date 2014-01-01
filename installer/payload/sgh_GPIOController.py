@@ -16,6 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+#Last mod 01Jan14
 
 import RPi.GPIO as GPIO
 import time
@@ -71,6 +72,8 @@ class GPIOController :
         self.pinCount = [0] * self.numOfPins
         self.countDirection = [1] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
+        self.callbackInUse = [False] * self.numOfPins
+		
         if self.piRevision == 1:
         #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
         #                     [ 3, 5,99,99, 7,99,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
@@ -91,7 +94,7 @@ class GPIOController :
     
     def my_callback(self,pin):
         self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
-        #print('Edge detected on channel',channel,self.encoderCount) 
+        #print('Edge detected on channel',pin,self.pinCount[pin]) 
         
     #reset pinmode
     def resetPinMode(self):
@@ -124,12 +127,17 @@ class GPIOController :
                 GPIO.setup(pin,GPIO.IN)
                 self.pinUse[pin] = self.PINPUT                
             elif (self.pinUse[pin] == self.PCOUNT):
-                print 'setting pin' , pin , ' to count' 
-                GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-                try: # add event callback but use try block jsut in case its already set
-                    GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback,bouncetime=2)  # add rising edge detection on a channel
-                except:
-                    pass
+                if self.callbackInUse[pin] == False:
+                    print 'setting pin' , pin , ' as counting pin' 
+                    GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+                    try: # add event callback but use try block jsut in case its already set
+                        GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback,bouncetime=2)  # add rising edge detection on a channel
+                        self.callbackInUse[pin] = True
+                    except Exception,e: 
+                        print "Error on event detection setup on pin" ,pin
+                        print str(e)
+                else:
+                    print ("Callback already in use")
                     
         print self.pinUse
                 
