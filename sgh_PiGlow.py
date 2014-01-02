@@ -57,7 +57,7 @@ class PiGlow:
     def update_pwm_values(self, values=[0] * 18):
         self.write_i2c(CMD_SET_PWM_VALUES, values)
         self.write_i2c(CMD_UPDATE, 0xFF)
-        print "update piglow pwm done"
+        #print "update piglow pwm done"
 
     def write_i2c(self, reg_addr, value):
         if not isinstance(value, list):

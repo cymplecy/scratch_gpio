@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.07' # 30Dec13
+Version =  'v4.1.09' # 2Dec13
 
 
 
@@ -827,8 +827,8 @@ class ScratchListener(threading.Thread):
                                 print "set pins to input with pulldown low"
                                 for pin in sghGC.validPins:
                                     sghGC.pinUse[pin] = sghGC.PINPUTDOWN
-                                #sghGC.pinUse[3] = sghGC.PUNUSED
-                                #sghGC.pinUse[5] = sghGC.PUNUSED
+                                sghGC.pinUse[3] = sghGC.PUNUSED
+                                sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True
                         if "high" in ADDON:
@@ -836,8 +836,8 @@ class ScratchListener(threading.Thread):
                                 print "set pins to input"
                                 for pin in sghGC.validPins:
                                     sghGC.pinUse[pin] = sghGC.PINPUT
-                                #sghGC.pinUse[3] = sghGC.PUNUSED
-                                #sghGC.pinUse[5] = sghGC.PUNUSED
+                                sghGC.pinUse[3] = sghGC.PUNUSED
+                                sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True        
                         if  "none" in ADDON:
@@ -845,8 +845,8 @@ class ScratchListener(threading.Thread):
                                 print "set pins to input"
                                 for pin in sghGC.validPins:
                                     sghGC.pinUse[pin] = sghGC.PINPUTNONE
-                                #sghGC.pinUse[3] = sghGC.PUNUSED
-                                #sghGC.pinUse[5] = sghGC.PUNUSED
+                                sghGC.pinUse[3] = sghGC.PUNUSED
+                                sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True     
                         if  "normal" in ADDON:
@@ -1659,10 +1659,14 @@ class ScratchListener(threading.Thread):
                             sghGC.pinUse[7] = sghGC.PULTRA
                             
                     elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
+                        #print "processing piglow variables"
                     
                         if self.bFindOnOff('all'):
+                            #print "found allon/off"
                             for i in range(1,19):
+                                #print i
                                 PiGlow_Values[i-1] = PiGlow_Brightness * self.OnOrOff
+                                #print "Values", PiGlow_Values
                                 piglow.update_pwm_values(PiGlow_Values)
                                  
                         #check LEDS
@@ -2166,8 +2170,8 @@ try:
     else:
         piglow = sgh_PiGlow.PiGlow(1)
     print ("PiGlow:",piglow)
+    print ("Update PWM value on PiGLow attempted")
     piglow.update_pwm_values()#PiGlow_Values)
-    print ("Update attempted")
 except:
     print "No PiGlow Detected"
     
@@ -2209,6 +2213,8 @@ try:
     print "AdaMatrix Detected"
 except:
     print "No AdaMatrix Detected"
+    
+    #time.sleep(5)
     
 
 
