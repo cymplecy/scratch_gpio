@@ -16,12 +16,13 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.0.2' # 25Nov13
+Version =  '0.0.3' # 1Jan13
 
 
 #try and inport smbus but don't worry if not installed
+import subprocess
 try:
-    from smbus import SMBus
+    import smbus
 except:
     pass
     
@@ -36,11 +37,15 @@ class PiGlow:
 
     def __init__(self, i2c_bus=1):
         print "PiGlow init"
-        print i2c_bus
+        self.i2c_bus = i2c_bus
+        print "i2cbus:",self.i2c_bus
         #self.bus = smbus.SMBus(i2c_bus)
-        self.bus = SMBus(i2c_bus)
+        self.bus = smbus.SMBus(i2c_bus)
+        print "self.bus:", self.bus
         self.enable_output()
+        print "enabled output"
         self.enable_leds()
+        print "enabled leds "
         print "complete"
 
     def enable_output(self):
@@ -50,14 +55,18 @@ class PiGlow:
         self.write_i2c(CMD_ENABLE_LEDS, [0xFF, 0xFF, 0xFF])
 
     def update_pwm_values(self, values=[0] * 18):
-        #print "update pwm"
         self.write_i2c(CMD_SET_PWM_VALUES, values)
         self.write_i2c(CMD_UPDATE, 0xFF)
+        print "update piglow pwm done"
 
     def write_i2c(self, reg_addr, value):
         if not isinstance(value, list):
             value = [value];
-        self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
+        try:
+            self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
+        except IOError:
+            subprocess.call(['i2cdetect', '-y', '0'])
+            self.bus.write_i2c_block_data(self.i2c_addr, reg_addr, value)
 #### end PiGlow ###############################################################
 
 
