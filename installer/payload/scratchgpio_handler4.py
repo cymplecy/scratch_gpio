@@ -627,18 +627,33 @@ class ScratchListener(threading.Thread):
         print "Diff:" , self.encoderDiff
         self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
 
+    # def beep(self,pin,freq,duration):
+        # print freq 
+        # if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
+            # sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
+        # startCount = time.time() #Get current time
+        # sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
+        # sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
+        # while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
+            # time.sleep(0.01)
+        # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
+        # print ("Beep Stopped")        
+
+        
     def beep(self,pin,freq,duration):
         print freq 
         if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
             sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
         startCount = time.time() #Get current time
-        sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
-        sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
-        while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
-            time.sleep(0.01)
-        sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        print ("Beep Stopped")        
+        sghGC.pinFreq(pin,2000) # Set freq used for PWM cycle
 
+        while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
+            sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
+            time.sleep(0.2)#1.0 / freq)
+            sghGC.pinUpdate(pin,0,"pwm")  # Set duty cycle to 50% to produce square wave
+            time.sleep(0.2)#1.0 / freq)
+        sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
+        print ("Beep Stopped")            
         
 
 
@@ -804,8 +819,9 @@ class ScratchListener(threading.Thread):
                         if self.value == "true":
                             self.send_scratch_command("broadcast Scratch-StartClicked")
                             
-                    if self.vFindValue("leddim"):
+                    if self.vFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
+                        PiGlow_Brightness = sghGC.ledDim
                         print sghGC.ledDim
                         
                     pinsoraddon = None
@@ -1223,11 +1239,12 @@ class ScratchListener(threading.Thread):
                                 j = j + 1
                             
                             piglow.update_pwm_values(PiGlow_Values)
-                            
-                        if self.vFindValue('bright'):
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue= min(255,max(svalue,0))
-                            PiGlow_Brightness = svalue
+                        
+                        #Replaced by global bright variable code
+                        #if self.vFindValue('bright'):
+                        #    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        #    svalue= min(255,max(svalue,0))
+                        #    PiGlow_Brightness = svalue
                             
                     elif "gpio" in ADDON:
                         #do gPiO stuff
@@ -1620,7 +1637,11 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True                                
                     
-                    
+                    if self.bFindValue("bright"):
+                        sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
+                        PiGlow_Brightness = sghGC.ledDim
+                        print sghGC.ledDim
+                        
                     #self.send_scratch_command("broadcast Begin")
                     if self.bFind("stepper"):
                         print ("Stepper declared")
@@ -2169,11 +2190,22 @@ try:
         piglow = sgh_PiGlow.PiGlow(0)
     else:
         piglow = sgh_PiGlow.PiGlow(1)
-    print ("PiGlow:",piglow)
-    print ("Update PWM value on PiGLow attempted")
-    piglow.update_pwm_values()#PiGlow_Values)
+        print ("PiGlow:",piglow)
+        print ("Update PWM value on PiGLow attempted")
+        piglow.update_pwm_values()#PiGlow_Values)
 except:
     print "No PiGlow Detected"
+    
+
+##if sghGC.getPiRevision() == 1:
+##    print "Rev1 Board" 
+##    piglow = sgh_PiGlow.PiGlow(0)
+##else:
+##    piglow = sgh_PiGlow.PiGlow(1)
+##print ("PiGlow:",piglow)
+##print ("Update PWM value on PiGLow attempted")
+##piglow.update_pwm_values()#PiGlow_Values)
+
     
 #See if Compass connected
 compass = None
