@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.09' # 2Dec13
+Version =  'v4.1.10' # 10Jan14
 
 
 
@@ -220,6 +220,8 @@ class ScratchSender(threading.Thread):
             #do berryclip stuff
             if pin == 26:
                 sensor_name = "switch"
+            if pin == 22:
+                sensor_name = "switch2"
         elif "piringo" in ADDON:
             #do PiRingo stuff
             sensor_name = "switch" + str(1 + [19,21].index(pin))
@@ -946,6 +948,7 @@ class ScratchListener(threading.Thread):
                                 for pin in berryOutputs:
                                     sghGC.pinUse[pin] = sghGC.POUTPUT
                                 sghGC.pinUse[26] = sghGC.PINPUT
+                                sghGC.pinUse[22] = sghGC.PINPUT
 
                                 sghGC.setPinMode()
                                 anyAddOns = True
