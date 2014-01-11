@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.09' # 2Dec13
+Version =  'v4.1.09a' # 11Jan13 motorpitx hotfix
 
 
 
@@ -1118,7 +1118,7 @@ class ScratchListener(threading.Thread):
                             elif self.value == "off":
                                 os.system("echo " + "0" + "=0 > /dev/servoblaster")
                         else:
-                            if self.vFindValue('servoa'):
+                            if self.vFindValue('servo1'):
                                 #print "tilt command rcvd"
                                 if self.valueIsNumeric:
                                     tilt = int(self.valueNumeric) 
@@ -1136,7 +1136,7 @@ class ScratchListener(threading.Thread):
                             elif self.value == "off":
                                 os.system("echo " + "1" + "=0 > /dev/servoblaster")
                         else:
-                            if self.vFindValue('servob'):
+                            if self.vFindValue('servo2'):
                                 #print "pan command rcvd"
                                 if self.valueIsNumeric:
                                     pan = int(self.valueNumeric) 
@@ -1147,7 +1147,7 @@ class ScratchListener(threading.Thread):
                        
                         if moveServos == True:
                             degrees = int(tilt + tiltoffset)
-                            degrees = min(80,max(degrees,-60))
+                            degrees = min(90,max(degrees,-90))
                             servodvalue = 50+ ((90 - degrees) * 200 / 180)
                             sghGC.pinServod(12,servodvalue)
                             degrees = int(pan + panoffset)

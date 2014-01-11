@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.09' # 2Dec13
+Version =  'v4.1.09a' # 11Jan13 motorpitx hotfix
 
 
 
@@ -627,18 +627,33 @@ class ScratchListener(threading.Thread):
         print "Diff:" , self.encoderDiff
         self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
 
+    # def beep(self,pin,freq,duration):
+        # print freq 
+        # if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
+            # sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
+        # startCount = time.time() #Get current time
+        # sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
+        # sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
+        # while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
+            # time.sleep(0.01)
+        # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
+        # print ("Beep Stopped")        
+
+        
     def beep(self,pin,freq,duration):
         print freq 
         if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
             sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
         startCount = time.time() #Get current time
-        sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
-        sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
-        while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
-            time.sleep(0.01)
-        sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        print ("Beep Stopped")        
+        sghGC.pinFreq(pin,2000) # Set freq used for PWM cycle
 
+        while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
+            sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
+            time.sleep(0.2)#1.0 / freq)
+            sghGC.pinUpdate(pin,0,"pwm")  # Set duty cycle to 50% to produce square wave
+            time.sleep(0.2)#1.0 / freq)
+        sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
+        print ("Beep Stopped")            
         
 
 
@@ -1103,7 +1118,7 @@ class ScratchListener(threading.Thread):
                             elif self.value == "off":
                                 os.system("echo " + "0" + "=0 > /dev/servoblaster")
                         else:
-                            if self.vFindValue('servoa'):
+                            if self.vFindValue('servo1'):
                                 #print "tilt command rcvd"
                                 if self.valueIsNumeric:
                                     tilt = int(self.valueNumeric) 
@@ -1121,7 +1136,7 @@ class ScratchListener(threading.Thread):
                             elif self.value == "off":
                                 os.system("echo " + "1" + "=0 > /dev/servoblaster")
                         else:
-                            if self.vFindValue('servob'):
+                            if self.vFindValue('servo2'):
                                 #print "pan command rcvd"
                                 if self.valueIsNumeric:
                                     pan = int(self.valueNumeric) 
@@ -1132,7 +1147,7 @@ class ScratchListener(threading.Thread):
                        
                         if moveServos == True:
                             degrees = int(tilt + tiltoffset)
-                            degrees = min(80,max(degrees,-60))
+                            degrees = min(90,max(degrees,-90))
                             servodvalue = 50+ ((90 - degrees) * 200 / 180)
                             sghGC.pinServod(12,servodvalue)
                             degrees = int(pan + panoffset)
