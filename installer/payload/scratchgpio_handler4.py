@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.10' # 10Jan14
+Version =  'v4.1.11' # 11Jan14
 
 
 
@@ -972,7 +972,8 @@ class ScratchListener(threading.Thread):
                                     self.send_scratch_command('sensor-update "encoder" "stopped"') 
                                     self.send_scratch_command('sensor-update "count7" "0"') 
                                 sghGC.setPinMode()
-                                sghGC.startServod([18,22]) # servos
+                                sghGC.startServod([18,22]) # servos orig
+                                #sghGC.startServod([12,10]) # servos testing motorpitx
 
                                 print "pirocon setup"
                                 anyAddOns = True
@@ -1122,7 +1123,7 @@ class ScratchListener(threading.Thread):
                             elif self.value == "off":
                                 os.system("echo " + "0" + "=0 > /dev/servoblaster")
                         else:
-                            if self.vFindValue('servoa'):
+                            if self.vFindValue('servo1'):
                                 #print "tilt command rcvd"
                                 if self.valueIsNumeric:
                                     tilt = int(self.valueNumeric) 
@@ -1140,23 +1141,25 @@ class ScratchListener(threading.Thread):
                             elif self.value == "off":
                                 os.system("echo " + "1" + "=0 > /dev/servoblaster")
                         else:
-                            if self.vFindValue('servob'):
-                                #print "pan command rcvd"
+                            if self.vFindValue('servo2'):
+                                #print "servob command rcvd"
                                 if self.valueIsNumeric:
                                     pan = int(self.valueNumeric) 
                                     moveServos = True
-                                    #print "pan=", pan
+                                    #print "servob=", pan
                                 elif self.value == "off":
                                     sghGC.pinServod(10,"off")
                        
                         if moveServos == True:
+                            #print "move servos == True"
                             degrees = int(tilt + tiltoffset)
-                            degrees = min(80,max(degrees,-60))
+                            degrees = min(90,max(degrees,-90))
                             servodvalue = 50+ ((90 - degrees) * 200 / 180)
                             sghGC.pinServod(12,servodvalue)
                             degrees = int(pan + panoffset)
                             degrees = min(90,max(degrees,-90))
                             servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            #print "Value being sent to pin 10:",servodvalue
                             sghGC.pinServod(10,servodvalue)
 
 
@@ -1350,12 +1353,12 @@ class ScratchListener(threading.Thread):
                             servodvalue = 50+ ((90 - degrees) * 200 / 180)
                             #print "sending", servodvalue, "to servod"
                             #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
-                            sghGC.pinServod(18,servodvalue)
+                            sghGC.pinServod(18,servodvalue) # orig =18
                             #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
                             degrees = int(pan + panoffset)
                             degrees = min(90,max(degrees,-90))
                             servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                            sghGC.pinServod(22,servodvalue)
+                            sghGC.pinServod(22,servodvalue) #orig =22
                             #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
 
 
