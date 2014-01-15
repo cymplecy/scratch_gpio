@@ -16,7 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#Last mod 01Jan14
+#Last mod 15Jan14 servod path
 
 import RPi.GPIO as GPIO
 import time
@@ -25,6 +25,7 @@ import datetime as dt
 import threading
 
 BIG_NUM = 2123456789
+SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]
 
 class GPIOController :
 
@@ -274,8 +275,8 @@ class GPIOController :
         os.system("sudo pkill -f servod")
         for pin in pins:
             self.pinUse[pin] = self.PSERVOD
-        os.system('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
-        print ('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        os.system(SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        print (SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
         
         self.servodPins = pins
 

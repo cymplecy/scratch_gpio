@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.11' # 11Jan14
+Version =  'v4.1.13' # 15Jan14
 
 
 
@@ -1888,7 +1888,7 @@ class ScratchListener(threading.Thread):
                     else: # Plain GPIO Broadcast processing
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
-                        self.bPinCheck() # Check for pin off/on type broadcasts
+                        #self.bPinCheck() # Check for pin off/on type broadcasts
                                     
                         #check pins
                         for pin in sghGC.validPins:
@@ -2257,6 +2257,8 @@ except:
 
 
 if __name__ == '__main__':
+    SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]
+    print "PATH:" ,SCRIPTPATH
     if len(sys.argv) > 1:
         host = sys.argv[1]
     else:
