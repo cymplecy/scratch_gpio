@@ -2096,6 +2096,16 @@ class ScratchListener(threading.Thread):
                         sensor_name = 'ipaddress'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, "ip"+ipaddr)
                         self.send_scratch_command(bcast_str)
+                        
+                    if self.bFind("gettemp"): #find temp address
+                        dsSensorId = sghGC.findDS180()
+                        print "ds:", dsSensorId
+                        if dsSensorId <> "":
+                            print "getting temp"
+                            temperature = sghGC.getDS180Temp(dsSensorId)
+                        sensor_name = 'temperature'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
+                        self.send_scratch_command(bcast_str)
                                              
                                         
 
