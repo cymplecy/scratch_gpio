@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.13' # 15Jan14
+Version =  'v4.1.14' # 23Jan14
 
 
 
@@ -33,6 +33,7 @@ import math
 import re
 import sgh_GPIOController
 import sgh_PiGlow
+import sgh_PiMatrix
 import sgh_Stepper
 import logging
 import subprocess
@@ -2045,6 +2046,89 @@ class ScratchListener(threading.Thread):
                                 print "scrollr" 
                                 AdaMatrix.scroll("right")    
                                 
+                    if PiMatrix != None: #Matrix connected
+                        #print self.dataraw
+                        #print
+                        self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:]
+                        #print self.dataraw
+                        #print
+                        #print self.dataraw.split('broadcast')
+                        broadcastList = self.dataraw.split(' ')
+                        for broadcastListLoop in broadcastList:
+                            self.dataraw = str(broadcastListLoop)
+                            #print self.dataraw
+                            if self.bFind("alloff"):
+                                PiMatrix.clear()
+                                
+                            if self.bFind("sweepon"):
+                                for y in range(1, 8):
+                                    for x in range(0, 8):
+                                        PiMatrix.setPixel(x,y)
+                                        time.sleep(0.05)
+                                        
+                            if self.bFind("sweepoff"):
+                                for y in range(1, 8):
+                                    for x in range(0, 8):
+                                        PiMatrix.clearPixel(x,y)
+                                        time.sleep(0.05)                                        
+                            
+                            for ym in range(0,8):
+                                for xm in range(0,8):
+                                    if self.bFindValue("matrixonx"+str(xm)+"y"+str(ym)):
+                                        PiMatrix.setPixel((7 - xm),ym)
+                                    if self.bFindValue("matrixoffx"+str(xm)+"y"+str(ym)):
+                                        PiMatrix.clearPixel((7 - xm),ym)
+                                    
+                            if self.bFindValue("brightness"):
+                                if self.valueIsNumeric:
+                                    PiMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
+                                else:
+                                    PiMatrix.setBrightness(15)
+                                    
+                            if self.bFindValue('matrixpattern'):
+                                bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
+                                #print 'bit_pattern %s' % bit_pattern
+                                for j in range(0,64):
+                                    ym = j // 8
+                                    xm = j - (8 * ym)
+                                    if bit_pattern[j] == '0':
+                                        PiMatrix.clearPixel(xm,ym)
+                                    else:
+                                        PiMatrix.setPixel(xm,ym)
+                                    j = j + 1
+                                    
+                            rowList = ['a','b','c','d','e','f','g','h']
+                            for i in range(0,8):
+                                if self.bFindValue('row'+rowList[i]):
+                                    bit_pattern = (self.value + "00000000")[0:8]
+                                    #print 'bit_pattern %s' % bit_pattern
+                                    for j in range(0,8):
+                                        ym = i
+                                        xm = j
+                                        if bit_pattern[(j)] == '0':
+                                            PiMatrix.clearPixel((7 - xm),ym)
+                                        else:
+                                            PiMatrix.setPixel((7 - xm),ym)
+                                            
+                            colList = ['a','b','c','d','e','f','g','h']
+                            for i in range(0,8):
+                                if self.bFindValue('col'+rowList[i]):
+                                    #print self.value
+                                    bit_pattern = (self.value + "00000000")[0:8]
+                                    for j in range(0,8):
+                                        ym = j
+                                        xm = i
+                                        if bit_pattern[(j)] == '0':
+                                            PiMatrix.clearPixel((xm),ym)
+                                        else:
+                                            PiMatrix.setPixel((xm),ym)       
+
+                            if self.bFindValue('scrollleft'):
+                                PiMatrix.scroll("left")
+                            if self.bFindValue('scrollright'):
+                                print "scrollr" 
+                                PiMatrix.scroll("right")    
+                                
                     self.dataraw = origdataraw
                     
                     if self.bFind('gettime'):
@@ -2176,6 +2260,13 @@ def cleanup_threads(threads):
             print "Stopped ", pin
         except:
             continue
+            
+    try:
+        print "Stopping Matrix"
+        PiMatrix.stop()
+        print "Stopped "
+    except:
+        pass
 
     print ("cleanup threads finished")
 
@@ -2244,15 +2335,15 @@ except:
     print "No pcaPwm Detected"
     
 pcfSensor = None
-try:
-    if sghGC.getPiRevision() == 1:
-        pcfSensor = sgh_PCF8591P(0) #i2c, 0x48)
-    else:
-        pcfSensor = sgh_PCF8591P(1) #i2c, 0x48)
-    print pcfSensor
-    print "PCF8591P Detected"
-except:
-    print "No PCF8591 Detected"
+# try:
+    # if sghGC.getPiRevision() == 1:
+        # pcfSensor = sgh_PCF8591P(0) #i2c, 0x48)
+    # else:
+        # pcfSensor = sgh_PCF8591P(1) #i2c, 0x48)
+    # print pcfSensor
+    # print "PCF8591P Detected"
+# except:
+    # print "No PCF8591 Detected"
     
 AdaMatrix = None
 try:
@@ -2262,6 +2353,20 @@ try:
 except:
     print "No AdaMatrix Detected"
     
+PiMatrix = None
+PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
+# try:
+    # if sghGC.getPiRevision() == 1:
+        # print "Rev1 Board" 
+        # PiMatrix = sgh_PiMatrix(0x20,0)
+    # else:
+        # PiMatrix = sgh_PiMatrix(0x20,1)
+    # print PiMatrix
+    # print "PiMatrix Detected"
+    # #PiMatrix.start()
+# except:
+    # print "No PiMatrix Detected"
+PiMatrix.start()
     #time.sleep(5)
     
 
