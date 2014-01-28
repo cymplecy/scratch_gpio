@@ -21,6 +21,7 @@ Version =  '0.1.0' # 25Jan14
 import time
 import threading
 import datetime as dt
+import numpy
 
 import subprocess
 import math
@@ -52,7 +53,7 @@ class sgh_PiMatrix(threading.Thread):
         self.toTerminate = False
         threading.Thread.__init__(self)
         self._stop = threading.Event()
-        self.mPoint =[[0 for x in xrange(8)] for x in xrange(8)] 
+        self.mPoint = numpy.zeros((8,8),dtype = numpy.int)
         print self.mPoint
         
     def enable_output(self):
@@ -91,65 +92,46 @@ class sgh_PiMatrix(threading.Thread):
     def run(self):
         #time.sleep(2) # just wait till board likely to be up and running
         while self.toTerminate == False:
+            stime = time.time()
             for y in range(0,8):
-                #print "X and Y",x,y
-                #if self.mPoint [x][y] == 1:
-                #print "X and Y",x,y
                 self.aval = 0
+                #if y == 3:
+                    #print y, self.mPoint[:,y]
+                    #print ''.join(map(str,self.mPoint[:,y]))
                 for x in range(0,8):
-                    self.aval = self.aval + ((0x80 >> x) * self.mPoint [x][y])
+                    self.aval = self.aval + ((0x80 >> x) * int(self.mPoint[x,y]))
+                #print self.aval
                 self.bval = 0xFF - (0x80 >> y)        
-                #self.aval = 0x0F
-                #print y
-                #print self.aval,self.bval
-                #print bin(self.aval)#,bin(self.bval)
-                #self.aval = 0x0F
                 self.update_porta(0)
                 self.update_portb(self.bval)
                 self.update_porta(self.aval)
-                
-                time.sleep(0.001)
-            #self.update_porta(0)
-            #self.update_porta(0)
-            #time.sleep(1)
-               
-                # for x in range(1,4):
-                    # #print "X and Y",x,y
-                    # if self.mPoint [x][y] == 1:
-                        # #print "X and Y",x,y
-                        # xbin = (0x80 >> x)
-                        # ybin = (0x80 >> y)
-                        # #print " xbin,ybin" , xbin,ybin
-                        # self.aval =  (0x80 >> x)
-                        # self.bval = 0xFF - (0x80 >> y)        
-                        # #self.aval = 0x0F
-                        # #print self.aval,self.bval
-                        # #print bin(self.aval),bin(self.bval)
-                        # #self.aval = 0x0F
-                        # self.update_porta(self.aval)
-                        # self.update_portb(self.bval)
-                 
+                dtime = time.time() - stime
+                #if dtime < 0.015:
+                    #elf.update_portb(0)
+                    #self.update_porta(0)
+                    #time.sleep(0.015- dtime)
+            #time.sleep(0.05)
 
         self.terminated = True
     ####### end of Stepper Class
 
     def setPixel(self,x,y,onoff=1):
-        self.mPoint[x][y] = onoff
+        self.mPoint[x,y] = onoff
         
     def clearPixel(self, x, y):
         "A wrapper function to clear pixels (purely cosmetic)"
         self.setPixel(x, y, 0)        
 
     def getPixel(self,x,y):
-        return self.mPoint[x][y]        
+        return self.mPoint[x,y]        
         
-    def clear(self):
+    def clear(self,onoff=0):
         print "clear"
-        self.update_porta(0)
-        self.update_portb(0)
+        #self.update_porta(0)
+        #self.update_portb(0)
         for y in range(0,8):
             for x in range(0,8):
-                self.mPoint[x][y] = 0
+                self.mPoint[x,y] = onoff
                 
     def scroll(self, direction = "left"):
         #print direction

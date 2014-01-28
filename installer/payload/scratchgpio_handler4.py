@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.14' # 23Jan14
+Version =  'v4.1.15' # 26Jan14
 
 
 
@@ -2057,33 +2057,29 @@ class ScratchListener(threading.Thread):
                         for broadcastListLoop in broadcastList:
                             self.dataraw = str(broadcastListLoop)
                             #print self.dataraw
-                            if self.bFind("alloff"):
-                                PiMatrix.clear()
-                                
-                            if self.bFind("sweepon"):
-                                for y in range(1, 8):
-                                    for x in range(0, 8):
-                                        PiMatrix.setPixel(x,y)
-                                        time.sleep(0.05)
-                                        
-                            if self.bFind("sweepoff"):
-                                for y in range(1, 8):
-                                    for x in range(0, 8):
-                                        PiMatrix.clearPixel(x,y)
-                                        time.sleep(0.05)                                        
                             
-                            for ym in range(0,8):
-                                for xm in range(0,8):
-                                    if self.bFindValue("matrixonx"+str(xm)+"y"+str(ym)):
-                                        PiMatrix.setPixel((7 - xm),ym)
-                                    if self.bFindValue("matrixoffx"+str(xm)+"y"+str(ym)):
-                                        PiMatrix.clearPixel((7 - xm),ym)
+                            if self.bFindOnOff("all"):
+                                PiMatrix.clear(self.OnOrOff)
+                                
+                            if self.bFindOnOff("sweep"):
+                                for y in range(0, 8):
+                                    for x in range(0, 8):
+                                        PiMatrix.setPixel(x,y,self.OnOrOff)
+                                        time.sleep(0.05)  
+                            
+                            if self.bFindValue("matrixo"):
+                                for ym in range(0,8):
+                                    for xm in range(0,8):
+                                        if self.bFindValue("matrixonx"+str(xm)+"y"+str(ym)):
+                                            PiMatrix.setPixel(xm,ym)
+                                        if self.bFindValue("matrixoffx"+str(xm)+"y"+str(ym)):
+                                            PiMatrix.clearPixel(xm,ym)
                                     
-                            if self.bFindValue("brightness"):
-                                if self.valueIsNumeric:
-                                    PiMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
-                                else:
-                                    PiMatrix.setBrightness(15)
+                            # if self.bFindValue("brightness"):
+                                # if self.valueIsNumeric:
+                                    # PiMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
+                                # else:
+                                    # PiMatrix.setBrightness(15)
                                     
                             if self.bFindValue('matrixpattern'):
                                 bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
@@ -2091,10 +2087,7 @@ class ScratchListener(threading.Thread):
                                 for j in range(0,64):
                                     ym = j // 8
                                     xm = j - (8 * ym)
-                                    if bit_pattern[j] == '0':
-                                        PiMatrix.clearPixel(xm,ym)
-                                    else:
-                                        PiMatrix.setPixel(xm,ym)
+                                    PiMatrix.setPixel(xm,ym,int(float(bit_pattern[j])))
                                     j = j + 1
                                     
                             rowList = ['a','b','c','d','e','f','g','h']
@@ -2105,10 +2098,7 @@ class ScratchListener(threading.Thread):
                                     for j in range(0,8):
                                         ym = i
                                         xm = j
-                                        if bit_pattern[(j)] == '0':
-                                            PiMatrix.clearPixel((7 - xm),ym)
-                                        else:
-                                            PiMatrix.setPixel((7 - xm),ym)
+                                        PiMatrix.setPixel(xm,ym,int(float(bit_pattern[j])))
                                             
                             colList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
@@ -2118,15 +2108,11 @@ class ScratchListener(threading.Thread):
                                     for j in range(0,8):
                                         ym = j
                                         xm = i
-                                        if bit_pattern[(j)] == '0':
-                                            PiMatrix.clearPixel((xm),ym)
-                                        else:
-                                            PiMatrix.setPixel((xm),ym)       
+                                        PiMatrix.setPixel(xm,ym,int(float(bit_pattern[j])))   
 
                             if self.bFindValue('scrollleft'):
                                 PiMatrix.scroll("left")
                             if self.bFindValue('scrollright'):
-                                print "scrollr" 
                                 PiMatrix.scroll("right")    
                                 
                     self.dataraw = origdataraw
@@ -2280,7 +2266,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG
 
  
 PORT = 42001
