@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.15' # 26Jan14
+Version =  'v4.1.16' # 2Feb14
 
 
 
@@ -1509,11 +1509,13 @@ class ScratchListener(threading.Thread):
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
      
                         self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
-                        
+                        #logging.debug("Steppers in use")
                         if steppersInUse == True:
+                            #logging.debug("Steppers in use")
                             stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
                             for listLoop in range(0,2):
                                 if self.vFindValue(stepperList[listLoop][0]):
+                                    logging.debug("Stepper found %s",stepperList[listLoop][0])
                                     if self.valueIsNumeric:
                                         self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
                                     else:
@@ -1653,6 +1655,15 @@ class ScratchListener(threading.Thread):
                     if self.bFind("stepper"):
                         print ("Stepper declared")
                         steppersInUse = True
+                        sghGC.pinUse[11] = sghGC.POUTPUT
+                        sghGC.pinUse[12] = sghGC.POUTPUT
+                        sghGC.pinUse[13] = sghGC.POUTPUT
+                        sghGC.pinUse[15] = sghGC.POUTPUT
+                        sghGC.pinUse[16] = sghGC.POUTPUT
+                        sghGC.pinUse[18] = sghGC.POUTPUT
+                        sghGC.pinUse[22] = sghGC.POUTPUT
+                        sghGC.pinUse[7]  = sghGC.POUTPUT
+                        sghGC.setPinMode()
 
                     if "ladder" in ADDON: # Gordon's Ladder Board
                         #do ladderboard stuff
@@ -2266,7 +2277,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG - quiwr = INFO
 
  
 PORT = 42001

@@ -38,11 +38,11 @@ import sgh_Stepper
 import logging
 import subprocess
 try:
-	from Adafruit_PWM_Servo_Driver import PWM
-	from sgh_PCF8591P import sgh_PCF8591P
-	from sgh_Adafruit_8x8 import sgh_EightByEight
+    from Adafruit_PWM_Servo_Driver import PWM
+    from sgh_PCF8591P import sgh_PCF8591P
+    from sgh_Adafruit_8x8 import sgh_EightByEight
 except:
-	pass
+    pass
     
 import dbus
 import dbus.mainloop.glib
@@ -162,13 +162,13 @@ class Compass:
     def __str__(self):
         (x, y, z) = self.axes()
         return "Axis X: " + str(x) + "\n" \
-               "Axis Y: " + str(y) + "\n" \
-               "Axis Z: " + str(z) + "\n" \
-               "dec deg: " + str(self.__declDegrees) + "\n" \
-               "dec min: " + str(self.__declMinutes) + "\n" \
-               "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
-               "Heading: " + str(self.heading()) + "\n"
-               
+             "Axis Y: " + str(y) + "\n" \
+             "Axis Z: " + str(z) + "\n" \
+             "dec deg: " + str(self.__declDegrees) + "\n" \
+             "dec min: " + str(self.__declMinutes) + "\n" \
+             "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
+             "Heading: " + str(self.heading()) + "\n"
+             
 ### End Compasss ###################################################################################################
 
 
@@ -2239,6 +2239,13 @@ class ScratchListener(threading.Thread):
                             # sensor_name = 'temperature'
                             # bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                             # self.send_scratch_command(bcast_str)
+                            
+                    if self.bFindOnOff("topred"):
+                        if self.OnOrOff == 1:
+                            Thymio.SetVariable("thymio-II", "leds.top", [20,0,0])
+                        else:
+                            Thymio.SetVariable("thymio-II", "leds.top", [0,0,0])
+                            
                                              
                                         
 
