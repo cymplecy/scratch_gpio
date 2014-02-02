@@ -2340,19 +2340,19 @@ except:
     print "No AdaMatrix Detected"
     
 PiMatrix = None
-PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
-# try:
-    # if sghGC.getPiRevision() == 1:
-        # print "Rev1 Board" 
-        # PiMatrix = sgh_PiMatrix(0x20,0)
-    # else:
-        # PiMatrix = sgh_PiMatrix(0x20,1)
-    # print PiMatrix
-    # print "PiMatrix Detected"
-    # #PiMatrix.start()
-# except:
-    # print "No PiMatrix Detected"
-PiMatrix.start()
+#PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
+try:
+    if sghGC.getPiRevision() == 1:
+        print "Rev1 Board" 
+        PiMatrix = sgh_PiMatrix(0x20,0)
+    else:
+        PiMatrix = sgh_PiMatrix(0x20,1)
+    print PiMatrix
+    print "PiMatrix Detected"
+    PiMatrix.start()
+except:
+    print "No PiMatrix Detected"
+#PiMatrix.start()
     #time.sleep(5)
     
 
