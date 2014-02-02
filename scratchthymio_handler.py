@@ -43,6 +43,11 @@ try:
 	from sgh_Adafruit_8x8 import sgh_EightByEight
 except:
 	pass
+    
+import dbus
+import dbus.mainloop.glib
+import gobject
+from optparse import OptionParser
 #try and inport smbus but don't worry if not installed
 #try:
 #    from smbus import SMBus
@@ -51,6 +56,34 @@ except:
 
 #import RPi.GPIO as GPIO
 
+proxSensorsVal=[0,0,0,0,0]
+
+def Braitenberg():
+    print "Brait", network
+    #get the values of the sensors
+    print network.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
+
+    #print the proximity sensors value in the terminal
+    print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
+    return True
+    
+def readThymioSensors():
+    global proxSensorsVal,Thymio
+    #get the values of the sensors
+    print Thymio.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
+
+    #print the proximity sensors value in the terminal
+    #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
+
+def get_variables_reply(r):
+    global proxSensorsVal
+    print "R:", r
+    proxSensorsVal=r
+
+def get_variables_error(e):
+    print 'error:'
+    print str(e)
+    #loop.quit()
 
 class Compass:
 
@@ -138,6 +171,8 @@ class Compass:
                
 ### End Compasss ###################################################################################################
 
+
+    
 def isNumeric(s):
     try:
         float(s)
@@ -658,11 +693,15 @@ class ScratchListener(threading.Thread):
         sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
         print ("Beep Stopped")            
         
+    def lget_variables_reply(r):
+        global proxSensorsVal
+        print "r",r
+        proxSensorsVal=r
 
 
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
-               Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass,ADDON
+               Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass,ADDON,proxSensorsVal
         
 
 
@@ -1505,10 +1544,23 @@ class ScratchListener(threading.Thread):
                             self.index_pin_update(24,self.valueNumeric)
                                     
                     else:   #normal variable processing with no add on board
-                        
+                    
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
-     
+                        
                         self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
+
+                            # motorList = [['motora',11],['motorb',12]]
+                                # for listLoop in range(0,2):
+                                    # if self.vFindValue(motorList[listLoop][0]):
+                                        # if self.valueIsNumeric:
+                                            # sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
+                                        # else:
+                                            # sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
+                        if  Thymio != None:
+                            if self.vFindValue("motorleft"):
+                                Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])
+                            if self.vFindValue("motorright"):
+                                Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])    
                         
                         if steppersInUse == True:
                             stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
@@ -2176,6 +2228,17 @@ class ScratchListener(threading.Thread):
                         sensor_name = 'temperature'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                         self.send_scratch_command(bcast_str)
+                        
+                    if Thymio != None:
+                        if self.bFind("getsensors"):
+                            #readThymioSensors()
+                            Braitenberg()
+                            print "getsensors"
+                            #print the proximity sensors value in the terminal
+                            
+                            # sensor_name = 'temperature'
+                            # bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
+                            # self.send_scratch_command(bcast_str)
                                              
                                         
 
@@ -2340,20 +2403,22 @@ except:
     print "No AdaMatrix Detected"
     
 PiMatrix = None
-PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
-# try:
-    # if sghGC.getPiRevision() == 1:
-        # print "Rev1 Board" 
-        # PiMatrix = sgh_PiMatrix(0x20,0)
-    # else:
-        # PiMatrix = sgh_PiMatrix(0x20,1)
-    # print PiMatrix
-    # print "PiMatrix Detected"
-    # #PiMatrix.start()
-# except:
-    # print "No PiMatrix Detected"
-PiMatrix.start()
+#PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
+try:
+    if sghGC.getPiRevision() == 1:
+        print "Rev1 Board" 
+        PiMatrix = sgh_PiMatrix(0x20,0)
+    else:
+        PiMatrix = sgh_PiMatrix(0x20,1)
+        print PiMatrix
+        print "PiMatrix Detected"
+        PiMatrix.start()
+except:
+    print "No PiMatrix Detected"
+#PiMatrix.start()
     #time.sleep(5)
+    
+
     
 
 
@@ -2370,7 +2435,29 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         if sys.argv[2] == "standard":
             GPIOPlus = False
-        
+    Thymio = None
+    try:
+        parser = OptionParser()
+        parser.add_option("-s", "--system", action="store_true", dest="system", default=False,help="use the system bus instead of the session bus")
+
+        (options, args) = parser.parse_args()
+
+        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
+        if options.system:
+            bus = dbus.SystemBus()
+        else:
+            bus = dbus.SessionBus()
+
+        #Create Aseba network 
+        network = dbus.Interface(bus.get_object('ch.epfl.mobots.Aseba', '/'), dbus_interface='ch.epfl.mobots.AsebaNetwork')
+
+        #print in the terminal the name of each Aseba NOde
+        print network.GetNodesList()
+        Thymio = network
+    except:
+        print "No Thmymio found"
+   
 
 
 cycle_trace = 'start'
@@ -2386,10 +2473,12 @@ while True:
         print "Thread cleanup done after disconnect"
         sghGC.stopServod()
         print "servod stopped afer disconnect"
+        #os.system('sudo pkill -f asebamedulla')
         time.sleep(1)
         cycle_trace = 'start'
 
     if (cycle_trace == 'start'):
+        #os.system('asebamedulla "ser:device=/dev/ttyACM0" &')
         ADDON = ""
         INVERT = False
         # open the socket
@@ -2410,6 +2499,11 @@ while True:
         print "Running...."
         listener.start()
         sender.start()
+        # gobject.threads_init()           
+        # loop = gobject.MainLoop()
+        # #call the callback of Braitenberg algorithm
+        # handle = gobject.timeout_add (1000, Braitenberg) #every 0.1 sec
+        # loop.run()
 ##        stepperb.start()
 
 
