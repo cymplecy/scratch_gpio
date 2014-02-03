@@ -57,14 +57,23 @@ from optparse import OptionParser
 #import RPi.GPIO as GPIO
 
 proxSensorsVal=[0,0,0,0,0]
+groundSensorsAmbient=[0,0]
+groundSensorsReflected=[0,0]
+groundSensorsDelta=[0,0]
+tempSensorsVal=[0]
+accSensorsVal = [0,0,0]
+
 
 def Braitenberg():
-    print "Brait", network
+    #print "Brait", network
     #get the values of the sensors
-    print network.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
+    Thymio.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
+    Thymio.GetVariable("thymio-II", "prox.ground.delta",reply_handler=deltaget_variables_reply,error_handler=deltaget_variables_error)
+    Thymio.GetVariable("thymio-II", "temperature",reply_handler=tempget_variables_reply,error_handler=tempget_variables_error)
 
+    Thymio.GetVariable("thymio-II", "acc",reply_handler=accget_variables_reply,error_handler=accget_variables_error)     
     #print the proximity sensors value in the terminal
-    print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
+    #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
     return True
     
 def readThymioSensors():
@@ -77,13 +86,43 @@ def readThymioSensors():
 
 def get_variables_reply(r):
     global proxSensorsVal
-    print "R:", r
+    #print "R:", r
     proxSensorsVal=r
 
 def get_variables_error(e):
     print 'error:'
     print str(e)
-    #loop.quit()
+    loop.quit()
+    
+def deltaget_variables_reply(r):
+    global groundSensorsDelta
+    #print "R:", r
+    groundSensorsDelta=r
+
+def deltaget_variables_error(e):
+    print 'error:'
+    print str(e)
+    loop.quit()
+    
+def tempget_variables_reply(r):
+    global tempSensorsVal
+    #print "R:", r
+    tempSensorsVal=r
+
+def tempget_variables_error(e):
+    print 'error:'
+    print str(e)
+    loop.quit()
+    
+def accget_variables_reply(r):
+    global accSensorsVal
+    #print "R:", r
+    accSensorsVal=r
+
+def accget_variables_error(e):
+    print 'error:'
+    print str(e)
+    loop.quit()
 
 class Compass:
 
@@ -327,6 +366,7 @@ class ScratchSender(threading.Thread):
 
         last_bit_pattern = last_bit_pattern ^ -1
         lastPinUpdateTime = 0
+        lastThymioSensorUpdateTime = 0
         while not self.stopped():
             time.sleep(0.01) # be kind to cpu  :)
             #print "sender running"
@@ -395,6 +435,33 @@ class ScratchSender(threading.Thread):
                     #print 'sending: %s' % bcast_str
                     self.send_scratch_command(bcast_str)
                 self.time_last_compass = time.time()
+                
+            if (time.time() - lastThymioSensorUpdateTime) > 0.6:
+                #print "time up"
+                #print compass
+                #If Compass board truely present
+                if Thymio != None:
+                    #print "getsensors"
+                    for loop in range(0,5):
+                        #print proxSensorsVal[loop]
+                        bcast_str = 'sensor-update "%s" %s' % ("front"+str(loop + 1), str(float(proxSensorsVal[loop])))
+                        self.send_scratch_command(bcast_str)
+                    for loop in range(0,2):
+                        #print groundSensorsDelta[loop]
+                        bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
+                        self.send_scratch_command(bcast_str)                      
+                    #print tempSensorsVal[0]
+                    bcast_str = 'sensor-update "%s" %s' % ("temp", str(float(tempSensorsVal[0])))
+                    self.send_scratch_command(bcast_str)              
+                    for loop in range(0,3):
+                        #print accSensorsVal[loop]
+                        bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
+                        self.send_scratch_command(bcast_str)                                  
+
+                lastThymioSensorUpdateTime = time.time()                
+                
+                
+
 
             #time.sleep(1)
 
@@ -2232,8 +2299,23 @@ class ScratchListener(threading.Thread):
                     if Thymio != None:
                         if self.bFind("getsensors"):
                             #readThymioSensors()
-                            Braitenberg()
-                            print "getsensors"
+                            #Braitenberg()
+                            #print "getsensors"
+                            for loop in range(0,5):
+                                #print proxSensorsVal[loop]
+                                bcast_str = 'sensor-update "%s" %s' % ("front"+str(loop + 1), str(float(proxSensorsVal[loop])))
+                                self.send_scratch_command(bcast_str)
+                            for loop in range(0,2):
+                                #print groundSensorsDelta[loop]
+                                bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
+                                self.send_scratch_command(bcast_str)                      
+                            #print tempSensorsVal[0]
+                            bcast_str = 'sensor-update "%s" %s' % ("temp", str(float(tempSensorsVal[0])))
+                            self.send_scratch_command(bcast_str)              
+                            for loop in range(0,3):
+                                #print accSensorsVal[loop]
+                                bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
+                                self.send_scratch_command(bcast_str)                                  
                             #print the proximity sensors value in the terminal
                             
                             # sensor_name = 'temperature'
@@ -2241,10 +2323,11 @@ class ScratchListener(threading.Thread):
                             # self.send_scratch_command(bcast_str)
                             
                     if self.bFindOnOff("topred"):
+                        #print Thymio
                         if self.OnOrOff == 1:
-                            Thymio.SetVariable("thymio-II", "leds.top", [20,0,0])
+                            Thymio.SetVariable("thymio-II", "leds.top", [32,0,0])
                         else:
-                            Thymio.SetVariable("thymio-II", "leds.top", [0,0,0])
+                            Thymio.SetVariable("thymio-II", "leds.circle", [0,0,0])
                             
                                              
                                         
@@ -2506,11 +2589,22 @@ while True:
         print "Running...."
         listener.start()
         sender.start()
-        # gobject.threads_init()           
-        # loop = gobject.MainLoop()
-        # #call the callback of Braitenberg algorithm
-        # handle = gobject.timeout_add (1000, Braitenberg) #every 0.1 sec
-        # loop.run()
+        gobject.threads_init()           
+        loop = gobject.MainLoop()
+        #call the callback of Braitenberg algorithm
+        handle = gobject.timeout_add (500, Braitenberg) #every 0.1 sec
+        try:
+            loop.run()
+        except KeyboardInterrupt:
+            print ("Keyboard Interrupt")
+            cleanup_threads((listener,sender))
+            sghGC.stopServod()
+            print ("servod stopped")
+            sghGC.cleanup()
+            print ("Pin Cleanup done")
+            sys.exit()
+            print "CleanUp complete"            
+            print "loop running"
 ##        stepperb.start()
 
 
@@ -2525,6 +2619,9 @@ while True:
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
         cleanup_threads((listener,sender))
+        if Thymio != None:
+            loop.quit()
+            print "loop quitted"
         sghGC.stopServod()
         print ("servod stopped")
         sghGC.cleanup()
