@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# ScratchGPIO - control Raspberry Pi GPIO ports using Scratch.
+# ScratchThymio - control Thymio Robot coupled with Raspberry Pi  using Scratch.
 #Copyright (C) 2013 by Simon Walters based on original code for PiFace by Thomas Preston
 
 #This program is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.16' # 2Feb14
+Version =  'v0.0.01' # 29Jan14
 
 
 
@@ -38,19 +38,80 @@ import sgh_Stepper
 import logging
 import subprocess
 try:
-	from Adafruit_PWM_Servo_Driver import PWM
-	from sgh_PCF8591P import sgh_PCF8591P
-	from sgh_Adafruit_8x8 import sgh_EightByEight
+    from Adafruit_PWM_Servo_Driver import PWM
+    from sgh_PCF8591P import sgh_PCF8591P
+    from sgh_Adafruit_8x8 import sgh_EightByEight
 except:
-	pass
-#try and inport smbus but don't worry if not installed
-#try:
-#    from smbus import SMBus
-#except:
-#    pass
+    pass
+  
+try:  
+    import dbus
+    import dbus.mainloop.glib
+    import gobject
+    from optparse import OptionParser
+except:
+    pass
 
-#import RPi.GPIO as GPIO
+proxSensorsVal=[0,0,0,0,0]
+groundSensorsAmbient=[0,0]
+groundSensorsReflected=[0,0]
+groundSensorsDelta=[0,0]
+tempSensorsVal=[0]
+accSensorsVal = [0,0,0]
 
+
+def Braitenberg():
+    #print "Brait", network
+    #get the values of the sensors
+    Thymio.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
+    Thymio.GetVariable("thymio-II", "prox.ground.delta",reply_handler=deltaget_variables_reply,error_handler=deltaget_variables_error)
+    Thymio.GetVariable("thymio-II", "temperature",reply_handler=tempget_variables_reply,error_handler=tempget_variables_error)
+
+    Thymio.GetVariable("thymio-II", "acc",reply_handler=accget_variables_reply,error_handler=accget_variables_error)     
+    #print the proximity sensors value in the terminal
+    #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
+    return True
+
+
+def get_variables_reply(r):
+    global proxSensorsVal
+    #print "R:", r
+    proxSensorsVal=r
+
+def get_variables_error(e):
+    print 'error:'
+    print str(e)
+    loop.quit()
+    
+def deltaget_variables_reply(r):
+    global groundSensorsDelta
+    #print "R:", r
+    groundSensorsDelta=r
+
+def deltaget_variables_error(e):
+    print 'error:'
+    print str(e)
+    loop.quit()
+    
+def tempget_variables_reply(r):
+    global tempSensorsVal
+    #print "R:", r
+    tempSensorsVal=r
+
+def tempget_variables_error(e):
+    print 'error:'
+    print str(e)
+    loop.quit()
+    
+def accget_variables_reply(r):
+    global accSensorsVal
+    #print "R:", r
+    accSensorsVal=r
+
+def accget_variables_error(e):
+    print 'error:'
+    print str(e)
+    loop.quit()
 
 class Compass:
 
@@ -129,15 +190,17 @@ class Compass:
     def __str__(self):
         (x, y, z) = self.axes()
         return "Axis X: " + str(x) + "\n" \
-               "Axis Y: " + str(y) + "\n" \
-               "Axis Z: " + str(z) + "\n" \
-               "dec deg: " + str(self.__declDegrees) + "\n" \
-               "dec min: " + str(self.__declMinutes) + "\n" \
-               "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
-               "Heading: " + str(self.heading()) + "\n"
-               
+             "Axis Y: " + str(y) + "\n" \
+             "Axis Z: " + str(z) + "\n" \
+             "dec deg: " + str(self.__declDegrees) + "\n" \
+             "dec min: " + str(self.__declMinutes) + "\n" \
+             "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
+             "Heading: " + str(self.heading()) + "\n"
+             
 ### End Compasss ###################################################################################################
 
+
+    
 def isNumeric(s):
     try:
         float(s)
@@ -292,6 +355,7 @@ class ScratchSender(threading.Thread):
 
         last_bit_pattern = last_bit_pattern ^ -1
         lastPinUpdateTime = 0
+        lastThymioSensorUpdateTime = 0
         while not self.stopped():
             time.sleep(0.01) # be kind to cpu  :)
             #print "sender running"
@@ -360,6 +424,33 @@ class ScratchSender(threading.Thread):
                     #print 'sending: %s' % bcast_str
                     self.send_scratch_command(bcast_str)
                 self.time_last_compass = time.time()
+                
+            if (time.time() - lastThymioSensorUpdateTime) > 0.6:
+                #print "time up"
+                #print compass
+                #If Compass board truely present
+                if Thymio != None:
+                    #print "getsensors"
+                    for loop in range(0,5):
+                        #print proxSensorsVal[loop]
+                        bcast_str = 'sensor-update "%s" %s' % ("front"+str(loop + 1), str(float(proxSensorsVal[loop])))
+                        self.send_scratch_command(bcast_str)
+                    for loop in range(0,2):
+                        #print groundSensorsDelta[loop]
+                        bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
+                        self.send_scratch_command(bcast_str)                      
+                    #print tempSensorsVal[0]
+                    bcast_str = 'sensor-update "%s" %s' % ("temp", str(float(tempSensorsVal[0])))
+                    self.send_scratch_command(bcast_str)              
+                    for loop in range(0,3):
+                        #print accSensorsVal[loop]
+                        bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
+                        self.send_scratch_command(bcast_str)                                  
+
+                lastThymioSensorUpdateTime = time.time()                
+                
+                
+
 
             #time.sleep(1)
 
@@ -658,11 +749,15 @@ class ScratchListener(threading.Thread):
         sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
         print ("Beep Stopped")            
         
+    def lget_variables_reply(r):
+        global proxSensorsVal
+        print "r",r
+        proxSensorsVal=r
 
 
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
-               Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass,ADDON
+               Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass,ADDON,proxSensorsVal
         
 
 
@@ -1505,17 +1600,27 @@ class ScratchListener(threading.Thread):
                             self.index_pin_update(24,self.valueNumeric)
                                     
                     else:   #normal variable processing with no add on board
-                        
+                    
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
-     
+                        
                         self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
-                        #logging.debug("Steppers in use")
+
+
+                        if  Thymio != None:
+                            if self.vFindValue("motora"):
+                                Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])
+                            if self.vFindValue("motorleft"):
+                                Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])                                
+                            if self.vFindValue("motorb"):
+                                Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])
+                            if self.vFindValue("motorright"):
+                                Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])                                
+                                
+                        
                         if steppersInUse == True:
-                            #logging.debug("Steppers in use")
                             stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
                             for listLoop in range(0,2):
                                 if self.vFindValue(stepperList[listLoop][0]):
-                                    logging.debug("Stepper found %s",stepperList[listLoop][0])
                                     if self.valueIsNumeric:
                                         self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
                                     else:
@@ -1655,15 +1760,6 @@ class ScratchListener(threading.Thread):
                     if self.bFind("stepper"):
                         print ("Stepper declared")
                         steppersInUse = True
-                        sghGC.pinUse[11] = sghGC.POUTPUT
-                        sghGC.pinUse[12] = sghGC.POUTPUT
-                        sghGC.pinUse[13] = sghGC.POUTPUT
-                        sghGC.pinUse[15] = sghGC.POUTPUT
-                        sghGC.pinUse[16] = sghGC.POUTPUT
-                        sghGC.pinUse[18] = sghGC.POUTPUT
-                        sghGC.pinUse[22] = sghGC.POUTPUT
-                        sghGC.pinUse[7]  = sghGC.POUTPUT
-                        sghGC.setPinMode()
 
                     if "ladder" in ADDON: # Gordon's Ladder Board
                         #do ladderboard stuff
@@ -2187,6 +2283,33 @@ class ScratchListener(threading.Thread):
                         sensor_name = 'temperature'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                         self.send_scratch_command(bcast_str)
+                        
+                    if Thymio != None:
+                        if self.bFind("getsensors"):
+                            #print "getsensors"
+                            for loop in range(0,5):
+                                #print proxSensorsVal[loop]
+                                bcast_str = 'sensor-update "%s" %s' % ("front"+str(loop + 1), str(float(proxSensorsVal[loop])))
+                                self.send_scratch_command(bcast_str)
+                            for loop in range(0,2):
+                                #print groundSensorsDelta[loop]
+                                bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
+                                self.send_scratch_command(bcast_str)                      
+                            #print tempSensorsVal[0]
+                            bcast_str = 'sensor-update "%s" %s' % ("temp", str(float(tempSensorsVal[0])))
+                            self.send_scratch_command(bcast_str)              
+                            for loop in range(0,3):
+                                #print accSensorsVal[loop]
+                                bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
+                                self.send_scratch_command(bcast_str)                                  
+                            
+                    if self.bFindOnOff("topred"):
+                        #print Thymio
+                        if self.OnOrOff == 1:
+                            Thymio.SetVariable("thymio-II", "call leds.top", [32,0,0])
+                        else:
+                            Thymio.SetVariable("thymio-II", "call leds.top", [0,0,0])
+                            
                                              
                                         
 
@@ -2277,7 +2400,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG - quiwr = INFO
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG
 
  
 PORT = 42001
@@ -2358,13 +2481,15 @@ try:
         PiMatrix = sgh_PiMatrix(0x20,0)
     else:
         PiMatrix = sgh_PiMatrix(0x20,1)
-    print PiMatrix
-    print "PiMatrix Detected"
-    PiMatrix.start()
+        print PiMatrix
+        print "PiMatrix Detected"
+        PiMatrix.start()
 except:
     print "No PiMatrix Detected"
 #PiMatrix.start()
     #time.sleep(5)
+    
+
     
 
 
@@ -2381,7 +2506,29 @@ if __name__ == '__main__':
     if len(sys.argv) > 2:
         if sys.argv[2] == "standard":
             GPIOPlus = False
-        
+    Thymio = None
+    try:
+        parser = OptionParser()
+        parser.add_option("-s", "--system", action="store_true", dest="system", default=False,help="use the system bus instead of the session bus")
+
+        (options, args) = parser.parse_args()
+
+        dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
+
+        if options.system:
+            bus = dbus.SystemBus()
+        else:
+            bus = dbus.SessionBus()
+
+        #Create Aseba network 
+        network = dbus.Interface(bus.get_object('ch.epfl.mobots.Aseba', '/'), dbus_interface='ch.epfl.mobots.AsebaNetwork')
+
+        #print in the terminal the name of each Aseba NOde
+        print network.GetNodesList()
+        Thymio = network
+    except:
+        print "No Thmymio found"
+   
 
 
 cycle_trace = 'start'
@@ -2397,10 +2544,12 @@ while True:
         print "Thread cleanup done after disconnect"
         sghGC.stopServod()
         print "servod stopped afer disconnect"
+        #os.system('sudo pkill -f asebamedulla')
         time.sleep(1)
         cycle_trace = 'start'
 
     if (cycle_trace == 'start'):
+        #os.system('asebamedulla "ser:device=/dev/ttyACM0" &')
         ADDON = ""
         INVERT = False
         # open the socket
@@ -2421,6 +2570,22 @@ while True:
         print "Running...."
         listener.start()
         sender.start()
+        gobject.threads_init()           
+        loop = gobject.MainLoop()
+        #call the callback of Braitenberg algorithm
+        handle = gobject.timeout_add (500, Braitenberg) #every 0.1 sec
+        try:
+            loop.run()
+        except KeyboardInterrupt:
+            print ("Keyboard Interrupt")
+            cleanup_threads((listener,sender))
+            sghGC.stopServod()
+            print ("servod stopped")
+            sghGC.cleanup()
+            print ("Pin Cleanup done")
+            sys.exit()
+            print "CleanUp complete"            
+            print "loop running"
 ##        stepperb.start()
 
 
@@ -2435,6 +2600,9 @@ while True:
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
         cleanup_threads((listener,sender))
+        if Thymio != None:
+            loop.quit()
+            print "loop quitted"
         sghGC.stopServod()
         print ("servod stopped")
         sghGC.cleanup()

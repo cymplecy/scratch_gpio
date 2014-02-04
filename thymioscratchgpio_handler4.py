@@ -43,18 +43,14 @@ try:
     from sgh_Adafruit_8x8 import sgh_EightByEight
 except:
     pass
-    
-import dbus
-import dbus.mainloop.glib
-import gobject
-from optparse import OptionParser
-#try and inport smbus but don't worry if not installed
-#try:
-#    from smbus import SMBus
-#except:
-#    pass
-
-#import RPi.GPIO as GPIO
+  
+try:  
+    import dbus
+    import dbus.mainloop.glib
+    import gobject
+    from optparse import OptionParser
+except:
+    pass
 
 proxSensorsVal=[0,0,0,0,0]
 groundSensorsAmbient=[0,0]
@@ -75,14 +71,7 @@ def Braitenberg():
     #print the proximity sensors value in the terminal
     #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
     return True
-    
-def readThymioSensors():
-    global proxSensorsVal,Thymio
-    #get the values of the sensors
-    print Thymio.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
 
-    #print the proximity sensors value in the terminal
-    #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
 
 def get_variables_reply(r):
     global proxSensorsVal
@@ -1616,18 +1605,17 @@ class ScratchListener(threading.Thread):
                         
                         self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
 
-                            # motorList = [['motora',11],['motorb',12]]
-                                # for listLoop in range(0,2):
-                                    # if self.vFindValue(motorList[listLoop][0]):
-                                        # if self.valueIsNumeric:
-                                            # sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
-                                        # else:
-                                            # sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
+
                         if  Thymio != None:
-                            if self.vFindValue("motorleft"):
+                            if self.vFindValue("motora"):
                                 Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])
+                            if self.vFindValue("motorleft"):
+                                Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])                                
+                            if self.vFindValue("motorb"):
+                                Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])
                             if self.vFindValue("motorright"):
-                                Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])    
+                                Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])                                
+                                
                         
                         if steppersInUse == True:
                             stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
@@ -2298,8 +2286,6 @@ class ScratchListener(threading.Thread):
                         
                     if Thymio != None:
                         if self.bFind("getsensors"):
-                            #readThymioSensors()
-                            #Braitenberg()
                             #print "getsensors"
                             for loop in range(0,5):
                                 #print proxSensorsVal[loop]
@@ -2316,18 +2302,13 @@ class ScratchListener(threading.Thread):
                                 #print accSensorsVal[loop]
                                 bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
                                 self.send_scratch_command(bcast_str)                                  
-                            #print the proximity sensors value in the terminal
-                            
-                            # sensor_name = 'temperature'
-                            # bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
-                            # self.send_scratch_command(bcast_str)
                             
                     if self.bFindOnOff("topred"):
                         #print Thymio
                         if self.OnOrOff == 1:
-                            Thymio.SetVariable("thymio-II", "leds.top", [32,0,0])
+                            Thymio.SetVariable("thymio-II", "call leds.top", [32,0,0])
                         else:
-                            Thymio.SetVariable("thymio-II", "leds.circle", [0,0,0])
+                            Thymio.SetVariable("thymio-II", "call leds.top", [0,0,0])
                             
                                              
                                         
