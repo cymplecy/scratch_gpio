@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v0.0.01' # 29Jan14
+Version =  'v0.0.03' # 9Feb14
 
 
 
@@ -50,6 +50,7 @@ try:
     import gobject
     from optparse import OptionParser
 except:
+    print "error during dbus stuff import"
     pass
 
 proxSensorsVal=[0,0,0,0,0]
@@ -61,15 +62,16 @@ accSensorsVal = [0,0,0]
 
 
 def Braitenberg():
-    #print "Brait", network
+    #print "Brait", network500
     #get the values of the sensors
     Thymio.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
     Thymio.GetVariable("thymio-II", "prox.ground.delta",reply_handler=deltaget_variables_reply,error_handler=deltaget_variables_error)
-    Thymio.GetVariable("thymio-II", "temperature",reply_handler=tempget_variables_reply,error_handler=tempget_variables_error)
+    # Thymio.GetVariable("thymio-II", "temperature",reply_handler=tempget_variables_reply,error_handler=tempget_variables_error)
 
-    Thymio.GetVariable("thymio-II", "acc",reply_handler=accget_variables_reply,error_handler=accget_variables_error)     
+    # Thymio.GetVariable("thymio-II", "acc",reply_handler=accget_variables_reply,error_handler=accget_variables_error)     
     #print the proximity sensors value in the terminal
     #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
+    #print groundSensorsDelta[0], groundSensorsDelta[1]
     return True
 
 
@@ -222,12 +224,12 @@ def parse_data(dataraw, search_string):
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
     
 
-class MyError(Exception):
-    def __init__(self, value):
-        self.value = value
+# class MyError(Exception):
+    # def __init__(self, value):
+        # self.value = value
 
-    def __str__(self):
-        return repr(self.value)
+    # def __str__(self):
+        # return repr(self.value)
 
 class ScratchSender(threading.Thread):
 
@@ -426,9 +428,7 @@ class ScratchSender(threading.Thread):
                 self.time_last_compass = time.time()
                 
             if (time.time() - lastThymioSensorUpdateTime) > 0.6:
-                #print "time up"
-                #print compass
-                #If Compass board truely present
+
                 if Thymio != None:
                     #print "getsensors"
                     for loop in range(0,5):
@@ -2574,9 +2574,14 @@ while True:
         loop = gobject.MainLoop()
         #call the callback of Braitenberg algorithm
         handle = gobject.timeout_add (500, Braitenberg) #every 0.1 sec
+        print "handle", handle
         try:
+            print "start loop"
             loop.run()
-        except KeyboardInterrupt:
+            print "loop exited"
+        except: #KeyboardInterrupt:
+            print "Unexpected error:", sys.exc_info()[0]
+            sys.exit()
             print ("Keyboard Interrupt")
             cleanup_threads((listener,sender))
             sghGC.stopServod()
@@ -2584,7 +2589,7 @@ while True:
             sghGC.cleanup()
             print ("Pin Cleanup done")
             sys.exit()
-            print "CleanUp complete"            
+            print "Thymio CleanUp complete"            
             print "loop running"
 ##        stepperb.start()
 
@@ -2597,6 +2602,7 @@ while True:
 #        piglow.update_pwm_values(values)
 
         time.sleep(0.1)
+        print "loop"
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
         cleanup_threads((listener,sender))
