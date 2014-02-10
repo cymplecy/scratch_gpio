@@ -53,7 +53,7 @@ except:
     print "error during dbus stuff import"
     pass
 
-proxSensorsVal=[0,0,0,0,0]
+proxSensorsVal=[0,0,0,0,0,0,0]
 groundSensorsAmbient=[0,0]
 groundSensorsReflected=[0,0]
 groundSensorsDelta=[0,0]
@@ -61,8 +61,9 @@ tempSensorsVal=[0]
 accSensorsVal = [0,0,0]
 
 
-def Braitenberg():
+def readThymioSensors():
     #print "Brait", network500
+    
     #get the values of the sensors
     Thymio.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
     Thymio.GetVariable("thymio-II", "prox.ground.delta",reply_handler=deltaget_variables_reply,error_handler=deltaget_variables_error)
@@ -70,7 +71,7 @@ def Braitenberg():
 
     # Thymio.GetVariable("thymio-II", "acc",reply_handler=accget_variables_reply,error_handler=accget_variables_error)     
     #print the proximity sensors value in the terminal
-    #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
+    #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4],proxSensorsVal[5],proxSensorsVal[6]
     #print groundSensorsDelta[0], groundSensorsDelta[1]
     return True
 
@@ -427,7 +428,7 @@ class ScratchSender(threading.Thread):
                     self.send_scratch_command(bcast_str)
                 self.time_last_compass = time.time()
                 
-            if (time.time() - lastThymioSensorUpdateTime) > 0.6:
+            if (time.time() - lastThymioSensorUpdateTime) > 0.4:
 
                 if Thymio != None:
                     #print "getsensors"
@@ -435,6 +436,12 @@ class ScratchSender(threading.Thread):
                         #print proxSensorsVal[loop]
                         bcast_str = 'sensor-update "%s" %s' % ("front"+str(loop + 1), str(float(proxSensorsVal[loop])))
                         self.send_scratch_command(bcast_str)
+                    for loop in range(5,7):
+                        #print proxSensorsVal[loop]
+                        bcast_str = 'sensor-update "%s" %s' % ("back"+str(loop -4), str(float(proxSensorsVal[loop])))
+                        self.send_scratch_command(bcast_str)     
+                    bcast_str = 'sensor-update "%s" %s' % ("front", str(float(max(proxSensorsVal[0:5]))))
+                    self.send_scratch_command(bcast_str)                        
                     for loop in range(0,2):
                         #print groundSensorsDelta[loop]
                         bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
@@ -1609,12 +1616,16 @@ class ScratchListener(threading.Thread):
                         if  Thymio != None:
                             if self.vFindValue("motora"):
                                 Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])
+
                             if self.vFindValue("motorleft"):
-                                Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])                                
+                                Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])    
+             
                             if self.vFindValue("motorb"):
                                 Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])
+
                             if self.vFindValue("motorright"):
-                                Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])                                
+                                Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])    
+
                                 
                         
                         if steppersInUse == True:
@@ -2284,24 +2295,24 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                         self.send_scratch_command(bcast_str)
                         
-                    if Thymio != None:
-                        if self.bFind("getsensors"):
-                            #print "getsensors"
-                            for loop in range(0,5):
-                                #print proxSensorsVal[loop]
-                                bcast_str = 'sensor-update "%s" %s' % ("front"+str(loop + 1), str(float(proxSensorsVal[loop])))
-                                self.send_scratch_command(bcast_str)
-                            for loop in range(0,2):
-                                #print groundSensorsDelta[loop]
-                                bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
-                                self.send_scratch_command(bcast_str)                      
-                            #print tempSensorsVal[0]
-                            bcast_str = 'sensor-update "%s" %s' % ("temp", str(float(tempSensorsVal[0])))
-                            self.send_scratch_command(bcast_str)              
-                            for loop in range(0,3):
-                                #print accSensorsVal[loop]
-                                bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
-                                self.send_scratch_command(bcast_str)                                  
+                    # if Thymio != None:
+                        # if self.bFind("getsensors"):
+                            # #print "getsensors"
+                            # for loop in range(0,5):
+                                # #print proxSensorsVal[loop]
+                                # bcast_str = 'sensor-update "%s" %s' % ("front"+str(loop + 1), str(float(proxSensorsVal[loop])))
+                                # self.send_scratch_command(bcast_str)
+                            # for loop in range(0,2):
+                                # #print groundSensorsDelta[loop]
+                                # bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
+                                # self.send_scratch_command(bcast_str)                      
+                            # #print tempSensorsVal[0]
+                            # bcast_str = 'sensor-update "%s" %s' % ("temp", str(float(tempSensorsVal[0])))
+                            # self.send_scratch_command(bcast_str)              
+                            # for loop in range(0,3):
+                                # #print accSensorsVal[loop]
+                                # bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
+                                # self.send_scratch_command(bcast_str)                                  
                             
                     if self.bFindOnOff("topred"):
                         #print Thymio
@@ -2573,7 +2584,7 @@ while True:
         gobject.threads_init()           
         loop = gobject.MainLoop()
         #call the callback of Braitenberg algorithm
-        handle = gobject.timeout_add (500, Braitenberg) #every 0.1 sec
+        handle = gobject.timeout_add (300, readThymioSensors) #every 0.1 sec
         print "handle", handle
         try:
             print "start loop"
