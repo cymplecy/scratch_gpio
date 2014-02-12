@@ -10,6 +10,7 @@
 #Version 29Oct13 Add in Chown commands and extra Adafruit and servod files and alter gpio_scrath2.sh and bit of chmod +x make V3
 #Version 21Nov13 Change for ScratchGPIO V4
 #Version 26Dec13 Change for ScratchGPIO4plus
+#Version 12Feb14 Copy all sgh*.py files into scratchgpio4
 f_exit(){
 echo ""
 echo "Usage:"
@@ -64,16 +65,16 @@ chown -R $USERID:$GROUPID $HDIR/scratchgpio4
 cp scratchgpio_handler4.py $HDIR/scratchgpio4
 cp Adafruit_I2C.py $HDIR/scratchgpio4
 cp Adafruit_PWM_Servo_Driver.py $HDIR/scratchgpio4
-cp sgh_GPIOController.py $HDIR/scratchgpio4
-cp sgh_PCF8591P.py $HDIR/scratchgpio4
-cp sgh_PiGlow.py $HDIR/scratchgpio4
-cp sgh_Stepper.py $HDIR/scratchgpio4
+#cp sgh_GPIOController.py $HDIR/scratchgpio4
+#cp sgh_PCF8591P.py $HDIR/scratchgpio4
+#cp sgh_PiGlow.py $HDIR/scratchgpio4
+cp sgh*.py $HDIR/scratchgpio4
 
 cp sgh_servod $HDIR/scratchgpio4
 cp killsgh.sh $HDIR/scratchgpio4
 
-cp sgh_Adafruit_8x8.py $HDIR/scratchgpio4
-cp sgh_Adafruit_LEDBackpack.py $HDIR/scratchgpio4
+#cp sgh_Adafruit_8x8.py $HDIR/scratchgpio4
+#cp sgh_Adafruit_LEDBackpack.py $HDIR/scratchgpio4
 
 chown -R $USERID:$GROUPID $HDIR/scratchgpio4
 chmod +x sgh_servod
