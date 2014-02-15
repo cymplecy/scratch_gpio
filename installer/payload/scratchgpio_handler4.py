@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.09a' # 11Jan13 motorpitx hotfix
+Version =  'v4.1.09b' # 15Feb14 piglow hotfix
 
 
 
@@ -2189,6 +2189,18 @@ try:
     piglow.update_pwm_values()#PiGlow_Values)
 except:
     print "No PiGlow Detected"
+    
+piglow = None
+
+# if sghGC.getPiRevision() == 1:
+    # print "Rev1 Board" 
+    # piglow = sgh_PiGlow.PiGlow(0)
+# else:
+    # piglow = sgh_PiGlow.PiGlow(1)
+# print ("PiGlow:",piglow)
+# print ("Update PWM value on PiGLow attempted")
+# piglow.update_pwm_values()#PiGlow_Values)
+
     
 #See if Compass connected
 compass = None

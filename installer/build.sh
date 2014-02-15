@@ -5,13 +5,15 @@ cp ../Adafruit_I2C.py ./payload/
 cp ../Adafruit_PWM_Servo_Driver.py ./payload/
 cp ../killsgh.sh ./payload/
 cp ../scratchgpio_handler4.py ./payload/
+cp ../sgh_Adafruit_8x8.py ./payload/
+cp ../sgh_Adafruit_LEDBackpack.py ./payload/
 cp ../sgh_GPIOController.py ./payload/
 cp ../sgh_PCF8591P.py ./payload/
 cp ../sgh_PiGlow.py ./payload/
 cp ../sgh_servod ./payload/
 cp ../sgh_Stepper.py ./payload/
-cp ../sgh_Adafruit_8x8.py ./payload/
-cp ../sgh_Adafruit_LEDBackpack.py ./payload/
+
+
 
 cd payload
 tar cf ../payload.tar ./* #tar all the payload files
