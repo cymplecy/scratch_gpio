@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.09b' # 15Feb14 piglow hotfix
+Version =  'v4.1.09c' # 15Feb14 piglow hotfix
 
 
 
@@ -1674,7 +1674,7 @@ class ScratchListener(threading.Thread):
                             sghGC.pinUse[7] = sghGC.PULTRA
                             
                     elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
-                        #print "processing piglow variables"
+                        logging.debug("processing piglow variables")
                     
                         if self.bFindOnOff('all'):
                             #print "found allon/off"
@@ -2167,7 +2167,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stderr, level=logging.INFO)#DEBUG) # USe DEBUG for debug - INFO normally
 
  
 PORT = 42001
@@ -2190,8 +2190,6 @@ try:
 except:
     print "No PiGlow Detected"
     
-piglow = None
-
 # if sghGC.getPiRevision() == 1:
     # print "Rev1 Board" 
     # piglow = sgh_PiGlow.PiGlow(0)
