@@ -57,24 +57,23 @@ from optparse import OptionParser
 
 #import RPi.GPIO as GPIO
 
-proxSensorsVal=[0,0,0,0,0]
-groundSensorsAmbient=[0,0]
-groundSensorsReflected=[0,0]
-groundSensorsDelta=[0,0]
-tempSensorsVal=[0]
-accSensorsVal = [0,0,0]
+# proxSensorsVal=[0,0,0,0,0]
+# groundSensorsAmbient=[0,0]
+# groundSensorsReflected=[0,0]
+# groundSensorsDelta=[0,0]
+# tempSensorsVal=[0]
+# accSensorsVal = [0,0,0]
 
-class ThymioController(object):
+class ThymioController(threading.Thread):
     def __init__(self, filename):
+        print filename 
+        threading.Thread.__init__(self)
         # init the main loop and joystick
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-        #pygame.init()
-        #self.joystick = pygame.joystick.Joystick(0)
-        #self.joystick.init()
-        #self.ox = 0
-        #self.oy = 0
-        self.oc = [0] * 3
-        
+        self.lMotor = 0
+        self.rMotor = 0
+        self.colour = [0] * 3
+        self.proxSensors = [0] * 7
         # get stub of the Aseba network
         bus = dbus.SessionBus()
         asebaNetworkObject = bus.get_object('ch.epfl.mobots.Aseba', '/')
@@ -86,9 +85,13 @@ class ThymioController(object):
             reply_handler=self.dbusReply,
             error_handler=self.dbusError
         )
+        self.groundDelta = self.asebaNetwork.GetVariable("thymio-II", "prox.ground.delta")
         
-        # schedules first scan of joystick
-        #glib.timeout_add(1000, self.scanJoystick)
+    def stop(self):
+        self._stop.set()
+
+    def stopped(self):
+        return self._stop.isSet()        
     
     def run(self):
         # run event loop
@@ -103,108 +106,36 @@ class ThymioController(object):
     def dbusError(self, e):
         # there was an error on D-Bus, stop loop
         print('dbus error: %s' % str(e))
-        self.loop.quit()
-
-    def scanJoystick(self):
-        # if no loop is running, skip function
-        if not self.loop.is_running():
-            return
+        self.loop.quit() 
         
-        # scan joystick and send command to Thymio
-        #pygame.event.pump()
-        #x = self.joystick.get_axis(0) * 300
-        #y = -self.joystick.get_axis(1) * 300
-        c = [1,0,1]#[self.joystick.get_button(i) for i in range(3)]
+# send speed command
+    def SetSpeed(self):
+        self.asebaNetwork.SendEventName('SetSpeed',
+            [self.lMotor, self.rMotor],
+            reply_handler=self.dbusReply,
+            error_handler=self.dbusError
+        )
         
-        # send speed command
-        #if x != self.ox or y != self.oy:
-        #    self.asebaNetwork.SendEventName('SetSpeed',
-        #        [y+x, y-x],
-        #        reply_handler=self.dbusReply,
-        #        error_handler=self.dbusError
-        #    )
-        #    self.ox, self.oy = x, y
+    def UpdateSpeedLeft(self, mleft):
+        self.lMotor = mleft
+
+    def UpdateSpeedRight(self, mright):
+        self.rMotor = mright
         
-        # send color command
-        if c != 24:
-            self.asebaNetwork.SendEventName('SetColor',
-                map(lambda x: 32*x, c),
-                reply_handler=self.dbusReply,
-                error_handler=self.dbusError
-            )
-            self.oc = c
+    def SetLEDS(self):
+        self.asebaNetwork.SendEventName('SetColor',
+            map(lambda x: 32*x, self.colour),
+            reply_handler=self.dbusReply,
+            error_handler=self.dbusError
+        )    
         
-        # read and display horizontal sensors
-        horizontalProximity = self.asebaNetwork.GetVariable(
-            'thymio-II', 'prox.horizontal')
-        print(', '.join(map(str, horizontalProximity)))
+    def UpdateRed(self, value):
+        self.colour[0] = value        
+    def UpdateGreen(self, value):
+        self.colour[1] = value    
+    def UpdateBlue(self, value):
+        self.colour[2] = value            
         
-        # reschedule scan of joystick
-        glib.timeout_add(1000, self.scanJoystick)
-
-
-
-def Braitenberg():
-    #print "Brait", network
-    #get the values of the sensors
-    Thymio.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
-    Thymio.GetVariable("thymio-II", "prox.ground.delta",reply_handler=deltaget_variables_reply,error_handler=deltaget_variables_error)
-    #Thymio.GetVariable("thymio-II", "temperature",reply_handler=tempget_variables_reply,error_handler=tempget_variables_error)
-    #sesnors
-    Thymio.GetVariable("thymio-II", "acc",reply_handler=accget_variables_reply,error_handler=accget_variables_error)     
-    #print the proximity sensors value in the terminal
-    #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
-    return True
-    
-def readThymioSensors():
-    global proxSensorsVal,Thymio
-    #get the values of the sensors
-    print Thymio.GetVariable("thymio-II", "prox.horizontal",reply_handler=get_variables_reply,error_handler=get_variables_error)
-
-    #print the proximity sensors value in the terminal
-    #print proxSensorsVal[0],proxSensorsVal[1],proxSensorsVal[2],proxSensorsVal[3],proxSensorsVal[4]
-
-def get_variables_reply(r):
-    global proxSensorsVal
-    #print "R:", r
-    proxSensorsVal=r
-
-def get_variables_error(e):
-    print 'error:'
-    print str(e)
-    loop.quit()
-    
-def deltaget_variables_reply(r):
-    global groundSensorsDelta
-    #print "R:", r
-    groundSensorsDelta=r
-
-def deltaget_variables_error(e):
-    print 'error:'
-    print str(e)
-    loop.quit()
-    
-def tempget_variables_reply(r):
-    global tempSensorsVal
-    #print "R:", r
-    tempSensorsVal=r
-
-def tempget_variables_error(e):
-    print 'error:'
-    print str(e)
-    loop.quit()
-    
-def accget_variables_reply(r):
-    global accSensorsVal
-    #print "R:", r
-    accSensorsVal=r
-
-def accget_variables_error(e):
-    print 'error:'
-    print str(e)
-    loop.quit()
-
-
     
 def isNumeric(s):
     try:
@@ -244,8 +175,6 @@ class ScratchSender(threading.Thread):
         self.time_last_compass = 0.0
         self.distlist = [0.0,0.0,0.0]
         
-        
-
 
     def stop(self):
         self._stop.set()
@@ -258,7 +187,7 @@ class ScratchSender(threading.Thread):
             #print pin
             # if we care about this pin's value
             if (changed_pin_map >> pin) & 0b1:
-                #print "changed"
+                print "changed"
                 pin_value = (pin_value_map >> pin) & 0b1
                 if (sghGC.pinUse[pin] == sghGC.PINPUT):
                     #print pin , pin_value
@@ -266,7 +195,6 @@ class ScratchSender(threading.Thread):
                     self.broadcast_pin_update(pin, pin_value)
                     
 
-                    
                                      
     def broadcast_pin_update(self, pin, value):
         #print ADDON 
@@ -278,7 +206,6 @@ class ScratchSender(threading.Thread):
         #Normal action is to just send updates to pin values but this can be modified if known addon in use
         sensor_name = "pin" + str(pin)
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
-     
 
         
     def send_scratch_command(self, cmd):
@@ -352,24 +279,47 @@ class ScratchSender(threading.Thread):
                 #If Compass board truely present
                 if Thymio != None:
                     #print "getsensors"
+                    horizontalProximity = Thymio.asebaNetwork.GetVariable('thymio-II', 'prox.horizontal')
+                    newGroundDelta = Thymio.asebaNetwork.GetVariable("thymio-II", "prox.ground.delta")
+                    #print type(horizontalProximity)
+                    #proxSensorsVal=[0,0,0,0,0,0,0]
+                    proxSensorsVal = horizontalProximity[0:7]
+                    #print proxSensorsVal
+                    #print(', '.join(map(str, horizontalProximity))) 
+                    bcast_str = ''#sensor-update'
                     for loop in range(0,5):
                         #print proxSensorsVal[loop]
-                        bcast_str = 'sensor-update "%s" %s' % ("front"+str(loop + 1), str(float(proxSensorsVal[loop])))
-                        self.send_scratch_command(bcast_str)
-                    for loop in range(0,2):
-                        #print groundSensorsDelta[loop]
-                        bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
-                        self.send_scratch_command(bcast_str)                      
-                    #print tempSensorsVal[0]
-                    bcast_str = 'sensor-update "%s" %s' % ("temp", str(float(tempSensorsVal[0])))
-                    self.send_scratch_command(bcast_str)              
-                    for loop in range(0,3):
-                        #print accSensorsVal[loop]
-                        bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
-                        self.send_scratch_command(bcast_str)          
-                    horizontalProximity = self.asebaNetwork.GetVariable('thymio-II', 'prox.horizontal')
-                    print(', '.join(map(str, horizontalProximity)))                        
+                        if proxSensorsVal[loop] != Thymio.proxSensors[loop]:
+                            bcast_str ='sensor-update "%s" %s' % ("front"+str(loop + 1), str(int(float(proxSensorsVal[loop]) / 46.0 )))
+                            print bcast_str
+                            self.send_scratch_command(bcast_str)
 
+                    #print proxSensorsVal
+                    #print(', '.join(map(str, horizontalProximity))) 
+                    print Thymio.groundDelta
+                    print newGroundDelta
+                    bcast_str = ''#sensor-update'
+                    for loop in range(0,2):
+                        #print proxSensorsVal[loop]
+                        if newGroundDelta[loop] != Thymio.groundDelta[loop]:
+                            bcast_str ='sensor-update "%s" %s' % ("front"+str(loop + 1), str(int(float(newGroundDelta[loop]) / 10.0 )))
+                            print bcast_str
+                            self.send_scratch_command(bcast_str)                            
+                    #for loop in range(0,2):
+                        #print groundSensorsDelta[loop]
+                        #bcast_str = 'sensor-update "%s" %s' % ("ground"+str(loop + 1), str(float(groundSensorsDelta[loop])))
+                        #self.send_scratch_command(bcast_str)                      
+                    #print tempSensorsVal[0]
+                    #bcast_str = 'sensor-update "%s" %s' % ("temp", str(float(tempSensorsVal[0])))
+                    #self.send_scratch_command(bcast_str)              
+                    #for loop in range(0,3):
+                        #print accSensorsVal[loop]
+                        #bcast_str = 'sensor-update "%s" %s' % ("accelerometer"+str(loop + 0), str(float(accSensorsVal[loop])))
+                        #self.send_scratch_command(bcast_str)          
+                                           
+                Thymio.proxSensors = proxSensorsVal
+                Thymio.groundDelta = newGroundDelta
+                #print Thymio.proxSensors
                 lastThymioSensorUpdateTime = time.time()                
                 
                 
@@ -763,9 +713,23 @@ class ScratchListener(threading.Thread):
 
                     if  Thymio != None:
                         if self.vFindValue("motorleft"):
-                            Thymio.SetVariable("thymio-II", "motor.left.target", [self.valueNumeric])
+                            Thymio.UpdateSpeedLeft(self.valueNumeric)
                         if self.vFindValue("motorright"):
-                            Thymio.SetVariable("thymio-II", "motor.right.target", [self.valueNumeric])    
+                            Thymio.UpdateSpeedRight(self.valueNumeric)
+                        if self.bFind("motor"):
+                            Thymio.SetSpeed()
+                        changeLED = False
+                        if self.vFindValue("red"):
+                            Thymio.UpdateRed(self.valueNumeric)
+                            changeLED = True
+                        if self.vFindValue("green"):
+                            Thymio.UpdateGreen(self.valueNumeric)
+                            changeLED = True
+                        if self.vFindValue("blue"):
+                            Thymio.UpdateBlue(self.valueNumeric)   
+                            changeLED = True                            
+                        if changeLED == True:
+                            Thymio.SetLEDS()                            
                         
 
     ### Check for Broadcast type messages being received
@@ -808,6 +772,8 @@ def cleanup_threads(threads):
     for thread in threads:
         thread.join()
     print "Waiting for join on main threads to complete"
+    Thymio.stop()
+    
 
     print ("cleanup threads finished")
 
@@ -845,28 +811,9 @@ if __name__ == '__main__':
         if sys.argv[2] == "standard":
             GPIOPlus = False
     Thymio = None
-    #try:
-        # parser = OptionParser()
-        # parser.add_option("-s", "--system", action="store_true", dest="system", default=False,help="use the system bus instead of the session bus")
-
-        # (options, args) = parser.parse_args()
-
-        # dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
-
-        # if options.system:
-            # bus = dbus.SystemBus()
-        # else:
-            # bus = dbus.SessionBus()
-
-        # #Create Aseba network 
-        # network = dbus.Interface(bus.get_object('ch.epfl.mobots.Aseba', '/'), dbus_interface='ch.epfl.mobots.AsebaNetwork')
-
-        # #print in the terminal the name of each Aseba NOde
-        # print network.GetNodesList()
-        # Thymio = network
-        
     Thymio = ThymioController("/home/pi/test-medulla.aesl")
-    Thymio.run()
+    print "thymio: ",Thymio
+    #Thymio.run()
    # except:
         #print "No Thymio found"
    
@@ -898,50 +845,32 @@ while True:
         the_socket = create_socket(host, PORT)
         print 'Connected!'
         the_socket.settimeout(SOCKET_TIMEOUT) #removed 3dec13 to see what happens
-        listener = ScratchListener(the_socket)
+        #listener = ScratchListener(the_socket)
 
-
-##        data = the_socket.recv(BUFFER_SIZE)
-##        print "Discard 1st data buffer" , data[4:].lower()
         sender = ScratchSender(the_socket)
         cycle_trace = 'running'
         print "Running...."
-        listener.start()
+        #listener.start()
         sender.start()
-        #gobject.threads_init()           
-        #loop = gobject.MainLoop()
-        #call the callback of Braitenberg algorithm
-        #handle = gobject.timeout_add (500, Braitenberg) #every 0.1 sec
-        # try:
-            # loop.run()
-        # except KeyboardInterrupt:
-            # print ("Keyboard Interrupt")
-            # cleanup_threads((listener,sender))
-            # sghGC.stopServod()
-            # print ("servod stopped")
-            # sghGC.cleanup()
-            # print ("Pin Cleanup done")
-            # sys.exit()
-            # print "CleanUp complete"            
-            # print "loop running"
+        Thymio.start()
 ##        stepperb.start()
 
 
     # wait for ctrl+c
-    try:
-        time.sleep(0.1)
-    except KeyboardInterrupt:
-        print ("Keyboard Interrupt")
-        cleanup_threads((listener,sender))
-        if Thymio != None:
-            loop.quit()
-            print "loop quitted"
-        sghGC.stopServod()
-        print ("servod stopped")
-        sghGC.cleanup()
-        print ("Pin Cleanup done")
-        sys.exit()
-        print "CleanUp complete"
+    #try:
+    time.sleep(0.1)
+    # except KeyboardInterrupt:
+        # print ("Keyboard Interrupt")
+        # cleanup_threads((listener,sender))
+        # if Thymio != None:
+            # loop.quit()
+            # print "loop quitted"
+        # sghGC.stopServod()
+        # print ("servod stopped")
+        # sghGC.cleanup()
+        # print ("Pin Cleanup done")
+        # sys.exit()
+        # print "CleanUp complete"
         
 #### End of main program
 
