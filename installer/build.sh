@@ -1,10 +1,10 @@
 #!/bin/bash
 #copy files to payload folder
-
+SGHVER="5"
 cp ../Adafruit_I2C.py ./payload/
 cp ../Adafruit_PWM_Servo_Driver.py ./payload/
 cp ../killsgh.sh ./payload/
-cp ../scratchgpio_handler4.py ./payload/
+cp ../scratchgpio_handler${SGHVER}.py ./payload/
 cp ../sgh_GPIOController.py ./payload/
 cp ../sgh_PCF8591P.py ./payload/
 cp ../sgh_PiGlow.py ./payload/
@@ -21,7 +21,7 @@ if [ -e "payload.tar" ]; then
     gzip payload.tar #gzip the payload files
 
     if [ -e "payload.tar.gz" ]; then
-        cat decompress.sh payload.tar.gz > install_scratchgpio4.sh # bolt on decompress script
+        cat decompress.sh payload.tar.gz > install_scratchgpio${SGHVER}.sh # bolt on decompress script
     else
         echo "payload.tar.gz does not exist"
         exit 1
@@ -30,8 +30,8 @@ else
     echo "payload.tar does not exist"
     exit 1
 fi
-chmod +x install_scratchgpio4.sh #make install script executeable
-echo "install_scratchgpio4.sh created"
-cp install_scratchgpio4.sh ../ #copy installer to main folder
+chmod +x install_scratchgpio${SGHVER}.sh #make install script executeable
+echo "install_scratchgpio"$SGHVER".sh created"
+cp install_scratchgpio${SGHVER}.sh ../ #copy installer to main folder
 
 exit 0
