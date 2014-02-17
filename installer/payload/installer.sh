@@ -98,8 +98,8 @@ chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 cp scratchgpio${SGHVER}.desktop $HDIR/Desktop
 
-#Instead of copying the scratchgpio4plus.sh file, we will generate it
-#Create a new file for scratchgpio4plus.sh
+#Instead of copying the scratchgpioXplus.sh file, we will generate it
+#Create a new file for scratchgpioXplus.sh
 echo "#!/bin/bash" > $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
