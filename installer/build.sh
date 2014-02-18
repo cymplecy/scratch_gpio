@@ -12,6 +12,7 @@ cp ../sgh_servod ./payload/
 cp ../sgh_Stepper.py ./payload/
 cp ../sgh_Adafruit_8x8.py ./payload/
 cp ../sgh_Adafruit_LEDBackpack.py ./payload/
+cp ../sgh_PiMatrix.py ./payload/
 
 cd payload
 tar cf ../payload.tar ./* #tar all the payload files
