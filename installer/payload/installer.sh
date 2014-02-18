@@ -10,7 +10,8 @@
 #Version 29Oct13 Add in Chown commands and extra Adafruit and servod files and alter gpio_scrath2.sh and bit of chmod +x make V3
 #Version 21Nov13 Change for ScratchGPIO V4
 #Version 26Dec13 Change for ScratchGPIO4plus
-SGHVER="5"
+#Version 18Dec13 Change for ScratchGPIO5
+SGHVER="5dev"
 f_exit(){
 echo ""
 echo "Usage:"
@@ -97,7 +98,22 @@ echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR
 
 chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-cp scratchgpio${SGHVER}.desktop $HDIR/Desktop
+
+#Create new desktop icon
+echo "[Desktop Entry]" > $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Encoding=UTF-8" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Version=1.0" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Type=Application" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Exec=./scratchgpio5/scratchgpio5.sh" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Icon=scratch" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Terminal=false" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Name=ScratchGPIO 5" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Comment= Programming system and content development tool" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "Categories=Application;Education;Development;" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+echo "MimeType=application/x-scratch-project" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+
+chown -R $USERID:$GROUPID $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+
 
 #Instead of copying the scratchgpioXplus.sh file, we will generate it
 #Create a new file for scratchgpioXplus.sh
@@ -114,7 +130,21 @@ echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR
 
 chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-cp scratchgpio${SGHVER}plus.desktop $HDIR/Desktop
+
+#Create new desktop icon for plus version
+echo "[Desktop Entry]" > $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Encoding=UTF-8" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Version=1.0" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Type=Application" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Exec=./scratchgpio5/scratchgpio5.sh" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Icon=scratch" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Terminal=false" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Name=ScratchGPIO 5" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Comment= Programming system and content development tool" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Categories=Application;Education;Development;" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "MimeType=application/x-scratch-project" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+
+chown -R $USERID:$GROUPID  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
 
 cp blink11.py $HDIR
 

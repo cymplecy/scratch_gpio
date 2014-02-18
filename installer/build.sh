@@ -1,6 +1,6 @@
 #!/bin/bash
 #copy files to payload folder
-SGHVER="5"
+SGHVER="5dev"
 cp ../Adafruit_I2C.py ./payload/
 cp ../Adafruit_PWM_Servo_Driver.py ./payload/
 cp ../killsgh.sh ./payload/
