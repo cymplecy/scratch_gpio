@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.16' # 2Feb14
+Version =  'v5.0.0' # 18Feb14
 
 
 
@@ -2168,6 +2168,7 @@ class ScratchListener(threading.Thread):
                         self.encoderDiff = 0
 
                     if self.bFind("getip"): #find ip address
+                        logging.debug("Finding IP")
                         arg = 'ip route list'
                         p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
                         ipdata = p.communicate()
@@ -2277,7 +2278,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG - quiwr = INFO
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)# default DEBUG - quiwr = INFO
 
  
 PORT = 42001
