@@ -68,6 +68,7 @@ cp sgh_GPIOController.py $HDIR/scratchgpio4
 cp sgh_PCF8591P.py $HDIR/scratchgpio4
 cp sgh_PiGlow.py $HDIR/scratchgpio4
 cp sgh_Stepper.py $HDIR/scratchgpio4
+cp sgh_PiMatrix.py $HDIR/scratchgpio4
 
 cp sgh_servod $HDIR/scratchgpio4
 cp killsgh.sh $HDIR/scratchgpio4

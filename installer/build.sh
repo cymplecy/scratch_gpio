@@ -12,6 +12,7 @@ cp ../sgh_PCF8591P.py ./payload/
 cp ../sgh_PiGlow.py ./payload/
 cp ../sgh_servod ./payload/
 cp ../sgh_Stepper.py ./payload/
+cp ../sgh_PiMatrix.py ./payload/
 
 
 
