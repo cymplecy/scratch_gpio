@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.3.0' # 19Feb14 from 17thDev version 
+Version =  'v4.3.`' # 21Feb14
 
 
 
@@ -242,7 +242,7 @@ class ScratchSender(threading.Thread):
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
             try:
-                sensor_name = ["blue","red","white","yellow"][([19,21,26,24].index(pin))]
+                sensor_name = ["green","red","blue","yellow"][([19,21,26,24].index(pin))]
             except:
                 print "pidie input out of range"
                 sensor_name = "pin" + str(pin)
@@ -255,7 +255,7 @@ class ScratchSender(threading.Thread):
             #  
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         if ("piringo" in ADDON) or ("pidie" in ADDON):
-            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("Down","Up")[value == 1])
+            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("on","off")[value == 1])
         if ("fishdish" in ADDON):
             bcast_str = 'sensor-update "switch" %s' %  (("Up","Down")[value == 1])
         #print 'sending: %s' % bcast_str
@@ -1033,7 +1033,7 @@ class ScratchListener(threading.Thread):
                             sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
                             with lock:
                                 sghGC.resetPinMode()
-                                pidieOutputs = [7,11,12,22,13,8,15,16,18]
+                                pidieOutputs = [7,11,12,13,15,16,18,22,8]
                                 for pin in pidieOutputs:
                                     sghGC.pinUse[pin] = sghGC.POUTPUT
                                 pidieInputs = [21,19,24,26]
