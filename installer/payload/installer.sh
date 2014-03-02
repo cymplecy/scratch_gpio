@@ -137,7 +137,7 @@ echo "[Desktop Entry]" > $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
 echo "Encoding=UTF-8" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
 echo "Version=1.0" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
 echo "Type=Application" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Exec=./scratchgpio"$SGHVER"plus/scratchgpio"$SGHVER"plus.sh" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+echo "Exec=./scratchgpio"$SGHVER"/scratchgpio"$SGHVER"plus.sh" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
 echo "Icon=scratch" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
 echo "Terminal=false" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
 echo "Name=ScratchGPIO "$SGHVER"plus" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
