@@ -293,7 +293,7 @@ class ScratchSender(threading.Thread):
         last_bit_pattern = last_bit_pattern ^ -1
         lastPinUpdateTime = 0
         while not self.stopped():
-            time.sleep(0.01) # be kind to cpu  :)
+            time.sleep(01.01) # be kind to cpu  :)
             #print "sender running"
             pin_bit_pattern = 0
             with lock:
@@ -561,8 +561,8 @@ class ScratchListener(threading.Thread):
                     
     def vLEDCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
-            if self.vFindValueOnOff('led' + str(led)):
-                sghGC.pinUpdate(pin,self.OnOrOff)
+            if self.vFindOnOff('led' + str(led)):
+                sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
                     
             if self.vFindValue('power' + str(led)):
                 if self.valueIsNumeric:
@@ -1042,6 +1042,7 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 anyAddOns = True 
+                            
                                 
                         if "fishdish" in ADDON:
                             with lock:
@@ -1053,6 +1054,7 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 anyAddOns = True
+                                
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     # with lock:

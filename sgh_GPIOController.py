@@ -16,7 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#Last mod 15Jan14 servod path
+#Last mod 5Mar14 more debugging
 
 import RPi.GPIO as GPIO
 import time
@@ -199,6 +199,7 @@ class GPIOController :
             #print pin,value,type,self.pinUse[pin]
         except ValueError:
             print "mistake made in trying to update an invalid pin"
+            print pin,value,type
             pass
         
     def pinFreq(self, pin, freq):
