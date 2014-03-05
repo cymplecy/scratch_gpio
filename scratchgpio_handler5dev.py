@@ -488,12 +488,15 @@ class ScratchListener(threading.Thread):
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
+        self.OnOrOff = None
         if self.vFind(searchStr):
             self.value = self.getValue(searchStr)
             if str(self.value) in ["high","on","1"]:
                 self.valueNumeric = 1
+                self.OnOrOff = 1
             else:
                 self.valueNumeric = 0
+                self.OnOrOff = 0
             return True
         else:
             return False
@@ -558,11 +561,8 @@ class ScratchListener(threading.Thread):
                     
     def vLEDCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
-            if self.vFindValue('led' + str(led)):
-                if self.valueIsNumeric:
-                    sghGC.pinUpdate(ledList[led - 1],self.valueNumeric)
-                else:
-                    sghGC.pinUpdate(ledList[led - 1],0)
+            if self.vFindValueOnOff('led' + str(led)):
+                sghGC.pinUpdate(pin,self.OnOrOff)
                     
             if self.vFindValue('power' + str(led)):
                 if self.valueIsNumeric:
