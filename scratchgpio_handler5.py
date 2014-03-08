@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.2' # 7Mar14
+Version =  'v5.0.21' # 8Mar14
 
 
 
@@ -192,7 +192,7 @@ class ScratchSender(threading.Thread):
             if (changed_pin_map >> pin) & 0b1:
                 #print "changed"
                 pin_value = (pin_value_map >> pin) & 0b1
-                if (sghGC.pinUse[pin] == sghGC.PINPUT):
+                if (sghGC.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                     #print pin , pin_value
                     #print "broadcast changed pin"
                     self.broadcast_pin_update(pin, pin_value)
@@ -230,8 +230,8 @@ class ScratchSender(threading.Thread):
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
             try:
-                sensor_name = "In" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
-                if sensor_name == "InE":
+                sensor_name = "Input" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
+                if sensor_name == "InputE":
                     sensor_name = "switch"
             except:
                 print "pibrella input out of range"
@@ -279,11 +279,11 @@ class ScratchSender(threading.Thread):
         #time.sleep(5)
         last_bit_pattern=0L
         
-        self.send_scratch_command('broadcast "SetPins"')
+        #self.send_scratch_command('broadcast "SetPins"')
         #print sghGC.pinUse
         with lock:
             for pin in sghGC.validPins:
-                if (sghGC.pinUse[pin] == sghGC.PINPUT):
+                if (sghGC.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                     #self.broadcast_pin_update(pin, sghGC.pinRead(pin))
                     last_bit_pattern += sghGC.pinRead(pin) << pin
                 else:
@@ -300,7 +300,7 @@ class ScratchSender(threading.Thread):
                 #print "lOCKED"
                 for pin in sghGC.validPins:
                     #print pin
-                    if (sghGC.pinUse[pin] == sghGC.PINPUT):
+                    if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                         #print 'trying to read pin' , pin 
                         pin_bit_pattern += sghGC.pinRead(pin) << pin
                     else:
@@ -328,7 +328,7 @@ class ScratchSender(threading.Thread):
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for pin in sghGC.validPins:
-                    if (sghGC.pinUse[pin] == sghGC.PINPUT):
+                    if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                         self.broadcast_pin_update(pin, sghGC.pinRead(pin))
 
             if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
@@ -631,7 +631,7 @@ class ScratchListener(threading.Thread):
         self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
 
     def beep(self,pin,freq,duration):
-        print freq 
+        logging.debug("Freq:%s", freq) 
         if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
             sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
         startCount = time.time() #Get current time
@@ -640,7 +640,7 @@ class ScratchListener(threading.Thread):
         while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
             time.sleep(0.01)
         sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        print ("Beep Stopped")        
+        
 
         
     # def beep(self,pin,freq,duration):
@@ -685,7 +685,7 @@ class ScratchListener(threading.Thread):
             with lock:
                 print "set pins standard"
                 for pin in sghGC.validPins:
-                    sghGC.pinUse[pin] = sghGC.PINPUTDOWN
+                    sghGC.pinUse[pin] = sghGC.PINPUT
                 sghGC.pinUse[11] = sghGC.POUTPUT
                 sghGC.pinUse[12] = sghGC.POUTPUT
                 sghGC.pinUse[13] = sghGC.POUTPUT
@@ -698,6 +698,7 @@ class ScratchListener(threading.Thread):
         #This is main listening routine
         lcount = 0
         dataPrevious = ""
+        debugLogging = False
         
         
         #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
@@ -799,7 +800,7 @@ class ScratchListener(threading.Thread):
                 print "Unknown error occured with receiving data"
                 #raise
                 continue
-            
+
             #At this point dataList[] contains a series of strings either broadcast or sensor-updates
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
@@ -821,6 +822,18 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue("autostart"):
                         if self.value == "true":
                             self.send_scratch_command("broadcast Scratch-StartClicked")
+                            
+                    if self.vFindValue("logdebug"):
+                        if (self.value == "1") and (debugLogging == False):
+                            logging.getLogger().setLevel(logging.DEBUG)
+                            debugLogging = True
+                        if (self.value == "0") and (debugLogging == True):
+                            logging.getLogger().setLevel(logging.INFO)
+                            debugLogging = False                            
+                            
+                    if (debugLogging == False):
+                         logging.getLogger().setLevel(logging.INFO)
+                        
                             
                     if self.vFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
@@ -1083,9 +1096,13 @@ class ScratchListener(threading.Thread):
                             #print "checking pin" ,pin
                             if self.bFindValue('config' + str(pin)):
                                 if self.value == "in":
-                                    sghGC.pinUse[pin] = sghGC.PINPUT
-                                else:
-                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                    sghGC.pinUse[pin] = sghGC.PINPUT                            
+                                # if self.value == "inpulldown":
+                                    # sghGC.pinUse[pin] = sghGC.PINPUTDOWN                            
+                                # if self.value == "inpullnone":
+                                    # sghGC.pinUse[pin] = sghGC.PINPUTNONE
+                                # else:
+                                    # sghGC.pinUse[pin] = sghGC.POUTPUT
                     
                         sghGC.setPinMode()           
     ### Check for AddOn boards being declared
@@ -1593,9 +1610,9 @@ class ScratchListener(threading.Thread):
                             pcfSensor.writeDAC(svalue)
 
     ### Check for Broadcast type messages being received
+
                 if 'broadcast' in self.dataraw:
                     #print 'broadcast:' , self.dataraw
-                    
 
                     if self.bFindValue("setpins"):
                         logging.debug("SetPins broadcast found")
@@ -1861,7 +1878,6 @@ class ScratchListener(threading.Thread):
                                     bn = int(self.valueNumeric)
                                 except:
                                     bn = "60"
-                            print self.value
                             beepNote = int(float(bn))
                             beepDuration = (float(bd))
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
@@ -2231,7 +2247,8 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % ("Version", Version)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
-
+                        
+                 
                     #end of broadcast check
 
 
