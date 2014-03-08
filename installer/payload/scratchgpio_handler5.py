@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v4.1.16' # 2Feb14
+Version =  'v5.0.2' # 7Mar14
 
 
 
@@ -242,7 +242,7 @@ class ScratchSender(threading.Thread):
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
             try:
-                sensor_name = ["blue","red","white","yellow"][([19,21,26,24].index(pin))]
+                sensor_name = ["green","red","blue","yellow"][([19,21,26,24].index(pin))]
             except:
                 print "pidie input out of range"
                 sensor_name = "pin" + str(pin)
@@ -255,13 +255,13 @@ class ScratchSender(threading.Thread):
             #  
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         if ("piringo" in ADDON) or ("pidie" in ADDON):
-            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("Down","Up")[value == 1])
+            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("on","off")[value == 1])
         if ("fishdish" in ADDON):
-            bcast_str = 'sensor-update "switch" %s' %  (("Up","Down")[value == 1])
+            bcast_str = 'sensor-update "switch" %s' %  (("on","off")[value == 1])
         #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
         if "motorpitx" in ADDON:
-            bcast_str = 'broadcast "%s%s"' % (sensor_name,("Off","On")[value == 1])
+            bcast_str = 'broadcast "%s%s"' % (sensor_name,("off","on")[value == 1])
             #print 'sending: %s' % bcast_str
             self.send_scratch_command(bcast_str)
         
@@ -392,17 +392,17 @@ class ScratchListener(threading.Thread):
         return (searchStr in self.dataraw)
         
     def bFindOn(self,searchStr):
-        return (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high'))
+        return (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high') or self.bFind(searchStr + '1'))
         
     def bFindOff(self,searchStr):
-        return (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low'))
+        return (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low') or self.bFind(searchStr + '0'))
         
     def bFindOnOff(self,searchStr):
         self.OnOrOff = None
-        if (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high')):
+        if (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high') or self.bFind(searchStr + '1')):
             self.OnOrOff = 1
             return True
-        elif (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low')):
+        elif (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low') or self.bFind(searchStr + '0')):
             self.OnOrOff = 0
             return True
         else:
@@ -488,12 +488,15 @@ class ScratchListener(threading.Thread):
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
+        self.OnOrOff = None
         if self.vFind(searchStr):
             self.value = self.getValue(searchStr)
             if str(self.value) in ["high","on","1"]:
                 self.valueNumeric = 1
+                self.OnOrOff = 1
             else:
                 self.valueNumeric = 0
+                self.OnOrOff = 0
             return True
         else:
             return False
@@ -558,11 +561,8 @@ class ScratchListener(threading.Thread):
                     
     def vLEDCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
-            if self.vFindValue('led' + str(led)):
-                if self.valueIsNumeric:
-                    sghGC.pinUpdate(ledList[led - 1],self.valueNumeric)
-                else:
-                    sghGC.pinUpdate(ledList[led - 1],0)
+            if self.vFindOnOff('led' + str(led)):
+                sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
                     
             if self.vFindValue('power' + str(led)):
                 if self.valueIsNumeric:
@@ -630,33 +630,33 @@ class ScratchListener(threading.Thread):
         print "Diff:" , self.encoderDiff
         self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
 
-    # def beep(self,pin,freq,duration):
-        # print freq 
-        # if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
-            # sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
-        # startCount = time.time() #Get current time
-        # sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
-        # sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
-        # while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
-            # time.sleep(0.01)
-        # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        # print ("Beep Stopped")        
-
-        
     def beep(self,pin,freq,duration):
         print freq 
         if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
             sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
         startCount = time.time() #Get current time
-        sghGC.pinFreq(pin,2000) # Set freq used for PWM cycle
-
+        sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
+        sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
         while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
-            sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
-            time.sleep(0.2)#1.0 / freq)
-            sghGC.pinUpdate(pin,0,"pwm")  # Set duty cycle to 50% to produce square wave
-            time.sleep(0.2)#1.0 / freq)
+            time.sleep(0.01)
         sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        print ("Beep Stopped")            
+        print ("Beep Stopped")        
+
+        
+    # def beep(self,pin,freq,duration):
+        # print freq 
+        # if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
+            # sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
+        # startCount = time.time() #Get current time
+        # sghGC.pinFreq(pin,2000) # Set freq used for PWM cycle
+
+        # while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
+            # sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
+            # time.sleep(0.2)#1.0 / freq)
+            # sghGC.pinUpdate(pin,0,"pwm")  # Set duty cycle to 50% to produce square wave
+            # time.sleep(0.2)#1.0 / freq)
+        # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
+        # print ("Beep Stopped")            
         
 
 
@@ -1033,7 +1033,7 @@ class ScratchListener(threading.Thread):
                             sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
                             with lock:
                                 sghGC.resetPinMode()
-                                pidieOutputs = [7,11,12,22,13,8,15,16,18]
+                                pidieOutputs = [7,11,12,13,15,16,18,22,8]
                                 for pin in pidieOutputs:
                                     sghGC.pinUse[pin] = sghGC.POUTPUT
                                 pidieInputs = [21,19,24,26]
@@ -1042,6 +1042,7 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 anyAddOns = True 
+                            
                                 
                         if "fishdish" in ADDON:
                             with lock:
@@ -1053,6 +1054,7 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 anyAddOns = True
+                                
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     # with lock:
@@ -1434,7 +1436,7 @@ class ScratchListener(threading.Thread):
                                 bn = "60"
                                 bd = "1"
                             beepNote = int(float(bn))
-                            beepDuration = int(float(bd))
+                            beepDuration = (float(bd))
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
                             beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
                             beepThread.start()
@@ -1849,10 +1851,26 @@ class ScratchListener(threading.Thread):
                             if self.bFindOnOff("output" + oLed[i][0]):
                                 #print oLed[i][0]
                                 sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
-
-                        if self.bFind("beep"):
-                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0), beepDuration])
-                            beepThread.start()     
+                                
+                        if self.bFindValue("beep"):
+                            try:
+                                bn,bd = self.value.split(",")
+                            except:
+                                bd = "1"
+                                try:
+                                    bn = int(self.valueNumeric)
+                                except:
+                                    bn = "60"
+                            print self.value
+                            beepNote = int(float(bn))
+                            beepDuration = (float(bd))
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
+                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
+                            beepThread.start()
+                            
+                        # if self.bFind("beep"):
+                            # beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0), beepDuration])
+                            # beepThread.start()     
 
                     elif "rgbled" in ADDON: # rgb-led
 
@@ -2168,6 +2186,7 @@ class ScratchListener(threading.Thread):
                         self.encoderDiff = 0
 
                     if self.bFind("getip"): #find ip address
+                        logging.debug("Finding IP")
                         arg = 'ip route list'
                         p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
                         ipdata = p.communicate()
@@ -2277,7 +2296,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG - quiwr = INFO
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)# default DEBUG - quiwr = INFO
 
  
 PORT = 42001

@@ -1,6 +1,6 @@
 #!/bin/bash
 #copy files to payload folder
-SGHVER="5dev"
+SGHVER="5"
 echo $SGHVER
 echo $HOME
 cp $HOME/sghdev/scratch_gpio/Adafruit_I2C.py $HOME/sghdev/scratch_gpio/installer/payload
