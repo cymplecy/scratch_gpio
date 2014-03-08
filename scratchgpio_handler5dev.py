@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.1' # 2Mar14
+Version =  'v5.0.2' # 7Mar14
 
 
 
@@ -293,7 +293,7 @@ class ScratchSender(threading.Thread):
         last_bit_pattern = last_bit_pattern ^ -1
         lastPinUpdateTime = 0
         while not self.stopped():
-            time.sleep(01.01) # be kind to cpu  :)
+            time.sleep(0.01) # be kind to cpu  :)
             #print "sender running"
             pin_bit_pattern = 0
             with lock:
@@ -392,17 +392,17 @@ class ScratchListener(threading.Thread):
         return (searchStr in self.dataraw)
         
     def bFindOn(self,searchStr):
-        return (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high'))
+        return (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high') or self.bFind(searchStr + '1'))
         
     def bFindOff(self,searchStr):
-        return (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low'))
+        return (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low') or self.bFind(searchStr + '0'))
         
     def bFindOnOff(self,searchStr):
         self.OnOrOff = None
-        if (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high')):
+        if (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high') or self.bFind(searchStr + '1')):
             self.OnOrOff = 1
             return True
-        elif (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low')):
+        elif (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low') or self.bFind(searchStr + '0')):
             self.OnOrOff = 0
             return True
         else:
@@ -630,33 +630,33 @@ class ScratchListener(threading.Thread):
         print "Diff:" , self.encoderDiff
         self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
 
-    # def beep(self,pin,freq,duration):
-        # print freq 
-        # if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
-            # sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
-        # startCount = time.time() #Get current time
-        # sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
-        # sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
-        # while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
-            # time.sleep(0.01)
-        # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        # print ("Beep Stopped")        
-
-        
     def beep(self,pin,freq,duration):
         print freq 
         if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
             sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
         startCount = time.time() #Get current time
-        sghGC.pinFreq(pin,2000) # Set freq used for PWM cycle
-
+        sghGC.pinFreq(pin,freq) # Set freq used for PWM cycle
+        sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
         while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
-            sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
-            time.sleep(0.2)#1.0 / freq)
-            sghGC.pinUpdate(pin,0,"pwm")  # Set duty cycle to 50% to produce square wave
-            time.sleep(0.2)#1.0 / freq)
+            time.sleep(0.01)
         sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        print ("Beep Stopped")            
+        print ("Beep Stopped")        
+
+        
+    # def beep(self,pin,freq,duration):
+        # print freq 
+        # if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
+            # sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
+        # startCount = time.time() #Get current time
+        # sghGC.pinFreq(pin,2000) # Set freq used for PWM cycle
+
+        # while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
+            # sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
+            # time.sleep(0.2)#1.0 / freq)
+            # sghGC.pinUpdate(pin,0,"pwm")  # Set duty cycle to 50% to produce square wave
+            # time.sleep(0.2)#1.0 / freq)
+        # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
+        # print ("Beep Stopped")            
         
 
 
@@ -1436,7 +1436,7 @@ class ScratchListener(threading.Thread):
                                 bn = "60"
                                 bd = "1"
                             beepNote = int(float(bn))
-                            beepDuration = int(float(bd))
+                            beepDuration = (float(bd))
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
                             beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
                             beepThread.start()
@@ -1851,10 +1851,26 @@ class ScratchListener(threading.Thread):
                             if self.bFindOnOff("output" + oLed[i][0]):
                                 #print oLed[i][0]
                                 sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
-
-                        if self.bFind("beep"):
-                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0), beepDuration])
-                            beepThread.start()     
+                                
+                        if self.bFindValue("beep"):
+                            try:
+                                bn,bd = self.value.split(",")
+                            except:
+                                bd = "1"
+                                try:
+                                    bn = int(self.valueNumeric)
+                                except:
+                                    bn = "60"
+                            print self.value
+                            beepNote = int(float(bn))
+                            beepDuration = (float(bd))
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
+                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
+                            beepThread.start()
+                            
+                        # if self.bFind("beep"):
+                            # beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0), beepDuration])
+                            # beepThread.start()     
 
                     elif "rgbled" in ADDON: # rgb-led
 
