@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.21' # 8Mar14
+Version =  'v5.0.3' # 9Mar14
 
 
 
@@ -230,8 +230,8 @@ class ScratchSender(threading.Thread):
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
             try:
-                sensor_name = "Input" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
-                if sensor_name == "InputE":
+                sensor_name = "In" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
+                if sensor_name == "InE":
                     sensor_name = "switch"
             except:
                 print "pibrella input out of range"
