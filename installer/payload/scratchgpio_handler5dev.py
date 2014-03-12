@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.3' # 9Mar14
+Version =  'v5.0.4' # 11Mar14 PiBrella Changes
 
 
 
@@ -230,8 +230,8 @@ class ScratchSender(threading.Thread):
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
             try:
-                sensor_name = "In" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
-                if sensor_name == "InE":
+                sensor_name = "Input" + ["NA","A","B","C","D","E"][([0,21,26,24,19,23].index(pin))]
+                if sensor_name == "InputE":
                     sensor_name = "switch"
             except:
                 print "pibrella input out of range"
@@ -249,13 +249,15 @@ class ScratchSender(threading.Thread):
                 pass
         else:
             sensor_name = "pin" + str(pin)
-        # 
+        #  
             # 
             # 
             #  
         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         if ("piringo" in ADDON) or ("pidie" in ADDON):
             bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("on","off")[value == 1])
+        if ("pibrella" in ADDON):
+            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("off","on")[value == 1])            
         if ("fishdish" in ADDON):
             bcast_str = 'sensor-update "switch" %s' %  (("on","off")[value == 1])
         #print 'sending: %s' % bcast_str
@@ -569,6 +571,18 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(ledList[led - 1],self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(ledList[led - 1],0,type="pwm")
+                    
+                    
+    def vListCheck(self,pinList,nameList):
+        for loop in range(0,len(pinList)): # loop thru led numbers
+            if self.vFindOnOff(str(nameList[loop])):
+                sghGC.pinUpdate(pinList[loop],self.OnOrOff)
+                    
+            if self.vFindValue('power' + str(nameList[loop])):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
+                else:
+                    sghGC.pinUpdate(pinList[loop],0,type="pwm")                    
                     
     def stop(self):
         self._stop.set()
@@ -1427,24 +1441,9 @@ class ScratchListener(threading.Thread):
                     elif "pibrella" in ADDON: # PiBrella
                
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
-     
-                        self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
 
-                        cLed = [["redpower",13],["amberpower",11],["greenpower",7]]
-                        for i in range(0,3):
-                            if self.vFindValue(cLed[i][0]):
-                                if self.valueIsNumeric:
-                                    sghGC.pinUpdate(cLed[i][1],self.valueNumeric,"pwm")
-                                else:
-                                    sghGC.pinUpdate(cLed[i][1],0)
-                                    
-                        oLed = [["powere",15],["powerf",16],["powerg",18],["powerh",22]]
-                        for i in range(0,4):
-                            if self.vFindValue(oLed[i][0]):
-                                if self.valueIsNumeric:
-                                    sghGC.pinUpdate(oLed[i][1],self.valueNumeric,"pwm")
-                                else:
-                                    sghGC.pinUpdate(oLed[i][1],0)        
+                        self.vListCheck([13,11,7,15,16,18,22],["led1","led2","led3","led4","led5","led6","led7"])
+                        self.vListCheck([13,11,11,11,7,15,16,18,22],["red","amber","yellow","orange","green","outpute","outputf","outputg","outputh"])
                                     
                         if self.vFindValue("beep"):
                             try:
