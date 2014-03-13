@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.4' # 11Mar14 PiBrella Changes
+Version =  'v5.0.5' # 12Mar14 PiBrella Changes
 
 
 
@@ -437,6 +437,17 @@ class ScratchListener(threading.Thread):
             if self.bFindOnOff('led' + str(led)):
                 sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
                 
+    def bListCheck(self,pinList,nameList):
+        for loop in range(0,len(pinList)): # loop thru list
+            if self.bFindOnOff(str(nameList[loop])):
+                sghGC.pinUpdate(pinList[loop],self.OnOrOff)
+                    
+            if self.bFindValue('power' + str(nameList[loop])):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
+                else:
+                    sghGC.pinUpdate(pinList[loop],0,type="pwm")                    
+                
     def bFindValue(self,searchStr):
         #print "searching for ", searchStr 
         self.value = None
@@ -591,12 +602,12 @@ class ScratchListener(threading.Thread):
         return self._stop.isSet()
 
     def stepperUpdate(self, pins, value,steps=2123456789,stepDelay = 0.003):
-        print "pin" , pins , "value" , value
-        print "Stepper type", sgh_Stepper.sghStepper, "this one", type(sghGC.pinRef[pins[0]])
+        #print "pin" , pins , "value" , value
+        #print "Stepper type", sgh_Stepper.sghStepper, "this one", type(sghGC.pinRef[pins[0]])
         try:
             sghGC.pinRef[pins[0]].changeSpeed(max(-100,min(100,value)),steps) # just update Stepper value
-            print "stepper updated"
-            print ("pin",pins, "set to", value)
+            #print "stepper updated"
+           # print ("pin",pins, "set to", value)
         except:
             try:
                 print ("Stopping PWM")
@@ -605,12 +616,12 @@ class ScratchListener(threading.Thread):
                 pass
             sghGC.pinRef[pins[0]] = None
             #time.sleep(5)
-            print ("New Stepper instance started", pins)
+            #print ("New Stepper instance started", pins)
             sghGC.pinRef[pins[0]] = sgh_Stepper.sghStepper(sghGC,pins,stepDelay) # create new Stepper instance 
             sghGC.pinRef[pins[0]].changeSpeed(max(-100,min(100,value)),steps) # update Stepper value
             sghGC.pinRef[pins[0]].start() # update Stepper value                
-            print 'pin' , pins , ' changed to Stepper' 
-            print ("pins",pins, "set to", value)  
+           # print 'pin' , pins , ' changed to Stepper' 
+            #print ("pins",pins, "set to", value)  
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
         
         
@@ -1444,6 +1455,12 @@ class ScratchListener(threading.Thread):
 
                         self.vListCheck([13,11,7,15,16,18,22],["led1","led2","led3","led4","led5","led6","led7"])
                         self.vListCheck([13,11,11,11,7,15,16,18,22],["red","amber","yellow","orange","green","outpute","outputf","outputg","outputh"])
+                        
+                        if self.vFindValue('stepper'):
+                            if self.valueIsNumeric:
+                                self.stepperUpdate([15,16,18,22],self.valueNumeric)
+                            else:
+                                self.stepperUpdate([15,16,18,22],0)                        
                                     
                         if self.vFindValue("beep"):
                             try:
@@ -1850,29 +1867,18 @@ class ScratchListener(threading.Thread):
                         self.bLEDCheck(piringoOutputs) # Check for LED off/on type broadcasts
                         self.bLEDPowerCheck(piringoOutputs) # Vary LED Brightness
                         
-                    elif "pibrella" in ADDON: # BerryClip
-
+                    elif "pibrella" in ADDON: # PiBrella
                         #print ("PiBrella broadcast processing")                    
-                        self.bCheckAll() # Check for all off/on type broadcasts
-                        self.bPinCheck() # Check for pin off/on type broadcasts
-                        
-                        cLed = [["red",13],["amber",11],["green",7]]
-                        for i in range(0,3):
-                            if self.bFindOnOff(cLed[i][0]):
-                                #print cLed[i][0]
-                                sghGC.pinUpdate(cLed[i][1],self.OnOrOff)
-                                
-                        oLed = [["e",15],["f",16],["g",18],["h",22]]
-                        for i in range(0,4):
-                            if self.bFindOnOff("output" + oLed[i][0]):
-                                #print oLed[i][0]
-                                sghGC.pinUpdate(oLed[i][1],self.OnOrOff)           
+                        self.bCheckAll() # Check for all off/on type broadcasts                    
+
+                        self.bListCheck([13,11,7,15,16,18,22],["led1","led2","led3","led4","led5","led6","led7"])
+                        self.bListCheck([13,11,11,11,7,15,16,18,22],["red","amber","yellow","orange","green","outpute","outputf","outputg","outputh"])
                                 
                         if self.bFindValue("beep"):
                             try:
                                 bn,bd = self.value.split(",")
                             except:
-                                bd = "1"
+                                bd = "0.25"
                                 try:
                                     bn = int(self.valueNumeric)
                                 except:
@@ -1883,10 +1889,6 @@ class ScratchListener(threading.Thread):
                             beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
                             beepThread.start()
                             
-                        # if self.bFind("beep"):
-                            # beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0), beepDuration])
-                            # beepThread.start()     
-
                     elif "rgbled" in ADDON: # rgb-led
 
                         #print ("rgb-led broadcast processing")            
