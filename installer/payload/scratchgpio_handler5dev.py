@@ -394,17 +394,17 @@ class ScratchListener(threading.Thread):
         return (searchStr in self.dataraw)
         
     def bFindOn(self,searchStr):
-        return (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high') or self.bFind(searchStr + '1'))
+        return (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 '))
         
     def bFindOff(self,searchStr):
-        return (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low') or self.bFind(searchStr + '0'))
+        return (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(searchStr + '0 '))
         
     def bFindOnOff(self,searchStr):
         self.OnOrOff = None
-        if (self.bFind(searchStr + 'on') or self.bFind(searchStr + 'high') or self.bFind(searchStr + '1')):
+        if (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 ')):
             self.OnOrOff = 1
             return True
-        elif (self.bFind(searchStr + 'off') or self.bFind(searchStr + 'low') or self.bFind(searchStr + '0')):
+        elif (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(searchStr + '0 ')):
             self.OnOrOff = 0
             return True
         else:
@@ -433,8 +433,12 @@ class ScratchListener(threading.Thread):
                 #print pin
 
     def bLEDCheck(self,ledList):
+        print self.dataraw
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
             if self.bFindOnOff('led' + str(led)):
+                print '#'+'led' + str(led)+'#'
+                print self.value
+                print self.OnOrOff
                 sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
                 
     def bListCheck(self,pinList,nameList):
@@ -834,10 +838,11 @@ class ScratchListener(threading.Thread):
             logging.debug("dataList: %s",dataList)
             #print "GPIOPLus" , GPIOPlus
             for dataItem in dataList:
-                dataraw = dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
+                dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
+                dataraw = dataraw + " "
                 self.dataraw = dataraw
                 #print "Loop processing"
-                #print self.dataraw
+                print self.dataraw
                 #print
                 if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
@@ -1524,11 +1529,9 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
                                     
                     elif "pidie" in ADDON:
-                        #do pidie stuff
-
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
-
-                        self.vLEDCheck(pidieOutputs)
+                        self.vListCheck([7,11,12,13,15,16,18,22,8],["led1","led2","led3","led4","led5","led6","led7","led8","led9"])
+                        self.vListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])     
                         
                     elif "fishdish" in ADDON:
                         #do fishdish stuff
@@ -1913,8 +1916,11 @@ class ScratchListener(threading.Thread):
                     elif "pidie" in ADDON: # pidie
                         #do piringo stuff
                         self.bCheckAll() # Check for all off/on type broadcasrs
-                        self.bLEDCheck(pidieOutputs) # Check for LED off/on type broadcasts
-                        self.bLEDPowerCheck(pidieOutputs) # Vary LED Brightness            
+
+                        self.bLEDPowerCheck(pidieOutputs) # Vary LED Brightness          
+
+                        self.bListCheck([7,11,12,13,15,16,18,22,8],["led1","led2","led3","led4","led5","led6","led7","led8","led9"])
+                        self.bListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])                             
 
                     elif "fishdish" in ADDON: # fishdish
                         #do piringo stuff
