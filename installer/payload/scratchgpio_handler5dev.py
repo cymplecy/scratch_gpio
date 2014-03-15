@@ -247,6 +247,15 @@ class ScratchSender(threading.Thread):
                 print "pidie input out of range"
                 sensor_name = "pin" + str(pin)
                 pass
+        elif "pi2go" in ADDON:
+            #print pin
+            #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
+            try:
+                sensor_name = ["left","mid","right","switch1","switch2","switch3"][([7,11,12,16,18,22].index(pin))]
+            except:
+                print "pi2go input out of range"
+                sensor_name = "pin" + str(pin)
+                pass                
         else:
             sensor_name = "pin" + str(pin)
         #  
@@ -1094,6 +1103,28 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
                                 
+                        if "pi2go" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
+                                sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
+                                sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[16]  = sghGC.PINPUT 
+                                sghGC.pinUse[18]  = sghGC.PINPUT        
+                                sghGC.pinUse[22]  = sghGC.PINPUT 
+                                
+                                sghGC.setPinMode()
+
+                                #sghGC.startServod([12,10]) # servos testing motorpitx
+
+                                print "pi2go setup"
+                                anyAddOns = True
+                                
+                                
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     # with lock:
@@ -1537,6 +1568,26 @@ class ScratchListener(threading.Thread):
                                     
                         if self.vFindOnOff('buzzer'):
                             self.index_pin_update(24,self.valueNumeric)
+                            
+                    elif "pi2go" in ADDON:
+                        #do PiRoCon stuff
+                        logging.debug("Processing variables for Pi2Go")
+
+                        #check for motor variable commands
+                        motorList = [['motorb',21,19],['motora',26,24]]
+                        logging.debug("ADDON:%s", ADDON)
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                else:
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
                                     
                     else:   #normal variable processing with no add on board
                         
