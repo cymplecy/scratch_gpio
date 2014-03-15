@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.5' # 12Mar14 PiBrella Changes
+Version =  'v5.0.6' # 15Mar14 1/0 broadcast bugfix for PiRingo
 
 
 
@@ -433,12 +433,8 @@ class ScratchListener(threading.Thread):
                 #print pin
 
     def bLEDCheck(self,ledList):
-        print self.dataraw
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
             if self.bFindOnOff('led' + str(led)):
-                print '#'+'led' + str(led)+'#'
-                print self.value
-                print self.OnOrOff
                 sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
                 
     def bListCheck(self,pinList,nameList):
@@ -842,7 +838,7 @@ class ScratchListener(threading.Thread):
                 dataraw = dataraw + " "
                 self.dataraw = dataraw
                 #print "Loop processing"
-                print self.dataraw
+                #print self.dataraw
                 #print
                 if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
