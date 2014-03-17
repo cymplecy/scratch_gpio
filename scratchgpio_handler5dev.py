@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.6' # 15Mar14 1/0 broadcast bugfix for PiRingo
+Version =  'v5.0.7' # 17Mar14 Stable release version
 
 
 
