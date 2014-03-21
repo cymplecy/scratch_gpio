@@ -17,11 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-<<<<<<< HEAD:scratchgpio_handler5.py
-Version =  'v5.0.7' # 17Mar14 Stable release version
-=======
 Version =  'v5.0.87' # 19Mar14 Temp and GPIO pin numbering
->>>>>>> V5Dev:scratchgpio_handler5dev.py
 
 
 
@@ -847,11 +843,7 @@ class ScratchListener(threading.Thread):
             #print "GPIOPLus" , GPIOPlus
             for dataItem in dataList:
                 dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
-<<<<<<< HEAD:scratchgpio_handler5.py
-                dataraw = dataraw + " "
-=======
                 dataraw = " "+dataraw + " "
->>>>>>> V5Dev:scratchgpio_handler5dev.py
                 self.dataraw = dataraw
                 #print "Loop processing"
                 #print self.dataraw

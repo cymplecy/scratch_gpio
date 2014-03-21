@@ -10,13 +10,16 @@
 #Version 29Oct13 Add in Chown commands and extra Adafruit and servod files and alter gpio_scrath2.sh and bit of chmod +x make V3
 #Version 21Nov13 Change for ScratchGPIO V4
 #Version 26Dec13 Change for ScratchGPIO4plus
+<<<<<<< HEAD
 #Version 18Dec13 Change for ScratchGPIO5
 SGHVER="5"
 
+=======
+>>>>>>> V5Dev
 f_exit(){
 echo ""
 echo "Usage:"
-echo "i.e. sudo install_scratchgpio"$SGHVER".sh otheruser"
+echo "i.e. sudo install_scratchgpio4.sh otheruser"
 echo "Optional: Add a non-default 'otheruser' username after the command (default is:pi)."
 exit
 }
@@ -59,93 +62,64 @@ sudo pkill -f servod
 sleep 1
 
 echo "Thank you"
-sudo rm -rf $HDIR/scratchgpio${SGHVER}
+sudo rm -rf $HDIR/scratchgpio4
 
-mkdir -p $HDIR/scratchgpio${SGHVER}
-chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}
+mkdir -p $HDIR/scratchgpio4
+chown -R $USERID:$GROUPID $HDIR/scratchgpio4
 
-cp scratchgpio_handler${SGHVER}.py $HDIR/scratchgpio${SGHVER}
-cp Adafruit_I2C.py $HDIR/scratchgpio${SGHVER}
-cp Adafruit_PWM_Servo_Driver.py $HDIR/scratchgpio${SGHVER}
-cp sgh_GPIOController.py $HDIR/scratchgpio${SGHVER}
-cp sgh_PCF8591P.py $HDIR/scratchgpio${SGHVER}
-cp sgh_PiGlow.py $HDIR/scratchgpio${SGHVER}
-cp sgh_Stepper.py $HDIR/scratchgpio${SGHVER}
+cp scratchgpio_handler4.py $HDIR/scratchgpio4
+cp Adafruit_I2C.py $HDIR/scratchgpio4
+cp Adafruit_PWM_Servo_Driver.py $HDIR/scratchgpio4
+cp sgh_GPIOController.py $HDIR/scratchgpio4
+cp sgh_PCF8591P.py $HDIR/scratchgpio4
+cp sgh_PiGlow.py $HDIR/scratchgpio4
+cp sgh_Stepper.py $HDIR/scratchgpio4
+cp sgh_PiMatrix.py $HDIR/scratchgpio4
 
-cp sgh_servod $HDIR/scratchgpio${SGHVER}
-cp killsgh.sh $HDIR/scratchgpio${SGHVER}
+cp sgh_servod $HDIR/scratchgpio4
+cp killsgh.sh $HDIR/scratchgpio4
 
-cp sgh_Adafruit_8x8.py $HDIR/scratchgpio${SGHVER}
-cp sgh_Adafruit_LEDBackpack.py $HDIR/scratchgpio${SGHVER}
-cp sgh_PiMatrix.py $HDIR/scratchgpio${SGHVER}
+cp sgh_Adafruit_8x8.py $HDIR/scratchgpio4
+cp sgh_Adafruit_LEDBackpack.py $HDIR/scratchgpio4
 
-chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}
+chown -R $USERID:$GROUPID $HDIR/scratchgpio4
 chmod +x sgh_servod
 chmod +x killsgh.sh
 
 
-#Instead of copying the scratchgpioX.sh file, we will generate it
-#Create a new file for scratchgpioX.sh
-echo "#!/bin/bash" > $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "#Version 0.2 - add in & to allow simultaneous running of handler and Scratch" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >>$HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "cd $HDIR/scratchgpio"$SGHVER >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "sudo python scratchgpio_handler"$SGHVER".py 127.0.0.1 standard &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+#Instead of copying the scratchgpio4.sh file, we will generate it
+#Create a new file for scratchgpio4.sh
+echo "#!/bin/bash" > $HDIR/scratchgpio4/scratchgpio4.sh
+echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "cd $HDIR/scratchgpio4" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "sudo python scratchgpio_handler4.py 127.0.0.1 standard &" >> $HDIR/scratchgpio4/scratchgpio4.sh
+echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio4/scratchgpio4.sh
 
-chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+chmod +x $HDIR/scratchgpio4/scratchgpio4.sh
+chown -R $USERID:$GROUPID $HDIR/scratchgpio4/scratchgpio4.sh
+cp scratchgpio4.desktop $HDIR/Desktop
 
-#Create new desktop icon
-echo "[Desktop Entry]" > $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Encoding=UTF-8" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Version=1.0" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Type=Application" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Exec=./scratchgpio"$SGHVER"/scratchgpio"$SGHVER".sh" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Icon=scratch" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Terminal=false" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Name=ScratchGPIO "$SGHVER >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Comment= Programming system and content development tool" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "Categories=Application;Education;Development;" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-echo "MimeType=application/x-scratch-project" >> $HDIR/Desktop/scratchgpio${SGHVER}.desktop
+#Instead of copying the scratchgpio4plus.sh file, we will generate it
+#Create a new file for scratchgpio4plus.sh
+echo "#!/bin/bash" > $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "cd $HDIR/scratchgpio4" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "sudo python scratchgpio_handler4.py &" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
+echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio4/scratchgpio4plus.sh
 
-chown -R $USERID:$GROUPID $HDIR/Desktop/scratchgpio${SGHVER}.desktop
-
-
-#Instead of copying the scratchgpioXplus.sh file, we will generate it
-#Create a new file for scratchgpioXplus.sh
-echo "#!/bin/bash" > $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "cd $HDIR/scratchgpio"$SGHVER >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo python scratchgpio_handler"$SGHVER".py &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-
-chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-
-#Create new desktop icon for plus version
-echo "[Desktop Entry]" > $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Encoding=UTF-8" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Version=1.0" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Type=Application" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Exec=./scratchgpio"$SGHVER"/scratchgpio"$SGHVER"plus.sh" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Icon=scratch" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Terminal=false" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Name=ScratchGPIO "$SGHVER"plus" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Comment= Programming system and content development tool" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "Categories=Application;Education;Development;" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-echo "MimeType=application/x-scratch-project" >>  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
-
-chown -R $USERID:$GROUPID  $HDIR/Desktop/scratchgpio${SGHVER}plus.desktop
+chmod +x $HDIR/scratchgpio4/scratchgpio4plus.sh
+chown -R $USERID:$GROUPID $HDIR/scratchgpio4/scratchgpio4plus.sh
+cp scratchgpio4plus.desktop $HDIR/Desktop
 
 cp blink11.py $HDIR
 

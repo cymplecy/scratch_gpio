@@ -24,7 +24,6 @@ import subprocess
 try:
     import smbus
 except:
-    print "sgh_PiGlow:no smbus package installed"
     pass
     
 CMD_ENABLE_OUTPUT = 0x00
