@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.7' # 17Mar14 Stable release version
+Version =  'v5.0.87' # 19Mar14 Temp and GPIO pin numbering
 
 
 
@@ -400,7 +400,7 @@ class ScratchListener(threading.Thread):
         return sensor_value[0]
         
     def bFind(self,searchStr):
-        return (searchStr in self.dataraw)
+        return (' '+searchStr in self.dataraw)
         
     def bFindOn(self,searchStr):
         return (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 '))
@@ -419,11 +419,6 @@ class ScratchListener(threading.Thread):
         else:
             return False
             
-    # def dRtnOnOff(self,searchStr):
-        # if self.bFindOn(searchStr):
-            # return 1
-        # else:
-            # return 0
 
     def bCheckAll(self):
         if self.bFindOnOff('all'):
@@ -498,7 +493,7 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(ledList[led - 1],0,type="pwm")            
         
     def vFind(self,searchStr):
-        return ((searchStr + ' ') in self.dataraw)
+        return ((' '+searchStr + ' ') in self.dataraw)
         
     def vFindOn(self,searchStr):
         return (self.vFind(searchStr + 'on') or self.vFind(searchStr + 'high')or self.vFind(searchStr + '1'))
@@ -569,13 +564,17 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pin,0,type="pwm")
                     
             if self.vFindValue('gpio' + str(sghGC.gpioLookup[pin])):
+                logging.debug("pin %s",pin )
+                logging.debug("gpio lookup %s",str(sghGC.gpioLookup[pin])) 
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric)
                 else:
                     sghGC.pinUpdate(pin,0)
-                    
-            if self.vFindValue('gpiopower' + str(sghGC.gpioLookup[pin])):
-                #print pin , "found"
+                #time.sleep(1)
+                
+            if self.vFindValue('powergpio' + str(sghGC.gpioLookup[pin])):
+                logging.debug("pin %s",pin )
+                logging.debug("gpiopower lookup %s",str(sghGC.gpioLookup[pin])) 
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                 else:
@@ -844,7 +843,7 @@ class ScratchListener(threading.Thread):
             #print "GPIOPLus" , GPIOPlus
             for dataItem in dataList:
                 dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
-                dataraw = dataraw + " "
+                dataraw = " "+dataraw + " "
                 self.dataraw = dataraw
                 #print "Loop processing"
                 #print self.dataraw
@@ -2268,14 +2267,15 @@ class ScratchListener(threading.Thread):
                         self.send_scratch_command(bcast_str)
                         
                     if self.bFind("gettemp"): #find temp address
-                        dsSensorId = sghGC.findDS180()
-                        print "ds:", dsSensorId
-                        if dsSensorId <> "":
-                            print "getting temp"
-                            temperature = sghGC.getDS180Temp(dsSensorId)
-                        sensor_name = 'temperature'
-                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
-                        self.send_scratch_command(bcast_str)
+                        if sghGC.dsSensorId == "":
+                            sghGC.findDS180()
+                            if sghGC.dsSensorId == "":
+                                print "ds:", sghGC.dsSensorId
+                                print "getting temp"
+                                temperature = sghGC.getDS180Temp( sghGC.dsSensorId)
+                                sensor_name = 'temperature'
+                                bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
+                                self.send_scratch_command(bcast_str)
                                              
                                         
 

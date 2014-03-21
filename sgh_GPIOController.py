@@ -16,7 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#Last mod 5Mar14 more debugging
+#Last mod 19Mar14 Change to DS180 handling
 
 import RPi.GPIO as GPIO
 import time
@@ -62,6 +62,8 @@ class GPIOController :
         self.ledDim = 100
 
         self.PWMFREQ = 100
+        
+        self.dsSensorId  = ""
        
        
        
@@ -289,7 +291,6 @@ class GPIOController :
         os.system("sudo pkill -f servod")
         
     def findDS180(self):
-        dsSensorId = ""
         print ("Starting DS180")
         try:
             os.system('sudo modprobe w1-gpio')
@@ -298,16 +299,16 @@ class GPIOController :
             #print possSensors
             for loop in possSensors:
                 if loop[:2] == "28":
-                    dsSensorId = loop
+                     self.dsSensorId = loop
+                     return True
         except:
             pass
-        print dsSensorId
-        return dsSensorId
+        return False
 
-    def getDS180Temp(self,dsSensorId):
+    def getDS180Temp(self):
         temperature = -300.0
         try:
-            tfile = open("/sys/bus/w1/devices/"+ dsSensorId +"/w1_slave")
+            tfile = open("/sys/bus/w1/devices/"+ self.dsSensorId  +"/w1_slave")
             # Read all of the text in the file.
             text = tfile.read()
             # Close the file now that the text has been read.
