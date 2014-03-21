@@ -16,7 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#Last mod 01Jan14
+#Last mod 19Mar14 Change to DS180 handling
 
 import RPi.GPIO as GPIO
 import time
@@ -25,6 +25,7 @@ import datetime as dt
 import threading
 
 BIG_NUM = 2123456789
+SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]
 
 class GPIOController :
 
@@ -61,6 +62,8 @@ class GPIOController :
         self.ledDim = 100
 
         self.PWMFREQ = 100
+        
+        self.dsSensorId  = ""
        
        
        
@@ -198,6 +201,7 @@ class GPIOController :
             #print pin,value,type,self.pinUse[pin]
         except ValueError:
             print "mistake made in trying to update an invalid pin"
+            print pin,value,type
             pass
         
     def pinFreq(self, pin, freq):
@@ -274,8 +278,8 @@ class GPIOController :
         os.system("sudo pkill -f servod")
         for pin in pins:
             self.pinUse[pin] = self.PSERVOD
-        os.system('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
-        print ('./sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        os.system(SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        print (SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
         
         self.servodPins = pins
 
@@ -286,6 +290,40 @@ class GPIOController :
     def stopServod(self):
         os.system("sudo pkill -f servod")
         
+    def findDS180(self):
+        print ("Starting DS180")
+        try:
+            os.system('sudo modprobe w1-gpio')
+            os.system('sudo modprobe  w1-therm')
+            possSensors  = os.listdir('/sys/bus/w1/devices')
+            #print possSensors
+            for loop in possSensors:
+                if loop[:2] == "28":
+                     self.dsSensorId = loop
+                     return True
+        except:
+            pass
+        return False
+
+    def getDS180Temp(self):
+        temperature = -300.0
+        try:
+            tfile = open("/sys/bus/w1/devices/"+ self.dsSensorId  +"/w1_slave")
+            # Read all of the text in the file.
+            text = tfile.read()
+            # Close the file now that the text has been read.
+            tfile.close()
+            # Split the text with new lines (\n) and select the second line.
+            secondline = text.split("\n")[1]
+            # Split the line into words, referring to the spaces, and select the 10th word (counting from 0).
+            temperaturedata = secondline.split(" ")[9]
+            # The first two characters are "t=", so get rid of those and convert the temperature from a string to a number.
+            temperature = float(temperaturedata[2:]) / 1000.0
+        except:
+            pass
+        print temperature
+        return temperature
+
 
 
 
