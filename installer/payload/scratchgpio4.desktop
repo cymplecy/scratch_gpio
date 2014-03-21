@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Exec=./scratchgpio4/scratchgpio4.sh
+Icon=scratch
+Terminal=false
+Name=Scratch GPIO4
+Comment= Programming system and content development tool
+Categories=Application;Education;Development;
+MimeType=application/x-scratch-project
