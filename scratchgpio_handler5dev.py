@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.88' # 22Mar14 Switch off Debugging Hotfix
+Version =  'v5.0.89' # 22Mar14 Change debugging again and Pi2Go
 
 
 
@@ -249,9 +249,8 @@ class ScratchSender(threading.Thread):
                 pass
         elif "pi2go" in ADDON:
             #print pin
-            #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
             try:
-                sensor_name = ["left","mid","right","switch1","switch2","switch3"][([7,11,12,16,18,22].index(pin))]
+                sensor_name = ["left","front","right","lineleft","lineright","switch1","switch2","switch3"][([7,15,11,12,13,16,18,22].index(pin))]
             except:
                 print "pi2go input out of range"
                 sensor_name = "pin" + str(pin)
@@ -742,7 +741,7 @@ class ScratchListener(threading.Thread):
                 #print "try reading socket"
                 BUFFER_SIZE = 512 # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket plus any data not yet processed
-                logging.debug(len(data)) 
+                logging.debug("datalen: %s",len(data)) 
                 logging.debug("RAW: %s", data)
                 
                 if "send-vars" in data:
@@ -857,7 +856,7 @@ class ScratchListener(threading.Thread):
                         if self.value == "true":
                             self.send_scratch_command("broadcast Scratch-StartClicked")
                             
-                    if self.vFindValue("logdebug"):
+                    if self.vFindValue("sghdebug"):
                         if (self.value == "1") and (debugLogging == False):
                             logging.getLogger().setLevel(logging.DEBUG)
                             debugLogging = True
@@ -1109,9 +1108,11 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
                                 sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
-                                sghGC.pinUse[7]  = sghGC.PINPUT #ObsLeft
-                                sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
+                                sghGC.pinUse[7]  = sghGC.PINPUT #ObjLeft
+                                sghGC.pinUse[11] = sghGC.PINPUT #ObjRight
+                                sghGC.pinUse[15] = sghGC.PINPUT #ObjMid                                
                                 sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[13] = sghGC.PINPUT #LFRight                                
                                 sghGC.pinUse[16]  = sghGC.PINPUT 
                                 sghGC.pinUse[18]  = sghGC.PINPUT        
                                 sghGC.pinUse[22]  = sghGC.PINPUT 
@@ -1578,6 +1579,7 @@ class ScratchListener(threading.Thread):
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
                                     sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
@@ -1728,7 +1730,18 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinUse[3] = sghGC.PUNUSED
                                 #sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
-                                anyAddOns = True                                
+                                anyAddOns = True                        
+                                
+                    if self.bFindOnOff("sghdebug"):
+                        if (self.OnOrOff == True) and (debugLogging == False):
+                            logging.getLogger().setLevel(logging.DEBUG)
+                            debugLogging = True
+                        if (self.OnOrOff == False) and (debugLogging == True):
+                            logging.getLogger().setLevel(logging.INFO)
+                            debugLogging = False                            
+                            
+                    if (debugLogging == False):
+                         logging.getLogger().setLevel(logging.INFO)                                
                     
                     if self.bFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
@@ -2367,7 +2380,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG - quiwr = INFO
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)# default DEBUG - quiwr = INFO
 
  
 PORT = 42001
