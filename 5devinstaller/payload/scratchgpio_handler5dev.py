@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.90' # 25Mar14 Pi2Go stuff
+Version =  'v5.0.91' # 26Mar14 HapPi stuff
 
 
 
@@ -1123,7 +1123,33 @@ class ScratchListener(threading.Thread):
 
                                 print "pi2go setup"
                                 anyAddOns = True
+                        if "happi" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.pinUse[11] = sghGC.POUTPUT #Motor1 
+                                sghGC.pinUse[12] = sghGC.POUTPUT #Motor1
+                                sghGC.pinUse[15] = sghGC.POUTPUT #Motor2
+                                sghGC.pinUse[16] = sghGC.POUTPUT #Motor2
+                                sghGC.pinUse[3]  = sghGC.PINPUT 
+                                sghGC.pinUse[5] = sghGC.PINPUT 
+                                sghGC.pinUse[7] = sghGC.PINPUT                               
+                                sghGC.pinUse[8] = sghGC.PINPUT 
+                                sghGC.pinUse[10] = sghGC.PINPUT                          
+                                sghGC.pinUse[13]  = sghGC.PINPUT 
+                                sghGC.pinUse[18]  = sghGC.PINPUT        
+                                sghGC.pinUse[19]  = sghGC.PINPUT 
+                                sghGC.pinUse[21]  = sghGC.PINPUT 
+                                sghGC.pinUse[22]  = sghGC.PINPUT 
+                                sghGC.pinUse[23]  = sghGC.PINPUT 
+                                sghGC.pinUse[24]  = sghGC.PINPUT 
+                                sghGC.pinUse[26]  = sghGC.PINPUT 
                                 
+                                sghGC.setPinMode()
+
+                                #sghGC.startServod([12,10]) # servos testing motorpitx
+
+                                print "HapPi setup"
+                                anyAddOns = True                                
                                 
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
@@ -1589,6 +1615,27 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    
+                    elif "happi" in ADDON:
+                        #do happi stuff
+                        logging.debug("Processing variables for HapPi")
+
+                        #check for motor variable commands
+                        motorList = [['motor1',11,12],['motor2',15,16]]
+                        logging.debug("ADDON:%s", ADDON)
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                else:
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)                                    
                                     
                     else:   #normal variable processing with no add on board
                         
