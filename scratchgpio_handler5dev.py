@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.89' # 22Mar14 Change debugging again and Pi2Go
+Version =  'v5.0.90' # 25Mar14 Pi2Go stuff
 
 
 
