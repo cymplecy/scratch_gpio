@@ -16,7 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#Last mod 19Mar14 Change to DS180 handling
+#Last mod 22 Keep pwm mode for pin once used as pwm
 
 import RPi.GPIO as GPIO
 import time
@@ -184,14 +184,17 @@ class GPIOController :
                     print 'pin' , pin , ' changed to digital out from input' 
                     print ("pin",pin, "set to", value)
                 elif (self.pinUse[pin] == self.PPWM): #if pin in use for PWM
-                    self.pinRef[pin].stop() # stop PWM from running
-                    self.pinRef[pin] = None
-                    time.sleep(0.1)
-                    GPIO.setup(pin,GPIO.OUT)
-                    GPIO.output(pin, int(value)) # set output to 1 or 0
-                    self.pinUse[pin] = self.POUTPUT # switch it to output
-                    print 'pin' , pin , ' changed to digital out from PWM' 
-                    print ("pin",pin, "set to", value)
+                    # self.pinRef[pin].stop() # stop PWM from running
+                    # self.pinRef[pin] = None
+                    # time.sleep(0.1)
+                    # GPIO.setup(pin,GPIO.OUT)
+                    # GPIO.output(pin, int(value)) # set output to 1 or 0
+                    # self.pinUse[pin] = self.POUTPUT # switch it to output
+                    # print 'pin' , pin , ' changed to digital out from PWM' 
+                    # print ("pin",pin, "set to", value)
+                    value = value * 100
+                    self.pinRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
+                    #print ("pwm pin",pin, "set to", value)                    
                 elif (self.pinUse[pin] == self.PUNUSED): # if pin is not allocated
                     self.pinUse[pin] = self.POUTPUT # switch it to output
                     GPIO.setup(pin,GPIO.OUT)
