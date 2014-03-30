@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.91' # 26Mar14 HapPi stuff
+Version =  'v5.0.91' # 30Mar14 Powerxx,yy broadcast now accepted
 
 
 
@@ -428,12 +428,20 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pin,self.OnOrOff)
 
     def bPinCheck(self):
+        logging.debug("bPinCheck:%s",searchStr )    
         for pin in sghGC.validPins:
+            logging.debug("bPinCheck:%s",pin )    
             if self.bFindOnOff('pin' + str(pin)):
                 sghGC.pinUpdate(pin,self.OnOrOff)
             if self.bFindOnOff('gpio' + str(sghGC.gpioLookup[pin])):
                 sghGC.pinUpdate(pin,self.OnOrOff)
-                #print pin
+            if self.bFindValue('power' + str(pin)):
+                print pin,self.value
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
+                else:
+                    sghGC.pinUpdate(pin,0,type="pwm")                  
+
 
     def bLEDCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
@@ -452,13 +460,13 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pinList[loop],0,type="pwm")                    
                 
     def bFindValue(self,searchStr):
-        #print "searching for ", searchStr 
+        #logging.debug("Searching for:%s",searchStr )
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
         if self.bFind(searchStr):
             self.findPos = self.dataraw.find((searchStr))
-            logging.debug("1st chars of value:%s",(self.dataraw[self.findPos + len(searchStr):]) )
+            #logging.debug("1st chars of value:%s",(self.dataraw[self.findPos + len(searchStr):]) )
             try:
                 if (self.dataraw[self.findPos + len(searchStr):][0]) == " ":
                     logging.debug("space found in bfindvalue")
@@ -482,6 +490,7 @@ class ScratchListener(threading.Thread):
         else:
             return False                
             
+                    
     def bLEDPowerCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
             #print "power" +str(led) + ","
@@ -563,7 +572,6 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pin,0,type="pwm")
                     
             if self.vFindValue('gpio' + str(sghGC.gpioLookup[pin])):
-                logging.debug("pin %s",pin )
                 logging.debug("gpio lookup %s",str(sghGC.gpioLookup[pin])) 
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric)
@@ -2053,6 +2061,14 @@ class ScratchListener(threading.Thread):
                         for pin in sghGC.validPins:
                             if self.bFindOnOff('pin' + str(pin)):
                                 sghGC.pinUpdate(pin,self.OnOrOff)
+                            if self.bFindOnOff('gpio' + str(sghGC.gpioLookup[pin])):
+                                sghGC.pinUpdate(pin,self.OnOrOff)
+                            if self.bFindValue('power' + str(pin)+","):
+                                #logging.debug("bPowerPin:%s",pin )    
+                                if self.valueIsNumeric:
+                                    sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
+                                else:
+                                    sghGC.pinUpdate(pin,0,type="pwm")                                   
 
                             if self.bFind('sonar' + str(pin)):
                                 
