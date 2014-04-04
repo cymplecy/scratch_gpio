@@ -11,12 +11,12 @@
 #Version 21Nov13 Change for ScratchGPIO V4
 #Version 26Dec13 Change for ScratchGPIO4plus
 #Version 18Dec13 Change for ScratchGPIO5
-SGHVER="5"
 
+SGHVER=$(<SGHVER.txt)
 f_exit(){
 echo ""
 echo "Usage:"
-echo "i.e. sudo install_scratchgpio"$SGHVER".sh otheruser"
+echo "i.e. sudo NameOfInstaller.sh otheruser"
 echo "Optional: Add a non-default 'otheruser' username after the command (default is:pi)."
 exit
 }
@@ -64,7 +64,7 @@ sudo rm -rf $HDIR/scratchgpio${SGHVER}
 mkdir -p $HDIR/scratchgpio${SGHVER}
 chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}
 
-cp scratchgpio_handler${SGHVER}.py $HDIR/scratchgpio${SGHVER}
+cp scratchgpio_handler5.py $HDIR/scratchgpio${SGHVER}
 cp Adafruit_I2C.py $HDIR/scratchgpio${SGHVER}
 cp Adafruit_PWM_Servo_Driver.py $HDIR/scratchgpio${SGHVER}
 cp sgh_GPIOController.py $HDIR/scratchgpio${SGHVER}
@@ -94,7 +94,7 @@ echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to 
 echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "cd $HDIR/scratchgpio"$SGHVER >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "sudo python scratchgpio_handler"$SGHVER".py 127.0.0.1 standard &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "sudo python scratchgpio_handler5.py 127.0.0.1 standard &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
@@ -126,7 +126,7 @@ echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to 
 echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "cd $HDIR/scratchgpio"$SGHVER >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo python scratchgpio_handler"$SGHVER".py &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
+echo "sudo python scratchgpio_handler5.py &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 
 chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh

@@ -1,12 +1,15 @@
 #!/bin/bash
 #copy files to payload folder
-SGHVER="5"
+SGHVER=$1
 echo $SGHVER
 echo $HOME
+echo $SGHVER > $HOME/sghdev/scratch_gpio/installer/payload/SGHVER.txt
+
+cp $HOME/sghdev/scratch_gpio/scratchgpio_handler5.py $HOME/sghdev/scratch_gpio/installer/payload
+
 cp $HOME/sghdev/scratch_gpio/Adafruit_I2C.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/Adafruit_PWM_Servo_Driver.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/killsgh.sh $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/scratchgpio_handler${SGHVER}.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/sgh_GPIOController.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/sgh_PCF8591P.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/sgh_PiGlow.py $HOME/sghdev/scratch_gpio/installer/payload
