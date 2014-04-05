@@ -266,6 +266,64 @@ class GPIOController :
 
         return distance
         
+    def pinSonar2(self, trig,echo):
+        #print pin
+        #print self.pinUse[pin]         
+        self.pinUse[trig] = self.PSONAR
+        self.pinUse[echo] = self.PSONAR        
+        GPIO.setup(trig,GPIO.OUT)
+        GPIO.setup(echo,GPIO.OUT)        
+        ti = time.time()
+        # setup a list to hold 3 values and then do 3 distance calcs and store them
+        #print 'sonar started'
+        distlist = [0.0,0.0,0.0]
+        ts=time.time()
+        for k in range(3):
+            #print "sonar pulse" , k
+            GPIO.output(trig, 1)    # Send Pulse high
+            time.sleep(0.00001)     #  wait
+            GPIO.output(trig, 0)  #  bring it back low - pulse over.
+            t0=time.time() # remember current time
+            GPIO.setup(echo,GPIO.IN)
+            #PIN_USE[i] = PINPUT don't bother telling system
+            
+            t1=t0
+            # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
+            while ((GPIO.input(echo)==0) and ((t1-t0) < 0.02)):
+                #time.sleep(0.00001)
+                t1=time.time()
+            t1=time.time()
+            #print 'low' , (t1-t0).microseconds
+            t2=t1
+            #  This while loops waits for input pin to go high to indicate pulse detection
+            #  with 0.04 sec timeout
+            while ((GPIO.input(echo)==1) and ((t2-t1) < 0.02)):
+                #time.sleep(0.00001)
+                t2=time.time()
+            t2=time.time()
+            #print 'high' , (t2-t1).microseconds
+            t3=(t2-t1)  # t2 contains time taken for pulse to return
+            #print "total time " , t3
+            distance=t3*343/2*100  # calc distance in cm
+            distlist[k]=distance
+            #print distance
+            GPIO.setup(echo,GPIO.OUT)
+        tf = time.time() - ts
+        distance = sorted(distlist)[1] # sort the list and pick middle value as best distance
+        
+        #print "total time " , tf
+        #for k in range(5):
+            #print distlist[k]
+        #print "pulse time" , distance*58
+        #print "total time in microsecs" , (tf-ti).microseconds                    
+        # only update Scratch values if distance is < 500cm
+        if (distance > 280):
+            distance = 299
+        if (distance < 2):
+            distance = 1
+
+        return distance        
+        
     def pinRead(self, pin):
         #print "pin",pin ,"set to", self.pinUse[pin]
         #print pin ," being read"

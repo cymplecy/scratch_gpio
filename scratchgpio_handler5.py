@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.92' # 4Apr14 Minor MOD JUST TO PROVE new VERSION CONTROL Powerxx,yy broadcast now accepted
+Version =  'v5.0.92' # 4Apr14 Raspibot start
 
 
 
@@ -255,7 +255,9 @@ class ScratchSender(threading.Thread):
             except:
                 print "pi2go input out of range"
                 sensor_name = "pin" + str(pin)
-                pass                
+                pass 
+        elif "raspibot2" in ADDON:
+            sensor_name = ["switch1","switch2"][([23,21].index(pin))]        
         else:
             sensor_name = "pin" + str(pin)
         #  
@@ -270,11 +272,12 @@ class ScratchSender(threading.Thread):
         if ("fishdish" in ADDON):
             bcast_str = 'sensor-update "switch" %s' %  (("on","off")[value == 1])
         #print 'sending: %s' % bcast_str
-        self.send_scratch_command(bcast_str)
+        if ("raspibot2" in ADDON):
+            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("closed","open")[value == 1])  
         if "motorpitx" in ADDON:
             bcast_str = 'broadcast "%s%s"' % (sensor_name,("off","on")[value == 1])
             #print 'sending: %s' % bcast_str
-            self.send_scratch_command(bcast_str)
+        self.send_scratch_command(bcast_str)
         
 
         
@@ -335,7 +338,7 @@ class ScratchSender(threading.Thread):
 
             last_bit_pattern = pin_bit_pattern
             
-            if (time.time() - lastPinUpdateTime)  > 2:
+            if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if  they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for pin in sghGC.validPins:
@@ -454,7 +457,7 @@ class ScratchListener(threading.Thread):
             if self.bFindOnOff(str(nameList[loop])):
                 sghGC.pinUpdate(pinList[loop],self.OnOrOff)
                     
-            if self.bFindValue('power' + str(nameList[loop])):
+            if self.bFindValue('power' + str(nameList[loop])+","):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
                 else:
@@ -601,7 +604,7 @@ class ScratchListener(threading.Thread):
                     
                     
     def vListCheck(self,pinList,nameList):
-        for loop in range(0,len(pinList)): # loop thru led numbers
+        for loop in range(0,len(pinList)): # loop thru pinlist numbers
             if self.vFindOnOff(str(nameList[loop])):
                 sghGC.pinUpdate(pinList[loop],self.OnOrOff)
                     
@@ -1160,6 +1163,28 @@ class ScratchListener(threading.Thread):
                                 print "HapPi setup"
                                 anyAddOns = True                                
                                 
+                        if "raspibot2" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                                        
+                                sghGC.pinUse[11] = sghGC.POUTPUT #left go
+                                sghGC.pinUse[7] = sghGC.POUTPUT #left dir
+                                sghGC.pinUse[19] = sghGC.POUTPUT #right go
+                                sghGC.pinUse[22] = sghGC.POUTPUT #right dir
+                                sghGC.pinUse[15] = sghGC.POUTPUT #oc1
+                                sghGC.pinUse[13] = sghGC.POUTPUT #oc2                                
+                                sghGC.pinUse[23]  = sghGC.PINPUT #sw1 pin
+                                sghGC.pinUse[21] = sghGC.PINPUT #sw2 pin
+                                sghGC.pinUse[26] = sghGC.POUTPUT #LED1                                
+                                sghGC.pinUse[24] = sghGC.POUTPUT #LED2 
+                                sghGC.pinUse[12] = sghGC.PSONAR      # trigger                
+                                sghGC.pinUse[16]  = sghGC.PSONAR  #echo
+                                
+                                sghGC.setPinMode()
+
+                                print "RaspPiBot2 setup"
+                                anyAddOns = True                                        
+                           
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     # with lock:
@@ -1644,8 +1669,30 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)                                    
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
                                     
+                    elif "raspibot2" in ADDON:
+                        logging.debug("Processing variables for RasPiBot2")
+                        self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+                        self.vListCheck([26,24,15,13],["led1","led2","output1","output2"]) # Check for LED off/on type broadcasts
+
+                        #check for motor variable commands
+                        motorList = [['motorl',19,22],['motorr',11,7]]
+                        logging.debug("ADDON:%s", ADDON)
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                else:
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)                                    
+
                     else:   #normal variable processing with no add on board
                         
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
@@ -2050,9 +2097,20 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(fishOutputs[fishList.index(listLoop)],self.OnOrOff)    
                                 
                         if self.bFindOnOff('buzzer'):
-                            sghGC.pinUpdate(24,self.OnOrOff)                         
+                            sghGC.pinUpdate(24,self.OnOrOff)                  
 
-       
+                    elif "raspibot2" in ADDON: 
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bListCheck([26,24,15,13],["led1","led2","output1","output2"]) # Check for LED off/on type broadcasts
+                        if self.bFind('sonar'):
+                            distance = sghGC.pinSonar2(12,16)
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'sonar'
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)                        
+                               
+
                     else: # Plain GPIO Broadcast processing
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
