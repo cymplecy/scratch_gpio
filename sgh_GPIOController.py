@@ -276,9 +276,9 @@ class GPIOController :
         ti = time.time()
         # setup a list to hold 3 values and then do 3 distance calcs and store them
         #print 'sonar started'
-        distlist = [0.0,0.0,0.0]
+        distlist = [0.0,0.0,0.0,0.0,0.0]
         ts=time.time()
-        for k in range(3):
+        for k in range(5):
             #print "sonar pulse" , k
             GPIO.output(trig, 1)    # Send Pulse high
             time.sleep(0.00001)     #  wait

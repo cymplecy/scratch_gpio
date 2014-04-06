@@ -2054,6 +2054,14 @@ class ScratchListener(threading.Thread):
                             beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
                             beepThread.start()
                             
+                        if self.bFind('sonare,a'):
+                            distance = sghGC.pinSonar2(15,21)
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'sonara'
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)                                    
+                            
                     elif "rgbled" in ADDON: # rgb-led
 
                         #print ("rgb-led broadcast processing")            
