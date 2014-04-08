@@ -118,16 +118,24 @@ class GPIOController :
             if (self.pinUse[pin] == self.POUTPUT):
                 print 'setting pin' , pin , ' to out' 
                 GPIO.setup(pin,GPIO.OUT)
+                try:
+                    GPIO.remove_event_detect(pin)
+                    self.callbackInUse[pin] = False
+                except:
+                    pass
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
+                GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
             elif (self.pinUse[pin] == self.PINPUTDOWN):
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+                GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel                
                 self.pinUse[pin] = self.PINPUT
             elif (self.pinUse[pin] == self.PINPUTNONE):
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN)
+                GPIO.add_event_detect(pin, GPIO.BOTH)  # add event detection on a channel                
                 self.pinUse[pin] = self.PINPUT                
             elif (self.pinUse[pin] == self.PCOUNT):
                 if self.callbackInUse[pin] == False:
@@ -162,7 +170,18 @@ class GPIOController :
                         sghGC.pinRef[pin].stop()
                     except:
                         pass
-                    GPIO.setup(pin,GPIO.OUT)
+                        
+                    if (self.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]): # if pin was an input then we need to clean up
+                        self.pinUse[pin] = self.POUTPUT # switch it to output
+                        GPIO.setup(pin,GPIO.OUT)
+                        GPIO.output(pin, int(value)) # set output to 1 ot 0
+                        try:
+                            GPIO.remove_event_detect(pin)
+                            self.callbackInUse[pin] = False
+                        except:
+                            pass  
+                        
+                    GPIO.setup(pin,GPIO.OUT) # Setup
                     self.pinRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance
                     #print "type of pwm:" ,self.pinRef[pin]
                     self.pinRef[pin].start(max(0,min(100,abs(value)))) # update PWM value
@@ -176,22 +195,18 @@ class GPIOController :
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
                     #print ("pin",pin, "set to", value)
-                elif (self.pinUse[pin] == self.PINPUT): # if pin is an input
+                elif (self.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]): # if pin is an input
                     self.pinUse[pin] = self.POUTPUT # switch it to output
-                    #GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                     GPIO.setup(pin,GPIO.OUT)
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
+                    try:
+                        GPIO.remove_event_detect(pin)
+                        self.callbackInUse[pin] = False
+                    except:
+                        pass                    
                     print 'pin' , pin , ' changed to digital out from input' 
                     print ("pin",pin, "set to", value)
                 elif (self.pinUse[pin] == self.PPWM): #if pin in use for PWM
-                    # self.pinRef[pin].stop() # stop PWM from running
-                    # self.pinRef[pin] = None
-                    # time.sleep(0.1)
-                    # GPIO.setup(pin,GPIO.OUT)
-                    # GPIO.output(pin, int(value)) # set output to 1 or 0
-                    # self.pinUse[pin] = self.POUTPUT # switch it to output
-                    # print 'pin' , pin , ' changed to digital out from PWM' 
-                    # print ("pin",pin, "set to", value)
                     value = value * 100
                     self.pinRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
                     #print ("pwm pin",pin, "set to", value)                    
@@ -333,6 +348,16 @@ class GPIOController :
             print "Some error reading pin" ,pin
             print str(e)
             return 0
+            
+    def pinEvent(self, pin):
+        #print "pin",pin ,"set to", self.pinUse[pin]
+        #print pin ," being read"
+        try:
+            return GPIO.event_detected(pin)
+        except Exception,e: 
+            print "error reading pin event" ,pin
+            print str(e)
+            return 0            
         
     def startServod(self, pins):
         print ("Starting servod")

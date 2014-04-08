@@ -17,8 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.92' # 4Apr14 Raspibot start
-
+Version =  'v5.1.00' # 8Apr14 New input pin processing with event detection
 
 
 import threading
@@ -39,11 +38,11 @@ import logging
 import subprocess
 
 try:
-	from Adafruit_PWM_Servo_Driver import PWM
-	from sgh_PCF8591P import sgh_PCF8591P
-	from sgh_Adafruit_8x8 import sgh_EightByEight
+    from Adafruit_PWM_Servo_Driver import PWM
+    from sgh_PCF8591P import sgh_PCF8591P
+    from sgh_Adafruit_8x8 import sgh_EightByEight
 except:
-	pass
+    pass
 #try and inport smbus but don't worry if not installed
 #try:
 #    from smbus import SMBus
@@ -123,7 +122,7 @@ class Compass:
 
     def degrees(self, (degrees, minutes)):
         return str(degrees) + "*" + str(minutes) + "'"
-    
+
     def degreesdecimal(self, (degrees, minutes)):
         return str(degrees + (minutes /60.0) ) if (degrees >=0) else str(degrees - (minutes /60.0) )
 
@@ -136,7 +135,7 @@ class Compass:
                "dec min: " + str(self.__declMinutes) + "\n" \
                "Declination: " + self.degreesdecimal(self.declination()) + "\n" \
                "Heading: " + str(self.heading()) + "\n"
-               
+
 ### End Compasss ###################################################################################################
 
 def isNumeric(s):
@@ -145,20 +144,20 @@ def isNumeric(s):
         return True
     except ValueError:
         return False
-        
+
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
 
 def xgetValue(searchString, dataString):
     outputall_pos = dataString.find((searchString + ' '))
     sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
     return sensor_value[0]
-    
+
 def sign(number):return cmp(number,0)
 
 def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
-    
+
 
 class MyError(Exception):
     def __init__(self, value):
@@ -176,38 +175,25 @@ class ScratchSender(threading.Thread):
         self.time_last_ping = 0.0
         self.time_last_compass = 0.0
         self.distlist = [0.0,0.0,0.0]
-        
-        
+        print "Sender Init"
+
+
 
 
     def stop(self):
         self._stop.set()
+        print "Sender Stop Set"
 
     def stopped(self):
         return self._stop.isSet()
-        
-    def broadcast_changed_pins(self, changed_pin_map, pin_value_map):
-        for pin in sghGC.validPins:
-            #print pin
-            # if we care about this pin's value
-            if (changed_pin_map >> pin) & 0b1:
-                #print "changed"
-                pin_value = (pin_value_map >> pin) & 0b1
-                if (sghGC.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
-                    #print pin , pin_value
-                    #print "broadcast changed pin"
-                    self.broadcast_pin_update(pin, pin_value)
-                    
 
-                    
-                                     
     def broadcast_pin_update(self, pin, value):
         #print ADDON 
         #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
         #self.send_scratch_command(bcast_str)   
-        
+
         #Normal action is to just send updates to pin values but this can be modified if known addon in use
         if "ladder" in ADDON:
             #do ladderboard stuff
@@ -238,7 +224,7 @@ class ScratchSender(threading.Thread):
                 print "pibrella input out of range"
                 sensor_name = "pin" + str(pin)
                 pass
-                
+
         elif "pidie" in ADDON:
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
@@ -278,67 +264,71 @@ class ScratchSender(threading.Thread):
             bcast_str = 'broadcast "%s%s"' % (sensor_name,("off","on")[value == 1])
             #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
-        
 
-        
+
+
     def send_scratch_command(self, cmd):
         n = len(cmd)
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
 
+
     def run(self):
         global firstRun,ADDON,compass
+        print lock
         # while firstRun:
             # print "first run running"
         #time.sleep(5)
-        last_bit_pattern=0L
-        
-        #self.send_scratch_command('broadcast "SetPins"')
-        #print sghGC.pinUse
+        # set last pin pattern to inverse of current state
+        pin_bit_pattern = [0] * len(sghGC.validPins)
+        last_bit_pattern = pin_bit_pattern 
         with lock:
-            for pin in sghGC.validPins:
-                if (sghGC.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
-                    #self.broadcast_pin_update(pin, sghGC.pinRead(pin))
-                    last_bit_pattern += sghGC.pinRead(pin) << pin
-                else:
-                    last_bit_pattern += 1 << pin
-                #print 'lbp %s' % bin(last_bit_pattern)
+            for listIndex in range(len(sghGC.validPins)):
+                pin = sghGC.validPins[listIndex]
+                last_bit_pattern[listIndex] = 0
+                if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
+                    if (sghGC.pinRead(pin) == 0):
+                        last_bit_pattern[listIndex] = 1
 
-        last_bit_pattern = last_bit_pattern ^ -1
-        lastPinUpdateTime = 0
+        lastPinUpdateTime = time.time() 
+        lastTimeSinceLastSleep = time.time() 
+        sleepTime = 0.1
         while not self.stopped():
-            time.sleep(0.01) # be kind to cpu  :)
-            #print "sender running"
-            pin_bit_pattern = 0
+            #time.sleep(sleepTime)
+            if (time.time() - lastTimeSinceLastSleep) < sleepTime:
+                #logging.debug("sleep for:%s", sleepTime-(time.time() - lastTimeSinceLastSleep) ) 
+                time.sleep(sleepTime-(time.time() - lastTimeSinceLastSleep)) # be kind to cpu  :)
+                lastTimeSinceLastSleep = time.time() 
+                #print("sender running after sleep") 
+
             with lock:
-                #print "lOCKED"
-                for pin in sghGC.validPins:
-                    #print pin
+                for listIndex in range(len(sghGC.validPins)):
+                    pin = sghGC.validPins[listIndex]
+                    pin_bit_pattern[listIndex] = 0
                     if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
-                        #print 'trying to read pin' , pin 
-                        pin_bit_pattern += sghGC.pinRead(pin) << pin
-                    else:
-                        pin_bit_pattern += 1 << pin
-            
-            #print "unlocked"
-                #print bin(pin_bit_pattern) , pin_bit_pattern
-            #print bin(pin_bit_pattern) , pin_bit_pattern
+                        if sghGC.pinEvent(pin):
+                            #logging.debug("pinEvent Detected on pin:%s", pin )
+                            pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
+                            if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
+                                pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex]
+                        else:
+                            pin_bit_pattern[listIndex] = sghGC.pinRead(pin)                        
+
             # if there is a change in the input pins
-            changed_pins = pin_bit_pattern ^ last_bit_pattern
-            #print "changed pins" , bin(changed_pins)
-            if changed_pins:
-                #print 'pin bit pattern' , bin(pin_bit_pattern)
-
-                try:
-                    self.broadcast_changed_pins(changed_pins, pin_bit_pattern)
-
-                except Exception as e:
-                    print e
-                    break
-
+            for listIndex in range(len(sghGC.validPins)):
+                pin = sghGC.validPins[listIndex]    
+                if pin_bit_pattern[listIndex] != last_bit_pattern[listIndex]:
+                    #logging.debug("changed pin,new value,old value:%s,%s,%s", pin,pin_bit_pattern[listIndex],last_bit_pattern[listIndex] ) 
+                    if (sghGC.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
+                        #print pin , pin_value
+                        self.broadcast_pin_update(pin, pin_bit_pattern[listIndex])            
+                    
             last_bit_pattern = pin_bit_pattern
+            #print ("last:%s",last_bit_pattern)
+            #print ("this:%s",pin_bit_pattern)
             
-            if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if  they don't change
+
+            if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for pin in sghGC.validPins:
@@ -356,12 +346,12 @@ class ScratchSender(threading.Thread):
                                 sensor_name = "ultra1"
                             if pin == 7:
                                 sensor_name = "ultra2"
-                                    
+
                         bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
                         self.time_last_ping = time.time()
-    
+
             if (time.time() - self.time_last_compass) > 0.25:
                 #print "time up"
                 #print compass
@@ -377,7 +367,7 @@ class ScratchSender(threading.Thread):
 
             #time.sleep(1)
 
-            
+
 class ScratchListener(threading.Thread):
     def __init__(self, socket):
         threading.Thread.__init__(self)
@@ -391,26 +381,26 @@ class ScratchListener(threading.Thread):
         self.encoderDiff = 0
         self.turnSpeed = 100
 
-        
+
     def send_scratch_command(self, cmd):
         n = len(cmd)
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
-                       
+
     def getValue(self,searchString):
         outputall_pos = self.dataraw.find((searchString + ' '))
         sensor_value = self.dataraw[(outputall_pos+1+len(searchString)):].split()
         return sensor_value[0]
-        
+
     def bFind(self,searchStr):
         return (' '+searchStr in self.dataraw)
-        
+
     def bFindOn(self,searchStr):
         return (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 '))
-        
+
     def bFindOff(self,searchStr):
         return (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(searchStr + '0 '))
-        
+
     def bFindOnOff(self,searchStr):
         self.OnOrOff = None
         if (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 ')):
@@ -421,7 +411,7 @@ class ScratchListener(threading.Thread):
             return True
         else:
             return False
-            
+
 
     def bCheckAll(self):
         if self.bFindOnOff('all'):
@@ -451,18 +441,18 @@ class ScratchListener(threading.Thread):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
             if self.bFindOnOff('led' + str(led)):
                 sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
-                
+
     def bListCheck(self,pinList,nameList):
         for loop in range(0,len(pinList)): # loop thru list
             if self.bFindOnOff(str(nameList[loop])):
                 sghGC.pinUpdate(pinList[loop],self.OnOrOff)
-                    
+
             if self.bFindValue('power' + str(nameList[loop])+","):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(pinList[loop],0,type="pwm")                    
-                
+
     def bFindValue(self,searchStr):
         #logging.debug("Searching for:%s",searchStr )
         self.value = None
@@ -493,8 +483,8 @@ class ScratchListener(threading.Thread):
             return True
         else:
             return False                
-            
-                    
+
+
     def bLEDPowerCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
             #print "power" +str(led) + ","
@@ -503,16 +493,16 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(ledList[led - 1],self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(ledList[led - 1],0,type="pwm")            
-        
+
     def vFind(self,searchStr):
         return ((' '+searchStr + ' ') in self.dataraw)
-        
+
     def vFindOn(self,searchStr):
         return (self.vFind(searchStr + 'on') or self.vFind(searchStr + 'high')or self.vFind(searchStr + '1'))
-        
+
     def vFindOff(self,searchStr):
         return (self.vFind(searchStr + 'off') or self.vFind(searchStr + 'low') or self.vFind(searchStr + '0'))
-        
+
     def vFindOnOff(self,searchStr):
         self.value = None
         self.valueNumeric = None
@@ -546,7 +536,7 @@ class ScratchListener(threading.Thread):
             return True
         else:
             return False
-            
+
     def vAllCheck(self,searchStr):
         if self.vFindOnOff(searchStr):
             for pin in sghGC.validPins:
@@ -561,20 +551,20 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pin,self.valueNumeric)
                 else:
                     sghGC.pinUpdate(pin,0)
-                    
+
             if self.vFindValue('power' + str(pin)):
                 #print pin , "found"
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(pin,0,type="pwm")
-                    
+
             if self.vFindValue('motor' + str(pin)):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(pin,0,type="pwm")
-                    
+
             if self.vFindValue('gpio' + str(sghGC.gpioLookup[pin])):
                 logging.debug("gpio lookup %s",str(sghGC.gpioLookup[pin])) 
                 if self.valueIsNumeric:
@@ -582,7 +572,7 @@ class ScratchListener(threading.Thread):
                 else:
                     sghGC.pinUpdate(pin,0)
                 #time.sleep(1)
-                
+
             if self.vFindValue('powergpio' + str(sghGC.gpioLookup[pin])):
                 logging.debug("pin %s",pin )
                 logging.debug("gpiopower lookup %s",str(sghGC.gpioLookup[pin])) 
@@ -590,30 +580,30 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(pin,0,type="pwm")
-                    
+
     def vLEDCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
             if self.vFindOnOff('led' + str(led)):
                 sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
-                    
+
             if self.vFindValue('power' + str(led)):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(ledList[led - 1],self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(ledList[led - 1],0,type="pwm")
-                    
-                    
+
+
     def vListCheck(self,pinList,nameList):
         for loop in range(0,len(pinList)): # loop thru pinlist numbers
             if self.vFindOnOff(str(nameList[loop])):
                 sghGC.pinUpdate(pinList[loop],self.OnOrOff)
-                    
+
             if self.vFindValue('power' + str(nameList[loop])):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
                 else:
                     sghGC.pinUpdate(pinList[loop],0,type="pwm")                    
-                    
+
     def stop(self):
         self._stop.set()
 
@@ -626,7 +616,7 @@ class ScratchListener(threading.Thread):
         try:
             sghGC.pinRef[pins[0]].changeSpeed(max(-100,min(100,value)),steps) # just update Stepper value
             #print "stepper updated"
-           # print ("pin",pins, "set to", value)
+            # print ("pin",pins, "set to", value)
         except:
             try:
                 print ("Stopping PWM")
@@ -639,11 +629,11 @@ class ScratchListener(threading.Thread):
             sghGC.pinRef[pins[0]] = sgh_Stepper.sghStepper(sghGC,pins,stepDelay) # create new Stepper instance 
             sghGC.pinRef[pins[0]].changeSpeed(max(-100,min(100,value)),steps) # update Stepper value
             sghGC.pinRef[pins[0]].start() # update Stepper value                
-           # print 'pin' , pins , ' changed to Stepper' 
+            # print 'pin' , pins , ' changed to Stepper' 
             #print ("pins",pins, "set to", value)  
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
-        
-        
+
+
     def stopTurning(self,motorList,count,startCount):
         self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
         countingPin = motorList[0][3] # use 1st motor counting pin only  
@@ -684,9 +674,9 @@ class ScratchListener(threading.Thread):
         while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
             time.sleep(0.01)
         sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        
 
-        
+
+
     # def beep(self,pin,freq,duration):
         # print freq 
         # if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
@@ -701,13 +691,13 @@ class ScratchListener(threading.Thread):
             # time.sleep(0.2)#1.0 / freq)
         # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
         # print ("Beep Stopped")            
-        
+
 
 
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
                Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass,ADDON
-        
+
 
 
         #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
@@ -723,8 +713,8 @@ class ScratchListener(threading.Thread):
         steppersInUse = None
         beepDuration = 0.5
         beepNote = 60
-        
-                      
+
+
         if GPIOPlus == False:
             with lock:
                 print "set pins standard"
@@ -737,14 +727,14 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUse[16] = sghGC.POUTPUT
                 sghGC.pinUse[18] = sghGC.POUTPUT
                 sghGC.setPinMode()
-   
-                               
+
+
         #This is main listening routine
         lcount = 0
         dataPrevious = ""
         debugLogging = False
-        
-        
+
+
         #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
         while not self.stopped():
             #lcount += 1
@@ -755,7 +745,7 @@ class ScratchListener(threading.Thread):
                 data = dataPrevious + self.scratch_socket.recv(BUFFER_SIZE) # get the data from the socket plus any data not yet processed
                 logging.debug("datalen: %s",len(data)) 
                 logging.debug("RAW: %s", data)
-                
+
                 if "send-vars" in data:
                     #Reset if New project detected from Scratch
                     #tell outer loop that Scratch has disconnected
@@ -763,9 +753,9 @@ class ScratchListener(threading.Thread):
                         cycle_trace = 'disconnected'
                         print "cycle_trace has changed to" ,cycle_trace
                         break
-                
+
                 if len(data) > 0: # Connection still valid so process the data received
-                
+
                     dataIn = data 
                     #dataOut = ""
                     dataList = [] # used to hold series of broadcasts or sensor updates
@@ -791,7 +781,7 @@ class ScratchListener(threading.Thread):
                             if len(dataMsg) == size: # if msg recieved is correct
                                 if "alloff" in dataMsg:
                                     allSplit =  dataMsg.find("alloff")
-                                    
+
                                     logging.debug("Whole message:%s", dataIn)
                                     #dataPrevious = dataIn # store data and tag it onto next data read
                                     #break
@@ -816,14 +806,14 @@ class ScratchListener(threading.Thread):
                                     else:
                                         dataList.append(dataMsg)
                                         dataPrefix = "se"
-                              
-                                                                                            
-                            dataIn = dataIn[size+4:] # cut data down that's been processed
-                            
-                    #print "previous:", dataPrevious
-                   
 
-                
+
+                            dataIn = dataIn[size+4:] # cut data down that's been processed
+
+                    #print "previous:", dataPrevious
+
+
+
                 #print 'Cycle trace' , cycle_trace
                 if len(data) == 0:
                     #This is due to client disconnecting or user loading new Scratch program so temp disconnect
@@ -867,7 +857,7 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue("autostart"):
                         if self.value == "true":
                             self.send_scratch_command("broadcast Scratch-StartClicked")
-                            
+
                     if self.vFindValue("sghdebug"):
                         if (self.value == "1") and (debugLogging == False):
                             logging.getLogger().setLevel(logging.DEBUG)
@@ -875,16 +865,16 @@ class ScratchListener(threading.Thread):
                         if (self.value == "0") and (debugLogging == True):
                             logging.getLogger().setLevel(logging.INFO)
                             debugLogging = False                            
-                            
+
                     if (debugLogging == False):
-                         logging.getLogger().setLevel(logging.INFO)
-                        
-                            
+                        logging.getLogger().setLevel(logging.INFO)
+
+
                     if self.vFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
                         PiGlow_Brightness = sghGC.ledDim
                         print sghGC.ledDim
-                        
+
                     pinsoraddon = None
                     if self.vFindValue("setpins"):
                         setupValue = self.value
@@ -892,13 +882,13 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue("addon"):
                         setupValue = self.value                    
                         pinsoraddon = "addon"
-                        
-                                                
-                        
+
+
+
                     if pinsoraddon != None:
                         ADDON = setupValue
                         print (ADDON, " declared")
-                        
+
                         if "low" in ADDON:
                             with lock:
                                 print "set pins to input with pulldown low"
@@ -936,10 +926,10 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[18] = sghGC.POUTPUT 
                                 sghGC.pinUse[22] = sghGC.PINPUT 
                                 sghGC.pinUse[7] = sghGC.PINPUT 
-             
+
                                 sghGC.setPinMode()
                                 anyAddOns = True 
-                                
+
                         if "ladder" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -950,7 +940,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUse[pin] = sghGC.PINPUT
                                 sghGC.setPinMode()
                                 anyAddOns = True
-                                
+
                         if "motorpitx" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -962,7 +952,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[21] = sghGC.POUTPUT #Motor1
                                 sghGC.pinUse[22] = sghGC.POUTPUT #Motr 2 Enable
                                 sghGC.pinUse[23] = sghGC.POUTPUT #Motor1 Enable
-                                
+
                                 sghGC.pinUse[13] = sghGC.PINPUT #Motor1 Enable
                                 sghGC.pinUse[7]  = sghGC.PINPUT #Motor1 Enable
 
@@ -999,7 +989,7 @@ class ScratchListener(threading.Thread):
                                 print  "gPiO setup"
                                 print sghGC.pinUse 
                                 anyAddOns = True
-                                                           
+
                         if "berry" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -1011,7 +1001,7 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 anyAddOns = True
-                            
+
                         if "pirocon" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -1023,7 +1013,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[11] = sghGC.PINPUT #ObsRight
                                 sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
-                                
+
                                 if "encoders" in ADDON:
                                     logging.debug("Encoders Found:%s", ADDON)
                                     sghGC.pinUse[7]  = sghGC.PCOUNT 
@@ -1036,7 +1026,7 @@ class ScratchListener(threading.Thread):
 
                                 print "pirocon setup"
                                 anyAddOns = True
-                            
+
                         if "piringo" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -1050,7 +1040,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUse[pin] = sghGC.PINPUT # set switches as inputs
                                 sghGC.setPinMode() # execute pin assignment
                                 anyAddOns = True # add on declared
-                            
+
                         if "pibrella" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -1073,7 +1063,7 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 anyAddOns = True
-                        
+
                         if "rtkmotorcon" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -1085,7 +1075,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 print "rtkmotorcon setup"
                                 anyAddOns = True
-                                
+
                         if "pidie" in ADDON:
                             print "pidie detected"
                             sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
@@ -1100,8 +1090,8 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 anyAddOns = True 
-                            
-                                
+
+
                         if "fishdish" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -1112,7 +1102,7 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 anyAddOns = True
-                                
+
                         if "pi2go" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -1128,7 +1118,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[16]  = sghGC.PINPUT 
                                 sghGC.pinUse[18]  = sghGC.PINPUT        
                                 sghGC.pinUse[22]  = sghGC.PINPUT 
-                                
+
                                 sghGC.setPinMode()
 
                                 #sghGC.startServod([12,10]) # servos testing motorpitx
@@ -1155,18 +1145,18 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[23]  = sghGC.PINPUT 
                                 sghGC.pinUse[24]  = sghGC.PINPUT 
                                 sghGC.pinUse[26]  = sghGC.PINPUT 
-                                
+
                                 sghGC.setPinMode()
 
                                 #sghGC.startServod([12,10]) # servos testing motorpitx
 
                                 print "HapPi setup"
                                 anyAddOns = True                                
-                                
+
                         if "raspibot2" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                                        
+
                                 sghGC.pinUse[11] = sghGC.POUTPUT #left go
                                 sghGC.pinUse[7] = sghGC.POUTPUT #left dir
                                 sghGC.pinUse[19] = sghGC.POUTPUT #right go
@@ -1179,12 +1169,12 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[24] = sghGC.POUTPUT #LED2 
                                 sghGC.pinUse[12] = sghGC.PSONAR      # trigger                
                                 sghGC.pinUse[16]  = sghGC.PSONAR  #echo
-                                
+
                                 sghGC.setPinMode()
 
                                 print "RaspPiBot2 setup"
                                 anyAddOns = True                                        
-                           
+
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
                     # with lock:
@@ -1198,14 +1188,14 @@ class ScratchListener(threading.Thread):
                         # sghGC.pinUse[7]  = sghGC.PINPUT
                         # sghGC.pinUse[22] = sghGC.PINPUT
                         # sghGC.setPinMode()
-                                
+
                         # firstRun = False
 
 
                 #If outputs need globally inverting (7 segment common anode needs it - PiRingo etc)
                 if ('invert' in self.dataraw):
                     sghGC.INVERT = True
-                    
+
                 #Change pins from input to output if more needed
                 if self.bFind('config'):
                     with lock:
@@ -1214,33 +1204,32 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue('config' + str(pin)):
                                 if self.value == "in":
                                     sghGC.pinUse[pin] = sghGC.PINPUT                            
-                                # if self.value == "inpulldown":
-                                    # sghGC.pinUse[pin] = sghGC.PINPUTDOWN                            
-                                # if self.value == "inpullnone":
-                                    # sghGC.pinUse[pin] = sghGC.PINPUTNONE
-                                # else:
-                                    # sghGC.pinUse[pin] = sghGC.POUTPUT
-                    
+                                if self.value == "inpulldown":
+                                    sghGC.pinUse[pin] = sghGC.PINPUTDOWN                            
+                                if self.value == "inpullnone":
+                                    sghGC.pinUse[pin] = sghGC.PINPUTNONE
+
+
                         sghGC.setPinMode()           
-    ### Check for AddOn boards being declared
-                    
+        ### Check for AddOn boards being declared
+
                 #Listen for Variable changes
                 if 'sensor-update' in self.dataraw:
 
                     #print "sensor-update rcvd" , dataraw
-                               
-                  
+
+
                     if "ladder" in ADDON:
                         #do ladderboard stuff
 
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
                         self.vLEDCheck(ladderOutputs)
-                                        
+
                     elif "motorpitx" in ADDON:
                         #do MotorPiTx stuff
                         #check for motor variable commands
-                        
+                        self.vListCheck([15,11],["out1","out2"])
                         moveServos = False
 
                         if self.vFindValue('tiltoffset'):
@@ -1250,7 +1239,7 @@ class ScratchListener(threading.Thread):
                         if self.vFindValue('panoffset'):
                             panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
                             moveServos = True
-                            
+
                         if self.vFindValue('tilt'):
                             #print "tilt command rcvd"
                             if self.valueIsNumeric:
@@ -1268,7 +1257,7 @@ class ScratchListener(threading.Thread):
                                     #print "tilt=", tilt
                                 elif self.value == "off":
                                     sghGC.pinServod(12,"off")
-                                    
+
                         if self.vFindValue('pan'):
                             #print "pan command rcvd"
                             if self.valueIsNumeric:
@@ -1286,7 +1275,7 @@ class ScratchListener(threading.Thread):
                                     #print "servob=", pan
                                 elif self.value == "off":
                                     sghGC.pinServod(10,"off")
-                       
+
                         if moveServos == True:
                             #print "move servos == True"
                             degrees = int(tilt + tiltoffset)
@@ -1318,11 +1307,11 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][3],0)                      
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    
-                            
+
+
                     elif (("piglow" in ADDON) and (piglow != None)):
                         #do PiGlow stuff but make sure PiGlow physically detected             
-                     
+
                         #check LEDS
                         for i in range(1,19):
                             if self.vFindValue('led' + str(i)):
@@ -1330,7 +1319,7 @@ class ScratchListener(threading.Thread):
                                 svalue= min(255,max(svalue,0))
                                 PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
                                 piglow.update_pwm_values(PiGlow_Values)
-                                
+
                         for i in range(1,4):
                             if self.vFindValue('leg' + str(i)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -1342,7 +1331,7 @@ class ScratchListener(threading.Thread):
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
                                 piglow.update_pwm_values(PiGlow_Values)
-                                
+
                             if self.vFindValue('arm' + str(i)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 svalue= min(255,max(svalue,0))
@@ -1353,7 +1342,7 @@ class ScratchListener(threading.Thread):
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
                                 piglow.update_pwm_values(PiGlow_Values)
-                                
+
                         pcolours = ['red','orange','yellow','green','blue','white']
                         for i in range(len(pcolours)):
                             if self.vFindValue(pcolours[i]):
@@ -1363,8 +1352,8 @@ class ScratchListener(threading.Thread):
                                 PiGlow_Values[PiGlow_Lookup[i+6]] = svalue
                                 PiGlow_Values[PiGlow_Lookup[i+12]] = svalue
                                 piglow.update_pwm_values(PiGlow_Values)
-                            
-                                
+
+
                         #Use bit pattern to control leds
                         if self.vFindValue('ledpattern'):
                             #print 'Found ledpattern'
@@ -1380,22 +1369,22 @@ class ScratchListener(threading.Thread):
                                 else:
                                     PiGlow_Values[PiGlow_Lookup[i]] = 1
                                 j = j + 1
-                            
+
                             piglow.update_pwm_values(PiGlow_Values)
-                        
+
                         #Replaced by global bright variable code
                         #if self.vFindValue('bright'):
                         #    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                         #    svalue= min(255,max(svalue,0))
                         #    PiGlow_Brightness = svalue
-                            
+
                     elif "gpio" in ADDON:
                         #do gPiO stuff
-                        
+
                         self.vAllCheck("allpins") # check Allpins On/Off/High/Low/1/0
-     
+
                         self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
-                                
+
                         #check for motor variable commands
                         motorList = [['motora',11,12],['motorb',13,15]]
                         #motorList = [['motora',21,26],['motorb',19,24]]
@@ -1422,18 +1411,18 @@ class ScratchListener(threading.Thread):
                                     self.pinUpdate(motorList[listLoop][2],0)
 
                         ######### End of gPiO Variable handling
-                       
+
                     elif "berry" in ADDON:
                         #do BerryClip stuff
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
                         self.vLEDCheck(berryOutputs) # check All LEDS On/Off/High/Low/1/0
-                                    
+
                         if self.vFindOnOff('buzzer'):
                             self.index_pin_update(24,self.valueNumeric)
 
                         ######### End of BerryClip Variable handling
-                        
+
                     elif "pirocon" in ADDON:
                         #do PiRoCon stuff
                         #logging.debug("Processing variables for PiRoCon")
@@ -1447,7 +1436,7 @@ class ScratchListener(threading.Thread):
                         if self.vFindValue('panoffset'):
                             panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
                             moveServos = True
-                            
+
                         if self.vFindValue('tilt'):
                             #print "tilt command rcvd"
                             if self.valueIsNumeric:
@@ -1465,7 +1454,7 @@ class ScratchListener(threading.Thread):
                                     #print "tilt=", tilt
                                 elif self.value == "off":
                                     os.system("echo " + "0" + "=0 > /dev/servoblaster")
-                                    
+
                         if self.vFindValue('pan'):
                             #print "pan command rcvd"
                             if self.valueIsNumeric:
@@ -1483,7 +1472,7 @@ class ScratchListener(threading.Thread):
                                     #print "pan=", pan
                                 elif self.value == "off":
                                     os.system("echo " + "1" + "=0 > /dev/servoblaster")
-                       
+
                         if moveServos == True:
                             degrees = int(tilt + tiltoffset)
                             degrees = min(80,max(degrees,-60))
@@ -1517,7 +1506,7 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                        
+
 
                         if (pcaPWM != None):
                             for i in range(0, 16): # go thru servos on PCA Board
@@ -1525,13 +1514,13 @@ class ScratchListener(threading.Thread):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
                                     #print i, svalue
                                     pcaPWM.setPWM(i, 0, svalue)
-                                    
+
                             for i in range(0, 16): # go thru PowerPWM on PCA Board
                                 if self.vFindValue('power' + str(i + 1)):
                                     svalue = int(self.valueNueric) if self.valueIsNumeric else 0
                                     svalue = min(4095,max(((svalue * 4096) /100),0))
                                     pcaPWM.setPWM(i, 0, svalue)
-                                    
+
                         ######### End of PiRoCon Variable handling
                     elif "piringo" in ADDON:
                         #do piringo stuff
@@ -1539,21 +1528,21 @@ class ScratchListener(threading.Thread):
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
                         self.vLEDCheck(piringoOutputs)
-                        
-                        
+
+
                     elif "pibrella" in ADDON: # PiBrella
-               
+
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
 
                         self.vListCheck([13,11,7,15,16,18,22],["led1","led2","led3","led4","led5","led6","led7"])
                         self.vListCheck([13,11,11,11,7,15,16,18,22],["red","amber","yellow","orange","green","outpute","outputf","outputg","outputh"])
-                        
+
                         if self.vFindValue('stepper'):
                             if self.valueIsNumeric:
                                 self.stepperUpdate([15,16,18,22],self.valueNumeric)
                             else:
                                 self.stepperUpdate([15,16,18,22],0)                        
-                                    
+
                         if self.vFindValue("beep"):
                             try:
                                 bn,bd = self.value.split(",")
@@ -1565,17 +1554,17 @@ class ScratchListener(threading.Thread):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
                             beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
                             beepThread.start()
-                            
+
                         # if self.vFindValue("beepnote"):
                             # beepNote = max(12,int(self.valueNumeric)) if self.valueIsNumeric else 60
-                   
+
                         # if self.vFindValue("beepduration"):
                             # beepDuration = max(0.125,int(self.valueNumeric)) if self.valueIsNumeric else 0.5
-                           
-                            
+
+
                     elif "rgbled" in ADDON: # RGB-LED by Meltwater/rsstab/tim cox
-               
-                         #print ("rgb-led variable processing")            
+
+                            #print ("rgb-led variable processing")            
                         if self.vFindOnOff("all"):
                             for loop in range(0,5):
                                 sghGC.pinUpdate(rgbOutputs[loop],1 - self.valueNumeric)
@@ -1591,14 +1580,14 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(rgbOutputs[rgbList.index(listLoop)],100-self.valueNumeric,"pwm")
                                 else:
                                     sghGC.pinUpdate(rgbOutputs[rgbList.index(listLoop)],1)
-                        
-                        
+
+
                         rgbList = ["red","green","blue"]
                         for listLoop in rgbList:
                             if self.vFindOnOff(listLoop):
                                 print listLoop , "found",
                                 sghGC.pinUpdate(rgbOutputs[5+rgbList.index(listLoop)],self.valueNumeric)
-                                                            
+
                     elif "rtkmotorcon" in ADDON:  
                         #check for motor variable commands
                         motorList = [['motor1',11,12],['motor2',15,16]]
@@ -1614,21 +1603,21 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    
+
                     elif "pidie" in ADDON:
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
                         self.vListCheck([7,11,12,13,15,16,18,22,8],["led1","led2","led3","led4","led5","led6","led7","led8","led9"])
                         self.vListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])     
-                        
+
                     elif "fishdish" in ADDON:
                         #do fishdish stuff
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
                         self.vLEDCheck(fishOutputs) # check All LEDS On/Off/High/Low/1/0
-                                    
+
                         if self.vFindOnOff('buzzer'):
                             self.index_pin_update(24,self.valueNumeric)
-                            
+
                     elif "pi2go" in ADDON:
                         #do PiRoCon stuff
                         logging.debug("Processing variables for Pi2Go")
@@ -1649,7 +1638,7 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    
+
                     elif "happi" in ADDON:
                         #do happi stuff
                         logging.debug("Processing variables for HapPi")
@@ -1670,7 +1659,7 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    
+
                     elif "raspibot2" in ADDON:
                         logging.debug("Processing variables for RasPiBot2")
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
@@ -1694,9 +1683,9 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][2],0)                                    
 
                     else:   #normal variable processing with no add on board
-                        
+
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
-     
+
                         self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
                         #logging.debug("Steppers in use")
                         if steppersInUse == True:
@@ -1709,7 +1698,7 @@ class ScratchListener(threading.Thread):
                                         self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
                                     else:
                                         self.stepperUpdate(stepperList[listLoop][1],0)
-                                     
+
                             stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
                             for listLoop in range(0,2):
                                 #print ("look for steppers") 
@@ -1747,7 +1736,7 @@ class ScratchListener(threading.Thread):
                                         sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
                                     else:
                                         sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
-                                                
+
                     #Use bit pattern to control ports
                     if self.vFindValue('pinpattern'):
                         svalue = self.value 
@@ -1772,14 +1761,14 @@ class ScratchListener(threading.Thread):
                         if isNumeric(tempValue):
                             step_delay = int(float(tempValue))
                             print 'step delay changed to', step_delay
-                            
-                    
+
+
                     if pcfSensor != None: #if PCF ADC found
                         if self.vFindValue('dac'):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             pcfSensor.writeDAC(svalue)
 
-    ### Check for Broadcast type messages being received
+        ### Check for Broadcast type messages being received
 
                 if 'broadcast' in self.dataraw:
                     #print 'broadcast:' , self.dataraw
@@ -1788,10 +1777,10 @@ class ScratchListener(threading.Thread):
                         logging.debug("SetPins broadcast found")
                         logging.debug("SetPins value len %d",len(self.value))
                         logging.debug("SetPins value %s",self.value)
-                        
+
                         if len(self.value) == 0:
                             with lock:
-                                
+
                                 for pin in sghGC.validPins:
                                     sghGC.pinUse[pin] = sghGC.PINPUTDOWN
                                 sghGC.pinUse[11] = sghGC.POUTPUT
@@ -1804,7 +1793,7 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinUse[7] = sghGC.PINPUT
                                 sghGC.setPinMode()
                                 anyAddOns = True
-                        
+
                         elif self.value == "low":
                             with lock:
                                 print "set pins to input with pulldown low"
@@ -1814,7 +1803,7 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True
-                                
+
                         elif self.value == "high":
                             with lock:
                                 print "set pins to input with pull ups"
@@ -1824,7 +1813,7 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True     
-                                
+
                         elif self.value == "none":
                             with lock:
                                 print "set pins to input with no pullups"
@@ -1834,7 +1823,7 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True                        
-                                
+
                     if self.bFindOnOff("sghdebug"):
                         if (self.OnOrOff == True) and (debugLogging == False):
                             logging.getLogger().setLevel(logging.DEBUG)
@@ -1842,15 +1831,15 @@ class ScratchListener(threading.Thread):
                         if (self.OnOrOff == False) and (debugLogging == True):
                             logging.getLogger().setLevel(logging.INFO)
                             debugLogging = False                            
-                            
+
                     if (debugLogging == False):
-                         logging.getLogger().setLevel(logging.INFO)                                
-                    
+                        logging.getLogger().setLevel(logging.INFO)                                
+
                     if self.bFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
                         PiGlow_Brightness = sghGC.ledDim
                         print sghGC.ledDim
-                        
+
                     #self.send_scratch_command("broadcast Begin")
                     if self.bFind("stepper"):
                         print ("Stepper declared")
@@ -1870,9 +1859,10 @@ class ScratchListener(threading.Thread):
                         #print ("Ladder broadcast processing")                    
                         self.bCheckAll() # Check for all off/on type broadcasrs
                         self.bLEDCheck(ladderOutputs) # Check for LED off/on type broadcasts
-                                
-                    elif "motorpitx" in ADDON: # Boeeerb MotorPiTx
 
+                    elif "motorpitx" in ADDON: # Boeeerb MotorPiTx
+                        self.bCheckAll()
+                        self.bListCheck([15,11],["out1","out2"])
                         if ('sonar1') in dataraw:
                             distance = sghGC.pinSonar(13)
                             #print'Distance:',distance,'cm'
@@ -1880,7 +1870,7 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)
-                            
+
                         if ('sonar2') in dataraw:
                             distance = sghGC.pinSonar(7)
                             #print'Distance:',distance,'cm'
@@ -1888,18 +1878,18 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)                        
-                            
+
                         if self.bFind('ultra1'):
                             print 'start pinging on', str(13)
                             sghGC.pinUse[13] = sghGC.PULTRA
-                            
+
                         if self.bFind('ultra2'):
                             print 'start pinging on', str(7)
                             sghGC.pinUse[7] = sghGC.PULTRA
-                            
+
                     elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
                         #print "processing piglow variables"
-                    
+
                         if self.bFindOnOff('all'):
                             #print "found allon/off"
                             for i in range(1,19):
@@ -1907,7 +1897,7 @@ class ScratchListener(threading.Thread):
                                 PiGlow_Values[i-1] = PiGlow_Brightness * self.OnOrOff
                                 #print "Values", PiGlow_Values
                                 piglow.update_pwm_values(PiGlow_Values)
-                                 
+
                         #check LEDS
                         for i in range(1,19):
                             #check_broadcast = str(i) + 'on'
@@ -1921,7 +1911,7 @@ class ScratchListener(threading.Thread):
                                 #print dataraw
                                 PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
                                 piglow.update_pwm_values(PiGlow_Values)
-                                
+
                         pcolours = ['red','orange','yellow','green','blue','white']
                         for i in range(len(pcolours)):
                             if self.bFindOnOff(pcolours[i]):
@@ -1930,7 +1920,7 @@ class ScratchListener(threading.Thread):
                                 PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness * self.OnOrOff
                                 PiGlow_Values[PiGlow_Lookup[i+12]] = PiGlow_Brightness * self.OnOrOff
                                 piglow.update_pwm_values(PiGlow_Values)
-                                                           
+
                         for i in range(1,4):
                             if self.bFindOnOff('leg'+str(i)):
                                 #print dataraw
@@ -1941,7 +1931,7 @@ class ScratchListener(threading.Thread):
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
                                 piglow.update_pwm_values(PiGlow_Values)
-                                
+
                             if self.bFindOnOff('arm'+str(i)):
                                 #print dataraw
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
@@ -1956,7 +1946,7 @@ class ScratchListener(threading.Thread):
                         #print ("gPiO broadcast processing")
                         self.bCheckAll() # Check for all off/on type broadcasts
                         self.bPinCheck() # Check for pin off/on type broadcasts
-                    
+
                     elif "berry" in ADDON: # BerryClip
 
                         #print ("Berry broadcast processing")                    
@@ -1964,12 +1954,12 @@ class ScratchListener(threading.Thread):
                         self.bLEDCheck(berryOutputs) # Check for LED off/on type broadcasts
                         if self.bFindOnOff('buzzer'):
                             sghGC.pinUpdate(24,self.OnOrOff)
-                            
+
                     elif "pirocon" in ADDON: # pirocon         
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
                         self.bPinCheck() # Check for pin off/on type broadcasts
-                                    
+
                         #check pins
                         for pin in sghGC.validPins:
                             if self.bFindOnOff('pin' + str(pin)):
@@ -1982,24 +1972,24 @@ class ScratchListener(threading.Thread):
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
-                                
+
                             #Start using ultrasonic sensor on a pin    
                             if self.bFind('ultra' + str(pin)):
                                 print 'start pinging on', str(pin)
                                 sghGC.pinUse[pin] = sghGC.PULTRA
 
-                    
+
                         motorList = [['turnr',21,26,7],['turnl',19,24,11]]
                         if "piroconb" in ADDON:
                             logging.debug("PiRoConB Found:%s", ADDON)
                             motorList = [['turnr',21,19,7],['turnl',26,24,11]]						
-                                                       
+
                         if self.bFindValue("move"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            
+
                             sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
                             print "sghdir" , sghGC.countDirection[motorList[0][3]]
-                            
+
                             turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList,svalue,sghGC.pinCount[motorList[0][3]]])
                             turnDualThread.start()
                             for listLoop in range(0,2):
@@ -2009,7 +1999,7 @@ class ScratchListener(threading.Thread):
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
                                     sghGC.pinUpdate(motorList[listLoop][1],(self.turnSpeed),"pwm")
-                                
+
                         if self.bFindValue("turn"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList,svalue])
@@ -2025,20 +2015,20 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(motorList[1][2],1)
                                 sghGC.pinUpdate(motorList[1][1],(100-self.turnSpeed),"pwm")                             
 
-                    
+
                     elif "piringo" in ADDON: # piringo
                         #do piringo stuff
                         self.bCheckAll() # Check for all off/on type broadcasrs
                         self.bLEDCheck(piringoOutputs) # Check for LED off/on type broadcasts
                         self.bLEDPowerCheck(piringoOutputs) # Vary LED Brightness
-                        
+
                     elif "pibrella" in ADDON: # PiBrella
                         #print ("PiBrella broadcast processing")                    
                         self.bCheckAll() # Check for all off/on type broadcasts                    
 
                         self.bListCheck([13,11,7,15,16,18,22],["led1","led2","led3","led4","led5","led6","led7"])
                         self.bListCheck([13,11,11,11,7,15,16,18,22],["red","amber","yellow","orange","green","outpute","outputf","outputg","outputh"])
-                                
+
                         if self.bFindValue("beep"):
                             try:
                                 bn,bd = self.value.split(",")
@@ -2053,7 +2043,7 @@ class ScratchListener(threading.Thread):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
                             beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
                             beepThread.start()
-                            
+
                         if self.bFind('sonare,a'):
                             distance = sghGC.pinSonar2(15,21)
                             #print'Distance:',distance,'cm'
@@ -2061,7 +2051,7 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)                                    
-                            
+
                     elif "rgbled" in ADDON: # rgb-led
 
                         #print ("rgb-led broadcast processing")            
@@ -2075,14 +2065,14 @@ class ScratchListener(threading.Thread):
                         for listLoop in rgbList:
                             if self.bFindOnOff("led"+str(1+rgbList.index(listLoop))):
                                 sghGC.pinUpdate(rgbOutputs[rgbList.index(listLoop)],1-self.OnOrOff)
-                        
-                        
+
+
                         rgbList = ["red","green","blue"]
                         for listLoop in rgbList:
                             if self.bFindOnOff(listLoop):
                                 print listLoop , "found",
                                 sghGC.pinUpdate(rgbOutputs[5+rgbList.index(listLoop)],self.OnOrOff)
-                                
+
                     elif "pidie" in ADDON: # pidie
                         #do piringo stuff
                         self.bCheckAll() # Check for all off/on type broadcasrs
@@ -2103,7 +2093,7 @@ class ScratchListener(threading.Thread):
                             if self.bFindOnOff(listLoop):
                                 print listLoop , "found",
                                 sghGC.pinUpdate(fishOutputs[fishList.index(listLoop)],self.OnOrOff)    
-                                
+
                         if self.bFindOnOff('buzzer'):
                             sghGC.pinUpdate(24,self.OnOrOff)                  
 
@@ -2117,13 +2107,13 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)                        
-                               
+
 
                     else: # Plain GPIO Broadcast processing
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
                         #self.bPinCheck() # Check for pin off/on type broadcasts
-                                    
+
                         #check pins
                         for pin in sghGC.validPins:
                             if self.bFindOnOff('pin' + str(pin)):
@@ -2138,23 +2128,23 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(pin,0,type="pwm")                                   
 
                             if self.bFind('sonar' + str(pin)):
-                                
+
                                 distance = sghGC.pinSonar(pin)
                                 #print'Distance:',distance,'cm'
                                 sensor_name = 'sonar' + str(pin)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
-                                
+
                             #Start using ultrasonic sensor on a pin    
                             if self.bFind('ultra' + str(pin)):
                                 print 'start pinging on', str(pin)
                                 sghGC.pinUse[pin] = sghGC.PULTRA
-                           
-                                          
+
+
                         #end of normal pin checking
 
-                                
+
                     stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
                     for listLoop in range(0,2):
                         #print ("loop" , listLoop)
@@ -2184,7 +2174,7 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(pin,1)
                                 j = j + 1
-                                 
+
                     if pcfSensor != None: #if PCF ADC found
                         for channel in range(1,5): #loop thru all 4 inputs
                             if self.bFind('adc'+str(channel)):
@@ -2194,8 +2184,8 @@ class ScratchListener(threading.Thread):
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
-                                
-                                    
+
+
                     origdataraw = self.dataraw
                     if AdaMatrix != None: #Matrix connected
                         #print self.dataraw
@@ -2215,34 +2205,34 @@ class ScratchListener(threading.Thread):
                                     for x in range(0, 8):
                                         AdaMatrix.setPixel((7-x),y)
                                         time.sleep(0.05)
-                            
+
                             for ym in range(0,8):
                                 for xm in range(0,8):
-                                
+
                                     if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
                                         AdaMatrix.setPixel((7 - xm),ym)
-                                        
+
                                     if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
                                         AdaMatrix.clearPixel((7 - xm),ym)
-                                
+
                                 # if self.bFindValue("matrixon"):
                                     # #print self.value
                                     # xPos = int(self.value[0:1])
                                     # yPos = int(self.value[2:3])
                                     # AdaMatrix.setPixel((7 - xPos),yPos)
-                                    
+
                                 # if self.bFindValue("matrixoff"):
                                     # #print self.value
                                     # xPos = int(self.value[0:1])
                                     # yPos = int(self.value[2:3])
                                     # AdaMatrix.clearPixel((7 - xPos),yPos)        
-                                    
+
                             if self.bFindValue("brightness"):
                                 if self.valueIsNumeric:
                                     AdaMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
                                 else:
                                     AdaMatrix.setBrightness(15)
-                                    
+
                             if self.bFindValue('matrixpattern'):
                                 bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
                                 #print 'bit_pattern %s' % bit_pattern
@@ -2254,7 +2244,7 @@ class ScratchListener(threading.Thread):
                                     else:
                                         AdaMatrix.setPixel((7 - xm),ym)
                                     j = j + 1
-                                    
+
                             rowList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
                                 if self.bFindValue('row'+rowList[i]):
@@ -2267,7 +2257,7 @@ class ScratchListener(threading.Thread):
                                             AdaMatrix.clearPixel((7 - xm),ym)
                                         else:
                                             AdaMatrix.setPixel((7 - xm),ym)
-                                            
+
                             colList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
                                 if self.bFindValue('col'+rowList[i]):
@@ -2286,7 +2276,7 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue('scrollright'):
                                 print "scrollr" 
                                 AdaMatrix.scroll("right")    
-                                
+
                     if PiMatrix != None: #Matrix connected
                         #print self.dataraw
                         #print
@@ -2298,16 +2288,16 @@ class ScratchListener(threading.Thread):
                         for broadcastListLoop in broadcastList:
                             self.dataraw = str(broadcastListLoop)
                             #print self.dataraw
-                            
+
                             if self.bFindOnOff("all"):
                                 PiMatrix.clear(self.OnOrOff)
-                                
+
                             if self.bFindOnOff("sweep"):
                                 for y in range(0, 8):
                                     for x in range(0, 8):
                                         PiMatrix.setPixel(x,y,self.OnOrOff)
                                         time.sleep(0.05)  
-                            
+
                             if self.bFindValue("matrixo"):
                                 for ym in range(0,8):
                                     for xm in range(0,8):
@@ -2315,13 +2305,13 @@ class ScratchListener(threading.Thread):
                                             PiMatrix.setPixel(xm,ym)
                                         if self.bFindValue("matrixoffx"+str(xm)+"y"+str(ym)):
                                             PiMatrix.clearPixel(xm,ym)
-                                    
+
                             # if self.bFindValue("brightness"):
                                 # if self.valueIsNumeric:
                                     # PiMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
                                 # else:
                                     # PiMatrix.setBrightness(15)
-                                    
+
                             if self.bFindValue('matrixpattern'):
                                 bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
                                 #print 'bit_pattern %s' % bit_pattern
@@ -2330,7 +2320,7 @@ class ScratchListener(threading.Thread):
                                     xm = j - (8 * ym)
                                     PiMatrix.setPixel(xm,ym,int(float(bit_pattern[j])))
                                     j = j + 1
-                                    
+
                             rowList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
                                 if self.bFindValue('row'+rowList[i]):
@@ -2340,7 +2330,7 @@ class ScratchListener(threading.Thread):
                                         ym = i
                                         xm = j
                                         PiMatrix.setPixel(xm,ym,int(float(bit_pattern[j])))
-                                            
+
                             colList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
                                 if self.bFindValue('col'+rowList[i]):
@@ -2355,9 +2345,9 @@ class ScratchListener(threading.Thread):
                                 PiMatrix.scroll("left")
                             if self.bFindValue('scrollright'):
                                 PiMatrix.scroll("right")    
-                                
+
                     self.dataraw = origdataraw
-                    
+
                     if self.bFind('gettime'):
                         now = dt.datetime.now()
                         #print now
@@ -2376,7 +2366,7 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, minutes)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
-                        
+
                     if self.bFind("readcount"): #update pin count values
                         for pin in sghGC.validPins: #loop thru all pins
                             if sghGC.pinUse[pin] == sghGC.PCOUNT:
@@ -2388,7 +2378,7 @@ class ScratchListener(threading.Thread):
                                     bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
                                     #print 'sending: %s' % bcast_str
                                     self.send_scratch_command(bcast_str)
-                                    
+
                     if self.bFind("resetcount"): #update pin count values
                         for pin in sghGC.validPins: #loop thru all pins
                             if sghGC.pinUse[pin] == sghGC.PCOUNT:
@@ -2408,7 +2398,7 @@ class ScratchListener(threading.Thread):
                         sensor_name = 'ipaddress'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, "ip"+ipaddr)
                         self.send_scratch_command(bcast_str)
-                        
+
                     if self.bFind("gettemp"): #find temp address
                         if sghGC.dsSensorId == "":
                             sghGC.findDS180()
@@ -2419,8 +2409,8 @@ class ScratchListener(threading.Thread):
                                 sensor_name = 'temperature'
                                 bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                                 self.send_scratch_command(bcast_str)
-                                             
-                                        
+
+
 
                     if  '1coil' in dataraw:
                         print "1coil broadcast"
@@ -2433,19 +2423,19 @@ class ScratchListener(threading.Thread):
                         stepType = 1
                         print "step mode" ,stepMode[stepType]
                         step_delay = 0.0025
-                        
+
                     if  'halfstep' in dataraw:
                         print "halfstep broadcast"
                         stepType = 2
                         print "step mode" ,stepMode[stepType]
                         step_delay = 0.0013
-                        
+
                     if "version" in dataraw:
                         bcast_str = 'sensor-update "%s" %s' % ("Version", Version)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
-                        
-                 
+
+
                     #end of broadcast check
 
 
@@ -2478,11 +2468,11 @@ def cleanup_threads(threads):
     for thread in threads:
         thread.stop()
     print "Threads told to stop"
-    
+
     for thread in threads:
         thread.join()
     print "Waiting for join on main threads to complete"
-        
+
     for pin in sghGC.validPins:
         try:
             print "Stopping ", pin
@@ -2490,7 +2480,7 @@ def cleanup_threads(threads):
             print "Stopped ", pin
         except:
             continue
-            
+
     try:
         print "Stopping Matrix"
         PiMatrix.stop()
@@ -2500,7 +2490,7 @@ def cleanup_threads(threads):
 
     print ("cleanup threads finished")
 
-        
+
 ######### Main Program Here
 
 
@@ -2512,7 +2502,7 @@ print sghGC.getPiRevision()
 ADDON = ""
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)# default DEBUG - quiwr = INFO
 
- 
+
 PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
 BUFFER_SIZE = 8192 #used to be 100
@@ -2532,7 +2522,7 @@ try:
         piglow.update_pwm_values()#PiGlow_Values)
 except:
     print "No PiGlow Detected"
-    
+
 
 ##if sghGC.getPiRevision() == 1:
 ##    print "Rev1 Board" 
@@ -2543,7 +2533,7 @@ except:
 ##print ("Update PWM value on PiGLow attempted")
 ##piglow.update_pwm_values()#PiGlow_Values)
 
-    
+
 #See if Compass connected
 compass = None
 try:
@@ -2554,7 +2544,7 @@ try:
     print "compass detected"
 except:
     print "No Compass Detected"
-    
+
 pcaPWM = None
 try:
     pcaPWM = PWM(0x40, debug=False)
@@ -2563,18 +2553,18 @@ try:
     print "AdaFruit PCA9685 detected"
 except:
     print "No pcaPwm Detected"
-    
+
 pcfSensor = None
 # try:
     # if sghGC.getPiRevision() == 1:
-        # pcfSensor = sgh_PCF8591P(0) #i2c, 0x48)
+    # pcfSensor = sgh_PCF8591P(0) #i2c, 0x48)
     # else:
-        # pcfSensor = sgh_PCF8591P(1) #i2c, 0x48)
+    # pcfSensor = sgh_PCF8591P(1) #i2c, 0x48)
     # print pcfSensor
     # print "PCF8591P Detected"
 # except:
     # print "No PCF8591 Detected"
-    
+
 AdaMatrix = None
 try:
     AdaMatrix = sgh_EightByEight(address=0x70)
@@ -2582,7 +2572,7 @@ try:
     print "AdaMatrix Detected"
 except:
     print "No AdaMatrix Detected"
-    
+
 PiMatrix = None
 #PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
 try:
@@ -2598,7 +2588,7 @@ except:
     print "No PiMatrix Detected"
 #PiMatrix.start()
     #time.sleep(5)
-    
+
 
 
 if __name__ == '__main__':
@@ -2609,12 +2599,12 @@ if __name__ == '__main__':
     else:
         host = DEFAULT_HOST
     host = host.replace("'", "")
-    
+
     GPIOPlus = True
     if len(sys.argv) > 2:
         if sys.argv[2] == "standard":
             GPIOPlus = False
-        
+
 
 
 cycle_trace = 'start'
@@ -2674,8 +2664,7 @@ while True:
         print ("Pin Cleanup done")
         sys.exit()
         print "CleanUp complete"
-        
+
 #### End of main program
 
-        
 
