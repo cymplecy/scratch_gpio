@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.00' # 8Apr14 New input pin processing with event detection
+Version =  'v5.1.01' # 9Apr14 New input pin processing with event detection and bug fix and rCTime
 
 
 import threading
@@ -2135,6 +2135,14 @@ class ScratchListener(threading.Thread):
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
+                                
+                            if self.bFind('rctime' + str(pin)):
+                                RCtime = sghGC.pinRCTime(pin)
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'RCtime' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, RCtime)
+                                #print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)                                
 
                             #Start using ultrasonic sensor on a pin    
                             if self.bFind('ultra' + str(pin)):

@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.00' # 8Apr14 New input pin processing with event detection
+Version =  'v5.1.01' # 9Apr14 New input pin processing with event detection and bug fix and rCTime
 
 
 import threading
