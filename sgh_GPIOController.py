@@ -171,7 +171,7 @@ class GPIOController :
                     except:
                         pass
                         
-                    if (self.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]): # if pin was an input then we need to clean up
+                    if (self.pinUse[pin] in [self.PINPUT,self.PINPUTNONE,self.PINPUTDOWN]): # if pin was an input then we need to clean up
                         self.pinUse[pin] = self.POUTPUT # switch it to output
                         GPIO.setup(pin,GPIO.OUT)
                         GPIO.output(pin, int(value)) # set output to 1 ot 0
@@ -193,9 +193,10 @@ class GPIOController :
                     if (self.pinUse[pin] == self.POUTPUT) or (self.pinUse[pin] == self.PPWM):
                         value = abs(value - 1)
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
+                    print ("pin,pinUse:%s,%s",pin,self.pinUse[pin])
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
-                    #print ("pin",pin, "set to", value)
-                elif (self.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]): # if pin is an input
+                    print ("pin",pin, "set to", value)
+                elif (self.pinUse[pin] in [self.PINPUT,self.PINPUTNONE,self.PINPUTDOWN]): # if pin is an input
                     self.pinUse[pin] = self.POUTPUT # switch it to output
                     GPIO.setup(pin,GPIO.OUT)
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
@@ -213,7 +214,7 @@ class GPIOController :
                 elif (self.pinUse[pin] == self.PUNUSED): # if pin is not allocated
                     self.pinUse[pin] = self.POUTPUT # switch it to output
                     GPIO.setup(pin,GPIO.OUT)
-                    GPIO.output(pin, int(value)) # set output to 1 ot 0
+                    GPIO.output(pin,int(value)) # set output to 1 ot 0
                     print 'pin' , pin , ' changed to digital out from unused' 
                     print ("pin",pin, "set to", value)
             #print pin,value,type,self.pinUse[pin]
@@ -280,6 +281,25 @@ class GPIOController :
             distance = 1
 
         return distance
+        
+    def pinRCTime (self,pin):
+        reading = 0
+        #print "rc pin told to set to output"
+        self.pinUpdate(pin,0)
+        #print "rc changed to ouput"
+        time.sleep(0.1)
+        #print "sleep done"
+        GPIO.setup(pin,GPIO.IN)
+        #print "rc set to input"
+        #time.sleep(3)
+        #print "sleep 2 done"
+        # This takes about 1 millisecond per loop cycle
+        while (GPIO.input(pin) == GPIO.LOW) and (reading < 1000):
+            reading += 1
+        #print "change back to output"
+        GPIO.setup(pin,GPIO.OUT)
+        self.pinUpdate(pin,0)
+        return reading
         
     def pinSonar2(self, trig,echo):
         #print pin

@@ -2135,6 +2135,14 @@ class ScratchListener(threading.Thread):
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
+                                
+                            if self.bFind('rctime' + str(pin)):
+                                RCtime = sghGC.pinRCTime(pin)
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'RCtime' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, RCtime)
+                                #print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)                                
 
                             #Start using ultrasonic sensor on a pin    
                             if self.bFind('ultra' + str(pin)):
