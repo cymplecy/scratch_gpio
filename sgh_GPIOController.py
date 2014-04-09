@@ -120,23 +120,33 @@ class GPIOController :
                 GPIO.setup(pin,GPIO.OUT)
                 try:
                     GPIO.remove_event_detect(pin)
-                    self.callbackInUse[pin] = False
                 except:
                     pass
+                try:
+                    self.callbackInUse[pin] = False
+                except:
+                    pass                    
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
-                GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                try:
+                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                except:
+                    pass
             elif (self.pinUse[pin] == self.PINPUTDOWN):
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-                GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel                
-                self.pinUse[pin] = self.PINPUT
+                try:
+                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                except:
+                    pass             
             elif (self.pinUse[pin] == self.PINPUTNONE):
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN)
-                GPIO.add_event_detect(pin, GPIO.BOTH)  # add event detection on a channel                
-                self.pinUse[pin] = self.PINPUT                
+                try:
+                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                except:
+                    pass             
             elif (self.pinUse[pin] == self.PCOUNT):
                 if self.callbackInUse[pin] == False:
                     print 'setting pin' , pin , ' as counting pin' 
@@ -193,9 +203,9 @@ class GPIOController :
                     if (self.pinUse[pin] == self.POUTPUT) or (self.pinUse[pin] == self.PPWM):
                         value = abs(value - 1)
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
-                    print ("pin,pinUse:%s,%s",pin,self.pinUse[pin])
+                    #print ("pin,pinUse:%s,%s",pin,self.pinUse[pin])
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
-                    print ("pin",pin, "set to", value)
+                    #print ("pin",pin, "set to", value)
                 elif (self.pinUse[pin] in [self.PINPUT,self.PINPUTNONE,self.PINPUTDOWN]): # if pin is an input
                     self.pinUse[pin] = self.POUTPUT # switch it to output
                     GPIO.setup(pin,GPIO.OUT)

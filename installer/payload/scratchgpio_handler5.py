@@ -17,8 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.01' # 9Apr14 New input pin processing with event detection and bug fix and rCTime
-
+Version =  'v5.1.03' # 9Apr14 More bugs in new input handling and change MotorPiTx
 
 import threading
 import socket
@@ -189,6 +188,7 @@ class ScratchSender(threading.Thread):
 
     def broadcast_pin_update(self, pin, value):
         #print ADDON 
+        #print "sending",pin,value
         #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
@@ -259,11 +259,12 @@ class ScratchSender(threading.Thread):
             bcast_str = 'sensor-update "switch" %s' %  (("on","off")[value == 1])
         #print 'sending: %s' % bcast_str
         if ("raspibot2" in ADDON):
-            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("closed","open")[value == 1])  
+            bcast_str = 'sensor-update "%s" %s' % (sensor_name,("closed","open")[value == 1])  
         if "motorpitx" in ADDON:
-            bcast_str = 'broadcast "%s%s"' % (sensor_name,("off","on")[value == 1])
+            bcast_str = 'sensor-update "%s" %s' % (sensor_name,("off","on")[value == 1])
             #print 'sending: %s' % bcast_str
         self.send_scratch_command(bcast_str)
+        
 
 
 
@@ -271,6 +272,7 @@ class ScratchSender(threading.Thread):
         n = len(cmd)
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
+        #print 'sent: %s' %cmd
 
 
     def run(self):
@@ -281,7 +283,7 @@ class ScratchSender(threading.Thread):
         #time.sleep(5)
         # set last pin pattern to inverse of current state
         pin_bit_pattern = [0] * len(sghGC.validPins)
-        last_bit_pattern = pin_bit_pattern 
+        last_bit_pattern = list(pin_bit_pattern)
         with lock:
             for listIndex in range(len(sghGC.validPins)):
                 pin = sghGC.validPins[listIndex]
@@ -307,10 +309,15 @@ class ScratchSender(threading.Thread):
                     pin_bit_pattern[listIndex] = 0
                     if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                         if sghGC.pinEvent(pin):
-                            #logging.debug("pinEvent Detected on pin:%s", pin )
+                            logging.debug(" ")
+                            logging.debug("pinEvent Detected on pin:%s", pin )
+                            logging.debug("before updating pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
                             pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
+                            logging.debug("afte uipdating pin patterm :%s",pin_bit_pattern[listIndex] )
                             if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
+                                logging.debug("pinEvent but pin state the same as before...")
                                 pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex]
+                            logging.debug("after checking states pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
                         else:
                             pin_bit_pattern[listIndex] = sghGC.pinRead(pin)                        
 
@@ -318,17 +325,17 @@ class ScratchSender(threading.Thread):
             for listIndex in range(len(sghGC.validPins)):
                 pin = sghGC.validPins[listIndex]    
                 if pin_bit_pattern[listIndex] != last_bit_pattern[listIndex]:
-                    #logging.debug("changed pin,new value,old value:%s,%s,%s", pin,pin_bit_pattern[listIndex],last_bit_pattern[listIndex] ) 
+                    logging.debug("changed pin,new value,old value:%s,%s,%s", pin,pin_bit_pattern[listIndex],last_bit_pattern[listIndex] ) 
                     if (sghGC.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                         #print pin , pin_value
-                        self.broadcast_pin_update(pin, pin_bit_pattern[listIndex])            
+                        self.broadcast_pin_update(pin, pin_bit_pattern[listIndex])       
                     
-            last_bit_pattern = pin_bit_pattern
+            last_bit_pattern = list(pin_bit_pattern)
             #print ("last:%s",last_bit_pattern)
             #print ("this:%s",pin_bit_pattern)
             
 
-            if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if they don't change
+            if (time.time() - lastPinUpdateTime)  > 2222:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for pin in sghGC.validPins:
@@ -953,8 +960,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[22] = sghGC.POUTPUT #Motr 2 Enable
                                 sghGC.pinUse[23] = sghGC.POUTPUT #Motor1 Enable
 
-                                sghGC.pinUse[13] = sghGC.PINPUT #Motor1 Enable
-                                sghGC.pinUse[7]  = sghGC.PINPUT #Motor1 Enable
+                                sghGC.pinUse[13] = sghGC.PINPUT #Input 1
+                                sghGC.pinUse[7]  = sghGC.PINPUT #Input 2
 
                                 sghGC.setPinMode()
                                 sghGC.startServod([12,10]) # servos
@@ -1229,7 +1236,7 @@ class ScratchListener(threading.Thread):
                     elif "motorpitx" in ADDON:
                         #do MotorPiTx stuff
                         #check for motor variable commands
-                        self.vListCheck([15,11],["out1","out2"])
+                        self.vListCheck([15,11,13,7],["output1","output2","input1","input2"])
                         moveServos = False
 
                         if self.vFindValue('tiltoffset'):
@@ -1862,7 +1869,7 @@ class ScratchListener(threading.Thread):
 
                     elif "motorpitx" in ADDON: # Boeeerb MotorPiTx
                         self.bCheckAll()
-                        self.bListCheck([15,11],["out1","out2"])
+                        self.bListCheck([15,11,13,7],["output1","output2","input1","input2"])
                         if ('sonar1') in dataraw:
                             distance = sghGC.pinSonar(13)
                             #print'Distance:',distance,'cm'
