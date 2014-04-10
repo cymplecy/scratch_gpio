@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.03' # 9Apr14 More bugs in new input handling and change MotorPiTx
+Version =  'v5.1.04' # 9Apr14 Various changes investigating high CPU laod during debug mode
 
 import threading
 import socket
@@ -335,12 +335,14 @@ class ScratchSender(threading.Thread):
             #print ("this:%s",pin_bit_pattern)
             
 
-            if (time.time() - lastPinUpdateTime)  > 2222:  #This is to force the pin names to be read out even if they don't change
+            if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
-                for pin in sghGC.validPins:
+                for listIndex in range(len(sghGC.validPins)):
+                    pin = sghGC.validPins[listIndex]
                     if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
-                        self.broadcast_pin_update(pin, sghGC.pinRead(pin))
+                        pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
+                        self.broadcast_pin_update(pin,pin_bit_pattern[listIndex])
 
             if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
                 for pin in sghGC.validPins:
