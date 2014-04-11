@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.04' # 9Apr14 Various changes investigating high CPU laod during debug mode
+Version =  'v5.1.05' # 11Apr14 Various changes investigating high CPU load
 
 import threading
 import socket
