@@ -28,6 +28,7 @@ class PWM :
 
   def __init__(self, address=0x40, debug=False):
     self.i2c = Adafruit_I2C(address)
+    print self.i2c
     self.address = address
     self.debug = debug
     if (self.debug):

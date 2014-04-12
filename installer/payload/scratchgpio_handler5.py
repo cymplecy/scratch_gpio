@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.06' # 12Apr14 Fixed CPU usage bug :phew
+Version =  'v5.1.07' # 12Apr14 PiRoCon and I2C board work
 
 import threading
 import socket
@@ -437,7 +437,6 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pin,self.OnOrOff)
 
     def bPinCheck(self):
-        logging.debug("bPinCheck:%s",searchStr )    
         for pin in sghGC.validPins:
             logging.debug("bPinCheck:%s",pin )    
             if self.bFindOnOff('pin' + str(pin)):
@@ -2576,6 +2575,9 @@ try:
     print "AdaFruit PCA9685 detected"
 except:
     print "No pcaPwm Detected"
+    
+
+ 
 
 pcfSensor = None
 # try:
