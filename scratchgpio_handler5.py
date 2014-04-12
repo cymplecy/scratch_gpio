@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.07' # 12Apr14 PiRoCon and I2C board work
+Version =  'v5.1.08' # 12Apr14 ADAFruit PWM board available always via ADAServo and ADAPower
 
 import threading
 import socket
@@ -746,7 +746,7 @@ class ScratchListener(threading.Thread):
         #This is main listening routine
         lcount = 0
         dataPrevious = ""
-        debugLogging = True
+        debugLogging = False
 
 
         #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
@@ -1521,20 +1521,6 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
 
-
-                        if (pcaPWM != None):
-                            for i in range(0, 16): # go thru servos on PCA Board
-                                if self.vFindValue('servo' + str(i + 1)):
-                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
-                                    #print i, svalue
-                                    pcaPWM.setPWM(i, 0, svalue)
-
-                            for i in range(0, 16): # go thru PowerPWM on PCA Board
-                                if self.vFindValue('power' + str(i + 1)):
-                                    svalue = int(self.valueNueric) if self.valueIsNumeric else 0
-                                    svalue = min(4095,max(((svalue * 4096) /100),0))
-                                    pcaPWM.setPWM(i, 0, svalue)
-
                         ######### End of PiRoCon Variable handling
                     elif "piringo" in ADDON:
                         #do piringo stuff
@@ -1781,6 +1767,19 @@ class ScratchListener(threading.Thread):
                         if self.vFindValue('dac'):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             pcfSensor.writeDAC(svalue)
+                            
+                    if (pcaPWM != None):
+                        for i in range(0, 16): # go thru servos on PCA Board
+                            if self.vFindValue('adaservo' + str(i + 1)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
+                                #print i, svalue
+                                pcaPWM.setPWM(i, 0, svalue)
+
+                        for i in range(0, 16): # go thru PowerPWM on PCA Board
+                            if self.vFindValue('adapower' + str(i + 1)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = min(4095,max(((svalue * 4096) /100),0))
+                                pcaPWM.setPWM(i, 0, svalue)                            
 
         ### Check for Broadcast type messages being received
 
