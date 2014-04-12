@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.05' # 11Apr14 Various changes investigating high CPU load
+Version =  'v5.1.06' # 12Apr14 Fixed CPU usage bug :phew
 
 import threading
 import socket
@@ -174,6 +174,7 @@ class ScratchSender(threading.Thread):
         self.time_last_ping = 0.0
         self.time_last_compass = 0.0
         self.distlist = [0.0,0.0,0.0]
+        self.sleepTime = 0.1
         print "Sender Init"
 
 
@@ -273,6 +274,10 @@ class ScratchSender(threading.Thread):
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
         #print 'sent: %s' %cmd
+        
+    def setsleepTime(self, sleepTime):
+        self.sleepTime = sleepTime
+        #print("sleeptime:%s", self.sleepTime ) 
 
 
     def run(self):
@@ -293,16 +298,17 @@ class ScratchSender(threading.Thread):
                         last_bit_pattern[listIndex] = 1
 
         lastPinUpdateTime = time.time() 
-        lastTimeSinceLastSleep = time.time() 
-        sleepTime = 0.1
+        lastTimeSinceLastSleep = time.time()
+        self.sleepTime = 0.1
         while not self.stopped():
-            #time.sleep(sleepTime)
-            if (time.time() - lastTimeSinceLastSleep) < sleepTime:
-                #logging.debug("sleep for:%s", sleepTime-(time.time() - lastTimeSinceLastSleep) ) 
-                time.sleep(sleepTime-(time.time() - lastTimeSinceLastSleep)) # be kind to cpu  :)
-                lastTimeSinceLastSleep = time.time() 
-                #print("sender running after sleep") 
 
+            loopTime = time.time() - lastTimeSinceLastSleep
+            #print loopTime
+            if loopTime < self.sleepTime:
+                time.sleep(self.sleepTime-(time.time() - lastTimeSinceLastSleep)) # be kind to cpu  :)
+            lastTimeSinceLastSleep = time.time() 
+
+            #print "before lock"
             with lock:
                 for listIndex in range(len(sghGC.validPins)):
                     pin = sghGC.validPins[listIndex]
@@ -741,7 +747,7 @@ class ScratchListener(threading.Thread):
         #This is main listening routine
         lcount = 0
         dataPrevious = ""
-        debugLogging = False
+        debugLogging = True
 
 
         #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
@@ -898,7 +904,7 @@ class ScratchListener(threading.Thread):
                         ADDON = setupValue
                         print (ADDON, " declared")
 
-                        if "low" in ADDON:
+                        if "setpinslow" in ADDON:
                             with lock:
                                 print "set pins to input with pulldown low"
                                 for pin in sghGC.validPins:
@@ -907,7 +913,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True
-                        if "high" in ADDON:
+                        if "setpinshigh" in ADDON:
                             with lock:
                                 print "set pins to input"
                                 for pin in sghGC.validPins:
@@ -916,7 +922,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True        
-                        if  "none" in ADDON:
+                        if  "setpinsnone" in ADDON:
                             with lock:
                                 print "set pins to input"
                                 for pin in sghGC.validPins:
@@ -925,7 +931,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True     
-                        if  "normal" in ADDON:
+                        if  "setpinsnormal" in ADDON:
                             with lock:
                                 sghGC.pinUse[11] = sghGC.POUTPUT 
                                 sghGC.pinUse[12] = sghGC.POUTPUT 
