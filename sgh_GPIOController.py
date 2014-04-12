@@ -109,6 +109,7 @@ class GPIOController :
             except:
                 pass
             self.pinUse[pin] = self.PUNUSED
+        self.stopServod()
             
 
     #Procedure to set pin mode for each pin
@@ -117,7 +118,6 @@ class GPIOController :
             #print pin
             if (self.pinUse[pin] == self.POUTPUT):
                 print 'setting pin' , pin , ' to out' 
-                GPIO.setup(pin,GPIO.OUT)
                 try:
                     GPIO.remove_event_detect(pin)
                 except:
@@ -126,6 +126,7 @@ class GPIOController :
                     self.callbackInUse[pin] = False
                 except:
                     pass                    
+                GPIO.setup(pin,GPIO.OUT)                    
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
@@ -160,7 +161,7 @@ class GPIOController :
                 else:
                     print ("Callback already in use")
                     
-        print self.pinUse
+        print ("SetPinMode:",self.pinUse)
                 
     def pinUpdate(self, pin, value,type = 'plain',stepDelay = 0.003):
         if (self.ledDim < 100) and (type == 'plain'):
@@ -224,7 +225,7 @@ class GPIOController :
                 elif (self.pinUse[pin] == self.PUNUSED): # if pin is not allocated
                     self.pinUse[pin] = self.POUTPUT # switch it to output
                     GPIO.setup(pin,GPIO.OUT)
-                    GPIO.output(pin,int(value)) # set output to 1 ot 0
+                    GPIO.output(pin,int(value)) # set output to 1 or 0
                     print 'pin' , pin , ' changed to digital out from unused' 
                     print ("pin",pin, "set to", value)
             #print pin,value,type,self.pinUse[pin]

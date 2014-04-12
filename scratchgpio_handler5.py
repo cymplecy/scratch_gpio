@@ -741,7 +741,7 @@ class ScratchListener(threading.Thread):
         #This is main listening routine
         lcount = 0
         dataPrevious = ""
-        debugLogging = False
+        debugLogging = True
 
 
         #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
@@ -898,7 +898,7 @@ class ScratchListener(threading.Thread):
                         ADDON = setupValue
                         print (ADDON, " declared")
 
-                        if "low" in ADDON:
+                        if "setpinslow" in ADDON:
                             with lock:
                                 print "set pins to input with pulldown low"
                                 for pin in sghGC.validPins:
@@ -907,7 +907,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True
-                        if "high" in ADDON:
+                        if "setpinshigh" in ADDON:
                             with lock:
                                 print "set pins to input"
                                 for pin in sghGC.validPins:
@@ -916,7 +916,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True        
-                        if  "none" in ADDON:
+                        if  "setpinsnone" in ADDON:
                             with lock:
                                 print "set pins to input"
                                 for pin in sghGC.validPins:
@@ -925,7 +925,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True     
-                        if  "normal" in ADDON:
+                        if  "setpinsnormal" in ADDON:
                             with lock:
                                 sghGC.pinUse[11] = sghGC.POUTPUT 
                                 sghGC.pinUse[12] = sghGC.POUTPUT 
