@@ -35,6 +35,7 @@ import sgh_PiMatrix
 import sgh_Stepper
 import logging
 import subprocess
+import sgh_RasPiCamera
 
 try:
     from Adafruit_PWM_Servo_Driver import PWM
@@ -2430,7 +2431,9 @@ class ScratchListener(threading.Thread):
                                 sensor_name = 'temperature'
                                 bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                                 self.send_scratch_command(bcast_str)
-
+                    
+                    if self.bFindValue('photo'):
+                        RasPiCamera.take_photo()
 
 
                     if  '1coil' in dataraw:
@@ -2612,6 +2615,14 @@ except:
     print "No PiMatrix Detected"
 #PiMatrix.start()
     #time.sleep(5)
+    
+RasPiCamera = None
+try:
+    RasPiCamera = sgh_RasPiCamera.RasPiCamera()
+    print RasPiCamera
+except:
+    print "No Camera Detected"
+    
 
 
 

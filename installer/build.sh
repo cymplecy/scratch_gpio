@@ -18,6 +18,7 @@ cp $HOME/sghdev/scratch_gpio/sgh_Stepper.py $HOME/sghdev/scratch_gpio/installer/
 cp $HOME/sghdev/scratch_gpio/sgh_Adafruit_8x8.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/sgh_Adafruit_LEDBackpack.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/sgh_PiMatrix.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/sgh_*.py $HOME/sghdev/scratch_gpio/installer/payload
 
 cd $HOME/sghdev/scratch_gpio/installer/payload
 tar -cf ../payload.tar ./* #tar all the payload files
