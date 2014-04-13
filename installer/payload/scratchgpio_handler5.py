@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.08' # 12Apr14 ADAFruit PWM board available always via ADAServo and ADAPower
+Version =  'v5.1.10' # 13Apr14 - Camera Stuff Added from Matt Venn
 
 import threading
 import socket

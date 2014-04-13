@@ -16,7 +16,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.0.1' # 13Apr14
+Version =  '0.0.1' # 13Apr14 Mod SW 13Apr14
 
 
 import os
@@ -26,7 +26,7 @@ class RasPiCamera:
     def __init__(self):
         print "pi camera init"
         self.num = 0
-        self.dir = '/home/pi/photos/'
+        self.dir = (os.path.expanduser("~") + "/photos/")
         try:
             os.mkdir(self.dir)
         except OSError:
