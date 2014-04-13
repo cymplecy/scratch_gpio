@@ -26,7 +26,7 @@ class RasPiCamera:
     def __init__(self):
         print "pi camera init"
         self.num = 0
-        self.dir = '/home/pi/photos/'
+        self.dir = (os.path.expanduser("~") + "/photos/")
         try:
             os.mkdir(self.dir)
         except OSError:
