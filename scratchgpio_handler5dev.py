@@ -33,6 +33,7 @@ import math
 import re
 import sgh_GPIOController
 import sgh_PiGlow
+import sgh_RasPiCamera
 import sgh_PiMatrix
 import sgh_Stepper
 import logging
@@ -1259,6 +1260,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
                                     
                             
+
                     elif (("piglow" in ADDON) and (piglow != None)):
                         #do PiGlow stuff but make sure PiGlow physically detected             
                      
@@ -1780,6 +1782,10 @@ class ScratchListener(threading.Thread):
                         if self.bFind('ultra2'):
                             print 'start pinging on', str(7)
                             sghGC.pinUse[7] = sghGC.PULTRA
+
+                    elif ("raspicamera" in ADDON):
+                        if self.bFindValue('photo'):
+                            RasPiCamera.take_photo()
                             
                     elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
                         #print "processing piglow variables"
@@ -2456,7 +2462,12 @@ except:
 #PiMatrix.start()
     #time.sleep(5)
     
-
+RasPiCamera = None
+try:
+    RasPiCamera = sgh_RasPiCamera.RasPiCamera()
+    print RasPiCamera
+except:
+    print "No Camera Detected"
 
 if __name__ == '__main__':
     SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]
