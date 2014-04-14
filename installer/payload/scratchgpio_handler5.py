@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.10' # 13Apr14 - Camera Stuff Added from Matt Venn
+Version =  'v5.1.11' # 14Apr14 - ADC sensor re-enabled - oops 
 
 import threading
 import socket
@@ -36,7 +36,7 @@ import sgh_Stepper
 import logging
 import subprocess
 import sgh_RasPiCamera
-
+import pygame
 try:
     from Adafruit_PWM_Servo_Driver import PWM
     from sgh_PCF8591P import sgh_PCF8591P
@@ -2432,8 +2432,26 @@ class ScratchListener(threading.Thread):
                                 bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                                 self.send_scratch_command(bcast_str)
                     
-                    if self.bFindValue('photo'):
+                    if self.bFind('photo'):
                         RasPiCamera.take_photo()
+                        
+                    if self.bFindValue('displayphoto'):
+                        #pygame.init()
+                        #screen = pygame.display.set_mode((480, 320))
+                        search_dir = "/home/pi/photos/"
+                        os.chdir(search_dir)
+                        files = filter(os.path.isfile, os.listdir(search_dir))
+                        files = [os.path.join(search_dir, f) for f in files] # add path to each file
+                        files.sort(key=lambda x: os.path.getmtime(x))
+                        print files
+                        os.system('gpicview '+ files[-1])
+                        # image1 = pygame.image.load(files[-1])#"/home/pi/photos/0.jpg")
+                        # image2 = pygame.transform.scale(image1, (480,320))
+                        # screen.fill((255,255,255))
+                        # screen.blit(image2,(0,0))
+                        # pygame.display.flip()
+                        # time.sleep(3)
+                        # pygame.display.quit()
 
 
                     if  '1coil' in dataraw:
@@ -2582,15 +2600,15 @@ except:
  
 
 pcfSensor = None
-# try:
-    # if sghGC.getPiRevision() == 1:
-    # pcfSensor = sgh_PCF8591P(0) #i2c, 0x48)
-    # else:
-    # pcfSensor = sgh_PCF8591P(1) #i2c, 0x48)
-    # print pcfSensor
-    # print "PCF8591P Detected"
-# except:
-    # print "No PCF8591 Detected"
+try:
+    if sghGC.getPiRevision() == 1:
+        pcfSensor = sgh_PCF8591P(0) #i2c, 0x48)
+    else:
+        pcfSensor = sgh_PCF8591P(1) #i2c, 0x48)
+    print pcfSensor
+    print "PCF8591P Detected"
+except:
+    print "No PCF8591 Detected"
 
 AdaMatrix = None
 try:

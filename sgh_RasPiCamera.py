@@ -16,7 +16,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.0.1' # 13Apr14 Mod SW 13Apr14
+Version =  '0.0.1sw2' # 14Apr14 Change to get real user home name as runnign as sudo
 
 
 import os
@@ -26,7 +26,8 @@ class RasPiCamera:
     def __init__(self):
         print "pi camera init"
         self.num = 0
-        self.dir = (os.path.expanduser("~") + "/photos/")
+        realUser = os.getenv("SUDO_USER")
+        self.dir = ("/home/"+ realUser + "/photos/")
         try:
             os.mkdir(self.dir)
         except OSError:
