@@ -17,8 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.11' # 14Apr14 - ADC sensor re-enabled - oops 
-
+Version =  'v5.1.13' # 15Apr14 - DAC range bounds limited to 0 - 255
 import threading
 import socket
 import time
@@ -1767,7 +1766,7 @@ class ScratchListener(threading.Thread):
                     if pcfSensor != None: #if PCF ADC found
                         if self.vFindValue('dac'):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            pcfSensor.writeDAC(svalue)
+                            pcfSensor.writeDAC(max(0,min(255,svalue)))
                             
                     if (pcaPWM != None):
                         for i in range(0, 16): # go thru servos on PCA Board
@@ -2436,22 +2435,22 @@ class ScratchListener(threading.Thread):
                         RasPiCamera.take_photo()
                         
                     if self.bFindValue('displayphoto'):
-                        #pygame.init()
-                        #screen = pygame.display.set_mode((480, 320))
+                        pygame.init()
+                        screen = pygame.display.set_mode((480, 320))
                         search_dir = "/home/pi/photos/"
                         os.chdir(search_dir)
                         files = filter(os.path.isfile, os.listdir(search_dir))
                         files = [os.path.join(search_dir, f) for f in files] # add path to each file
                         files.sort(key=lambda x: os.path.getmtime(x))
                         print files
-                        os.system('gpicview '+ files[-1])
-                        # image1 = pygame.image.load(files[-1])#"/home/pi/photos/0.jpg")
-                        # image2 = pygame.transform.scale(image1, (480,320))
-                        # screen.fill((255,255,255))
-                        # screen.blit(image2,(0,0))
-                        # pygame.display.flip()
-                        # time.sleep(3)
-                        # pygame.display.quit()
+                        #os.system('gpicview '+ files[-1])
+                        image1 = pygame.image.load(files[-1])#"/home/pi/photos/0.jpg")
+                        image2 = pygame.transform.scale(image1, (480,320))
+                        screen.fill((255,255,255))
+                        screen.blit(image2,(0,0))
+                        pygame.display.flip()
+                        time.sleep(3)
+                        pygame.display.quit()
 
 
                     if  '1coil' in dataraw:
