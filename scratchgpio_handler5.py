@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.13' # 15Apr14 - DAC range bounds limited to 0 - 255
+Version =  'v5.1.14' # 16Apr14 - Minecraft
 import threading
 import socket
 import time
@@ -32,6 +32,7 @@ import sgh_GPIOController
 import sgh_PiGlow
 import sgh_PiMatrix
 import sgh_Stepper
+import sgh_Minecraft
 import logging
 import subprocess
 import sgh_RasPiCamera
@@ -42,6 +43,12 @@ try:
     from sgh_Adafruit_8x8 import sgh_EightByEight
 except:
     pass
+    
+try:
+    import mcpi.minecraft as minecraft
+except:
+    pass
+    
 #try and inport smbus but don't worry if not installed
 #try:
 #    from smbus import SMBus
@@ -143,6 +150,13 @@ def isNumeric(s):
         return True
     except ValueError:
         return False
+        
+def rtnNumeric(value,default):
+    try:
+        return float(value)
+    except ValueError:
+        return default     
+        
 
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
 
@@ -1779,7 +1793,21 @@ class ScratchListener(threading.Thread):
                             if self.vFindValue('adapower' + str(i + 1)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 svalue = min(4095,max(((svalue * 4096) /100),0))
-                                pcaPWM.setPWM(i, 0, svalue)                            
+                                pcaPWM.setPWM(i, 0, svalue)
+
+                    if self.vFindValue("minex"):
+                        print "minex"
+                        sghMC.setxPos(int(self.value)) 
+                    
+                    if self.vFindValue("miney"):
+                        print "miney"
+                        sghMC.setyPos(int(self.value))
+
+                    if self.vFindValue("minez"):
+                        print "minez"
+                        sghMC.setzPos(int(self.value))                        
+                  
+                                
 
         ### Check for Broadcast type messages being received
 
@@ -2435,8 +2463,9 @@ class ScratchListener(threading.Thread):
                         RasPiCamera.take_photo()
                         
                     if self.bFindValue('displayphoto'):
+                        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (600,100)
                         pygame.init()
-                        screen = pygame.display.set_mode((480, 320))
+                        screen = pygame.display.set_mode((320, 240))
                         search_dir = "/home/pi/photos/"
                         os.chdir(search_dir)
                         files = filter(os.path.isfile, os.listdir(search_dir))
@@ -2445,12 +2474,99 @@ class ScratchListener(threading.Thread):
                         print files
                         #os.system('gpicview '+ files[-1])
                         image1 = pygame.image.load(files[-1])#"/home/pi/photos/0.jpg")
-                        image2 = pygame.transform.scale(image1, (480,320))
+                        image2 = pygame.transform.scale(image1, (320,240))
                         screen.fill((255,255,255))
                         screen.blit(image2,(0,0))
                         pygame.display.flip()
                         time.sleep(3)
                         pygame.display.quit()
+                        
+                    if self.bFindValue('minecraft'):
+                        if self.value == "start":
+                            mc = minecraft.Minecraft.create()
+                            #mc.setBlocks(-100, 0, -100, 100, 63, 100, 0, 0)
+                            #mc.setBlocks(-100, -63, -100, 100, -2, 100, 1, 0)
+                            #mc.setBlocks(-100, -1, -100, 100, -1, 100, 2, 0)
+                            mc.player.setPos(0, 0, 0)
+                            #mc.camera.setFixed() 
+                            #mc.camera.setFollow(1)
+                            #mc.camera.setPos(0,0,0)                            
+                            mc.postToChat("ScratchGPIO connected to Minecraft Pi.")
+                            
+                        if self.value == "move":
+                            x,y,z = mc.player.getTilePos()
+                            print "old pos",x,y,z
+                            print "old pos",sghMC.getxPos(),y,z
+                            
+                            mc.player.setTilePos(sghMC.getxPos(),y,z)
+                            mc.postToChat("moved")
+                            
+                        if self.value == "cammove":
+                            x,y,z = mc.player.getTilePos()
+                            mc.camera.setPos(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos())
+                            mc.postToChat("cammoved")    
+                             
+                            
+                        if self.value == "movex-":
+                            x,y,z = mc.player.getTilePos()
+                            print x,y,z
+                            mc.player.setTilePos(x+1,y,z)
+                            mc.postToChat("moved")
+                        if self.value == "movex+":
+                            x,y,z = mc.player.getTilePos()
+                            print x,y,z
+                            mc.player.setTilePos(x-1,y,z)
+                            mc.postToChat("moved")        
+                        if self.value == "movez-":
+                            x,y,z = mc.player.getTilePos()
+                            print x,y,z
+                            mc.player.setTilePos(x,y,z+1)
+                            mc.postToChat("moved")
+                        if self.value == "movez+":
+                            x,y,z = mc.player.getTilePos()
+                            print x,y,z
+                            mc.player.setTilePos(x,y,z-1)
+                            mc.postToChat("moved")  
+                        if self.value == "movey-":
+                            x,y,z = mc.player.getTilePos()
+                            print x,y,z
+                            mc.player.setTilePos(x,y+1,z)
+                            mc.postToChat("moved")
+                        if self.value == "movey+":
+                            x,y,z = mc.player.getTilePos()
+                            print x,y,z
+                            mc.player.setTilePos(x,y-1,z)
+                            mc.postToChat("moved")            
+                        # if self.value == "movex-":
+                            # x,y,z = mc.player.getTilePos()
+                            # print x,y,z
+                            # mc.camera.setPos(x+1,y,z)
+                            # mc.postToChat("moved")
+                        # if self.value == "movex+":
+                            # x,y,z = mc.player.getTilePos()
+                            # print x,y,z
+                            # mc.camera.setPos(x-1,y,z)
+                            # mc.postToChat("moved")        
+                        # if self.value == "movez-":
+                            # x,y,z = mc.player.getTilePos()
+                            # print x,y,z
+                            # mc.camera.setPos(x,y,z+1)
+                            # mc.postToChat("moved")
+                        # if self.value == "movez+":
+                            # x,y,z = mc.player.getTilePos()
+                            # print x,y,z
+                            # mc.camera.setPos(x,y,z-1)
+                            # mc.postToChat("moved")  
+                        # if self.value == "movey-":
+                            # x,y,z = mc.player.getTilePos()
+                            # print x,y,z
+                            # mc.camera.setPos(x,y+1,z)
+                            # mc.postToChat("moved")
+                        # if self.value == "movey+":
+                            # x,y,z = mc.player.getTilePos()
+                            # print x,y,z
+                            # mc.camera.setPos(x,y-1,z)
+                            # mc.postToChat("moved")       
 
 
                     if  '1coil' in dataraw:
@@ -2538,6 +2654,7 @@ def cleanup_threads(threads):
 #Set some constants and initialise lists
 
 sghGC = sgh_GPIOController.GPIOController(True)
+
 print sghGC.getPiRevision()
 
 ADDON = ""
@@ -2640,6 +2757,7 @@ try:
 except:
     print "No Camera Detected"
     
+sghMC = sgh_Minecraft.Minecraft()    
 
 
 
