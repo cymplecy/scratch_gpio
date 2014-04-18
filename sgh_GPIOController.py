@@ -64,6 +64,7 @@ class GPIOController :
         self.PWMFREQ = 100
         
         self.dsSensorId  = ""
+        self.senderLoopDelay = 0.2
        
        
        

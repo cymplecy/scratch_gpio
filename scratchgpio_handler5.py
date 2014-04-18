@@ -313,7 +313,8 @@ class ScratchSender(threading.Thread):
 
         lastPinUpdateTime = time.time() 
         lastTimeSinceLastSleep = time.time()
-        self.sleepTime = 0.1
+        self.sleepTime = 0.10
+        lastADC = [0,0,0,0]
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
@@ -343,13 +344,14 @@ class ScratchSender(threading.Thread):
                             # pin_bit_pattern[listIndex] = sghGC.pinRead(pin)      
 
             if pcfSensor != None: #if PCF ADC found
-                for channel in range(1,5): #loop thru all 4 inputs
-                    adc = pcfSensor.readADC(channel - 1) # get each value
-                    #print'Distance:',distance,'cm'
-                    sensor_name = 'adc'+str(channel)
-                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
-                    #print 'sending: %s' % bcast_str
-                    self.send_scratch_command(bcast_str)                            
+                for channel in range(0,4): #loop thru all 4 inputs
+                    adc = pcfSensor.readADC(channel) # get each value
+                    if adc <> lastADC[channel]:
+                        print "channel,adc:",(channel+1),adc
+                        sensor_name = 'adc'+str(channel+1)
+                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
+                        self.send_scratch_command(bcast_str)
+                        lastADC[channel] = adc
 
             # if there is a change in the input pins
             for listIndex in range(len(sghGC.validPins)):
@@ -1161,7 +1163,6 @@ class ScratchListener(threading.Thread):
                             try:
                                 for i in range(0, 16): # go thru PowerPWM on PCA Board
                                     pcaPWM.setPWM(i, 0, 4095)
-                                    print "setting pwm channel", i
                             except:
                                 pass
 
