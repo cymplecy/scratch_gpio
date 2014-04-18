@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.14' # 16Apr14 - Minecraft
+Version =  'v5.1.15' # 17Apr14 - Pi2Go Mk3
 import threading
 import socket
 import time
@@ -328,18 +328,28 @@ class ScratchSender(threading.Thread):
                     pin = sghGC.validPins[listIndex]
                     pin_bit_pattern[listIndex] = 0
                     if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
-                        if sghGC.pinEvent(pin):
-                            logging.debug(" ")
-                            logging.debug("pinEvent Detected on pin:%s", pin )
-                            logging.debug("before updating pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
-                            pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
-                            logging.debug("afte uipdating pin patterm :%s",pin_bit_pattern[listIndex] )
-                            if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
-                                logging.debug("pinEvent but pin state the same as before...")
-                                pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex]
-                            logging.debug("after checking states pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
-                        else:
-                            pin_bit_pattern[listIndex] = sghGC.pinRead(pin)                        
+                        pin_bit_pattern[listIndex] = sghGC.pinRead(pin) 
+                        # if sghGC.pinEvent(pin):
+                            # logging.debug(" ")
+                            # logging.debug("pinEvent Detected on pin:%s", pin )
+                            # logging.debug("before updating pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
+                            # pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
+                            # logging.debug("afte uipdating pin patterm :%s",pin_bit_pattern[listIndex] )
+                            # if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
+                                # logging.debug("pinEvent but pin state the same as before...")
+                                # pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex]
+                            # logging.debug("after checking states pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
+                        # else:
+                            # pin_bit_pattern[listIndex] = sghGC.pinRead(pin)      
+
+            if pcfSensor != None: #if PCF ADC found
+                for channel in range(1,5): #loop thru all 4 inputs
+                    adc = pcfSensor.readADC(channel - 1) # get each value
+                    #print'Distance:',distance,'cm'
+                    sensor_name = 'adc'+str(channel)
+                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
+                    #print 'sending: %s' % bcast_str
+                    self.send_scratch_command(bcast_str)                            
 
             # if there is a change in the input pins
             for listIndex in range(len(sghGC.validPins)):
@@ -1148,6 +1158,12 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[22]  = sghGC.PINPUT 
 
                                 sghGC.setPinMode()
+                            try:
+                                for i in range(0, 16): # go thru PowerPWM on PCA Board
+                                    pcaPWM.setPWM(i, 0, 4095)
+                                    print "setting pwm channel", i
+                            except:
+                                pass
 
                                 #sghGC.startServod([12,10]) # servos testing motorpitx
 
@@ -1637,7 +1653,7 @@ class ScratchListener(threading.Thread):
                         logging.debug("Processing variables for Pi2Go")
 
                         #check for motor variable commands
-                        motorList = [['motorb',21,19],['motora',26,24]]
+                        motorList = [['motorb',21,19],['motora',24,26]]
                         logging.debug("ADDON:%s", ADDON)
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
@@ -1652,6 +1668,21 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    
+                        ledList = [0,3,6,9,12]
+                        for i in range(0, 5): # go thru PowerPWM on PCA Board
+                            if self.vFindValue('blue'):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                pcaPWM.setPWM((i*3), 0, svalue)    
+                            if self.vFindValue('green'):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                pcaPWM.setPWM((i*3)+1, 0, svalue)  
+                            if self.vFindValue('red'):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                pcaPWM.setPWM((i*3)+2, 0, svalue)                                                                    
 
                     elif "happi" in ADDON:
                         #do happi stuff
@@ -2136,7 +2167,22 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(fishOutputs[fishList.index(listLoop)],self.OnOrOff)    
 
                         if self.bFindOnOff('buzzer'):
-                            sghGC.pinUpdate(24,self.OnOrOff)                  
+                            sghGC.pinUpdate(24,self.OnOrOff)
+                            
+                    elif "pi2go" in ADDON:
+                        for i in range(0, 5): # go thru PowerPWM on PCA Board
+                            if self.bFindValue('blue'):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                pcaPWM.setPWM((i*3), 0, svalue)    
+                            if self.bFindValue('green'):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                pcaPWM.setPWM((i*3)+1, 0, svalue)  
+                            if self.bFindValue('red'):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                pcaPWM.setPWM((i*3)+2, 0, svalue)                              
 
                     elif "raspibot2" in ADDON: 
                         self.bCheckAll() # Check for all off/on type broadcasrs
