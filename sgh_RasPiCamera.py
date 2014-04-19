@@ -37,7 +37,7 @@ class RasPiCamera:
 
     def take_photo(self):
         photo_file = self.dir + str(self.num) + '.jpg'
-        os.system("raspistill -o " + photo_file)
+        os.system("raspistill -n -t 1 -o " + photo_file)
         print "photo taken: " + photo_file
         self.num += 1
 
