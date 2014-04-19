@@ -278,6 +278,9 @@ class ScratchSender(threading.Thread):
         if "motorpitx" in ADDON:
             bcast_str = 'sensor-update "%s" %s' % (sensor_name,("off","on")[value == 1])
             #print 'sending: %s' % bcast_str
+        if "pi2go" in ADDON:
+            bcast_str = 'sensor-update "%s" %s' % (sensor_name,("on","off")[value == 1])
+            #print 'sending: %s' % bcast_str            
         self.send_scratch_command(bcast_str)
         
 
@@ -346,8 +349,9 @@ class ScratchSender(threading.Thread):
             if pcfSensor != None: #if PCF ADC found
                 for channel in range(0,4): #loop thru all 4 inputs
                     adc = pcfSensor.readADC(channel) # get each value
+                    adc = int((adc + lastADC[channel]) / 2.0)
                     if adc <> lastADC[channel]:
-                        print "channel,adc:",(channel+1),adc
+                        #print "channel,adc:",(channel+1),adc
                         sensor_name = 'adc'+str(channel+1)
                         bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
                         self.send_scratch_command(bcast_str)
@@ -2173,15 +2177,15 @@ class ScratchListener(threading.Thread):
                     elif "pi2go" in ADDON:
                         for i in range(0, 5): # go thru PowerPWM on PCA Board
                             if self.bFindValue('blue'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
                                 svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                 pcaPWM.setPWM((i*3), 0, svalue)    
                             if self.bFindValue('green'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
                                 svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                 pcaPWM.setPWM((i*3)+1, 0, svalue)  
                             if self.bFindValue('red'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
                                 svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                 pcaPWM.setPWM((i*3)+2, 0, svalue)                              
 
