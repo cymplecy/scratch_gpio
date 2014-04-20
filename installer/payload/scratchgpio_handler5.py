@@ -37,16 +37,33 @@ import logging
 import subprocess
 import sgh_RasPiCamera
 import pygame
-#try:
-from Adafruit_PWM_Servo_Driver import PWM
-from sgh_PCF8591P import sgh_PCF8591P
-from sgh_Adafruit_8x8 import sgh_EightByEight
-#except:
-#    pass
+try:
+    from Adafruit_PWM_Servo_Driver import PWM
+    print "PWM/Servo imported OK"
+except:
+    print "PWM/Servo NOT imported OK"
+    pass
+    
+try:
+    from sgh_PCF8591P import sgh_PCF8591P
+    print "ADC/DAC imported OK"
+except:
+    print "ADC/DAC NOT imported OK"
+    pass    
+    
+# try:
+    # from sgh_Adafruit_8x8 import sgh_EightByEight
+    # print "8x8 imported OK"
+# except:
+    # print "8x8 NOT imported OK"
+    # pass    
+
     
 try:
     import mcpi.minecraft as minecraft
+    print "Minecraft imported OK"
 except:
+    print "Minecraft NOT imported OK"
     pass
     
 #try and inport smbus but don't worry if not installed
