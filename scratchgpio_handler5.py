@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.17' # 18Apr14 - Debugging I2C - fixed standard issue
+Version =  'v5.1.18' # 20Apr14 - Debugging I2C - fixed standard issue
 import threading
 import socket
 import time
