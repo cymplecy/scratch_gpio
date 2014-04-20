@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.15' # 17Apr14 - Pi2Go Mk3
+Version =  'v5.1.16' # 18Apr14 - Debugging I2C
 import threading
 import socket
 import time
@@ -39,14 +39,31 @@ import sgh_RasPiCamera
 import pygame
 try:
     from Adafruit_PWM_Servo_Driver import PWM
-    from sgh_PCF8591P import sgh_PCF8591P
-    from sgh_Adafruit_8x8 import sgh_EightByEight
+    print "PWM/Servo imported OK"
 except:
+    print "PWM/Servo NOT imported OK"
     pass
     
 try:
-    import mcpi.minecraft as minecraft
+    from sgh_PCF8591P import sgh_PCF8591P
+    print "ADC/DAC imported OK"
 except:
+    print "ADC/DAC NOT imported OK"
+    pass    
+    
+# try:
+    # from sgh_Adafruit_8x8 import sgh_EightByEight
+    # print "8x8 imported OK"
+# except:
+    # print "8x8 NOT imported OK"
+    # pass    
+
+    
+try:
+    import mcpi.minecraft as minecraft
+    print "Minecraft imported OK"
+except:
+    print "Minecraft NOT imported OK"
     pass
     
 #try and inport smbus but don't worry if not installed
@@ -2759,9 +2776,9 @@ try:
     pcaPWM = PWM(0x40, debug=False)
     print pcaPWM
     print pcaPWM.setPWMFreq(60)                        # Set frequency to 60 Hz
-    print "AdaFruit PCA9685 detected"
+    print "AdaFruit PWM/Servo Board PCA9685 detected"
 except:
-    print "No pcaPwm Detected"
+    print "No PWM/Servo Board PCA9685 detected"
     
 
  
@@ -2773,9 +2790,9 @@ try:
     else:
         pcfSensor = sgh_PCF8591P(1) #i2c, 0x48)
     print pcfSensor
-    print "PCF8591P Detected"
+    print "ADC/DAC PCF8591P Detected"
 except:
-    print "No PCF8591 Detected"
+    print "No ADC/DAC PCF8591 Detected"
 
 AdaMatrix = None
 try:
