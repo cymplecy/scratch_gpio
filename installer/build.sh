@@ -6,18 +6,11 @@ echo $HOME
 echo $SGHVER > $HOME/sghdev/scratch_gpio/installer/payload/SGHVER.txt
 
 cp $HOME/sghdev/scratch_gpio/scratchgpio_handler5.py $HOME/sghdev/scratch_gpio/installer/payload
-
 cp $HOME/sghdev/scratch_gpio/Adafruit_I2C.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/Adafruit_PWM_Servo_Driver.py $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/killsgh.sh $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/sgh_GPIOController.py $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/sgh_PCF8591P.py $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/sgh_PiGlow.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/sgh_servod $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/sgh_Stepper.py $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/sgh_Adafruit_8x8.py $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/sgh_Adafruit_LEDBackpack.py $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/sgh_PiMatrix.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/killsgh.sh $HOME/sghdev/scratch_gpio/installer/payload
+
 cp $HOME/sghdev/scratch_gpio/sgh_*.py $HOME/sghdev/scratch_gpio/installer/payload
 
 cd $HOME/sghdev/scratch_gpio/installer/payload

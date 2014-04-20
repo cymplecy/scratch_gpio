@@ -67,17 +67,9 @@ chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}
 cp scratchgpio_handler5.py $HDIR/scratchgpio${SGHVER}
 cp Adafruit_I2C.py $HDIR/scratchgpio${SGHVER}
 cp Adafruit_PWM_Servo_Driver.py $HDIR/scratchgpio${SGHVER}
-cp sgh_GPIOController.py $HDIR/scratchgpio${SGHVER}
-cp sgh_PCF8591P.py $HDIR/scratchgpio${SGHVER}
-cp sgh_PiGlow.py $HDIR/scratchgpio${SGHVER}
-cp sgh_Stepper.py $HDIR/scratchgpio${SGHVER}
-
 cp sgh_servod $HDIR/scratchgpio${SGHVER}
 cp killsgh.sh $HDIR/scratchgpio${SGHVER}
 
-cp sgh_Adafruit_8x8.py $HDIR/scratchgpio${SGHVER}
-cp sgh_Adafruit_LEDBackpack.py $HDIR/scratchgpio${SGHVER}
-cp sgh_PiMatrix.py $HDIR/scratchgpio${SGHVER}
 cp sgh_*.py $HDIR/scratchgpio${SGHVER}
 
 chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}
