@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.16' # 18Apr14 - Debugging I2C
+Version =  'v5.1.17' # 18Apr14 - Debugging I2C - fixed standard issue
 import threading
 import socket
 import time
@@ -334,7 +334,8 @@ class ScratchSender(threading.Thread):
         lastPinUpdateTime = time.time() 
         lastTimeSinceLastSleep = time.time()
         self.sleepTime = 0.10
-        lastADC = [0,0,0,0]
+        lastADC = [256,256,256,256]
+        
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
@@ -781,6 +782,8 @@ class ScratchListener(threading.Thread):
                 print "set pins standard"
                 for pin in sghGC.validPins:
                     sghGC.pinUse[pin] = sghGC.PINPUT
+                sghGC.pinUse[3] = sghGC.PUNUSED
+                sghGC.pinUse[5] = sghGC.PUNUSED                    
                 sghGC.pinUse[11] = sghGC.POUTPUT
                 sghGC.pinUse[12] = sghGC.POUTPUT
                 sghGC.pinUse[13] = sghGC.POUTPUT
