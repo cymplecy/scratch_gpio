@@ -13,6 +13,10 @@ cp $HOME/sghdev/scratch_gpio/killsgh.sh $HOME/sghdev/scratch_gpio/installer/payl
 
 cp $HOME/sghdev/scratch_gpio/sgh_*.py $HOME/sghdev/scratch_gpio/installer/payload
 
+rm -rf $HOME/sghdev/scratch_gpio/installer/payload/mcpi
+mkdir -p $HOME/sghdev/scratch_gpio/installer/payload/mcpi
+cp $HOME/sghdev/scratch_gpio/mcpi/* $HOME/sghdev/scratch_gpio/installer/payload/mcpi
+
 cd $HOME/sghdev/scratch_gpio/installer/payload
 tar -cf ../payload.tar ./* #tar all the payload files
 cd ..
