@@ -11,7 +11,7 @@
 #Version 21Nov13 Change for ScratchGPIO V4
 #Version 26Dec13 Change for ScratchGPIO4plus
 #Version 18Dec13 Change for ScratchGPIO5
-SGHVER="5"
+SGHVER="5dev"
 
 f_exit(){
 echo ""

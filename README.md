@@ -18,7 +18,7 @@ changes.
 ## Usage
 
 I maintain full download, install and usuage instructions in this blog
-http://cymplecy.wordpress.com/scratchgpio
+http://cymplecy.wordpress.com/2013/04/22/scratch-gpio-version-2-introduction-for-beginners/
 
 The code and installer in this folder are the same version as the ones linked to in the blog.
 

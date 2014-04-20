@@ -17,14 +17,13 @@ class Adafruit_I2C :
       with open('/proc/cpuinfo','r') as f:
         for line in f:
           if line.startswith('Revision'):
-            return 1 if line.rstrip()[-1] in ['1','2','3'] else 2 # 3 added as also means  Rev1 Board
+            return 1 if line.rstrip()[-1] in ['1','2'] else 2
     except:
       return 0
 
   @staticmethod
   def getPiI2CBusNumber():
     # Gets the I2C bus number /dev/i2c#
-    #print "ADAfruit Board Revision Detects:" , Adafruit_I2C.getPiRevision()
     return 1 if Adafruit_I2C.getPiRevision() > 1 else 0
  
   def __init__(self, address, busnum=-1, debug=False):
@@ -33,7 +32,8 @@ class Adafruit_I2C :
     # Alternatively, you can hard-code the bus version below:
     # self.bus = smbus.SMBus(0); # Force I2C0 (early 256MB Pi's)
     # self.bus = smbus.SMBus(1); # Force I2C1 (512MB Pi's)
-    self.bus = smbus.SMBus(busnum if busnum >= 0 else Adafruit_I2C.getPiI2CBusNumber())
+    self.bus = smbus.SMBus(
+      busnum if busnum >= 0 else Adafruit_I2C.getPiI2CBusNumber())
     self.debug = debug
 
   def reverseByteOrder(self, data):
@@ -47,7 +47,7 @@ class Adafruit_I2C :
     return val
 
   def errMsg(self):
-    print "Error accessing device at address 0x%02X" % self.address
+    print "Error accessing 0x%02X: Check your I2C address" % self.address
     raise Exception("Error accesing I2C Device") # Added by Simon Walters to raise an error if no device found
     return -1
 

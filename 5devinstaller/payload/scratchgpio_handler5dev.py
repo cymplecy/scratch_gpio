@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.88' # 22Mar14 Switch off Debugging Hotfix
+Version =  'v5.0.87' # 19Mar14 Temp and GPIO pin numbering
 
 
 
@@ -2367,7 +2367,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG - quiwr = INFO
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)# default DEBUG - quiwr = INFO
 
  
 PORT = 42001

@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.0.88' # 22Mar14 Switch off Debugging Hotfix
+Version =  'v5.0.7' # 17Mar14 Stable release version
 
 
 
@@ -400,7 +400,7 @@ class ScratchListener(threading.Thread):
         return sensor_value[0]
         
     def bFind(self,searchStr):
-        return (' '+searchStr in self.dataraw)
+        return (searchStr in self.dataraw)
         
     def bFindOn(self,searchStr):
         return (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 '))
@@ -419,6 +419,11 @@ class ScratchListener(threading.Thread):
         else:
             return False
             
+    # def dRtnOnOff(self,searchStr):
+        # if self.bFindOn(searchStr):
+            # return 1
+        # else:
+            # return 0
 
     def bCheckAll(self):
         if self.bFindOnOff('all'):
@@ -493,7 +498,7 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(ledList[led - 1],0,type="pwm")            
         
     def vFind(self,searchStr):
-        return ((' '+searchStr + ' ') in self.dataraw)
+        return ((searchStr + ' ') in self.dataraw)
         
     def vFindOn(self,searchStr):
         return (self.vFind(searchStr + 'on') or self.vFind(searchStr + 'high')or self.vFind(searchStr + '1'))
@@ -564,17 +569,13 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pin,0,type="pwm")
                     
             if self.vFindValue('gpio' + str(sghGC.gpioLookup[pin])):
-                logging.debug("pin %s",pin )
-                logging.debug("gpio lookup %s",str(sghGC.gpioLookup[pin])) 
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric)
                 else:
                     sghGC.pinUpdate(pin,0)
-                #time.sleep(1)
-                
-            if self.vFindValue('powergpio' + str(sghGC.gpioLookup[pin])):
-                logging.debug("pin %s",pin )
-                logging.debug("gpiopower lookup %s",str(sghGC.gpioLookup[pin])) 
+                    
+            if self.vFindValue('gpiopower' + str(sghGC.gpioLookup[pin])):
+                #print pin , "found"
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                 else:
@@ -843,7 +844,7 @@ class ScratchListener(threading.Thread):
             #print "GPIOPLus" , GPIOPlus
             for dataItem in dataList:
                 dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
-                dataraw = " "+dataraw + " "
+                dataraw = dataraw + " "
                 self.dataraw = dataraw
                 #print "Loop processing"
                 #print self.dataraw
@@ -2267,15 +2268,14 @@ class ScratchListener(threading.Thread):
                         self.send_scratch_command(bcast_str)
                         
                     if self.bFind("gettemp"): #find temp address
-                        if sghGC.dsSensorId == "":
-                            sghGC.findDS180()
-                            if sghGC.dsSensorId == "":
-                                print "ds:", sghGC.dsSensorId
-                                print "getting temp"
-                                temperature = sghGC.getDS180Temp( sghGC.dsSensorId)
-                                sensor_name = 'temperature'
-                                bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
-                                self.send_scratch_command(bcast_str)
+                        dsSensorId = sghGC.findDS180()
+                        print "ds:", dsSensorId
+                        if dsSensorId <> "":
+                            print "getting temp"
+                            temperature = sghGC.getDS180Temp(dsSensorId)
+                        sensor_name = 'temperature'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
+                        self.send_scratch_command(bcast_str)
                                              
                                         
 
@@ -2367,7 +2367,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print sghGC.getPiRevision()
 
 ADDON = ""
-logging.basicConfig(stream=sys.stderr, level=logging.INFO)# default DEBUG - quiwr = INFO
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)# default DEBUG - quiwr = INFO
 
  
 PORT = 42001
