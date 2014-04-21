@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.18' # 20Apr14 - Debugging I2C - fixed standard issue
+Version =  'v5.1.19' # 21Apr14 - Event triggering re-added and improved
 import threading
 import socket
 import time
@@ -341,15 +341,14 @@ class ScratchSender(threading.Thread):
                         if pinEvent:
                             logging.debug(" ")
                             logging.debug("pinEvent Detected on pin:%s", pin )
-                            # logging.debug("before updating pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
-                            # pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
-                            # logging.debug("afte uipdating pin patterm :%s",pin_bit_pattern[listIndex] )
-                            # if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
-                                # logging.debug("pinEvent but pin state the same as before...")
-                                # pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex]
-                            # logging.debug("after checking states pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
-                        # else:
-                            # pin_bit_pattern[listIndex] = sghGC.pinRead(pin)      
+                            #logging.debug("before updating pin patterm,last pattern :",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
+                            #logging.debug("afte uipdating pin patterm:",pin_bit_pattern[listIndex] )
+                            if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
+                                logging.debug("pinEvent but pin state the same as before...")
+                                pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex]
+                            #logging.debug("after checking states pin patterm,last pattern:",pin_bit_pattern[listIndex],last_bit_pattern[listIndex])
+                            time.sleep(0)
+
 
             if pcfSensor != None: #if PCF ADC found
                 for channel in range(0,4): #loop thru all 4 inputs
@@ -366,10 +365,12 @@ class ScratchSender(threading.Thread):
             for listIndex in range(len(sghGC.validPins)):
                 pin = sghGC.validPins[listIndex]    
                 if pin_bit_pattern[listIndex] != last_bit_pattern[listIndex]:
-                    logging.debug("changed pin,new value,old value:%s,%s,%s", pin,pin_bit_pattern[listIndex],last_bit_pattern[listIndex] ) 
+                    logging.debug("Final change sent value for pin %s is %s", pin,pin_bit_pattern[listIndex]) 
                     if (sghGC.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                         #print pin , pin_value
-                        self.broadcast_pin_update(pin, pin_bit_pattern[listIndex])       
+                        self.broadcast_pin_update(pin, pin_bit_pattern[listIndex])
+                        time.sleep(0.05) # just to give Scratch a better chance to react to event
+
                     
             last_bit_pattern = list(pin_bit_pattern)
             #print ("last:%s",last_bit_pattern)
@@ -1666,11 +1667,11 @@ class ScratchListener(threading.Thread):
 
                     elif "pi2go" in ADDON:
                         #do PiRoCon stuff
-                        logging.debug("Processing variables for Pi2Go")
+                        #logging.debug("Processing variables for Pi2Go")
 
                         #check for motor variable commands
                         motorList = [['motorb',21,19],['motora',24,26]]
-                        logging.debug("ADDON:%s", ADDON)
+                        #logging.debug("ADDON:%s", ADDON)
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -1919,10 +1920,16 @@ class ScratchListener(threading.Thread):
                             debugLogging = True
                         if (self.OnOrOff == False) and (debugLogging == True):
                             logging.getLogger().setLevel(logging.INFO)
-                            debugLogging = False                            
+                            debugLogging = False                 
+
+                            
 
                     if (debugLogging == False):
-                        logging.getLogger().setLevel(logging.INFO)                                
+                        logging.getLogger().setLevel(logging.INFO)       
+
+                    if self.bFindOnOff("eventdetect"):
+                        sghGC.pinEventEnabled = self.OnOrOff
+                        print sghGC.pinEventEnabled
 
                     if self.bFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100

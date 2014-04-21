@@ -77,6 +77,8 @@ class GPIOController :
         self.countDirection = [1] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins
+        
+        self.pinEventEnabled = True
 		
         if self.piRevision == 1:
         #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
@@ -385,11 +387,14 @@ class GPIOController :
         #print "pin",pin ,"set to", self.pinUse[pin]
         #print pin ," being read"
         try:
-            return GPIO.event_detected(pin)
+            if self.pinEventEnabled == True:
+                return GPIO.event_detected(pin)
+            else:
+                return False
         except Exception,e: 
             print "error reading pin event" ,pin
             print str(e)
-            return 0            
+            return False     
         
     def startServod(self, pins):
         print ("Starting servod")
