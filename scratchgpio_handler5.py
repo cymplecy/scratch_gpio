@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.19' # 21Apr14 - Event triggering re-added and improved
+Version =  'v5.1.20' # 21Apr14 - Event triggering re-added and improved2
 import threading
 import socket
 import time
@@ -1675,7 +1675,7 @@ class ScratchListener(threading.Thread):
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
+                                #logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
                                     sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
@@ -1686,21 +1686,22 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
                                     
-                        ledList = [0,3,6,9,12]
-                        for i in range(0, 5): # go thru PowerPWM on PCA Board
-                            if self.vFindValue('blue'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                pcaPWM.setPWM((i*3), 0, svalue)    
-                            if self.vFindValue('green'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                pcaPWM.setPWM((i*3)+1, 0, svalue)  
-                            if self.vFindValue('red'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0                          
-                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                  
-                                pcaPWM.setPWM((i*3)+2, 0, svalue)                                                                    
+                        if (pcaPWM != None):
+                            ledList = [0,3,6,9,12]
+                            for i in range(0, 5): # go thru PowerPWM on PCA Board
+                                if self.vFindValue('blue'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3), 0, svalue)    
+                                if self.vFindValue('green'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3)+1, 0, svalue)  
+                                if self.vFindValue('red'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0                          
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                      
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)                                                                    
 
                     elif "happi" in ADDON:
                         #do happi stuff
@@ -2194,19 +2195,20 @@ class ScratchListener(threading.Thread):
                             sghGC.pinUpdate(24,self.OnOrOff)
                             
                     elif "pi2go" in ADDON:
-                        for i in range(0, 5): # go thru PowerPWM on PCA Board
-                            if self.bFindValue('blue'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
-                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                pcaPWM.setPWM((i*3), 0, svalue)    
-                            if self.bFindValue('green'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
-                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                pcaPWM.setPWM((i*3)+1, 0, svalue)  
-                            if self.bFindValue('red'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
-                                svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                pcaPWM.setPWM((i*3)+2, 0, svalue)     
+                        if (pcaPWM != None):
+                            for i in range(0, 5): # go thru PowerPWM on PCA Board
+                                if self.bFindValue('blue'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3), 0, svalue)    
+                                if self.bFindValue('green'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3)+1, 0, svalue)  
+                                if self.bFindValue('red'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)     
                                
 
                     elif "raspibot2" in ADDON: 
