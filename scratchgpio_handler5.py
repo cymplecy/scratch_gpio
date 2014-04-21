@@ -207,6 +207,7 @@ class ScratchSender(threading.Thread):
         self.distlist = [0.0,0.0,0.0]
         self.sleepTime = 0.1
         print "Sender Init"
+        self.loopCmd = ""
 
 
 
@@ -227,6 +228,8 @@ class ScratchSender(threading.Thread):
         #self.send_scratch_command(bcast_str)   
 
         #Normal action is to just send updates to pin values but this can be modified if known addon in use
+        sensor_name = "pin" + str(pin)
+        sensorValue = str(value)
         if "ladder" in ADDON:
             #do ladderboard stuff
             sensor_name = "switch" + str([0,21,19,24,26].index(pin))
@@ -236,6 +239,7 @@ class ScratchSender(threading.Thread):
                 sensor_name = "input1"
             if pin == 7:
                 sensor_name = "input2"
+            sensorValue = ("off","on")[value == 1]                
         elif "berry" in ADDON:
             #do berryclip stuff
             if pin == 26:
@@ -245,6 +249,7 @@ class ScratchSender(threading.Thread):
         elif "piringo" in ADDON:
             #do PiRingo stuff
             sensor_name = "switch" + str(1 + [19,21].index(pin))
+            sensorValue = ("on","off")[value == 1]
         elif "pibrella" in ADDON:
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
@@ -256,6 +261,7 @@ class ScratchSender(threading.Thread):
                 print "pibrella input out of range"
                 sensor_name = "pin" + str(pin)
                 pass
+            sensorValue = ("off","on")[value == 1]                 
 
         elif "pidie" in ADDON:
             #print pin
@@ -274,40 +280,28 @@ class ScratchSender(threading.Thread):
                 print "pi2go input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
+            sensorValue = ("on","off")[value == 1]                
         elif "raspibot2" in ADDON:
             sensor_name = ["switch1","switch2"][([23,21].index(pin))]        
-        else:
-            sensor_name = "pin" + str(pin)
-        #  
-            # 
-            # 
-            #  
-        bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
-        if ("piringo" in ADDON) or ("pidie" in ADDON):
-            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("on","off")[value == 1])
-        if ("pibrella" in ADDON):
-            bcast_str = 'sensor-update "%s" %s' %  (sensor_name,("off","on")[value == 1])            
+            sensorValue = ("closed","open")[value == 1]
+         
         if ("fishdish" in ADDON):
-            bcast_str = 'sensor-update "switch" %s' %  (("on","off")[value == 1])
-        #print 'sending: %s' % bcast_str
-        if ("raspibot2" in ADDON):
-            bcast_str = 'sensor-update "%s" %s' % (sensor_name,("closed","open")[value == 1])  
-        if "motorpitx" in ADDON:
-            bcast_str = 'sensor-update "%s" %s' % (sensor_name,("off","on")[value == 1])
-            #print 'sending: %s' % bcast_str
-        if "pi2go" in ADDON:
-            bcast_str = 'sensor-update "%s" %s' % (sensor_name,("on","off")[value == 1])
-            #print 'sending: %s' % bcast_str            
-        self.send_scratch_command(bcast_str)
+            sensorValue = ("on","off")[value == 1]
+
+        bcast_str = '"' + sensor_name + '" ' + sensorValue
+        self.addtosend_scratch_command(bcast_str)
+       
+
+    def addtosend_scratch_command(self, cmd):
+        self.loopCmd += " "+ cmd
         
-
-
 
     def send_scratch_command(self, cmd):
         n = len(cmd)
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
         #print 'sent: %s' %cmd
+        #time.sleep(2)
         
     def setsleepTime(self, sleepTime):
         self.sleepTime = sleepTime
@@ -322,20 +316,11 @@ class ScratchSender(threading.Thread):
         #time.sleep(5)
         # set last pin pattern to inverse of current state
         pin_bit_pattern = [0] * len(sghGC.validPins)
-        last_bit_pattern = list(pin_bit_pattern)
-        with lock:
-            for listIndex in range(len(sghGC.validPins)):
-                pin = sghGC.validPins[listIndex]
-                last_bit_pattern[listIndex] = 0
-                if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
-                    if (sghGC.pinRead(pin) == 0):
-                        last_bit_pattern[listIndex] = 1
-
+        last_bit_pattern = [1] * len(sghGC.validPins)
         lastPinUpdateTime = time.time() 
         lastTimeSinceLastSleep = time.time()
         self.sleepTime = 0.10
         lastADC = [256,256,256,256]
-        
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
@@ -350,10 +335,12 @@ class ScratchSender(threading.Thread):
                     pin = sghGC.validPins[listIndex]
                     pin_bit_pattern[listIndex] = 0
                     if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
-                        pin_bit_pattern[listIndex] = sghGC.pinRead(pin) 
-                        # if sghGC.pinEvent(pin):
-                            # logging.debug(" ")
-                            # logging.debug("pinEvent Detected on pin:%s", pin )
+                        pinEvent = sghGC.pinEvent(pin)
+                        pinValue = sghGC.pinRead(pin)                
+                        pin_bit_pattern[listIndex] = pinValue
+                        if pinEvent:
+                            logging.debug(" ")
+                            logging.debug("pinEvent Detected on pin:%s", pin )
                             # logging.debug("before updating pin patterm,last pattern :%s,%s",pin_bit_pattern[listIndex],last_bit_pattern[listIndex] )
                             # pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
                             # logging.debug("afte uipdating pin patterm :%s",pin_bit_pattern[listIndex] )
@@ -371,8 +358,8 @@ class ScratchSender(threading.Thread):
                     if adc <> lastADC[channel]:
                         #print "channel,adc:",(channel+1),adc
                         sensor_name = 'adc'+str(channel+1)
-                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
-                        self.send_scratch_command(bcast_str)
+                        bcast_str = '"' + sensor_name + '" ' + str(adc)
+                        self.addtosend_scratch_command(bcast_str)
                         lastADC[channel] = adc
 
             # if there is a change in the input pins
@@ -389,14 +376,14 @@ class ScratchSender(threading.Thread):
             #print ("this:%s",pin_bit_pattern)
             
 
-            if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if they don't change
-                #print int(time.time())
-                lastPinUpdateTime = time.time()
-                for listIndex in range(len(sghGC.validPins)):
-                    pin = sghGC.validPins[listIndex]
-                    if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
-                        pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
-                        self.broadcast_pin_update(pin,pin_bit_pattern[listIndex])
+            # if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if they don't change
+                # print int(time.time())
+                # lastPinUpdateTime = time.time()
+                # for listIndex in range(len(sghGC.validPins)):
+                    # pin = sghGC.validPins[listIndex]
+                    # if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
+                        # pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
+                        # self.broadcast_pin_update(pin,pin_bit_pattern[listIndex])
 
             if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
                 for pin in sghGC.validPins:
@@ -428,8 +415,12 @@ class ScratchSender(threading.Thread):
                     self.send_scratch_command(bcast_str)
                 self.time_last_compass = time.time()
 
-            #time.sleep(1)
 
+            #time.sleep(1)
+            if self.loopCmd <> "":
+                #print "loop:",self.loopCmd
+                self.send_scratch_command("sensor-update " + self.loopCmd)
+            self.loopCmd = ""
 
 class ScratchListener(threading.Thread):
     def __init__(self, socket):
@@ -1705,8 +1696,9 @@ class ScratchListener(threading.Thread):
                                 svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                 pcaPWM.setPWM((i*3)+1, 0, svalue)  
                             if self.vFindValue('red'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0                          
                                 svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                  
                                 pcaPWM.setPWM((i*3)+2, 0, svalue)                                                                    
 
                     elif "happi" in ADDON:
