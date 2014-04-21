@@ -1119,7 +1119,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
-                        if "rtkmotorcon" in ADDON:
+                        if "rtkrpimcb" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
                                 sghGC.pinUse[11] = sghGC.POUTPUT #Motor1 
@@ -1634,7 +1634,7 @@ class ScratchListener(threading.Thread):
                                 print listLoop , "found",
                                 sghGC.pinUpdate(rgbOutputs[5+rgbList.index(listLoop)],self.valueNumeric)
 
-                    elif "rtkmotorcon" in ADDON:  
+                    elif "rtkrpimcb" in ADDON:  
                         #check for motor variable commands
                         motorList = [['motor1',11,12],['motor2',15,16]]
                         for listLoop in range(0,2):
@@ -2199,7 +2199,8 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue('red'):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
                                 svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                pcaPWM.setPWM((i*3)+2, 0, svalue)                              
+                                pcaPWM.setPWM((i*3)+2, 0, svalue)     
+                               
 
                     elif "raspibot2" in ADDON: 
                         self.bCheckAll() # Check for all off/on type broadcasrs
