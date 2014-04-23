@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.20' # 21Apr14 - Event triggering re-added and improved2
+Version =  'v5.1.21' # 23Apr14 - Pizazz added
 import threading
 import socket
 import time
@@ -280,7 +280,16 @@ class ScratchSender(threading.Thread):
                 print "pi2go input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
-            sensorValue = ("on","off")[value == 1]                
+            sensorValue = ("on","off")[value == 1]      
+        elif "pizazz" in ADDON:
+            #print pin
+            try:
+                sensor_name = ["lineleft","lineright",][([13,12].index(pin))]
+            except:
+                print "pi2go input out of range"
+                sensor_name = "pin" + str(pin)
+                pass 
+            sensorValue = ("on","off")[value == 1]             
         elif "raspibot2" in ADDON:
             sensor_name = ["switch1","switch2"][([23,21].index(pin))]        
             sensorValue = ("closed","open")[value == 1]
@@ -1234,7 +1243,30 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
 
                                 print "RaspPiBot2 setup"
-                                anyAddOns = True                                        
+                                anyAddOns = True   
+                                
+                        if "pizazz" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[7]  = sghGC.POUTPUT #LED
+                                sghGC.pinUse[11] = sghGC.POUTPUT #LED
+                                sghGC.pinUse[18]  = sghGC.POUTPUT #LED
+                                sghGC.pinUse[22] = sghGC.POUTPUT #LED
+                                sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[13] = sghGC.PINPUT #LFRight
+
+## 
+                                sghGC.setPinMode()
+                                #sghGC.startServod([18,22]) # servos orig
+                                #sghGC.startServod([12,10]) # servos testing motorpitx
+
+                                print "Pizazz setup"
+                                anyAddOns = True                                
 
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
@@ -1744,8 +1776,91 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)                                    
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    
+                    elif "pizazz" in ADDON:
 
+                        #logging.debug("Processing variables for Pizazz")
+                        #print "panoffset" , panoffset, "tilt",tiltoffset
+                        # moveServos = False
+
+                        # if self.vFindValue('tiltoffset'):
+                            # tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            # moveServos = True
+
+                        # if self.vFindValue('panoffset'):
+                            # panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            # moveServos = True
+
+                        # if self.vFindValue('tilt'):
+                            # #print "tilt command rcvd"
+                            # if self.valueIsNumeric:
+                                # tilt = int(self.valueNumeric) 
+                                # moveServos = True
+                                # #print "tilt=", tilt
+                            # elif self.value == "off":
+                                # os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                        # else:
+                            # if self.vFindValue('servoa'):
+                                # #print "tilt command rcvd"
+                                # if self.valueIsNumeric:
+                                    # tilt = int(self.valueNumeric) 
+                                    # moveServos = True
+                                    # #print "tilt=", tilt
+                                # elif self.value == "off":
+                                    # os.system("echo " + "0" + "=0 > /dev/servoblaster")
+
+                        # if self.vFindValue('pan'):
+                            # #print "pan command rcvd"
+                            # if self.valueIsNumeric:
+                                # pan = int(self.valueNumeric) 
+                                # moveServos = True
+                                # #print "pan=", pan
+                            # elif self.value == "off":
+                                # os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                        # else:
+                            # if self.vFindValue('servob'):
+                                # #print "pan command rcvd"
+                                # if self.valueIsNumeric:
+                                    # pan = int(self.valueNumeric) 
+                                    # moveServos = True
+                                    # #print "pan=", pan
+                                # elif self.value == "off":
+                                    # os.system("echo " + "1" + "=0 > /dev/servoblaster")
+
+                        # if moveServos == True:
+                            # degrees = int(tilt + tiltoffset)
+                            # degrees = min(80,max(degrees,-60))
+                            # servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            # #print "sending", servodvalue, "to servod"
+                            # #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                            # sghGC.pinServod(18,servodvalue) # orig =18
+                            # #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
+                            # degrees = int(pan + panoffset)
+                            # degrees = min(90,max(degrees,-90))
+                            # servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            # sghGC.pinServod(22,servodvalue) #orig =22
+                            # #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
+
+
+                        #check for motor variable commands
+                        motorList = [['motorb',21,19],['motora',26,24]]
+                        #logging.debug("ADDON:%s", ADDON)
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                else:
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+
+
+                                    
                     else:   #normal variable processing with no add on board
 
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
@@ -2220,8 +2335,30 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'sonar'
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
-                            self.send_scratch_command(bcast_str)                        
+                            self.send_scratch_command(bcast_str) 
 
+                    elif "pizazz" in ADDON:          
+
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bPinCheck() # Check for pin off/on type broadcasts
+
+                        #check pins
+                        for pin in sghGC.validPins:
+                            if self.bFindOnOff('pin' + str(pin)):
+                                sghGC.pinUpdate(pin,self.OnOrOff)
+
+                            if self.bFind('sonar' + str(pin)):
+                                distance = sghGC.pinSonar(pin)
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'sonar' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                                #print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)
+
+                            #Start using ultrasonic sensor on a pin    
+                            if self.bFind('ultra' + str(pin)):
+                                print 'start pinging on', str(pin)
+                                sghGC.pinUse[pin] = sghGC.PULTRA
 
                     else: # Plain GPIO Broadcast processing
 
