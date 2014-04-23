@@ -2340,7 +2340,7 @@ class ScratchListener(threading.Thread):
                     elif "pizazz" in ADDON:          
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
-                        self.bPinCheck() # Check for pin off/on type broadcasts
+                        self.bListCheck([11,7,18,22],["right","green","blue","left"]) # Check for LED off/on type broadcasts
 
                         #check pins
                         for pin in sghGC.validPins:
