@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.21' # 23Apr14 - Pizazz added
+Version =  'v5.1.24' # 24Apr14 - Pizazz added
 import threading
 import socket
 import time
@@ -284,7 +284,7 @@ class ScratchSender(threading.Thread):
         elif "pizazz" in ADDON:
             #print pin
             try:
-                sensor_name = ["lineleft","lineright",][([13,12].index(pin))]
+                sensor_name = ["left","right",][([13,12].index(pin))]
             except:
                 print "pi2go input out of range"
                 sensor_name = "pin" + str(pin)
@@ -328,12 +328,12 @@ class ScratchSender(threading.Thread):
         last_bit_pattern = [1] * len(sghGC.validPins)
         lastPinUpdateTime = time.time() 
         lastTimeSinceLastSleep = time.time()
-        self.sleepTime = 0.10
+        self.sleepTime = 0.1
         lastADC = [256,256,256,256]
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
-            #print loopTime
+            #print loopTime * 1000
             if loopTime < self.sleepTime:
                 time.sleep(self.sleepTime-(time.time() - lastTimeSinceLastSleep)) # be kind to cpu  :)
             lastTimeSinceLastSleep = time.time() 
@@ -406,6 +406,9 @@ class ScratchSender(threading.Thread):
                                 sensor_name = "ultra1"
                             if pin == 7:
                                 sensor_name = "ultra2"
+                        if "pizazz" in ADDON:
+                            if pin == 8:
+                                sensor_name = "ultra"
 
                         bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                         #print 'sending: %s' % bcast_str
@@ -799,9 +802,12 @@ class ScratchListener(threading.Thread):
         dataPrevious = ""
         debugLogging = False
 
-
+        listenLoopTime = time.time() + 10000
         #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
         while not self.stopped():
+            
+            #print "ListenLoopTime",listenLoopTime-time.time()
+            listenLoopTime = time.time()
             #lcount += 1
             #print lcount
             try:
@@ -1259,11 +1265,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[22] = sghGC.POUTPUT #LED
                                 sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
-
-## 
+ 
                                 sghGC.setPinMode()
-                                #sghGC.startServod([18,22]) # servos orig
-                                #sghGC.startServod([12,10]) # servos testing motorpitx
 
                                 print "Pizazz setup"
                                 anyAddOns = True                                
@@ -1781,70 +1784,11 @@ class ScratchListener(threading.Thread):
                     elif "pizazz" in ADDON:
 
                         #logging.debug("Processing variables for Pizazz")
-                        #print "panoffset" , panoffset, "tilt",tiltoffset
-                        # moveServos = False
-
-                        # if self.vFindValue('tiltoffset'):
-                            # tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            # moveServos = True
-
-                        # if self.vFindValue('panoffset'):
-                            # panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            # moveServos = True
-
-                        # if self.vFindValue('tilt'):
-                            # #print "tilt command rcvd"
-                            # if self.valueIsNumeric:
-                                # tilt = int(self.valueNumeric) 
-                                # moveServos = True
-                                # #print "tilt=", tilt
-                            # elif self.value == "off":
-                                # os.system("echo " + "0" + "=0 > /dev/servoblaster")
-                        # else:
-                            # if self.vFindValue('servoa'):
-                                # #print "tilt command rcvd"
-                                # if self.valueIsNumeric:
-                                    # tilt = int(self.valueNumeric) 
-                                    # moveServos = True
-                                    # #print "tilt=", tilt
-                                # elif self.value == "off":
-                                    # os.system("echo " + "0" + "=0 > /dev/servoblaster")
-
-                        # if self.vFindValue('pan'):
-                            # #print "pan command rcvd"
-                            # if self.valueIsNumeric:
-                                # pan = int(self.valueNumeric) 
-                                # moveServos = True
-                                # #print "pan=", pan
-                            # elif self.value == "off":
-                                # os.system("echo " + "1" + "=0 > /dev/servoblaster")
-                        # else:
-                            # if self.vFindValue('servob'):
-                                # #print "pan command rcvd"
-                                # if self.valueIsNumeric:
-                                    # pan = int(self.valueNumeric) 
-                                    # moveServos = True
-                                    # #print "pan=", pan
-                                # elif self.value == "off":
-                                    # os.system("echo " + "1" + "=0 > /dev/servoblaster")
-
-                        # if moveServos == True:
-                            # degrees = int(tilt + tiltoffset)
-                            # degrees = min(80,max(degrees,-60))
-                            # servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                            # #print "sending", servodvalue, "to servod"
-                            # #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
-                            # sghGC.pinServod(18,servodvalue) # orig =18
-                            # #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
-                            # degrees = int(pan + panoffset)
-                            # degrees = min(90,max(degrees,-90))
-                            # servodvalue = 50+ ((90 - degrees) * 200 / 180)
-                            # sghGC.pinServod(22,servodvalue) #orig =22
-                            # #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
-
+                        
+                        self.vListCheck([18,22,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
                         #check for motor variable commands
-                        motorList = [['motorb',21,19],['motora',26,24]]
+                        motorList = [['motorr',21,19],['motorl',26,24]]
                         #logging.debug("ADDON:%s", ADDON)
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
@@ -2340,25 +2284,20 @@ class ScratchListener(threading.Thread):
                     elif "pizazz" in ADDON:          
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
-                        self.bListCheck([11,7,18,22],["right","green","blue","left"]) # Check for LED off/on type broadcasts
+                        self.bListCheck([18,22,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
-                        #check pins
-                        for pin in sghGC.validPins:
-                            if self.bFindOnOff('pin' + str(pin)):
-                                sghGC.pinUpdate(pin,self.OnOrOff)
+                        if self.bFind('sonar'):
+                            distance = sghGC.pinSonar(8)
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'sonar'
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)
 
-                            if self.bFind('sonar' + str(pin)):
-                                distance = sghGC.pinSonar(pin)
-                                #print'Distance:',distance,'cm'
-                                sensor_name = 'sonar' + str(pin)
-                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                                #print 'sending: %s' % bcast_str
-                                self.send_scratch_command(bcast_str)
-
-                            #Start using ultrasonic sensor on a pin    
-                            if self.bFind('ultra' + str(pin)):
-                                print 'start pinging on', str(pin)
-                                sghGC.pinUse[pin] = sghGC.PULTRA
+                        #Start using ultrasonic sensor on a pin    
+                        if self.bFind('ultra'):
+                                print 'start pinging on', str(8)
+                                sghGC.pinUse[8] = sghGC.PULTRA
 
                     else: # Plain GPIO Broadcast processing
 
@@ -2869,6 +2808,8 @@ print sghGC.getPiRevision()
 
 ADDON = ""
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)# default DEBUG - quiwr = INFO
+
+logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
 
 
 PORT = 42001
