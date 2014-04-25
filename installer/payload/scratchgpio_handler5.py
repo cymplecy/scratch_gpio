@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.20' # 21Apr14 - Event triggering re-added and improved2
+Version =  'v5.1.25' # 25Apr14 - Depower all pins on disconnect
 import threading
 import socket
 import time
@@ -280,7 +280,16 @@ class ScratchSender(threading.Thread):
                 print "pi2go input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
-            sensorValue = ("on","off")[value == 1]                
+            sensorValue = ("on","off")[value == 1]      
+        elif "pizazz" in ADDON:
+            #print pin
+            try:
+                sensor_name = ["left","right",][([13,12].index(pin))]
+            except:
+                print "pi2go input out of range"
+                sensor_name = "pin" + str(pin)
+                pass 
+            sensorValue = ("on","off")[value == 1]             
         elif "raspibot2" in ADDON:
             sensor_name = ["switch1","switch2"][([23,21].index(pin))]        
             sensorValue = ("closed","open")[value == 1]
@@ -319,12 +328,12 @@ class ScratchSender(threading.Thread):
         last_bit_pattern = [1] * len(sghGC.validPins)
         lastPinUpdateTime = time.time() 
         lastTimeSinceLastSleep = time.time()
-        self.sleepTime = 0.10
+        self.sleepTime = 0.1
         lastADC = [256,256,256,256]
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
-            #print loopTime
+            #print loopTime * 1000
             if loopTime < self.sleepTime:
                 time.sleep(self.sleepTime-(time.time() - lastTimeSinceLastSleep)) # be kind to cpu  :)
             lastTimeSinceLastSleep = time.time() 
@@ -397,6 +406,9 @@ class ScratchSender(threading.Thread):
                                 sensor_name = "ultra1"
                             if pin == 7:
                                 sensor_name = "ultra2"
+                        if "pizazz" in ADDON:
+                            if pin == 8:
+                                sensor_name = "ultra"
 
                         bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                         #print 'sending: %s' % bcast_str
@@ -790,9 +802,12 @@ class ScratchListener(threading.Thread):
         dataPrevious = ""
         debugLogging = False
 
-
+        listenLoopTime = time.time() + 10000
         #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
         while not self.stopped():
+            
+            #print "ListenLoopTime",listenLoopTime-time.time()
+            listenLoopTime = time.time()
             #lcount += 1
             #print lcount
             try:
@@ -1234,7 +1249,27 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
 
                                 print "RaspPiBot2 setup"
-                                anyAddOns = True                                        
+                                anyAddOns = True   
+                                
+                        if "pizazz" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[7]  = sghGC.POUTPUT #LED
+                                sghGC.pinUse[11] = sghGC.POUTPUT #LED
+                                sghGC.pinUse[18]  = sghGC.POUTPUT #LED
+                                sghGC.pinUse[22] = sghGC.POUTPUT #LED
+                                sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[13] = sghGC.PINPUT #LFRight
+ 
+                                sghGC.setPinMode()
+
+                                print "Pizazz setup"
+                                anyAddOns = True                                
 
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
@@ -1744,8 +1779,32 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)                                    
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    
+                    elif "pizazz" in ADDON:
 
+                        #logging.debug("Processing variables for Pizazz")
+                        
+                        self.vListCheck([18,22,11,7],["led1","led2","led3","led4"]) # Check for LEDs
+
+                        #check for motor variable commands
+                        motorList = [['motorr',21,19],['motorl',26,24]]
+                        #logging.debug("ADDON:%s", ADDON)
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                if svalue > 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                elif svalue < 0:
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                else:
+                                    sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+
+
+                                    
                     else:   #normal variable processing with no add on board
 
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
@@ -2220,8 +2279,25 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'sonar'
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
-                            self.send_scratch_command(bcast_str)                        
+                            self.send_scratch_command(bcast_str) 
 
+                    elif "pizazz" in ADDON:          
+
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bListCheck([18,22,11,7],["led1","led2","led3","led4"]) # Check for LEDs
+
+                        if self.bFind('sonar'):
+                            distance = sghGC.pinSonar(8)
+                            #print'Distance:',distance,'cm'
+                            sensor_name = 'sonar'
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)
+
+                        #Start using ultrasonic sensor on a pin    
+                        if self.bFind('ultra'):
+                                print 'start pinging on', str(8)
+                                sghGC.pinUse[8] = sghGC.PULTRA
 
                     else: # Plain GPIO Broadcast processing
 
@@ -2733,6 +2809,8 @@ print sghGC.getPiRevision()
 ADDON = ""
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)# default DEBUG - quiwr = INFO
 
+logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+
 
 PORT = 42001
 DEFAULT_HOST = '127.0.0.1'
@@ -2861,8 +2939,9 @@ while True:
         print "Scratch disconnected"
         cleanup_threads((listener, sender))
         print "Thread cleanup done after disconnect"
-        sghGC.stopServod()
-        print "servod stopped afer disconnect"
+        INVERT = False
+        sghGC.resetPinMode()
+        print ("Pin Reset Done")
         time.sleep(1)
         cycle_trace = 'start'
 
@@ -2900,11 +2979,11 @@ while True:
         time.sleep(0.1)
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
-        cleanup_threads((listener,sender))
-        sghGC.stopServod()
-        print ("servod stopped")
-        sghGC.cleanup()
-        print ("Pin Cleanup done")
+        cleanup_threads((listener, sender))
+        print "Thread cleanup done after disconnect"
+        INVERT = False
+        sghGC.resetPinMode()
+        print ("Pin Reset Done")
         sys.exit()
         print "CleanUp complete"
 

@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.24' # 24Apr14 - Pizazz added
+Version =  'v5.1.25' # 25Apr14 - Depower all pins on disconnect
 import threading
 import socket
 import time
@@ -2939,8 +2939,9 @@ while True:
         print "Scratch disconnected"
         cleanup_threads((listener, sender))
         print "Thread cleanup done after disconnect"
-        sghGC.stopServod()
-        print "servod stopped afer disconnect"
+        INVERT = False
+        sghGC.resetPinMode()
+        print ("Pin Reset Done")
         time.sleep(1)
         cycle_trace = 'start'
 
@@ -2978,11 +2979,11 @@ while True:
         time.sleep(0.1)
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
-        cleanup_threads((listener,sender))
-        sghGC.stopServod()
-        print ("servod stopped")
-        sghGC.cleanup()
-        print ("Pin Cleanup done")
+        cleanup_threads((listener, sender))
+        print "Thread cleanup done after disconnect"
+        INVERT = False
+        sghGC.resetPinMode()
+        print ("Pin Reset Done")
         sys.exit()
         print "CleanUp complete"
 

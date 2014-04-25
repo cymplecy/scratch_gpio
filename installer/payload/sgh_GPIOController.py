@@ -16,7 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#Last mod 22 Keep pwm mode for pin once used as pwm
+
 
 import RPi.GPIO as GPIO
 import time
@@ -104,15 +104,38 @@ class GPIOController :
         
     #reset pinmode
     def resetPinMode(self):
+        print "resetting pin mode" 
+        self.stopServod()
         for pin in self.validPins:
             try:
                 self.pinRef[pin].stop() # stop PWM from running
                 self.pinRef[pin] = None
-                time.sleep(0.1)
             except:
                 pass
+            self.pinRef[pin] = None #reset pwm flag
+                
+            try:
+                GPIO.remove_event_detect(pin) #Stop Any event detection for input and counting
+            except:
+                pass
+                
+            try:
+                self.callbackInUse[pin] = False  #reset event callback flags
+            except:
+                pass
+                
+            if (self.pinUse[pin] == self.POUTPUT):
+                GPIO.setup(pin,GPIO.IN)   
+            elif (self.pinUse[pin] == self.PINPUT):
+                GPIO.setup(pin,GPIO.IN)   
+            elif (self.pinUse[pin] == self.PINPUTDOWN):
+                GPIO.setup(pin,GPIO.IN)  
+            elif (self.pinUse[pin] == self.PINPUTNONE):
+                GPIO.setup(pin,GPIO.IN)
+            elif (self.pinUse[pin] == self.PCOUNT):
+                GPIO.setup(pin,GPIO.IN)
             self.pinUse[pin] = self.PUNUSED
-        self.stopServod()
+        self.setPinMode()
             
 
     #Procedure to set pin mode for each pin
@@ -129,7 +152,8 @@ class GPIOController :
                     self.callbackInUse[pin] = False
                 except:
                     pass                    
-                GPIO.setup(pin,GPIO.OUT)                    
+                GPIO.setup(pin,GPIO.OUT)
+                GPIO.output(pin,0)
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
