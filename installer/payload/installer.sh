@@ -11,12 +11,12 @@
 #Version 21Nov13 Change for ScratchGPIO V4
 #Version 26Dec13 Change for ScratchGPIO4plus
 #Version 18Dec13 Change for ScratchGPIO5
-SGHVER="5"
 
+SGHVER=$(<SGHVER.txt)
 f_exit(){
 echo ""
 echo "Usage:"
-echo "i.e. sudo install_scratchgpio"$SGHVER".sh otheruser"
+echo "i.e. sudo NameOfInstaller.sh otheruser"
 echo "Optional: Add a non-default 'otheruser' username after the command (default is:pi)."
 exit
 }
@@ -66,7 +66,7 @@ mkdir -p $HDIR/scratchgpio${SGHVER}/mcpi
 
 chown -R $USERID:$GROUPID $HDIR/scratchgpio${SGHVER}
 
-cp scratchgpio_handler${SGHVER}.py $HDIR/scratchgpio${SGHVER}
+cp scratchgpio_handler5.py $HDIR/scratchgpio${SGHVER}
 cp Adafruit_I2C.py $HDIR/scratchgpio${SGHVER}
 cp Adafruit_PWM_Servo_Driver.py $HDIR/scratchgpio${SGHVER}
 cp sgh_servod $HDIR/scratchgpio${SGHVER}
@@ -87,10 +87,10 @@ echo "#Version 0.2 - add in & to allow simultaneous running of handler and Scrat
 echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >>$HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "sudo pkill -f scratch_gpio_handler" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "sudo pkill -f scratchgpio_handler" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "cd $HDIR/scratchgpio"$SGHVER >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "sudo python scratchgpio_handler"$SGHVER".py 127.0.0.1 standard &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "sudo python scratchgpio_handler5.py 127.0.0.1 standard &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
@@ -119,10 +119,10 @@ echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scrat
 echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo pkill -f scratch_gpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo pkill -f scratchgpio_handler*" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
+echo "sudo pkill -f scratch_gpio_handler" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
+echo "sudo pkill -f scratchgpio_handler" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "cd $HDIR/scratchgpio"$SGHVER >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo python scratchgpio_handler"$SGHVER".py &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
+echo "sudo python scratchgpio_handler5.py &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 
 chmod +x $HDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh

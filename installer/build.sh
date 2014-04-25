@@ -1,6 +1,6 @@
 #!/bin/bash
 #copy files to payload folder
-SGHVER="5"
+SGHVER=$1
 echo $SGHVER
 echo $HOME
 echo $SGHVER > $HOME/sghdev/scratch_gpio/installer/payload/SGHVER.txt
