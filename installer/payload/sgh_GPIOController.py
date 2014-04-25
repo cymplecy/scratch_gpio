@@ -16,7 +16,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#Last mod 19Mar14 Change to DS180 handling
+
 
 import RPi.GPIO as GPIO
 import time
@@ -76,6 +76,8 @@ class GPIOController :
         self.countDirection = [1] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins
+        
+        self.pinEventEnabled = True
 		
         if self.piRevision == 1:
         #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
@@ -101,14 +103,38 @@ class GPIOController :
         
     #reset pinmode
     def resetPinMode(self):
+        print "resetting pin mode" 
+        self.stopServod()
         for pin in self.validPins:
             try:
                 self.pinRef[pin].stop() # stop PWM from running
                 self.pinRef[pin] = None
-                time.sleep(0.1)
             except:
                 pass
+            self.pinRef[pin] = None #reset pwm flag
+                
+            try:
+                GPIO.remove_event_detect(pin) #Stop Any event detection for input and counting
+            except:
+                pass
+                
+            try:
+                self.callbackInUse[pin] = False  #reset event callback flags
+            except:
+                pass
+                
+            if (self.pinUse[pin] == self.POUTPUT):
+                GPIO.setup(pin,GPIO.IN)   
+            elif (self.pinUse[pin] == self.PINPUT):
+                GPIO.setup(pin,GPIO.IN)   
+            elif (self.pinUse[pin] == self.PINPUTDOWN):
+                GPIO.setup(pin,GPIO.IN)  
+            elif (self.pinUse[pin] == self.PINPUTNONE):
+                GPIO.setup(pin,GPIO.IN)
+            elif (self.pinUse[pin] == self.PCOUNT):
+                GPIO.setup(pin,GPIO.IN)
             self.pinUse[pin] = self.PUNUSED
+        self.setPinMode()
             
 
     #Procedure to set pin mode for each pin
@@ -117,7 +143,16 @@ class GPIOController :
             #print pin
             if (self.pinUse[pin] == self.POUTPUT):
                 print 'setting pin' , pin , ' to out' 
+                try:
+                    GPIO.remove_event_detect(pin)
+                except:
+                    pass
+                try:
+                    self.callbackInUse[pin] = False
+                except:
+                    pass                    
                 GPIO.setup(pin,GPIO.OUT)
+                GPIO.output(pin,0)
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
@@ -272,6 +307,19 @@ class GPIOController :
             print "Some error reading pin" ,pin
             print str(e)
             return 0
+            
+    def pinEvent(self, pin):
+        #print "pin",pin ,"set to", self.pinUse[pin]
+        #print pin ," being read"
+        try:
+            if self.pinEventEnabled == True:
+                return GPIO.event_detected(pin)
+            else:
+                return False
+        except Exception,e: 
+            print "error reading pin event" ,pin
+            print str(e)
+            return False     
         
     def startServod(self, pins):
         print ("Starting servod")
