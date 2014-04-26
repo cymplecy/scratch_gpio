@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.25' # 25Apr14 - Depower all pins on disconnect
+Version =  'v5.1.26' # 26Apr14 - fix Led1/led2 order for Pizazz
 import threading
 import socket
 import time
@@ -651,6 +651,7 @@ class ScratchListener(threading.Thread):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
             if self.vFindOnOff('led' + str(led)):
                 sghGC.pinUpdate(ledList[led - 1],self.OnOrOff)
+                #logging.debug("pin %s %s",ledList[led - 1],self.OnOrOff )
 
             if self.vFindValue('power' + str(led)):
                 if self.valueIsNumeric:
@@ -1785,7 +1786,7 @@ class ScratchListener(threading.Thread):
 
                         #logging.debug("Processing variables for Pizazz")
                         
-                        self.vListCheck([18,22,11,7],["led1","led2","led3","led4"]) # Check for LEDs
+                        self.vListCheck([22,18,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
                         #check for motor variable commands
                         motorList = [['motorr',21,19],['motorl',26,24]]
@@ -2284,7 +2285,7 @@ class ScratchListener(threading.Thread):
                     elif "pizazz" in ADDON:          
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
-                        self.bListCheck([18,22,11,7],["led1","led2","led3","led4"]) # Check for LEDs
+                        self.bListCheck([22,18,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
                         if self.bFind('sonar'):
                             distance = sghGC.pinSonar(8)
@@ -2786,6 +2787,9 @@ def cleanup_threads(threads):
             print "Stopped ", pin
         except:
             continue
+        if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
+            sghGC.pinUpdate(pin,1)
+            print "pin",pin
 
     try:
         print "Stopping Matrix"
@@ -2981,6 +2985,7 @@ while True:
         print ("Keyboard Interrupt")
         cleanup_threads((listener, sender))
         print "Thread cleanup done after disconnect"
+        time.sleep(5)
         INVERT = False
         sghGC.resetPinMode()
         print ("Pin Reset Done")
