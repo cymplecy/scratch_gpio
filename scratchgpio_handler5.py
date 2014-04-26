@@ -1789,7 +1789,7 @@ class ScratchListener(threading.Thread):
                         self.vListCheck([22,18,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
                         #check for motor variable commands
-                        motorList = [['motorr',21,19],['motorl',26,24]]
+                        motorList = [['motorr',19,21],['motorl',24,26]]
                         #logging.debug("ADDON:%s", ADDON)
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
@@ -2784,12 +2784,16 @@ def cleanup_threads(threads):
         try:
             print "Stopping ", pin
             sghGC.pinRef[pin].stop()
+            sghGC.pinRef[pin] = None
+            sghGC.pinUse[pin] = sghGC.PUNUSED
+            sghGC.pinUpdate(pin,0)
             print "Stopped ", pin
         except:
-            continue
-        if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
-            sghGC.pinUpdate(pin,1)
-            print "pin",pin
+            pass
+        #print "pin use", sghGC.pinUse[pin]
+        if sghGC.pinUse[pin] in [sghGC.POUTPUT]:
+            sghGC.pinUpdate(pin,0)
+            #print "pin:" ,pin , " set to 0"
 
     try:
         print "Stopping Matrix"
@@ -2985,8 +2989,8 @@ while True:
         print ("Keyboard Interrupt")
         cleanup_threads((listener, sender))
         print "Thread cleanup done after disconnect"
-        time.sleep(5)
-        INVERT = False
+        #time.sleep(5)
+        sghGC.INVERT = False
         sghGC.resetPinMode()
         print ("Pin Reset Done")
         sys.exit()

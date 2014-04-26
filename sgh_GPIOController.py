@@ -231,8 +231,8 @@ class GPIOController :
                     #print ("pin",pin, "set to", value)              
             elif type == "plain":
                 if self.INVERT == True: # Invert data value (useful for 7 segment common anode displays)
-                    if (self.pinUse[pin] == self.POUTPUT) or (self.pinUse[pin] == self.PPWM):
-                        value = abs(value - 1)
+                    #if (self.pinUse[pin] == self.POUTPUT) or (self.pinUse[pin] == self.PPWM):
+                    value = abs(value - 1)
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
                     #print ("pin,pinUse:%s,%s",pin,self.pinUse[pin])
                     GPIO.output(pin, int(value)) # set output to 1 ot 0

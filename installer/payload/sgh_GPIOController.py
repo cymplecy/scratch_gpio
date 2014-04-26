@@ -153,7 +153,10 @@ class GPIOController :
                 except:
                     pass                    
                 GPIO.setup(pin,GPIO.OUT)
-                GPIO.output(pin,0)
+                if self.INVERT == True:
+                    GPIO.output(pin,1)
+                else:
+                    GPIO.output(pin,1)
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
@@ -228,8 +231,8 @@ class GPIOController :
                     #print ("pin",pin, "set to", value)              
             elif type == "plain":
                 if self.INVERT == True: # Invert data value (useful for 7 segment common anode displays)
-                    if (self.pinUse[pin] == self.POUTPUT) or (self.pinUse[pin] == self.PPWM):
-                        value = abs(value - 1)
+                    #if (self.pinUse[pin] == self.POUTPUT) or (self.pinUse[pin] == self.PPWM):
+                    value = abs(value - 1)
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
                     #print ("pin,pinUse:%s,%s",pin,self.pinUse[pin])
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
