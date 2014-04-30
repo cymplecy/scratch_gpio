@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.27' # 26Apr14 - fix not setting sensor values
+Version =  'v5.1.28' # 30Apr14 - fix not setting pins to off as default!!
 import threading
 import socket
 import time
@@ -387,7 +387,7 @@ class ScratchSender(threading.Thread):
             
 
             if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if they don't change
-                print int(time.time())
+                #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for listIndex in range(len(sghGC.validPins)):
                     pin = sghGC.validPins[listIndex]

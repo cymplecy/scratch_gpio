@@ -156,7 +156,7 @@ class GPIOController :
                 if self.INVERT == True:
                     GPIO.output(pin,1)
                 else:
-                    GPIO.output(pin,1)
+                    GPIO.output(pin,0)
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
