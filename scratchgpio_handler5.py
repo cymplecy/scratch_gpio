@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.28' # 30Apr14 - fix not setting pins to off as default!!
+Version =  'v5.1.29' # 2May14 - SimPie Added
 import threading
 import socket
 import time
@@ -291,8 +291,11 @@ class ScratchSender(threading.Thread):
                 pass 
             sensorValue = ("on","off")[value == 1]             
         elif "raspibot2" in ADDON:
-            sensor_name = ["switch1","switch2"][([23,21].index(pin))]        
-            sensorValue = ("closed","open")[value == 1]
+            sensor_name = ["switch1","switch2"][([23,21].index(pin))]    
+            sensorValue = ("closed","open")[value == 1]            
+        elif "simpie" in ADDON:
+            sensor_name = ["red","amber","green"][([11,13,15].index(pin))]        
+            sensorValue = ("on","off")[value == 1]
          
         if ("fishdish" in ADDON):
             sensorValue = ("on","off")[value == 1]
@@ -1270,7 +1273,26 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
 
                                 print "Pizazz setup"
-                                anyAddOns = True                                
+                                anyAddOns = True       
+                        if "simpie" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.pinUse[11] = sghGC.PINPUT #Red 
+                                sghGC.pinUse[13] = sghGC.PINPUT #Amber
+                                sghGC.pinUse[15] = sghGC.PINPUT #Green
+                                sghGC.pinUse[12] = sghGC.POUTPUT #Red
+                                sghGC.pinUse[16]  = sghGC.POUTPUT #Green
+                                sghGC.pinUse[18]  = sghGC.POUTPUT #Blue
+                                sghGC.pinUse[7]  = sghGC.POUTPUT #Buzzer
+
+
+ 
+                                sghGC.setPinMode()
+                                sghGC.pinUpdate(7,0)
+
+                                print "SimPie setup"
+                                anyAddOns = True   
 
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
@@ -1803,6 +1825,14 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    
+                    elif "simpie" in ADDON:
+                        #do BerryClip stuff
+                        self.vAllCheck("all") # check All LEDS On/Off/High/Low/1/0
+                        self.vListCheck([12,16,18],["red","green","blue"]) # Check for LEDs
+
+                        if self.vFindOnOff('buzzer'):
+                            self.index_pin_update(7,100-self.valueNumeric)                                    
 
 
                                     
@@ -2299,6 +2329,17 @@ class ScratchListener(threading.Thread):
                         if self.bFind('ultra'):
                                 print 'start pinging on', str(8)
                                 sghGC.pinUse[8] = sghGC.PULTRA
+                                
+                    elif "simpie" in ADDON:
+                        #do BerryClip stuff
+                        if self.bFindOnOff('all'):
+                            for pin in [12,16,18]:
+                                sghGC.pinUpdate(pin,self.OnOrOff)
+                            sghGC.pinUpdate(7, self.OnOrOff)
+                        self.bListCheck([12,16,18],["red","green","blue"]) # Check for LEDs
+
+                        if self.bFindOnOff('buzzer'):
+                            sghGC.pinUpdate(7,1 - self.OnOrOff)                                   
 
                     else: # Plain GPIO Broadcast processing
 
@@ -2351,7 +2392,57 @@ class ScratchListener(threading.Thread):
                             if self.valueIsNumeric:
                                 self.stepperUpdate(stepperList[listLoop][1],10,self.valueNumeric)
                             else:
-                                self.stepperUpdate(stepperList[listLoop][1],0)                            
+                                self.stepperUpdate(stepperList[listLoop][1],0)           
+
+                    # if steppersInUse == True:
+                        # #logging.debug("Steppers in use")
+                        # stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
+                        # for listLoop in range(0,2):
+                            # if self.vFindValue(stepperList[listLoop][0]):
+                                # logging.debug("Stepper found %s",stepperList[listLoop][0])
+                                # if self.valueIsNumeric:
+                                    # self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
+                                # else:
+                                    # self.stepperUpdate(stepperList[listLoop][1],0)
+
+                        # stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
+                        # for listLoop in range(0,2):
+                            # #print ("look for steppers") 
+                            # if self.vFindValue(stepperList[listLoop][0]):
+                                # print ("Found stepper",stepperList[listLoop][0])
+                                # if self.valueIsNumeric:
+                                    # print ("value =",self.value)
+                                    # print stepperList[listLoop][1][0]
+                                    # try:
+                                        # print ("Trying to see if turn prev set")
+                                        # direction = int(100 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
+                                        # steps = abs(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]])
+                                    # except:
+                                        # direction = int(100 * sign(int(self.valueNumeric)))
+                                        # steps = abs(int(self.valueNumeric))
+                                        # turn = [None] * sghGC.numOfPins
+                                        # pass
+                                    # print ("direction and steps",direction,steps)
+                                    # self.stepperUpdate(stepperList[listLoop][1],direction,steps)
+                                    # turn[stepperList[listLoop][1][0]] = self.valueNumeric
+                                    # print ("position set to :",turn[stepperList[listLoop][1][0]])
+                                # else:
+                                    # self.stepperUpdate(stepperList[listLoop][1],0)
+                                    # try:
+                                        # turn[stepperList[listLoop][1][0]] = 0
+                                    # except:
+                                        # turn = [None] * sghGC.numOfPins
+                                        # turn[stepperList[listLoop][1][0]] = 0
+                                        # pass
+                    # else:       
+                        # motorList = [['motora',11],['motorb',12]]
+                        # for listLoop in range(0,2):
+                            # if self.vFindValue(motorList[listLoop][0]):
+                                # if self.valueIsNumeric:
+                                    # sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
+                                # else:
+                                    # sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
+                            
 
                     if self.bFind('pinpattern'):
                         #print 'Found pinpattern broadcast'
@@ -2745,6 +2836,8 @@ class ScratchListener(threading.Thread):
 
                     #end of broadcast check
 
+                    if self.bFind('shutdownpi'):
+                        os.system('sudo shutdown -h "now"')
 
                 if 'stop handler' in dataraw:
                     print "stop handler msg setn from Scratch"
