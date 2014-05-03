@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.29' # 2May14 - SimPie Added
+Version =  'v5.1.30' # 3May14 - Change PiDie from 1/0 to on/off for switches
 import threading
 import socket
 import time
@@ -272,6 +272,7 @@ class ScratchSender(threading.Thread):
                 print "pidie input out of range"
                 sensor_name = "pin" + str(pin)
                 pass
+            sensorValue = ("on","off")[value == 1]                   
         elif "pi2go" in ADDON:
             #print pin
             try:
