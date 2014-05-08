@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.30' # 3May14 - Change PiDie from 1/0 to on/off for switches
+Version =  'v5.1.40' # 8May14 - Remove PiDie single digit bug again
 import threading
 import socket
 import time
@@ -1713,7 +1713,7 @@ class ScratchListener(threading.Thread):
                     elif "pidie" in ADDON:
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
                         self.vListCheck([7,11,12,13,15,16,18,22,8],["led1","led2","led3","led4","led5","led6","led7","led8","led9"])
-                        self.vListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])     
+                        #self.vListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])     
 
                     elif "fishdish" in ADDON:
                         #do fishdish stuff
@@ -2268,7 +2268,7 @@ class ScratchListener(threading.Thread):
                         self.bLEDPowerCheck(pidieOutputs) # Vary LED Brightness          
 
                         self.bListCheck([7,11,12,13,15,16,18,22,8],["led1","led2","led3","led4","led5","led6","led7","led8","led9"])
-                        self.bListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])                             
+                        #self.bListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])                             
 
                     elif "fishdish" in ADDON: # fishdish
                         #do piringo stuff
