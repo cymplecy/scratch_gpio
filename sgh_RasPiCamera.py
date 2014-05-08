@@ -19,7 +19,7 @@
 Version =  '0.0.1' # 13Apr14
 
 
-import os
+import os,glob
 
 class RasPiCamera:
 
@@ -32,7 +32,16 @@ class RasPiCamera:
         except OSError:
             #already exists
             pass
-        print "complete"
+
+        photos = glob.glob(self.dir + '*.jpg')
+        if len(photos):
+            latest_photo = sorted(photos)[-1]
+            latest_photo = latest_photo.replace(self.dir,'')
+            latest_photo = latest_photo.replace('.jpg','')
+            latest_photo_num = int(latest_photo)
+            self.num = latest_photo_num + 1
+
+        print("starting at %d" % self.num)
 
 
     def take_photo(self):
