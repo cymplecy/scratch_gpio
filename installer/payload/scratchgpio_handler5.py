@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.40' # 8May14 - Remove PiDie single digit bug again
+Version =  'v5.1.41' # 11May14 - Make Powerx work with PiDie again
 import threading
 import socket
 import time
@@ -521,7 +521,15 @@ class ScratchListener(threading.Thread):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
                 else:
-                    sghGC.pinUpdate(pinList[loop],0,type="pwm")                    
+                    sghGC.pinUpdate(pinList[loop],0,type="pwm")       
+                    
+    def bListCheckPowerOnly(self,pinList,nameList):
+        for loop in range(0,len(pinList)): # loop thru list
+            if self.bFindValue('power' + str(nameList[loop])+","):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
+                else:
+                    sghGC.pinUpdate(pinList[loop],0,type="pwm")                       
 
     def bFindValue(self,searchStr):
         #logging.debug("Searching for:%s",searchStr )
@@ -673,7 +681,15 @@ class ScratchListener(threading.Thread):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
                 else:
-                    sghGC.pinUpdate(pinList[loop],0,type="pwm")                    
+                    sghGC.pinUpdate(pinList[loop],0,type="pwm")   
+                    
+    def vListCheckPowerOnly(self,pinList,nameList):
+        for loop in range(0,len(pinList)): # loop thru pinlist numbers
+            if self.vFindValue('power' + str(nameList[loop])):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
+                else:
+                    sghGC.pinUpdate(pinList[loop],0,type="pwm")                        
 
     def stop(self):
         self._stop.set()
@@ -1713,7 +1729,7 @@ class ScratchListener(threading.Thread):
                     elif "pidie" in ADDON:
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
                         self.vListCheck([7,11,12,13,15,16,18,22,8],["led1","led2","led3","led4","led5","led6","led7","led8","led9"])
-                        #self.vListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])     
+                        self.vListCheckPowerOnly([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])     
 
                     elif "fishdish" in ADDON:
                         #do fishdish stuff
@@ -2268,7 +2284,7 @@ class ScratchListener(threading.Thread):
                         self.bLEDPowerCheck(pidieOutputs) # Vary LED Brightness          
 
                         self.bListCheck([7,11,12,13,15,16,18,22,8],["led1","led2","led3","led4","led5","led6","led7","led8","led9"])
-                        #self.bListCheck([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])                             
+                        self.bListCheckPowerOnly([7,11,12,13,15,16,18,22,8],["1","2","3","4","5","6","7","8","9"])                             
 
                     elif "fishdish" in ADDON: # fishdish
                         #do piringo stuff
