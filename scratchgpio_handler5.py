@@ -2306,14 +2306,17 @@ class ScratchListener(threading.Thread):
                             for i in range(0, 5): # go thru PowerPWM on PCA Board
                                 if self.bFindValue('blue'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
+                                    svalue = svalue * sghGC.ledDim / 100
                                     svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                     pcaPWM.setPWM((i*3), 0, svalue)    
                                 if self.bFindValue('green'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
+                                    svalue = svalue * sghGC.ledDim / 100
                                     svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                     pcaPWM.setPWM((i*3)+1, 0, svalue)  
                                 if self.bFindValue('red'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
+                                    svalue = svalue * sghGC.ledDim / 100
                                     svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                     pcaPWM.setPWM((i*3)+2, 0, svalue)     
                                

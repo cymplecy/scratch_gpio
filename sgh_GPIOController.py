@@ -57,6 +57,8 @@ class GPIOController :
         self.PCOUNT = 256
         self.PINPUTDOWN = 512
         self.PINPUTNONE = 1024
+        self.PPWMMOTOR = 2048
+        self.PPWMLED = 4096
 
         self.INVERT = False
         self.ledDim = 100
@@ -77,6 +79,7 @@ class GPIOController :
         self.countDirection = [1] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins
+        self.pinValue = [0] * self.numOfPins
         
         self.pinEventEnabled = True
 		
@@ -135,6 +138,8 @@ class GPIOController :
             elif (self.pinUse[pin] == self.PCOUNT):
                 GPIO.setup(pin,GPIO.IN)
             self.pinUse[pin] = self.PUNUSED
+            print "reset pin", pin
+            self.pinValue[pin] = 0
         self.setPinMode()
             
 
@@ -157,6 +162,7 @@ class GPIOController :
                     GPIO.output(pin,1)
                 else:
                     GPIO.output(pin,0)
+                self.pinValue=[0]
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
@@ -194,6 +200,7 @@ class GPIOController :
         print ("SetPinMode:",self.pinUse)
                 
     def pinUpdate(self, pin, value,type = 'plain',stepDelay = 0.003):
+        self.pinValue = value
         if (self.ledDim < 100) and (type == 'plain'):
             type = "pwm"
             value = value * self.ledDim

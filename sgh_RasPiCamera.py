@@ -16,7 +16,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.0.1sw2' # 14Apr14 Change to get real user home name as runnign as sudo
+Version =  '0.0.1sw3' # 12May14 Investigate photo folder problem using SID
 
 
 import os
@@ -27,6 +27,7 @@ class RasPiCamera:
         print "pi camera init"
         self.num = 0
         realUser = os.getenv("SUDO_USER")
+        print "user",realUser
         self.dir = ("/home/"+ realUser + "/photos/")
         try:
             os.mkdir(self.dir)
