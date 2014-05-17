@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.1.41' # 11May14 - Make Powerx work with PiDie again
+Version =  'v5.2.00' # 17May14 - Major MotorPWM changes
 import threading
 import socket
 import time
@@ -488,7 +488,7 @@ class ScratchListener(threading.Thread):
         if self.bFindOnOff('all'):
             for pin in sghGC.validPins:
                 #print pin
-                if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
+                if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM,sghGC.PPWMMOTOR]:
                     #print pin
                     sghGC.pinUpdate(pin,self.OnOrOff)
 
@@ -618,7 +618,7 @@ class ScratchListener(threading.Thread):
     def vAllCheck(self,searchStr):
         if self.vFindOnOff(searchStr):
             for pin in sghGC.validPins:
-                if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM]:
+                if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM,sghGC.PPWMMOTOR]:
                     sghGC.pinUpdate(pin,self.valueNumeric)
 
     def vPinCheck(self):
@@ -639,9 +639,9 @@ class ScratchListener(threading.Thread):
 
             if self.vFindValue('motor' + str(pin)):
                 if self.valueIsNumeric:
-                    sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
+                    sghGC.pinUpdate(pin,self.valueNumeric,type="pwmmotor")
                 else:
-                    sghGC.pinUpdate(pin,0,type="pwm")
+                    sghGC.pinUpdate(pin,0,type="pwmmotor")
 
             if self.vFindValue('gpio' + str(sghGC.gpioLookup[pin])):
                 logging.debug("gpio lookup %s",str(sghGC.gpioLookup[pin])) 
@@ -1432,12 +1432,12 @@ class ScratchListener(threading.Thread):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 # This technique can be used if enabel is held high by hardware
                                 if svalue > 0:
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
                                     sghGC.pinUpdate(motorList[listLoop][3],1)# set enable to 1
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)            
-                                    sghGC.pinUpdate(motorList[listLoop][2],(svalue),"pwm")   
+                                    sghGC.pinUpdate(motorList[listLoop][2],(svalue),"pwmmotor")   
                                     sghGC.pinUpdate(motorList[listLoop][3],1) # set enable to 1
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][3],0)                      
@@ -1535,12 +1535,12 @@ class ScratchListener(threading.Thread):
                                     #print motorList[listLoop]
                                     #print "motor set forward" , svalue
                                     self.pinUpdate(motorList[listLoop][2],1)
-                                    self.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                    self.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
                                 elif svalue < 0:
                                     #print motorList[listLoop]
                                     #print "motor set backward", svalue
                                     self.pinUpdate(motorList[listLoop][2],0)
-                                    self.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    self.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                 else:
                                     #print svalue, "zero"
                                     self.pinUpdate(motorList[listLoop][1],0)
@@ -1635,10 +1635,10 @@ class ScratchListener(threading.Thread):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
@@ -1718,10 +1718,10 @@ class ScratchListener(threading.Thread):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
@@ -1753,10 +1753,10 @@ class ScratchListener(threading.Thread):
                                 #logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
@@ -1791,10 +1791,10 @@ class ScratchListener(threading.Thread):
                                 logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
@@ -1823,7 +1823,7 @@ class ScratchListener(threading.Thread):
                                     
                     elif "pizazz" in ADDON:
 
-                        #logging.debug("Processing variables for Pizazz")
+                        logging.debug("Processing variables for Pizazz")
                         
                         self.vListCheck([22,18,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
@@ -1833,12 +1833,13 @@ class ScratchListener(threading.Thread):
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s vale:%s", motorList[listLoop][0],svalue)
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
@@ -1904,9 +1905,9 @@ class ScratchListener(threading.Thread):
                             for listLoop in range(0,2):
                                 if self.vFindValue(motorList[listLoop][0]):
                                     if self.valueIsNumeric:
-                                        sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
+                                        sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwmmotor")
                                     else:
-                                        sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
+                                        sghGC.pinUpdate(motorList[listLoop][1],0,type="pwmmotor")
 
                     #Use bit pattern to control ports
                     if self.vFindValue('pinpattern'):
@@ -2199,10 +2200,10 @@ class ScratchListener(threading.Thread):
                             for listLoop in range(0,2):
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-self.turnSpeed),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(100-self.turnSpeed),"pwmmotor")
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(self.turnSpeed),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(self.turnSpeed),"pwmmotor")
 
                         if self.bFindValue("turn"):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -2210,14 +2211,14 @@ class ScratchListener(threading.Thread):
                             turnDualThread.start()                        
                             if svalue > 0:
                                 sghGC.pinUpdate(motorList[0][2],1)
-                                sghGC.pinUpdate(motorList[0][1],(100-self.turnSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[0][1],(100-self.turnSpeed),"pwmmotor")
                                 sghGC.pinUpdate(motorList[1][2],0)
-                                sghGC.pinUpdate(motorList[1][1],(self.turnSpeed),"pwm")                               
+                                sghGC.pinUpdate(motorList[1][1],(self.turnSpeed),"pwmmotor")                               
                             elif svalue < 0:
                                 sghGC.pinUpdate(motorList[0][2],0)
-                                sghGC.pinUpdate(motorList[0][1],(self.turnSpeed),"pwm")
+                                sghGC.pinUpdate(motorList[0][1],(self.turnSpeed),"pwmmotor")
                                 sghGC.pinUpdate(motorList[1][2],1)
-                                sghGC.pinUpdate(motorList[1][1],(100-self.turnSpeed),"pwm")                             
+                                sghGC.pinUpdate(motorList[1][1],(100-self.turnSpeed),"pwmmotor")                             
 
 
                     elif "piringo" in ADDON: # piringo
@@ -2333,7 +2334,6 @@ class ScratchListener(threading.Thread):
                             self.send_scratch_command(bcast_str) 
 
                     elif "pizazz" in ADDON:          
-
                         self.bCheckAll() # Check for all off/on type broadcasrs
                         self.bListCheck([22,18,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
