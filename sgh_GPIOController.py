@@ -64,7 +64,7 @@ class GPIOController :
         self.ledDim = 100
 
         self.PWMFREQ = 200
-        self.PWMFMOTORREQ = 10        
+        self.PWMMOTORFREQ = 10        
         
         self.dsSensorId  = ""
         self.senderLoopDelay = 0.2
@@ -141,7 +141,7 @@ class GPIOController :
                 GPIO.setup(pin,GPIO.IN)
             self.pinUse[pin] = self.PUNUSED
             print "reset pin", pin
-            self.pinValue[pin] = 0
+            #self.pinValue[pin] = 0
             
 
     #Procedure to set pin mode for each pin
@@ -233,7 +233,7 @@ class GPIOController :
                             pass  
                         
                     GPIO.setup(pin,GPIO.OUT) # Setup
-                    if type == "motorpwm":
+                    if type == "pwmmotor":
                         print "motor freq used"
                         self.pinRef[pin] = GPIO.PWM(pin,self.PWMMOTORFREQ) # create new PWM instance
                     else:
