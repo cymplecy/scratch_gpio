@@ -57,11 +57,14 @@ class GPIOController :
         self.PCOUNT = 256
         self.PINPUTDOWN = 512
         self.PINPUTNONE = 1024
+        self.PPWMMOTOR = 2048
+        self.PPWMLED = 4096
 
         self.INVERT = False
         self.ledDim = 100
 
-        self.PWMFREQ = 100
+        self.PWMFREQ = 200
+        self.PWMFMOTORREQ = 10        
         
         self.dsSensorId  = ""
         self.senderLoopDelay = 0.2
@@ -77,6 +80,8 @@ class GPIOController :
         self.countDirection = [1] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins
+        self.pinValue = [0] * self.numOfPins
+
         
         self.pinEventEnabled = True
 		
@@ -135,7 +140,8 @@ class GPIOController :
             elif (self.pinUse[pin] == self.PCOUNT):
                 GPIO.setup(pin,GPIO.IN)
             self.pinUse[pin] = self.PUNUSED
-        self.setPinMode()
+            print "reset pin", pin
+            self.pinValue[pin] = 0
             
 
     #Procedure to set pin mode for each pin
@@ -157,6 +163,7 @@ class GPIOController :
                     GPIO.output(pin,1)
                 else:
                     GPIO.output(pin,0)
+                self.pinValue=[0]
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
@@ -194,12 +201,15 @@ class GPIOController :
         print ("SetPinMode:",self.pinUse)
                 
     def pinUpdate(self, pin, value,type = 'plain',stepDelay = 0.003):
+        print "p,v,t: ",pin,value,type
+        self.pinValue = value
         if (self.ledDim < 100) and (type == 'plain'):
             type = "pwm"
             value = value * self.ledDim
         try:
             #print pin,value,type,self.pinUse[pin]
-            if type == "pwm": # 
+            if type[0:3] == "pwm": # 
+                print "processing pwm"
                 #return
                 if self.INVERT == True: # Invert data value (needed for active low devices)
                     value = 100 - abs(value)
@@ -223,7 +233,11 @@ class GPIOController :
                             pass  
                         
                     GPIO.setup(pin,GPIO.OUT) # Setup
-                    self.pinRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance
+                    if type == "motorpwm":
+                        print "motor freq used"
+                        self.pinRef[pin] = GPIO.PWM(pin,self.PWMMOTORFREQ) # create new PWM instance
+                    else:
+                        self.pinRef[pin] = GPIO.PWM(pin,self.PWMFREQ) # create new PWM instance
                     #print "type of pwm:" ,self.pinRef[pin]
                     self.pinRef[pin].start(max(0,min(100,abs(value)))) # update PWM value
                     self.pinUse[pin] = self.PPWM # set pin use as PWM
