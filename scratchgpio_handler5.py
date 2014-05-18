@@ -1276,10 +1276,10 @@ class ScratchListener(threading.Thread):
                             with lock:
                                 sghGC.resetPinMode()
                                 sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
-                                sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
-                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
-                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
-                                sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7]  = sghGC.POUTPUT #LED
                                 sghGC.pinUse[11] = sghGC.POUTPUT #LED
                                 sghGC.pinUse[18]  = sghGC.POUTPUT #LED
@@ -1288,6 +1288,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
  
                                 sghGC.setPinMode()
+                                sghGC.motorUpdate(19,21,0,0,False)
+                                sghGC.motorUpdate(24,26,0,0,False)
 
                                 print "Pizazz setup"
                                 anyAddOns = True       
