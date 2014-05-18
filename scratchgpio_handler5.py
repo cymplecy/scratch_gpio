@@ -1830,19 +1830,26 @@ class ScratchListener(threading.Thread):
                         #check for motor variable commands
                         motorList = [['motorr',19,21],['motorl',24,26]]
                         #logging.debug("ADDON:%s", ADDON)
+                        
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
-                                logging.debug("motor:%s vale:%s", motorList[listLoop][0],svalue)
-                                if svalue > 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
-                                elif svalue < 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
-                                else:
-                                    sghGC.pinUpdate(motorList[listLoop][1],0)
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)
+                                    
+                        # for listLoop in range(0,2):
+                            # if self.vFindValue(motorList[listLoop][0]):
+                                # svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                # logging.debug("motor:%s vale:%s", motorList[listLoop][0],svalue)
+                                # if svalue > 0:
+                                    # sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    # sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
+                                # elif svalue < 0:
+                                    # sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    # sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
+                                # else:
+                                    # sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    # sghGC.pinUpdate(motorList[listLoop][2],0)
                                     
                     elif "simpie" in ADDON:
                         #do BerryClip stuff
