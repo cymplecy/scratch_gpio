@@ -202,7 +202,7 @@ class GPIOController :
         print ("SetPinMode:",self.pinUse)
                 
     def pinUpdate(self, pin, value,type = 'plain',stepDelay = 0.003):
-        print "p,v,t: ",pin,value,type
+        print "pinUpdate p,v,t: ",pin,value,type
         self.pinValue = value
         if (self.ledDim < 100) and (type == 'plain'):
             type = "pwm"
@@ -298,16 +298,27 @@ class GPIOController :
     def motorUpdate(self, pwmPin, cPin,oPin,value,rev=False):
         print "p,c,v: ", pwmPin, cPin,value
         self.pinValue = value
+        self.mFreq = max(11,abs(value/2))
+        cPinValue = 0
+        if value > 0:
+            cPinValue = 1
+        else:
+            cPinValue = 0
+            if value < 0:
+                value = 100 - abs(value)
         try:
             #print pin,value,type,self.pinUse[pin]
             print "processing pwm"
-            self.mFreq = max(11,abs(value))
             print "motor freq calc", self.mFreq
             try: 
                 print "try just updating pwm"
-                self.pinRef[pwmPin].ChangeFrequency(self.mFreq) # change freq to motor freq
                 self.pinRef[pwmPin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
-                self.pinUpdate(cPin,1)
+                print "Speelp"
+                time.sleep(2)
+                self.pinUpdate(cPin,cPinValue)
+                print "sleep2"
+                time.sleep(2)
+                #self.pinRef[pwmPin].ChangeFrequency(self.mFreq) # change freq to motor freq                
                 print "updating pwm suceceed"
             except:
                 print "pwm not set so now setting up"
@@ -323,16 +334,11 @@ class GPIOController :
                         self.callbackInUse[pwmPin] = False
                     except:
                         pass
-                if (self.pinUse[cPin] in [self.PINPUT,self.PINPUTNONE,self.PINPUTDOWN]): # if pin was an input then we need to clean up
-                    try:
-                        GPIO.remove_event_detect(pin)
-                        self.callbackInUse[cPin] = False
-                    except:
-                        pass                        
+                 
                 GPIO.setup(pwmPin,GPIO.OUT) # Setup
                 self.pinRef[pwmPin] = GPIO.PWM(pwmPin,self.mFreq) # create new PWM instance
-                self.pinRef[pwmPin].start(max(0,min(100,abs(value)))) # update PWM value
-                self.pinUpdate(cPin,1)                
+                self.pinUpdate(cPin,cPinValue)                  
+                self.pinRef[pwmPin].start(max(0,min(100,abs(value)))) # update PWM value       
                 self.pinUse[pwmPin] = self.PPWM # set pin use as PWM
                 #print 'pin' , pin , ' changed to PWM' 
                 #print ("pin",pin, "set to", value)              
