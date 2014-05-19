@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.01' # 17May14 - Major MotorPWM changes
+Version =  'v5.2.03' # 19May14 - Major MotorPWM changes
 import threading
 import socket
 import time
@@ -1276,10 +1276,10 @@ class ScratchListener(threading.Thread):
                             with lock:
                                 sghGC.resetPinMode()
                                 sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
-                                sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
-                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
-                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
-                                sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7]  = sghGC.POUTPUT #LED
                                 sghGC.pinUse[11] = sghGC.POUTPUT #LED
                                 sghGC.pinUse[18]  = sghGC.POUTPUT #LED
@@ -1288,6 +1288,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
  
                                 sghGC.setPinMode()
+                                sghGC.motorUpdate(19,21,0,0,False)
+                                sghGC.motorUpdate(24,26,0,0,False)
 
                                 print "Pizazz setup"
                                 anyAddOns = True       
@@ -1828,22 +1830,15 @@ class ScratchListener(threading.Thread):
                         self.vListCheck([22,18,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
                         #check for motor variable commands
-                        motorList = [['motorr',19,21],['motorl',24,26]]
+                        motorList = [['motorr',19,21,0,False],['motorl',24,26,0,False]]
                         #logging.debug("ADDON:%s", ADDON)
+                        
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
-                                logging.debug("motor:%s vale:%s", motorList[listLoop][0],svalue)
-                                if svalue > 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
-                                elif svalue < 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
-                                else:
-                                    sghGC.pinUpdate(motorList[listLoop][1],0)
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue,motorList[listLoop][4])
+
                     elif "simpie" in ADDON:
                         #do BerryClip stuff
                         self.vAllCheck("all") # check All LEDS On/Off/High/Low/1/0
