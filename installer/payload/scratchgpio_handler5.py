@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.04' # 19May14 - Change Pi2Go PWM
+Version =  'v5.2.06' # 19May14 - Better Motor PWM by switching PWM pins
 import threading
 import socket
 import time
