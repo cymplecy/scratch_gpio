@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.02' # 18May14 - Major MotorPWM changes
+Version =  'v5.2.03' # 19May14 - Major MotorPWM changes
 import threading
 import socket
 import time
