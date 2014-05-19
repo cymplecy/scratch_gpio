@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.03' # 19May14 - Major MotorPWM changes
+Version =  'v5.2.04' # 19May14 - Change Pi2Go PWM
 import threading
 import socket
 import time
@@ -1198,10 +1198,10 @@ class ScratchListener(threading.Thread):
                         if "pi2go" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
-                                sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
-                                sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
-                                sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7]  = sghGC.PINPUT #ObjLeft
                                 sghGC.pinUse[11] = sghGC.PINPUT #ObjRight
                                 sghGC.pinUse[15] = sghGC.PINPUT #ObjMid                                
@@ -1212,6 +1212,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[22]  = sghGC.PINPUT 
 
                                 sghGC.setPinMode()
+                                sghGC.motorUpdate(19,21,0,0,False)
+                                sghGC.motorUpdate(26,24,0,0,False)                                
                             try:
                                 for i in range(0, 16): # go thru PowerPWM on PCA Board
                                     pcaPWM.setPWM(i, 0, 4095)
@@ -1747,21 +1749,27 @@ class ScratchListener(threading.Thread):
                         #logging.debug("Processing variables for Pi2Go")
 
                         #check for motor variable commands
-                        motorList = [['motorb',21,19],['motora',24,26]]
+                        motorList = [['motorb',19,21,0,False],['motora',26,24,0,False]]
                         #logging.debug("ADDON:%s", ADDON)
+                        
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                #logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
-                                if svalue > 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
-                                elif svalue < 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
-                                else:
-                                    sghGC.pinUpdate(motorList[listLoop][1],0)
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue,motorList[listLoop][4])                        
+                        # for listLoop in range(0,2):
+                            # if self.vFindValue(motorList[listLoop][0]):
+                                # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                # #logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
+                                # if svalue > 0:
+                                    # sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    # sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
+                                # elif svalue < 0:
+                                    # sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    # sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
+                                # else:
+                                    # sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    # sghGC.pinUpdate(motorList[listLoop][2],0)
                                     
                         if (pcaPWM != None):
                             ledList = [0,3,6,9,12]
