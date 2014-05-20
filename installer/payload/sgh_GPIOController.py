@@ -207,6 +207,7 @@ class GPIOController :
         #print "pin",pin
         #print "pvalue",self.pinValue
         self.pinValue[pin] = value
+        self.mFreq = max(11,abs(value/2))
         if (self.ledDim < 100) and (type == 'plain'):
             type = "pwm"
             value = value * self.ledDim
@@ -218,7 +219,6 @@ class GPIOController :
                 if self.INVERT == True: # Invert data value (needed for active low devices)
                     value = 100 - abs(value)
                     
-                self.mFreq = max(11,(50 - abs(abs(value) - 50)))
                 print "motor freq calc", self.mFreq
                 try: 
                     #print "try jsut updating pwm"
@@ -295,7 +295,7 @@ class GPIOController :
             print pin,value,type
             pass
             
-    def motorUpdate(self, Pin1, Pin2, Pin3, value, rev=False):
+    def motorUpdate(self, Pin1, Pin2, Pin3, value,rev=False):
         self.mFreq = max(11,abs(value/2))
        # print "mFreq= " , self.mFreq
         PinPWM = Pin1

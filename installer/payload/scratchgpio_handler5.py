@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.06' # 19May14 - Better Motor PWM by switching PWM pins
+Version =  'v5.2.07' # 19May14 - Pibrella MotorE..H added
 import threading
 import socket
 import time
@@ -681,7 +681,12 @@ class ScratchListener(threading.Thread):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
                 else:
-                    sghGC.pinUpdate(pinList[loop],0,type="pwm")   
+                    sghGC.pinUpdate(pinList[loop],0,type="pwm")  
+            if self.vFindValue('motor' + str(nameList[loop])):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwmmotor")
+                else:
+                    sghGC.pinUpdate(pinList[loop],0,type="pwmmotor")                     
                     
     def vListCheckPowerOnly(self,pinList,nameList):
         for loop in range(0,len(pinList)): # loop thru pinlist numbers
@@ -689,7 +694,15 @@ class ScratchListener(threading.Thread):
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwm")
                 else:
-                    sghGC.pinUpdate(pinList[loop],0,type="pwm")                        
+                    sghGC.pinUpdate(pinList[loop],0,type="pwm")     
+                    
+    def vListCheckMotorOnly(self,pinList,nameList):
+        for loop in range(0,len(pinList)): # loop thru pinlist numbers
+            if self.vFindValue('motor' + str(nameList[loop])):
+                if self.valueIsNumeric:
+                    sghGC.pinUpdate(pinList[loop],self.valueNumeric,type="pwmmotor")
+                else:
+                    sghGC.pinUpdate(pinList[loop],0,type="pwmmotor")                     
 
     def stop(self):
         self._stop.set()
@@ -1212,8 +1225,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[22]  = sghGC.PINPUT 
 
                                 sghGC.setPinMode()
-                                sghGC.motorUpdate(19,21,0,0,False)
-                                sghGC.motorUpdate(26,24,0,0,False)                                
+                                sghGC.motorUpdate(19,21,0,0)
+                                sghGC.motorUpdate(26,24,0,0)                                
                             try:
                                 for i in range(0, 16): # go thru PowerPWM on PCA Board
                                     pcaPWM.setPWM(i, 0, 4095)
@@ -1662,6 +1675,7 @@ class ScratchListener(threading.Thread):
 
                         self.vListCheck([13,11,7,15,16,18,22],["led1","led2","led3","led4","led5","led6","led7"])
                         self.vListCheck([13,11,11,11,7,15,16,18,22],["red","amber","yellow","orange","green","outpute","outputf","outputg","outputh"])
+                        self.vListCheckMotorOnly([15,16,18,22],["e","f","g","h"])                        
 
                         if self.vFindValue('stepper'):
                             if self.valueIsNumeric:
@@ -1823,10 +1837,10 @@ class ScratchListener(threading.Thread):
                                 logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
                                 if svalue > 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                 elif svalue < 0:
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwm")
+                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1],0)
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
@@ -1838,14 +1852,14 @@ class ScratchListener(threading.Thread):
                         self.vListCheck([22,18,11,7],["led1","led2","led3","led4"]) # Check for LEDs
 
                         #check for motor variable commands
-                        motorList = [['motorr',19,21,0,False],['motorl',24,26,0,False]]
+                        motorList = [['motorr',19,21,0],['motorl',24,26,0]]
                         #logging.debug("ADDON:%s", ADDON)
                         
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
-                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue,motorList[listLoop][4])
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)
 
                     elif "simpie" in ADDON:
                         #do BerryClip stuff
@@ -2380,7 +2394,14 @@ class ScratchListener(threading.Thread):
                                 if self.valueIsNumeric:
                                     sghGC.pinUpdate(pin,self.valueNumeric,type="pwm")
                                 else:
-                                    sghGC.pinUpdate(pin,0,type="pwm")                                   
+                                    sghGC.pinUpdate(pin,0,type="pwm")
+                                    
+                            if self.bFindValue('motor' + str(pin)+","):
+                                #logging.debug("bPowerPin:%s",pin )    
+                                if self.valueIsNumeric:
+                                    sghGC.pinUpdate(pin,self.valueNumeric,type="pwmmotor")
+                                else:
+                                    sghGC.pinUpdate(pin,0,type="pwmmotor")                                      
 
                             if self.bFind('sonar' + str(pin)):
 
