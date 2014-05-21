@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.07' # 19May14 - Pibrella MotorE..H added
+Version =  'v5.2.08' # 19May14 - Pibrella MotorE..H added
 import threading
 import socket
 import time
@@ -107,7 +107,7 @@ class Compass:
 
     def twos_complement(self, val, len):
         # Convert twos compliment to integer
-        if (val & (1 << len - 1)):
+        if val & (1 << len - 1):
             val = val - (1<<len)
         return val
 
@@ -774,6 +774,13 @@ class ScratchListener(threading.Thread):
         while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
             time.sleep(0.01)
         sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
+
+    def vListHBridge2(self,motorlist):
+        for loop in motorlist:
+            if self.vFindValue(loop[0]):
+                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                logging.debug("motor:%s valuee:%s", loop[0],svalue)
+                sghGC.motorUpdate(loop[1],loop[2],0,svalue)
 
 
 
@@ -1539,29 +1546,13 @@ class ScratchListener(threading.Thread):
                         self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
 
                         #check for motor variable commands
-                        motorList = [['motora',11,12],['motorb',13,15]]
+                        motorList = [['motora',11,12],['motorb',13,15,]]
                         #motorList = [['motora',21,26],['motorb',19,24]]
                         for listLoop in range(0,2):
-                            #print motorList[listLoop]
-                            checkStr = motorList[listLoop][0]
-                            if self.vFind(checkStr):
-                                tempValue = getValue(checkStr, dataraw)
-                                svalue = int(float(tempValue)) if isNumeric(tempValue) else 0
-                                #print "svalue", svalue
-                                if svalue > 0:
-                                    #print motorList[listLoop]
-                                    #print "motor set forward" , svalue
-                                    self.pinUpdate(motorList[listLoop][2],1)
-                                    self.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
-                                elif svalue < 0:
-                                    #print motorList[listLoop]
-                                    #print "motor set backward", svalue
-                                    self.pinUpdate(motorList[listLoop][2],0)
-                                    self.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
-                                else:
-                                    #print svalue, "zero"
-                                    self.pinUpdate(motorList[listLoop][1],0)
-                                    self.pinUpdate(motorList[listLoop][2],0)
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue,motorList[listLoop][4])
 
                         ######### End of gPiO Variable handling
 
@@ -1807,21 +1798,7 @@ class ScratchListener(threading.Thread):
                         logging.debug("Processing variables for HapPi")
 
                         #check for motor variable commands
-                        motorList = [['motor1',11,12],['motor2',15,16]]
-                        logging.debug("ADDON:%s", ADDON)
-                        for listLoop in range(0,2):
-                            if self.vFindValue(motorList[listLoop][0]):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
-                                if svalue > 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
-                                elif svalue < 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
-                                else:
-                                    sghGC.pinUpdate(motorList[listLoop][1],0)
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                        self.vListHBridge2([['motor1',11,12],['motor2',15,16]])
 
                     elif "raspibot2" in ADDON:
                         logging.debug("Processing variables for RasPiBot2")
@@ -1952,12 +1929,12 @@ class ScratchListener(threading.Thread):
                             print 'step delay changed to', step_delay
 
 
-                    if pcfSensor != None: #if PCF ADC found
+                    if pcfSensor is not None: #if PCF ADC found
                         if self.vFindValue('dac'):
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             pcfSensor.writeDAC(max(0,min(255,svalue)))
                             
-                    if (pcaPWM != None):
+                    if pcaPWM is not None:
                         for i in range(0, 16): # go thru servos on PCA Board
                             if self.vFindValue('adaservo' + str(i + 1)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
