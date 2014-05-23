@@ -16,7 +16,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.0.1sw4' # 21May14 Merge pull request from Matt Venn
+Version =  '0.0.1sw5' # 22May14 Add Try except arroudn take pic code
 
 import os,glob,pwd,grp
 
@@ -47,16 +47,22 @@ class RasPiCamera:
 
 
     def take_photo(self):
-        photo_file = self.dir + str(self.num) + '.jpg'
-        os.system("raspistill -n -t 1 -o " + photo_file)
-        print "photo taken: " + photo_file
+        try:
+            photo_file = self.dir + str(self.num) + '.jpg'
+            os.system("raspistill -n -t 1 -o " + photo_file)
+            #chown the photo so it can be modified by the user
+            uid = pwd.getpwnam(self.user).pw_uid
+            #assume group is same name as user
+            gid = grp.getgrnam(self.user).gr_gid
+            os.chown(photo_file, uid, gid)
+            print "photo taken: " + photo_file
+            self.num += 1
+        except:
+            print "Error taking photo - camera probably not correctly fitted"
+            pass
 
-	#chown the photo so it can be modified by the user
-	uid = pwd.getpwnam(self.user).pw_uid
-	#assume group is same name as user
-	gid = grp.getgrnam(self.user).gr_gid
-	os.chown(photo_file, uid, gid)
-        self.num += 1
+
+
 
 #### end RasPiCamera ###############################################################
 

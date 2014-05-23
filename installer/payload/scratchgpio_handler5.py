@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.08' # 19May14 - Pibrella MotorE..H added
+Version =  'v5.2.08' # 23May14 - Ultra Threading
 import threading
 import socket
 import time
@@ -797,9 +797,16 @@ class ScratchListener(threading.Thread):
             # sghGC.pinUpdate(pin,0,"pwm")  # Set duty cycle to 50% to produce square wave
             # time.sleep(0.2)#1.0 / freq)
         # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        # print ("Beep Stopped")            
-
-
+        # print ("Beep Stopped")       
+        
+    def ultra(self,pin):
+        while True:
+            distance = sghGC.pinSonar(pin) # do a ping
+            sensor_name = 'ultra' + str(pin)
+            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+            #print 'sending: %s' % bcast_str
+            self.send_scratch_command(bcast_str)
+            time.sleep(1)
 
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
@@ -1240,10 +1247,17 @@ class ScratchListener(threading.Thread):
                             except:
                                 pass
 
-                                #sghGC.startServod([12,10]) # servos testing motorpitx
+                            print 'Thread start pinging on', str(8)
+                            sghGC.pinUse[8] = sghGC.PSONAR                                 
+                            ultraThread = threading.Thread(target=self.ultra, args=[8])
+                            ultraThread.setDaemon(True)                                
+                            ultraThread.start()                                
 
-                                print "pi2go setup"
-                                anyAddOns = True
+                            #sghGC.startServod([12,10]) # servos testing motorpitx
+
+                            print "pi2go setup"
+                            anyAddOns = True
+                            
                         if "happi" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -2313,7 +2327,17 @@ class ScratchListener(threading.Thread):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
                                     svalue = svalue * sghGC.ledDim / 100
                                     svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                    pcaPWM.setPWM((i*3)+2, 0, svalue)     
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue) 
+                                    
+                        #Start using ultrasonic sensor on a pin    
+                        # if self.bFind('ultra'):
+                                # print 'Thread start pinging on', str(8)
+                                # sghGC.pinUse[8] = sghGC.PSONAR                                 
+                                # ultraThread = threading.Thread(target=self.ultra, args=[8])
+                                # ultraThread.setDaemon(True)                                
+                                # ultraThread.start()
+
+
                                
 
                     elif "raspibot2" in ADDON: 
