@@ -2337,7 +2337,15 @@ class ScratchListener(threading.Thread):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
                                     svalue = svalue * sghGC.ledDim / 100
                                     svalue = min(4095,max((((100-svalue) * 4096) /100),0))
-                                    pcaPWM.setPWM((i*3)+2, 0, svalue) 
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)
+                                if self.bFindOnOff('all'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
+                                    svalue = svalue * sghGC.ledDim / 100
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))  
+                                    pcaPWM.setPWM((i*3), 0, svalue)
+                                    pcaPWM.setPWM((i*3)+1, 0, svalue)
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)    
+                                    
                                     
                         #Start using ultrasonic sensor on a pin    
                         if self.bFindOnOff('ultra'):
