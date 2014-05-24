@@ -195,7 +195,7 @@ class MyError(Exception):
 
     def __str__(self):
         return repr(self.value)
-
+        
 class ScratchSender(threading.Thread):
 
     def __init__(self, socket):
@@ -799,10 +799,10 @@ class ScratchListener(threading.Thread):
         # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
         # print ("Beep Stopped")       
         
-    def ultra(self,pin):
-        while True:
-            distance = sghGC.pinSonar(pin) # do a ping
-            sensor_name = 'ultra' + str(pin)
+    def ultra(self,pintrig,pinecho,stop_event):
+        while(not stop_event.is_set()):
+            distance = sghGC.pinSonar(pintrig) # do a ping
+            sensor_name = 'ultra' + str(pintrig)
             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
             #print 'sending: %s' % bcast_str
             self.send_scratch_command(bcast_str)
@@ -818,6 +818,7 @@ class ScratchListener(threading.Thread):
         firstRunData = ''
         anyAddOns = False
         ADDON = ""
+        ultraThread = None
 
         #semi global variables used for servos in PiRoCon
         panoffset = 0
@@ -1246,12 +1247,21 @@ class ScratchListener(threading.Thread):
                                     pcaPWM.setPWM(i, 0, 4095)
                             except:
                                 pass
-
-                            print 'Thread start pinging on', str(8)
-                            sghGC.pinUse[8] = sghGC.PSONAR                                 
-                            ultraThread = threading.Thread(target=self.ultra, args=[8])
-                            ultraThread.setDaemon(True)                                
-                            ultraThread.start()                                
+                            
+                            startUltra = True
+                            try:
+                                if ultraThread.is_alive():
+                                    startUltra = False
+                            except:
+                                startUltra = True
+                                pass
+                            if startUltra == True:
+                                print 'Thread start pinging on', str(8)
+                                sghGC.pinUse[8] = sghGC.PSONAR                                 
+                                ultra_stop = threading.Event()
+                                ultraThread = threading.Thread(target=self.ultra, args=(8,0,ultra_stop))
+                                ultraThread.start()                   
+                         
 
                             #sghGC.startServod([12,10]) # servos testing motorpitx
 
@@ -2330,12 +2340,29 @@ class ScratchListener(threading.Thread):
                                     pcaPWM.setPWM((i*3)+2, 0, svalue) 
                                     
                         #Start using ultrasonic sensor on a pin    
-                        # if self.bFind('ultra'):
-                                # print 'Thread start pinging on', str(8)
-                                # sghGC.pinUse[8] = sghGC.PSONAR                                 
-                                # ultraThread = threading.Thread(target=self.ultra, args=[8])
-                                # ultraThread.setDaemon(True)                                
-                                # ultraThread.start()
+                        if self.bFindOnOff('ultra'):
+                            if self.OnOrOff == 0:
+                                try:
+                                    if ultra_stop.is_set() is False:
+                                        ultra_stop.set()
+                                        sghGC.pinUse[8] = sghGC.PUNUSED
+                                        print "ultra stopped"
+                                except:
+                                    pass
+                            else:
+                                startUltra = True
+                                try:
+                                    if ultraThread.is_alive():
+                                        startUltra = False
+                                except:
+                                    startUltra = True
+                                    pass
+                                if startUltra == True:
+                                    sghGC.pinUse[8] = sghGC.PSONAR                                 
+                                    ultra_stop = threading.Event()
+                                    ultraThread = threading.Thread(target=self.ultra, args=(8,0,ultra_stop))   
+                                    ultraThread.start()
+                                    print 'Ultra started pinging on', str(8)
 
 
                                
@@ -2891,6 +2918,14 @@ class ScratchListener(threading.Thread):
 
                 #else:
                     #print 'received something: %s' % dataraw
+        try:
+            print "Stopping Ultra"
+            if ultra_stop.is_set() is False:
+                ultra_stop.set()
+                sghGC.pinUse[8] = sghGC.PUNUSED
+                print "ultra stopped"
+        except:
+            pass   
 ###  End of  ScratchListner Class
 
 def create_socket(host, port):
@@ -2939,7 +2974,7 @@ def cleanup_threads(threads):
         print "Stopped "
     except:
         pass
-
+        
     print ("cleanup threads finished")
 
 
