@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.09' # 24May14 - Ultra Threading
+Version =  'v5.2.10' # 25May14 - Ultra in own class
 import threading
 import socket
 import time
@@ -214,8 +214,12 @@ class ultra(threading.Thread):
         
     def run(self):
         while not self.stopped():
-            distance = sghGC.pinSonar(self.pinTrig) # do a ping
-            sensor_name = 'ultra' + str(self.pinTrig)
+            if self.pinEcho == 0:
+                distance = sghGC.pinSonar(self.pinTrig) # do a ping
+                sensor_name = 'ultra' + str(self.pinTrig)
+            else:
+                distance = sghGC.pinSonar2(self.pinTrig,self.pinEcho)
+                sensor_name = 'ultra' + str(self.pinEcho)
             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
             #print 'sending: %s' % bcast_str
             #self.send_scratch_command(bcast_str)
@@ -428,25 +432,25 @@ class ScratchSender(threading.Thread):
                         pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
                         self.broadcast_pin_update(pin,pin_bit_pattern[listIndex])
 
-            if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
-                for pin in sghGC.validPins:
-                    if sghGC.pinUse[pin] == sghGC.PULTRA:
-                        distance = sghGC.pinSonar(pin) # do a ping
-                        sghGC.pinUse[pin] = sghGC.PULTRA # reset pin use back from sonar to ultra
-                        sensor_name = 'ultra' + str(pin)
-                        if "motorpitx" in ADDON:
-                            if pin == 13:
-                                sensor_name = "ultra1"
-                            if pin == 7:
-                                sensor_name = "ultra2"
-                        if "pizazz" in ADDON:
-                            if pin == 8:
-                                sensor_name = "ultra"
+            # if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
+                # for pin in sghGC.validPins:
+                    # if sghGC.pinUse[pin] == sghGC.PULTRA:
+                        # distance = sghGC.pinSonar(pin) # do a ping
+                        # sghGC.pinUse[pin] = sghGC.PULTRA # reset pin use back from sonar to ultra
+                        # sensor_name = 'ultra' + str(pin)
+                        # if "motorpitx" in ADDON:
+                            # if pin == 13:
+                                # sensor_name = "ultra1"
+                            # if pin == 7:
+                                # sensor_name = "ultra2"
+                        # if "pizazz" in ADDON:
+                            # if pin == 8:
+                                # sensor_name = "ultra"
 
-                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                        #print 'sending: %s' % bcast_str
-                        self.send_scratch_command(bcast_str)
-                        self.time_last_ping = time.time()
+                        # bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                        # #print 'sending: %s' % bcast_str
+                        # self.send_scratch_command(bcast_str)
+                        # self.time_last_ping = time.time()
 
             if (time.time() - self.time_last_compass) > 0.25:
                 #print "time up"
@@ -864,7 +868,7 @@ class ScratchListener(threading.Thread):
         firstRunData = ''
         anyAddOns = False
         ADDON = ""
-        ultraThread = None
+        #ultraThread = None
 
         #semi global variables used for servos in PiRoCon
         panoffset = 0
@@ -2236,8 +2240,7 @@ class ScratchListener(threading.Thread):
 
                             #Start using ultrasonic sensor on a pin    
                             if self.bFind('ultra' + str(pin)):
-                                print 'start pinging on', str(pin)
-                                sghGC.pinUse[pin] = sghGC.PULTRA
+                                self.startUltra(pin,0,self.OnOrOff)
 
 
                         motorList = [['turnr',21,26,7],['turnl',19,24,11]]
@@ -2472,7 +2475,7 @@ class ScratchListener(threading.Thread):
                             #Start using ultrasonic sensor on a pin    
                             if self.bFind('ultra' + str(pin)):
                                 print 'start pinging on', str(pin)
-                                sghGC.pinUse[pin] = sghGC.PULTRA
+                                self.startUltra(pin,0,self.OnOrOff)
 
 
                         #end of normal pin checking
