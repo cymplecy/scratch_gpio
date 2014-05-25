@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.10' # 25May14 - Ultra in own class
+Version =  'v5.2.11' # 25May14 - Ultra in own class
 import threading
 import socket
 import time
@@ -214,19 +214,23 @@ class ultra(threading.Thread):
         
     def run(self):
         while not self.stopped():
+            startTime = time.time()
             if self.pinEcho == 0:
                 distance = sghGC.pinSonar(self.pinTrig) # do a ping
                 sensor_name = 'ultra' + str(self.pinTrig)
             else:
                 distance = sghGC.pinSonar2(self.pinTrig,self.pinEcho)
                 sensor_name = 'ultra' + str(self.pinEcho)
-            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+            bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
             #print 'sending: %s' % bcast_str
             #self.send_scratch_command(bcast_str)
             n = len(bcast_str)
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
             self.scratch_socket.send(b + bcast_str)
-            time.sleep(1)
+            timeTaken = time.time()-startTime
+            #print "time taken:",timeTaken
+            if timeTaken < sghGC.ultraFreq:
+                time.sleep(sghGC.ultraFreq - timeTaken)
         print "ultra run ended for pin:",self.pinTrig
         
 class ScratchSender(threading.Thread):
@@ -432,25 +436,6 @@ class ScratchSender(threading.Thread):
                         pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
                         self.broadcast_pin_update(pin,pin_bit_pattern[listIndex])
 
-            # if (time.time() - self.time_last_ping) > 1: # Check if time to do another ultra ping
-                # for pin in sghGC.validPins:
-                    # if sghGC.pinUse[pin] == sghGC.PULTRA:
-                        # distance = sghGC.pinSonar(pin) # do a ping
-                        # sghGC.pinUse[pin] = sghGC.PULTRA # reset pin use back from sonar to ultra
-                        # sensor_name = 'ultra' + str(pin)
-                        # if "motorpitx" in ADDON:
-                            # if pin == 13:
-                                # sensor_name = "ultra1"
-                            # if pin == 7:
-                                # sensor_name = "ultra2"
-                        # if "pizazz" in ADDON:
-                            # if pin == 8:
-                                # sensor_name = "ultra"
-
-                        # bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-                        # #print 'sending: %s' % bcast_str
-                        # self.send_scratch_command(bcast_str)
-                        # self.time_last_ping = time.time()
 
             if (time.time() - self.time_last_compass) > 0.25:
                 #print "time up"
@@ -815,32 +800,6 @@ class ScratchListener(threading.Thread):
                 logging.debug("motor:%s valuee:%s", loop[0],svalue)
                 sghGC.motorUpdate(loop[1],loop[2],0,svalue)
 
-
-
-    # def beep(self,pin,freq,duration):
-        # print freq 
-        # if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
-            # sghGC.pinUpdate(pin,0,"pwm")  #Set pin to PWM mode
-        # startCount = time.time() #Get current time
-        # sghGC.pinFreq(pin,2000) # Set freq used for PWM cycle
-
-        # while (time.time() - startCount) < (duration * 1.0): # Wait until duration has passed
-            # sghGC.pinUpdate(pin,50,"pwm")  # Set duty cycle to 50% to produce square wave
-            # time.sleep(0.2)#1.0 / freq)
-            # sghGC.pinUpdate(pin,0,"pwm")  # Set duty cycle to 50% to produce square wave
-            # time.sleep(0.2)#1.0 / freq)
-        # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
-        # print ("Beep Stopped")       
-        
-    # def ultra(self,pintrig,pinecho,stop_event):
-        # while(not stop_event.is_set()):
-            # distance = sghGC.pinSonar(pintrig) # do a ping
-            # sensor_name = 'ultra' + str(pintrig)
-            # bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-            # #print 'sending: %s' % bcast_str
-            # self.send_scratch_command(bcast_str)
-            # time.sleep(1)
-            
     def startUltra(self,pinTrig,pinEcho,OnOrOff):
         if OnOrOff == 0:
             try:
@@ -2023,7 +1982,12 @@ class ScratchListener(threading.Thread):
 
                     if self.vFindValue("minez"):
                         print "minez"
-                        sghMC.setzPos(int(self.value))                        
+                        sghMC.setzPos(int(self.value))       
+                        
+                    if self.vFindValue('ultradelay'):
+                        sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
+                            
+                            
                   
                                 
 
@@ -2928,6 +2892,9 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % ("Version", Version)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
+                        
+                    if self.bFindValue('ultradelay'):
+                        sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1                        
 
 
                     #end of broadcast check

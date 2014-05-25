@@ -69,6 +69,7 @@ class GPIOController :
         self.dsSensorId  = ""
         self.senderLoopDelay = 0.2
         self.mFreq = 10
+        self.ultraFreq = 1
        
        
        
@@ -380,6 +381,8 @@ class GPIOController :
         ts=time.time()
         for k in range(3):
             #print "sonar pulse" , k
+            GPIO.output(pin, 0)
+            time.sleep(0.05)#set pin low for 50ms as per spec
             GPIO.output(pin, 1)    # Send Pulse high
             time.sleep(0.00001)     #  wait
             GPIO.output(pin, 0)  #  bring it back low - pulse over.
@@ -417,12 +420,14 @@ class GPIOController :
         #print "pulse time" , distance*58
         #print "total time in microsecs" , (tf-ti).microseconds                    
         # only update Scratch values if distance is < 500cm
+        
         if (distance > 280):
             distance = 299
         if (distance < 2):
             distance = 1
-
-        return distance
+        #distance = "x:" +str(int(distlist[0])) + "*" + str(int(distlist[1])) +"*" + str(int(distlist[2])) +"*" + str(int(distlist[3])) +"*" + str(int(distlist[4]))
+        #distance = "fred"
+        return int(distance)
         
     def pinRCTime (self,pin):
         reading = 0
