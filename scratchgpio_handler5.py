@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.08' # 23May14 - Ultra Threading
+Version =  'v5.2.09' # 24May14 - Ultra Threading
 import threading
 import socket
 import time
@@ -195,6 +195,35 @@ class MyError(Exception):
 
     def __str__(self):
         return repr(self.value)
+        
+class ultra(threading.Thread):
+
+    def __init__(self, pinTrig,pinEcho,socket):
+        threading.Thread.__init__(self)
+        self.scratch_socket = socket
+        self._stop = threading.Event()
+        self.pinTrig = pinTrig
+        self.pinEcho = pinEcho
+
+    def stop(self):
+        self._stop.set()
+        print "Sender Stop Set"
+
+    def stopped(self):
+        return self._stop.isSet()
+        
+    def run(self):
+        while not self.stopped():
+            distance = sghGC.pinSonar(self.pinTrig) # do a ping
+            sensor_name = 'ultra' + str(self.pinTrig)
+            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+            #print 'sending: %s' % bcast_str
+            #self.send_scratch_command(bcast_str)
+            n = len(bcast_str)
+            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+            self.scratch_socket.send(b + bcast_str)
+            time.sleep(1)
+        print "ultra run ended for pin:",self.pinTrig
         
 class ScratchSender(threading.Thread):
 
@@ -799,14 +828,31 @@ class ScratchListener(threading.Thread):
         # sghGC.pinUpdate(pin,0,"pwm") #Turn pin off
         # print ("Beep Stopped")       
         
-    def ultra(self,pintrig,pinecho,stop_event):
-        while(not stop_event.is_set()):
-            distance = sghGC.pinSonar(pintrig) # do a ping
-            sensor_name = 'ultra' + str(pintrig)
-            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
-            #print 'sending: %s' % bcast_str
-            self.send_scratch_command(bcast_str)
-            time.sleep(1)
+    # def ultra(self,pintrig,pinecho,stop_event):
+        # while(not stop_event.is_set()):
+            # distance = sghGC.pinSonar(pintrig) # do a ping
+            # sensor_name = 'ultra' + str(pintrig)
+            # bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+            # #print 'sending: %s' % bcast_str
+            # self.send_scratch_command(bcast_str)
+            # time.sleep(1)
+            
+    def startUltra(self,pinTrig,pinEcho,OnOrOff):
+        if OnOrOff == 0:
+            try:
+                sghGC.pinUltraRef[pinTrig].stop()
+                sghGC.pinUse[pinTrig] = sghGC.PUNUSED
+                sghGC.pinUltraRef[pinTrig] = None
+                print "ultra stopped"
+            except:
+                pass
+        else:
+            print "Attemping to start ultra on pin:",pinTrig
+            if sghGC.pinUltraRef[pinTrig] is None:
+                sghGC.pinUse[pinTrig] = sghGC.PSONAR                                 
+                sghGC.pinUltraRef[pinTrig] = ultra(pinTrig,pinEcho,self.scratch_socket) 
+                sghGC.pinUltraRef[pinTrig].start()
+                print 'Ultra started pinging on', str(pinTrig)            
 
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
@@ -1241,28 +1287,17 @@ class ScratchListener(threading.Thread):
 
                                 sghGC.setPinMode()
                                 sghGC.motorUpdate(19,21,0,0)
-                                sghGC.motorUpdate(26,24,0,0)                                
-                            try:
-                                for i in range(0, 16): # go thru PowerPWM on PCA Board
-                                    pcaPWM.setPWM(i, 0, 4095)
-                            except:
-                                pass
-                            
-                            startUltra = True
-                            try:
-                                if ultraThread.is_alive():
-                                    startUltra = False
-                            except:
-                                startUltra = True
-                                pass
-                            if startUltra == True:
-                                print 'Thread start pinging on', str(8)
-                                sghGC.pinUse[8] = sghGC.PSONAR                                 
-                                ultra_stop = threading.Event()
-                                ultraThread = threading.Thread(target=self.ultra, args=(8,0,ultra_stop))
-                                ultraThread.start()                   
+                                sghGC.motorUpdate(26,24,0,0)      
+                                
+                                try:
+                                    for i in range(0, 16): # go thru PowerPWM on PCA Board
+                                        pcaPWM.setPWM(i, 0, 4095)
+                                except:
+                                    pass
+                                
+                                self.startUltra(8,0,self.OnOrOff)               
                          
-
+                                sghGC.pinEventEnabled = 0
                             #sghGC.startServod([12,10]) # servos testing motorpitx
 
                             print "pi2go setup"
@@ -1336,6 +1371,9 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 sghGC.motorUpdate(19,21,0,0,False)
                                 sghGC.motorUpdate(24,26,0,0,False)
+                                #sghGC.pinEventEnabled = 0
+                                
+                                self.startUltra(8,0,self.OnOrOff)                     
 
                                 print "Pizazz setup"
                                 anyAddOns = True       
@@ -2056,7 +2094,7 @@ class ScratchListener(threading.Thread):
 
                     if self.bFindOnOff("eventdetect"):
                         sghGC.pinEventEnabled = self.OnOrOff
-                        print sghGC.pinEventEnabled
+                        print "pinEvent Detect: ",sghGC.pinEventEnabled
 
                     if self.bFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
@@ -2104,11 +2142,11 @@ class ScratchListener(threading.Thread):
 
                         if self.bFind('ultra1'):
                             print 'start pinging on', str(13)
-                            sghGC.pinUse[13] = sghGC.PULTRA
+                            self.startUltra(13,0,self.OnOrOff)
 
                         if self.bFind('ultra2'):
                             print 'start pinging on', str(7)
-                            sghGC.pinUse[7] = sghGC.PULTRA
+                            self.startUltra(7,0,self.OnOrOff)
 
                     elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
                         #print "processing piglow variables"
@@ -2349,31 +2387,7 @@ class ScratchListener(threading.Thread):
                                     
                         #Start using ultrasonic sensor on a pin    
                         if self.bFindOnOff('ultra'):
-                            if self.OnOrOff == 0:
-                                try:
-                                    if ultra_stop.is_set() is False:
-                                        ultra_stop.set()
-                                        sghGC.pinUse[8] = sghGC.PUNUSED
-                                        print "ultra stopped"
-                                except:
-                                    pass
-                            else:
-                                startUltra = True
-                                try:
-                                    if ultraThread.is_alive():
-                                        startUltra = False
-                                except:
-                                    startUltra = True
-                                    pass
-                                if startUltra == True:
-                                    sghGC.pinUse[8] = sghGC.PSONAR                                 
-                                    ultra_stop = threading.Event()
-                                    ultraThread = threading.Thread(target=self.ultra, args=(8,0,ultra_stop))   
-                                    ultraThread.start()
-                                    print 'Ultra started pinging on', str(8)
-
-
-                               
+                           self.startUltra(8,0,self.OnOrOff)
 
                     elif "raspibot2" in ADDON: 
                         self.bCheckAll() # Check for all off/on type broadcasrs
@@ -2399,9 +2413,8 @@ class ScratchListener(threading.Thread):
                             self.send_scratch_command(bcast_str)
 
                         #Start using ultrasonic sensor on a pin    
-                        if self.bFind('ultra'):
-                                print 'start pinging on', str(8)
-                                sghGC.pinUse[8] = sghGC.PULTRA
+                        if self.bFindOnOff('ultra'):
+                           self.startUltra(8,0,self.OnOrOff)
                                 
                     elif "simpie" in ADDON:
                         #do BerryClip stuff
@@ -2926,14 +2939,7 @@ class ScratchListener(threading.Thread):
 
                 #else:
                     #print 'received something: %s' % dataraw
-        try:
-            print "Stopping Ultra"
-            if ultra_stop.is_set() is False:
-                ultra_stop.set()
-                sghGC.pinUse[8] = sghGC.PUNUSED
-                print "ultra stopped"
-        except:
-            pass   
+
 ###  End of  ScratchListner Class
 
 def create_socket(host, port):
@@ -2971,6 +2977,16 @@ def cleanup_threads(threads):
             print "Stopped ", pin
         except:
             pass
+            
+        try:
+            if sghGC.pinUse[pin] == sghGC.PSONAR:
+                print "Attempting sonar stop on pin:",pin
+                sghGC.pinUltraRef[pin].stop()
+                sghGC.pinUse[pin] == sghGC.PUNUSED
+                print "Sonar stopped on pin:",pin
+        except:
+            pass
+            
         #print "pin use", sghGC.pinUse[pin]
         if sghGC.pinUse[pin] in [sghGC.POUTPUT]:
             sghGC.pinUpdate(pin,0)
@@ -2982,6 +2998,7 @@ def cleanup_threads(threads):
         print "Stopped "
     except:
         pass
+        
         
     print ("cleanup threads finished")
 
