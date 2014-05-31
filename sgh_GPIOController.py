@@ -297,7 +297,7 @@ class GPIOController :
             print pin,value,type
             pass
             
-    def motorUpdate(self, Pin1, Pin2, Pin3, value,rev=False):
+    def motorUpdate(self, Pin1, Pin2, Pin3, value):
         self.mFreq = max(11,abs(value/2))
        # print "mFreq= " , self.mFreq
         PinPWM = Pin1
