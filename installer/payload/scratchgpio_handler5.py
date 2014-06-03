@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.11' # 25May14 - Ultra in own class
+Version =  'v5.2.12' # 29May14 - Changes to PiRoCon/MicRoCon motors
 import threading
 import socket
 import time
@@ -1332,8 +1332,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[13] = sghGC.PINPUT #LFRight
  
                                 sghGC.setPinMode()
-                                sghGC.motorUpdate(19,21,0,0,False)
-                                sghGC.motorUpdate(24,26,0,0,False)
+                                sghGC.motorUpdate(19,21,0,0)
+                                sghGC.motorUpdate(24,26,0,0)
                                 #sghGC.pinEventEnabled = 0
                                 
                                 self.startUltra(8,0,self.OnOrOff)                     
@@ -1577,7 +1577,7 @@ class ScratchListener(threading.Thread):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
-                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue,motorList[listLoop][4])
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)
 
                         ######### End of gPiO Variable handling
 
@@ -1658,23 +1658,16 @@ class ScratchListener(threading.Thread):
 
 
                         #check for motor variable commands
-                        motorList = [['motora',21,26],['motorb',19,24]]
+                        motorList = [['motora',21,26,0],['motorb',19,24]]
                         if "piroconb" in ADDON:
                             logging.debug("PiRoConB Found:%s", ADDON)
-                            motorList = [['motora',21,19],['motorb',26,24]]
-                        #logging.debug("ADDON:%s", ADDON)
+                            motorList = [['motora',21,19,0,False],['motorb',26,24,0,False]]
+                       
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                if svalue > 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
-                                elif svalue < 0:
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
-                                    sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
-                                else:
-                                    sghGC.pinUpdate(motorList[listLoop][1],0)
-                                    sghGC.pinUpdate(motorList[listLoop][2],0)
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)
 
                         ######### End of PiRoCon Variable handling
                     elif "piringo" in ADDON:
@@ -1786,7 +1779,7 @@ class ScratchListener(threading.Thread):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
-                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue,motorList[listLoop][4])                        
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)                        
                         # for listLoop in range(0,2):
                             # if self.vFindValue(motorList[listLoop][0]):
                                 # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
