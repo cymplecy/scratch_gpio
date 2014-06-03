@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.12' # 29May14 - Changes to PiRoCon/MicRoCon motors
+Version =  'v5.2.13' # 03May14 - Add in Send to 2nd Scratch session
 import threading
 import socket
 import time
@@ -37,6 +37,7 @@ import logging
 import subprocess
 import sgh_RasPiCamera
 import pygame
+import re
 try:
     from Adafruit_PWM_Servo_Driver import PWM
     print "PWM/Servo imported OK"
@@ -238,6 +239,7 @@ class ScratchSender(threading.Thread):
     def __init__(self, socket):
         threading.Thread.__init__(self)
         self.scratch_socket = socket
+        self.scratch_socket2 = None
         self._stop = threading.Event()
         self.time_last_ping = 0.0
         self.time_last_compass = 0.0
@@ -461,6 +463,7 @@ class ScratchListener(threading.Thread):
     def __init__(self, socket):
         threading.Thread.__init__(self)
         self.scratch_socket = socket
+        self.scratch_socket2 = None
         self._stop = threading.Event()
         self.dataraw = ''
         self.value = None
@@ -2861,7 +2864,34 @@ class ScratchListener(threading.Thread):
                             # print x,y,z
                             # mc.camera.setPos(x,y-1,z)
                             # mc.postToChat("moved")       
-
+                            
+                    if self.bFindValue('link'):
+                        try:
+                            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            self.scratch_socket2.connect((self.value, 42001))
+                            print self.scratch_socket2
+                            print "Connected to ",self.value
+                        except:
+                            print "Failed to connect to ",self.value
+                            pass
+                        
+                    if self.bFindValue('send'):
+                        if self.scratch_socket2 is not None:
+                            print self.dataraw
+                            print self.dataraw.count('send')
+                            #print [match.start() for match in re.finditer(re.escape('send'), self.dataraw)]
+                            cmd ='broadcast '
+                            for qwe in self.dataraw.split(" "):
+                                #print qwe[0:4]
+                                if qwe[0:4] == 'send':
+                                    #print qwe
+                                    #cmd = qwe[4:]
+                                    cmd = cmd + '"' +qwe[4:]+'" '
+                                    #print "sneding:",cmd
+                                   
+                            n = len(cmd)
+                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+                            self.scratch_socket2.send(b + cmd)                        
 
                     if  '1coil' in dataraw:
                         print "1coil broadcast"
@@ -2904,6 +2934,10 @@ class ScratchListener(threading.Thread):
                     #print 'received something: %s' % dataraw
 
 ###  End of  ScratchListner Class
+
+
+
+
 
 def create_socket(host, port):
     while True:
