@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.13' # 03May14 - Add in Send to 2nd Scratch session
+Version =  'v5.2.15' # 04June14 - Changin Alt Broadcasts
 import threading
 import socket
 import time
@@ -2880,18 +2880,19 @@ class ScratchListener(threading.Thread):
                             print self.dataraw
                             print self.dataraw.count('send')
                             #print [match.start() for match in re.finditer(re.escape('send'), self.dataraw)]
-                            cmd ='broadcast '
+                            totalcmd =''
                             for qwe in self.dataraw.split(" "):
                                 #print qwe[0:4]
                                 if qwe[0:4] == 'send':
                                     #print qwe
                                     #cmd = qwe[4:]
-                                    cmd = cmd + '"' +qwe[4:]+'" '
+                                    cmd = 'broadcast "' +qwe[4:]+'"'
                                     #print "sneding:",cmd
-                                   
-                            n = len(cmd)
-                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
-                            self.scratch_socket2.send(b + cmd)                        
+                                    n = len(cmd)
+                                    b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+                                    totalcmd = totalcmd + b + cmd
+                            #print "Sending to Alt:",totalcmd									
+                            self.scratch_socket2.send(totalcmd)                        
 
                     if  '1coil' in dataraw:
                         print "1coil broadcast"
