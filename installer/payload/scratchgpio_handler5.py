@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.15' # 04June14 - Changin Alt Broadcasts
+Version =  'v5.2.17' # 06June14 - AdaFruit bi-color changes
 import threading
 import socket
 import time
@@ -52,12 +52,13 @@ except:
     print "ADC/DAC NOT imported OK"
     pass    
     
-# try:
-    # from sgh_Adafruit_8x8 import sgh_EightByEight
-    # print "8x8 imported OK"
-# except:
-    # print "8x8 NOT imported OK"
-    # pass    
+try:
+    from sgh_Adafruit_8x8 import sgh_EightByEight
+    from sgh_Adafruit_8x8 import ColorEightByEight
+    print "8x8 imported OK"
+except:
+    print "8x8 NOT imported OK"
+    pass    
 
     
 try:
@@ -205,6 +206,7 @@ class ultra(threading.Thread):
         self._stop = threading.Event()
         self.pinTrig = pinTrig
         self.pinEcho = pinEcho
+
 
     def stop(self):
         self._stop.set()
@@ -470,8 +472,12 @@ class ScratchListener(threading.Thread):
         self.valueNumeric = None
         self.valueIsNumeric = None
         self.OnOrOff = None
+        self.searchPos = 0
         self.encoderDiff = 0
         self.turnSpeed = 100
+        self.matrixX = 0
+        self.matrixY = 0        
+        self.matrixUse = 64
 
 
     def send_scratch_command(self, cmd):
@@ -484,7 +490,9 @@ class ScratchListener(threading.Thread):
         sensor_value = self.dataraw[(outputall_pos+1+len(searchString)):].split()
         return sensor_value[0]
 
+    # Find pos of searchStr - must be preceded by a delimiting  space to be found
     def bFind(self,searchStr):
+        self.searchPos = self.dataraw.find(' ' + searchStr) + 1 
         return (' '+searchStr in self.dataraw)
 
     def bFindOn(self,searchStr):
@@ -554,21 +562,29 @@ class ScratchListener(threading.Thread):
 
     def bFindValue(self,searchStr):
         #logging.debug("Searching for:%s",searchStr )
+        #return the value of the charachters following the searchstr as float if possible
+        #If not then try to return string
+        #If not then return ""
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
         if self.bFind(searchStr):
-            self.findPos = self.dataraw.find((searchStr))
-            #logging.debug("1st chars of value:%s",(self.dataraw[self.findPos + len(searchStr):]) )
-            try:
-                if (self.dataraw[self.findPos + len(searchStr):][0]) == " ":
-                    logging.debug("space found in bfindvalue")
-                    self.value = ""
-                    return True
-            except IndexError:
-                self.value = ""
-                return True
-            sensor_value = self.dataraw[(self.dataraw.find((searchStr)) + 0 + len(searchStr)):].split()
+            #logging.debug("SearchStr Found in:%s at:%s",self.dataraw,self.searchPos )
+            # try:
+                # if (self.dataraw[self.searchPos + len(searchStr):][0]) == " ":
+                    # logging.debug("space found in bfindvalue when searching for:%s",searchStr)
+                    # print self.dataraw
+                    # print self.searchPos
+                    # print searchStr
+                    # print self.dataraw[self.searchPos + len(searchStr):]
+                    # self.value = ""
+                    # return True
+            # except IndexError:
+                # print "IndexError in bfindvalue"
+                # self.value = ""
+                # return True
+            sensor_value = self.dataraw[(self.searchPos + len(searchStr)):].split()
+            #print "s value",sensor_value
             try:
                 self.value = sensor_value[0]
             except IndexError:
@@ -1403,6 +1419,18 @@ class ScratchListener(threading.Thread):
 
                 #Listen for Variable changes
                 if 'sensor-update' in self.dataraw:
+                
+                    if self.vFindValue("x"):
+                        self.matrixX = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        self.matrixX = min(7,max(self.matrixX,0))
+                        
+                    if self.vFindValue("y"):
+                        self.matrixY= int(self.valueNumeric) if self.valueIsNumeric else 0
+                        self.matrixY = min(7,max(self.matrixY,0))       
+                        
+                    if self.vFindValue("matrixuse"):
+                        self.matrixUse= int(self.valueNumeric) if self.valueIsNumeric else 64
+                        self.matrixUse = min(64,max(self.matrixUse,9))                          
 
                     #print "sensor-update rcvd" , dataraw
 
@@ -2532,7 +2560,9 @@ class ScratchListener(threading.Thread):
                                 self.send_scratch_command(bcast_str)
 
 
+
                     origdataraw = self.dataraw
+                    
                     if AdaMatrix != None: #Matrix connected
                         #print self.dataraw
                         #print
@@ -2542,36 +2572,70 @@ class ScratchListener(threading.Thread):
                         #print self.dataraw.split('broadcast')
                         broadcastList = self.dataraw.split(' ')
                         for broadcastListLoop in broadcastList:
-                            self.dataraw = str(broadcastListLoop)
-                            #print self.dataraw
+                            self.dataraw = " " + str(broadcastListLoop)
+                            #print "matrix looping tthru",self.dataraw
                             if self.bFind("alloff"):
                                 AdaMatrix.clear()
                             if self.bFind("sweep"):
+                                #print "sweep found"
                                 for y in range(0, 8):
                                     for x in range(0, 8):
                                         AdaMatrix.setPixel((7-x),y)
-                                        time.sleep(0.05)
+                                        time.sleep(0.01)
+                                for y in range(0, 8):
+                                    for x in range(0, 8):
+                                        AdaMatrix.setPixel((7-x),y,2)
+                                        time.sleep(0.01)    
+                                for y in range(0, 8):
+                                    for x in range(0, 8):
+                                        AdaMatrix.setPixel((7-x),y,3)
+                                time.sleep(0.01)    
+                                        
+                            mult = 1
+                            limit = 1
+                            if self.matrixUse == 9:
+                                mult = 3
+                                limit = 2
+                            if self.matrixUse == 16:
+                                mult = 2
+                                limit = 2            
 
+                            for colour in range(0,3):
+                                if self.bFindValue(["green","red","yellow"][colour] + "on"):
+                                    if self.value == "":
+                                        xm = self.matrixX
+                                        ym = self.matrixY
+                                        #print xm,ym
+                                        for yy in range(0,limit):
+                                            for xx in range(0,limit):
+                                                AdaMatrix.setPixel((7 - (xm * mult)-xx),(ym * mult)+yy,colour + 1) 
+                                                
                             for ym in range(0,8):
                                 for xm in range(0,8):
 
-                                    if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
+                                    if self.bFind("matrixon"+str(xm)+"x"+str(ym)+"y"):
                                         AdaMatrix.setPixel((7 - xm),ym)
 
-                                    if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
+                                    if self.bFind("matrixoff"+str(xm)+"x"+str(ym)+"y"):
                                         AdaMatrix.clearPixel((7 - xm),ym)
 
-                                # if self.bFindValue("matrixon"):
-                                    # #print self.value
-                                    # xPos = int(self.value[0:1])
-                                    # yPos = int(self.value[2:3])
-                                    # AdaMatrix.setPixel((7 - xPos),yPos)
-
-                                # if self.bFindValue("matrixoff"):
-                                    # #print self.value
-                                    # xPos = int(self.value[0:1])
-                                    # yPos = int(self.value[2:3])
-                                    # AdaMatrix.clearPixel((7 - xPos),yPos)        
+                            for colour in range(0,3): #["green","red","yellow"]:
+                                if self.bFindValue(["green","red","yellow"][colour] + "on"):
+                                    if self.value != "":
+                                        xm = 0
+                                        ym = 0
+                                    
+                                        #print "gon found"
+                                        #print self.value
+                                        if len(self.value) == 4:
+                                            xm = int(float(self.value[1]))
+                                            ym = int(float(self.value[3]))   
+                                        if len(self.value) == 2:
+                                            xm = int(float(self.value[0]))
+                                            ym = int(float(self.value[1]))                               
+                                        for yy in range(0,limit):
+                                            for xx in range(0,limit):
+                                                AdaMatrix.setPixel((7 - (xm * mult)-xx),(ym * mult)+yy,colour + 1)                                    
 
                             if self.bFindValue("brightness"):
                                 if self.valueIsNumeric:
@@ -2621,18 +2685,20 @@ class ScratchListener(threading.Thread):
                                 AdaMatrix.scroll("left")
                             if self.bFindValue('scrollright'):
                                 print "scrollr" 
-                                AdaMatrix.scroll("right")    
+                                AdaMatrix.scroll("right")                        
 
+                                
+                    self.dataraw = origdataraw #restore oringal sell.dataraw                      
                     if PiMatrix != None: #Matrix connected
                         #print self.dataraw
                         #print
-                        self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:]
+                        self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:] # split dataraw so that operations are sequential
                         #print self.dataraw
                         #print
                         #print self.dataraw.split('broadcast')
                         broadcastList = self.dataraw.split(' ')
                         for broadcastListLoop in broadcastList:
-                            self.dataraw = str(broadcastListLoop)
+                            self.dataraw = " " + str(broadcastListLoop)
                             #print self.dataraw
 
                             if self.bFindOnOff("all"):
@@ -3084,6 +3150,7 @@ except:
 AdaMatrix = None
 try:
     AdaMatrix = sgh_EightByEight(address=0x70)
+    AdaMatrix = ColorEightByEight(address=0x70)
     print AdaMatrix
     print "AdaMatrix Detected"
 except:
