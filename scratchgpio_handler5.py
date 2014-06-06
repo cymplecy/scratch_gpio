@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.15' # 04June14 - Changin Alt Broadcasts
+Version =  'v5.2.15' # 05June14 - Re-add ADAfruit Martix back in
 import threading
 import socket
 import time
@@ -52,12 +52,13 @@ except:
     print "ADC/DAC NOT imported OK"
     pass    
     
-# try:
-    # from sgh_Adafruit_8x8 import sgh_EightByEight
-    # print "8x8 imported OK"
-# except:
-    # print "8x8 NOT imported OK"
-    # pass    
+try:
+    from sgh_Adafruit_8x8 import sgh_EightByEight
+    from sgh_Adafruit_8x8 import ColorEightByEight
+    print "8x8 imported OK"
+except:
+    print "8x8 NOT imported OK"
+    pass    
 
     
 try:
@@ -205,6 +206,7 @@ class ultra(threading.Thread):
         self._stop = threading.Event()
         self.pinTrig = pinTrig
         self.pinEcho = pinEcho
+
 
     def stop(self):
         self._stop.set()
@@ -472,6 +474,9 @@ class ScratchListener(threading.Thread):
         self.OnOrOff = None
         self.encoderDiff = 0
         self.turnSpeed = 100
+        self.matrixX = 0
+        self.matrixY = 0        
+        self.matrixUse = 64
 
 
     def send_scratch_command(self, cmd):
@@ -1403,6 +1408,18 @@ class ScratchListener(threading.Thread):
 
                 #Listen for Variable changes
                 if 'sensor-update' in self.dataraw:
+                
+                    if self.vFindValue("x"):
+                        self.matrixX = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        self.matrixX = min(7,max(self.matrixX,0))
+                        
+                    if self.vFindValue("y"):
+                        self.matrixY= int(self.valueNumeric) if self.valueIsNumeric else 0
+                        self.matrixY = min(7,max(self.matrixY,0))       
+                        
+                    if self.vFindValue("matrixuse"):
+                        self.matrixUse= int(self.valueNumeric) if self.valueIsNumeric else 64
+                        self.matrixUse = min(64,max(self.matrixUse,9))                          
 
                     #print "sensor-update rcvd" , dataraw
 
@@ -2531,97 +2548,162 @@ class ScratchListener(threading.Thread):
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
 
-
-                    origdataraw = self.dataraw
                     if AdaMatrix != None: #Matrix connected
                         #print self.dataraw
                         #print
-                        self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:]
+                        #self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:]
                         #print self.dataraw
                         #print
                         #print self.dataraw.split('broadcast')
-                        broadcastList = self.dataraw.split(' ')
-                        for broadcastListLoop in broadcastList:
-                            self.dataraw = str(broadcastListLoop)
+                        #broadcastList = self.dataraw.split(' ')
+                        #for broadcastListLoop in broadcastList:
+                            #self.dataraw = ' ' + str(broadcastListLoop) # Need to add space onto front of string for search purposes
                             #print self.dataraw
-                            if self.bFind("alloff"):
-                                AdaMatrix.clear()
-                            if self.bFind("sweep"):
-                                for y in range(0, 8):
-                                    for x in range(0, 8):
-                                        AdaMatrix.setPixel((7-x),y)
-                                        time.sleep(0.05)
+                        if self.bFind("alloff"):
+                            AdaMatrix.clear()
+                        if self.bFind("sweep"):
+                            #print "sweep found"
+                            for y in range(0, 8):
+                                for x in range(0, 8):
+                                    AdaMatrix.setPixel((7-x),y)
+                                    time.sleep(0.01)
+                            for y in range(0, 8):
+                                for x in range(0, 8):
+                                    AdaMatrix.setPixel((7-x),y,2)
+                                    time.sleep(0.01)    
+                            for y in range(0, 8):
+                                for x in range(0, 8):
+                                    AdaMatrix.setPixel((7-x),y,3)
+                                    time.sleep(0.01)    
+                                    
+                        if self.matrixUse == 64:
+                            if self.bFind("greenon"):
+                                AdaMatrix.setPixel((7 - self.matrixX),self.matrixY,1)
+                            if self.bFind("redon"):
+                                AdaMatrix.setPixel((7 - self.matrixX),self.matrixY,2)
+                            if self.bFind("yellowon"):
+                                AdaMatrix.setPixel((7 - self.matrixX),self.matrixY,3)
+                            if self.bFind("off"):
+                                AdaMatrix.setPixel((7 - self.matrixX),self.matrixY,0)
+    
 
-                            for ym in range(0,8):
-                                for xm in range(0,8):
+                        if self.matrixUse == 9:
+                            mult = 3
+                            limit = 2
+                            if self.bFind("greenon"):
+                                for yy in range(0,limit):
+                                    for xx in range(0,limit):
+                                        AdaMatrix.setPixel((7 - (self.matrixX * mult)-xx),(self.matrixY * mult)+yy,1)
+                            if self.bFind("redon"):
+                                for yy in range(0,limit):
+                                    for xx in range(0,limit):
+                                        AdaMatrix.setPixel((7 - (self.matrixX * mult)-xx),(self.matrixY *mult)+yy,2)
+                            if self.bFind("yellowon"):
+                                for yy in range(0,limit):
+                                    for xx in range(0,limit):
+                                        AdaMatrix.setPixel((7 - (self.matrixX * mult)-xx),(self.matrixY * mult)+yy,3)
+                            if self.bFind("off"):
+                                for yy in range(0,limit):
+                                    for xx in range(0,limit):
+                                        AdaMatrix.setPixel((7 - (self.matrixX * mult)-xx),(self.matrixY * mult)+yy,0)
+                                        
+                        if self.matrixUse == 16:
+                            mult = 2
+                            limit = 2
+                            if self.bFind("greenon"):
+                                for yy in range(0,limit):
+                                    for xx in range(0,limit):
+                                        AdaMatrix.setPixel((7 - (self.matrixX * mult)-xx),(self.matrixY * mult)+yy,1)
+                            if self.bFind("redon"):
+                                for yy in range(0,limit):
+                                    for xx in range(0,limit):
+                                        AdaMatrix.setPixel((7 - (self.matrixX * mult)-xx),(self.matrixY *mult)+yy,2)
+                            if self.bFind("yellowon"):
+                                for yy in range(0,limit):
+                                    for xx in range(0,limit):
+                                        AdaMatrix.setPixel((7 - (self.matrixX * mult)-xx),(self.matrixY * mult)+yy,3)
+                            if self.bFind("off"):
+                                for yy in range(0,limit):
+                                    for xx in range(0,limit):
+                                        AdaMatrix.setPixel((7 - (self.matrixX * mult)-xx),(self.matrixY * mult)+yy,0)                                        
 
-                                    if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
-                                        AdaMatrix.setPixel((7 - xm),ym)
+                                        
+                                        
+                                    
+                  
 
-                                    if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
-                                        AdaMatrix.clearPixel((7 - xm),ym)
+                        for ym in range(0,8):
+                            for xm in range(0,8):
 
-                                # if self.bFindValue("matrixon"):
-                                    # #print self.value
-                                    # xPos = int(self.value[0:1])
-                                    # yPos = int(self.value[2:3])
-                                    # AdaMatrix.setPixel((7 - xPos),yPos)
+                                if self.bFindValue("matrixon"+str(xm)+"x"+str(ym)+"y"):
+                                    AdaMatrix.setPixel((7 - xm),ym)
 
-                                # if self.bFindValue("matrixoff"):
-                                    # #print self.value
-                                    # xPos = int(self.value[0:1])
-                                    # yPos = int(self.value[2:3])
-                                    # AdaMatrix.clearPixel((7 - xPos),yPos)        
+                                if self.bFindValue("matrixoff"+str(xm)+"x"+str(ym)+"y"):
+                                    AdaMatrix.clearPixel((7 - xm),ym)
 
-                            if self.bFindValue("brightness"):
-                                if self.valueIsNumeric:
-                                    AdaMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
+                            # if self.bFindValue("matrixon"):
+                                # #print self.value
+                                # xPos = int(self.value[0:1])
+                                # yPos = int(self.value[2:3])
+                                # AdaMatrix.setPixel((7 - xPos),yPos)
+
+                            # if self.bFindValue("matrixoff"):
+                                # #print self.value
+                                # xPos = int(self.value[0:1])
+                                # yPos = int(self.value[2:3])
+                                # AdaMatrix.clearPixel((7 - xPos),yPos)        
+
+                        if self.bFindValue("brightness"):
+                            if self.valueIsNumeric:
+                                AdaMatrix.setBrightness(max(0,min(15,self.valueNumeric)))
+                            else:
+                                AdaMatrix.setBrightness(15)
+
+                        if self.bFindValue('matrixpattern'):
+                            bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
+                            #print 'bit_pattern %s' % bit_pattern
+                            for j in range(0,64):
+                                ym = j // 8
+                                xm = j - (8 * ym)
+                                if bit_pattern[j] == '0':
+                                    AdaMatrix.clearPixel((7 - xm),ym)
                                 else:
-                                    AdaMatrix.setBrightness(15)
+                                    AdaMatrix.setPixel((7 - xm),ym)
+                                j = j + 1
 
-                            if self.bFindValue('matrixpattern'):
-                                bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
+                        rowList = ['a','b','c','d','e','f','g','h']
+                        for i in range(0,8):
+                            if self.bFindValue('row'+rowList[i]):
+                                bit_pattern = (self.value + "00000000")[0:8]
                                 #print 'bit_pattern %s' % bit_pattern
-                                for j in range(0,64):
-                                    ym = j // 8
-                                    xm = j - (8 * ym)
-                                    if bit_pattern[j] == '0':
+                                for j in range(0,8):
+                                    ym = i
+                                    xm = j
+                                    if bit_pattern[(j)] == '0':
                                         AdaMatrix.clearPixel((7 - xm),ym)
                                     else:
                                         AdaMatrix.setPixel((7 - xm),ym)
-                                    j = j + 1
 
-                            rowList = ['a','b','c','d','e','f','g','h']
-                            for i in range(0,8):
-                                if self.bFindValue('row'+rowList[i]):
-                                    bit_pattern = (self.value + "00000000")[0:8]
-                                    #print 'bit_pattern %s' % bit_pattern
-                                    for j in range(0,8):
-                                        ym = i
-                                        xm = j
-                                        if bit_pattern[(j)] == '0':
-                                            AdaMatrix.clearPixel((7 - xm),ym)
-                                        else:
-                                            AdaMatrix.setPixel((7 - xm),ym)
+                        colList = ['a','b','c','d','e','f','g','h']
+                        for i in range(0,8):
+                            if self.bFindValue('col'+rowList[i]):
+                                #print self.value
+                                bit_pattern = (self.value + "00000000")[0:8]
+                                for j in range(0,8):
+                                    ym = j
+                                    xm = i
+                                    if bit_pattern[(j)] == '0':
+                                        AdaMatrix.clearPixel((7 - xm),ym)
+                                    else:
+                                        AdaMatrix.setPixel((7 - xm),ym)       
 
-                            colList = ['a','b','c','d','e','f','g','h']
-                            for i in range(0,8):
-                                if self.bFindValue('col'+rowList[i]):
-                                    #print self.value
-                                    bit_pattern = (self.value + "00000000")[0:8]
-                                    for j in range(0,8):
-                                        ym = j
-                                        xm = i
-                                        if bit_pattern[(j)] == '0':
-                                            AdaMatrix.clearPixel((7 - xm),ym)
-                                        else:
-                                            AdaMatrix.setPixel((7 - xm),ym)       
+                        if self.bFindValue('scrollleft'):
+                            AdaMatrix.scroll("left")
+                        if self.bFindValue('scrollright'):
+                            print "scrollr" 
+                            AdaMatrix.scroll("right")    
 
-                            if self.bFindValue('scrollleft'):
-                                AdaMatrix.scroll("left")
-                            if self.bFindValue('scrollright'):
-                                print "scrollr" 
-                                AdaMatrix.scroll("right")    
+                    origdataraw = self.dataraw
 
                     if PiMatrix != None: #Matrix connected
                         #print self.dataraw
@@ -3084,6 +3166,7 @@ except:
 AdaMatrix = None
 try:
     AdaMatrix = sgh_EightByEight(address=0x70)
+    AdaMatrix = ColorEightByEight(address=0x70)
     print AdaMatrix
     print "AdaMatrix Detected"
 except:
