@@ -1430,7 +1430,12 @@ class ScratchListener(threading.Thread):
                         
                     if self.vFindValue("matrixuse"):
                         self.matrixUse= int(self.valueNumeric) if self.valueIsNumeric else 64
-                        self.matrixUse = min(64,max(self.matrixUse,1))                          
+                        self.matrixUse = min(64,max(self.matrixUse,1))      
+                        
+                    if self.vFindValue("matrixrotate"):
+                        print "mr"
+                        
+                        AdaMatrix.setRotate(min(3,max(int(self.valueNumeric) if self.valueIsNumeric else 0,0)))    
 
                     #print "sensor-update rcvd" , dataraw
 
@@ -2580,15 +2585,15 @@ class ScratchListener(threading.Thread):
                                 #print "sweep found"
                                 for y in range(0, 8):
                                     for x in range(0, 8):
-                                        AdaMatrix.setPixel((7-x),y)
+                                        AdaMatrix.setPixel((x),y)
                                         time.sleep(0.01)
                                 for y in range(0, 8):
                                     for x in range(0, 8):
-                                        AdaMatrix.setPixel((7-x),y,2)
+                                        AdaMatrix.setPixel((x),y,2)
                                         time.sleep(0.01)    
                                 for y in range(0, 8):
                                     for x in range(0, 8):
-                                        AdaMatrix.setPixel((7-x),y,3)
+                                        AdaMatrix.setPixel((x),y,3)
                                 time.sleep(0.01)    
                                         
                             mult = 1
@@ -2606,6 +2611,13 @@ class ScratchListener(threading.Thread):
                             colours = ["off","green","red","yellow"]
                             
                             for led in range(0,self.matrixUse):
+                                # if self.bFind("led"+str(led + 1)+"on"):
+                                    # ym = int(led / math.sqrt(self.matrixUse))
+                                    # xm = led - int((math.sqrt(self.matrixUse) * ym))
+                                    # for yy in range(0,limit):
+                                        # for xx in range(0,limit):
+                                            # AdaMatrix.setPixel((7 - (xm * mult)-xx),(ym * mult)+yy,1) 
+                                                
                                 if self.bFind("led"+str(led + 1)):
                                     for colour in colours:
                                         if self.bFind("led"+str(led + 1)+colour):
@@ -2616,7 +2628,7 @@ class ScratchListener(threading.Thread):
                                             print "led found",xm,ym
                                             for yy in range(0,limit):
                                                 for xx in range(0,limit):
-                                                    AdaMatrix.setPixel((7 - (xm * mult)-xx),(ym * mult)+yy,colours.index(colour)) 
+                                                    AdaMatrix.setPixel(( (xm * mult)+xx),(ym * mult)+yy,colours.index(colour)) 
 
                             for colour in range(0,3):
                                 if self.bFindValue(["green","red","yellow"][colour] + "on"):
@@ -2626,16 +2638,16 @@ class ScratchListener(threading.Thread):
                                         #print xm,ym
                                         for yy in range(0,limit):
                                             for xx in range(0,limit):
-                                                AdaMatrix.setPixel((7 - (xm * mult)-xx),(ym * mult)+yy,colour + 1) 
+                                                AdaMatrix.setPixel(((xm * mult)+xx),(ym * mult)+yy,colour + 1) 
                                                 
                             for ym in range(0,8):
                                 for xm in range(0,8):
 
                                     if self.bFind("matrixon"+str(xm)+"x"+str(ym)+"y"):
-                                        AdaMatrix.setPixel((7 - xm),ym)
+                                        AdaMatrix.setPixel((xm),ym)
 
                                     if self.bFind("matrixoff"+str(xm)+"x"+str(ym)+"y"):
-                                        AdaMatrix.clearPixel((7 - xm),ym)
+                                        AdaMatrix.clearPixel(( xm),ym)
 
                             for colour in range(0,3): #["green","red","yellow"]:
                                 if self.bFindValue(["green","red","yellow"][colour] + "on"):
@@ -2653,7 +2665,7 @@ class ScratchListener(threading.Thread):
                                             ym = int(float(self.value[1]))                               
                                         for yy in range(0,limit):
                                             for xx in range(0,limit):
-                                                AdaMatrix.setPixel((7 - (xm * mult)-xx),(ym * mult)+yy,colour + 1)                                    
+                                                AdaMatrix.setPixel(((xm * mult)+xx),(ym * mult)+yy,colour + 1)                                    
 
                             if self.bFindValue("brightness"):
                                 if self.valueIsNumeric:
@@ -2668,9 +2680,9 @@ class ScratchListener(threading.Thread):
                                     ym = j // 8
                                     xm = j - (8 * ym)
                                     if bit_pattern[j] == '0':
-                                        AdaMatrix.clearPixel((7 - xm),ym)
+                                        AdaMatrix.clearPixel((xm),ym)
                                     else:
-                                        AdaMatrix.setPixel((7 - xm),ym)
+                                        AdaMatrix.setPixel((xm),ym)
                                     j = j + 1
 
                             rowList = ['a','b','c','d','e','f','g','h']
@@ -2682,9 +2694,9 @@ class ScratchListener(threading.Thread):
                                         ym = i
                                         xm = j
                                         if bit_pattern[(j)] == '0':
-                                            AdaMatrix.clearPixel((7 - xm),ym)
+                                            AdaMatrix.clearPixel((xm),ym)
                                         else:
-                                            AdaMatrix.setPixel((7 - xm),ym)
+                                            AdaMatrix.setPixel(( xm),ym,1)
 
                             colList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
@@ -2694,10 +2706,12 @@ class ScratchListener(threading.Thread):
                                     for j in range(0,8):
                                         ym = j
                                         xm = i
+                                        
                                         if bit_pattern[(j)] == '0':
-                                            AdaMatrix.clearPixel((7 - xm),ym)
+                                            AdaMatrix.clearPixel((xm),ym)
                                         else:
-                                            AdaMatrix.setPixel((7 - xm),ym)       
+                                            AdaMatrix.setPixel((xm),ym,1) 
+                                    #time.sleep(2)
 
                             if self.bFindValue('scrollleft'):
                                 AdaMatrix.scroll("left")

@@ -18,6 +18,21 @@ class sgh_EightByEight:
       print "Initializing a new instance of LEDBackpack at 0x%02X" % address
     self.disp = sgh_LEDBackpack(address=address, debug=debug)
     self.matrix = [0] * 64
+    self.rotate = 0
+    
+  def checkRotate(self, x , y):
+      if self.rotate == 0:
+          return x, y
+      elif self.rotate == 1:
+          return y, 7-x    
+      elif self.rotate == 2:
+          return 7-x, 7-y    
+      elif self.rotate == 3:
+          return 7-y, x    
+
+  def setRotate(self, rotate):
+      self.rotate = rotate
+      print self.rotate
 
   def writeRowRaw(self, charNumber, value):
     "Sets a row of pixels using a raw 16-bit value"
@@ -32,11 +47,13 @@ class sgh_EightByEight:
 
   def setPixel(self, x, y, color=1):
     "Sets a single pixel"
-    self.matrix[(7-x)+(y*8)] = color
+    x , y = self.checkRotate(x,y)
+    self.matrix[(x)+(y*8)] = color
     if (x >= 8):
       return
     if (y >= 8):
-      return    
+      return   
+    x = 7 - x      
     x += 7   # ATTN: This might be a bug?  On the color matrix, this causes x=0 to draw on the last line instead of the first.
     x %= 8
     # Set the appropriate pixel
@@ -62,30 +79,38 @@ class sgh_EightByEight:
         for y in range(0,8):
             for x in range (0,7):
                 #print (x+1+(y*8))
-                self.setPixel(7-x,y,self.matrix[x+1+(y*8)])
+                self.setPixel(x,y,self.matrix[x+1+(y*8)])
         x=7
         for y in range(0,8):
-            self.setPixel(7-x,y,0)
+            self.setPixel(x,y,0)
         
     if direction == "right":
         print "right"
         for y in range(0,8):
             for x in range (7,0,-1):
                 #print (x+1+(y*8))
-                self.setPixel(7-x,y,self.matrix[x-1+(y*8)])   
+                self.setPixel(x,y,self.matrix[x-1+(y*8)])   
         x=0
         for y in range(0,8):
-            self.setPixel(7-x,y,0)                
+            self.setPixel(x,y,0)            
+
+
 
 
                 
 class ColorEightByEight(sgh_EightByEight):
   def setPixel(self, x, y, color=1):
     "Sets a single pixel"
+    print x , y
+    x , y = self.checkRotate(x,y)
+    print x , y
+    self.matrix[(x)+(y*8)] = color    
     if (x >= 8):
       return
     if (y >= 8):
       return
+    
+    x = 7 - x
 
     x %= 8
 
