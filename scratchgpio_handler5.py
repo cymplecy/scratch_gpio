@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.17' # 06June14 - AdaFruit bi-color changes
+Version =  'v5.2.18' # 08June14 - AdaFruit bi-color changes
 import threading
 import socket
 import time
@@ -1430,7 +1430,7 @@ class ScratchListener(threading.Thread):
                         
                     if self.vFindValue("matrixuse"):
                         self.matrixUse= int(self.valueNumeric) if self.valueIsNumeric else 64
-                        self.matrixUse = min(64,max(self.matrixUse,9))                          
+                        self.matrixUse = min(64,max(self.matrixUse,1))                          
 
                     #print "sensor-update rcvd" , dataraw
 
@@ -2593,12 +2593,30 @@ class ScratchListener(threading.Thread):
                                         
                             mult = 1
                             limit = 1
+                            if self.matrixUse == 4:
+                                mult = 4
+                                limit = 4                            
                             if self.matrixUse == 9:
                                 mult = 3
                                 limit = 2
                             if self.matrixUse == 16:
                                 mult = 2
                                 limit = 2            
+                                
+                            colours = ["off","green","red","yellow"]
+                            
+                            for led in range(0,self.matrixUse):
+                                if self.bFind("led"+str(led + 1)):
+                                    for colour in colours:
+                                        if self.bFind("led"+str(led + 1)+colour):
+                                            ym = int(led / math.sqrt(self.matrixUse))
+                                            xm = led - int((math.sqrt(self.matrixUse) * ym))
+                                            
+                                            print colour
+                                            print "led found",xm,ym
+                                            for yy in range(0,limit):
+                                                for xx in range(0,limit):
+                                                    AdaMatrix.setPixel((7 - (xm * mult)-xx),(ym * mult)+yy,colours.index(colour)) 
 
                             for colour in range(0,3):
                                 if self.bFindValue(["green","red","yellow"][colour] + "on"):
