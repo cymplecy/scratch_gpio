@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.00' # 11June2014 Pin trigger broadcasts
+Version =  'v5.3.01' # 11June2014 Pin trigger broadcasts2
 import threading
 import socket
 import time
@@ -248,7 +248,8 @@ class ScratchSender(threading.Thread):
         self.distlist = [0.0,0.0,0.0]
         self.sleepTime = 0.1
         print "Sender Init"
-        self.loopCmd = ""
+        self.loopCmd = "" # sensor update string
+        self.triggerCmd = "" # broadcast update string
 
 
 
@@ -345,15 +346,19 @@ class ScratchSender(threading.Thread):
         bcast_str = '"' + sensor_name + '" ' + sensorValue
         self.addtosend_scratch_command(bcast_str)
         if sghGC.pinTrigger[pin] == 1:
-            print "broadcast trigger for pin:",pin
+            #print "broadcast trigger for pin:",pin
             cmd = 'broadcast "Trigger' + sensor_name + '"'
+            n = len(cmd)
+            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+            self.triggerCmd = self.triggerCmd + b + cmd
             sghGC.pinTriggerName[pin] = sensor_name
-            self.send_scratch_command( cmd)
             sghGC.pinTrigger[pin] = 2
             if sghGC.anyTrigger == 0:
-                print "Any trigger broadcast"
+                #print "Any trigger broadcast"
                 cmd = 'broadcast "Trigger"'
-                self.send_scratch_command( cmd)
+                n = len(cmd)
+                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+                self.triggerCmd = self.triggerCmd + b + cmd
                 sghGC.anyTrigger = 2
        
 
@@ -444,7 +449,7 @@ class ScratchSender(threading.Thread):
             #print ("this:%s",pin_bit_pattern)
             
 
-            if (time.time() - lastPinUpdateTime)  > 10:  #This is to force the pin names to be read out even if they don't change
+            if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for listIndex in range(len(sghGC.validPins)):
@@ -472,9 +477,12 @@ class ScratchSender(threading.Thread):
             if self.loopCmd <> "":
                 #print "loop:",self.loopCmd
                 self.send_scratch_command("sensor-update " + self.loopCmd)
-                
+                self.scratch_socket.send(self.triggerCmd)
+                logging.debug("Sent to Scratch:%s",self.triggerCmd)
+   
                 
             self.loopCmd = ""
+            self.triggerCmd = ""
 
 class ScratchListener(threading.Thread):
     def __init__(self, socket):
@@ -2116,14 +2124,14 @@ class ScratchListener(threading.Thread):
                       
                     if self.bFindValue("triggerreset"):
                         if self.value == "":
-                            print "any trigger reset found"
+                            #print "any trigger reset found"
                             sghGC.anyTrigger = 0
                             for pin in sghGC.validPins:
                                 sghGC.pinTrigger[pin] = 0
                         else:
                             for pin in sghGC.validPins:
                                 if sghGC.pinTriggerName[pin] == self.value:
-                                    print "trigger reset found",self.value
+                                    #print "trigger reset found",self.value
                                     sghGC.pinTrigger[pin] = 0
                                     sghGC.anyTrigger = 0
 
