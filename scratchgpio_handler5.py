@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.18' # 08June14 - AdaFruit bi-color changes
+Version =  'v5.3.00' # 11June2014 Pin trigger broadcasts
 import threading
 import socket
 import time
@@ -344,6 +344,17 @@ class ScratchSender(threading.Thread):
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
         self.addtosend_scratch_command(bcast_str)
+        if sghGC.pinTrigger[pin] == 1:
+            print "broadcast trigger for pin:",pin
+            cmd = 'broadcast "Trigger' + sensor_name + '"'
+            sghGC.pinTriggerName[pin] = sensor_name
+            self.send_scratch_command( cmd)
+            sghGC.pinTrigger[pin] = 2
+            if sghGC.anyTrigger == 0:
+                print "Any trigger broadcast"
+                cmd = 'broadcast "Trigger"'
+                self.send_scratch_command( cmd)
+                sghGC.anyTrigger = 2
        
 
     def addtosend_scratch_command(self, cmd):
@@ -354,7 +365,7 @@ class ScratchSender(threading.Thread):
         n = len(cmd)
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
-        #print 'sent: %s' %cmd
+        logging.debug("Sent to Scratch:%s", cmd) 
         #time.sleep(2)
         
     def setsleepTime(self, sleepTime):
@@ -399,8 +410,10 @@ class ScratchSender(threading.Thread):
                             #logging.debug("afte uipdating pin patterm:",pin_bit_pattern[listIndex] )
                             if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
                                 logging.debug("pinEvent but pin state the same as before...")
-                                pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex]
+                                pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex] #change pin pattern - warning pinpattern now has !pin state
                             #logging.debug("after checking states pin patterm,last pattern:",pin_bit_pattern[listIndex],last_bit_pattern[listIndex])
+                            if sghGC.pinTrigger[pin] == 0:
+                                sghGC.pinTrigger[pin] = 1
                             time.sleep(0)
 
 
@@ -431,7 +444,7 @@ class ScratchSender(threading.Thread):
             #print ("this:%s",pin_bit_pattern)
             
 
-            if (time.time() - lastPinUpdateTime)  > 2:  #This is to force the pin names to be read out even if they don't change
+            if (time.time() - lastPinUpdateTime)  > 10:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for listIndex in range(len(sghGC.validPins)):
@@ -459,6 +472,8 @@ class ScratchSender(threading.Thread):
             if self.loopCmd <> "":
                 #print "loop:",self.loopCmd
                 self.send_scratch_command("sensor-update " + self.loopCmd)
+                
+                
             self.loopCmd = ""
 
 class ScratchListener(threading.Thread):
@@ -2097,6 +2112,20 @@ class ScratchListener(threading.Thread):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
                         PiGlow_Brightness = sghGC.ledDim
                         print sghGC.ledDim
+                        
+                      
+                    if self.bFindValue("triggerreset"):
+                        if self.value == "":
+                            print "any trigger reset found"
+                            sghGC.anyTrigger = 0
+                            for pin in sghGC.validPins:
+                                sghGC.pinTrigger[pin] = 0
+                        else:
+                            for pin in sghGC.validPins:
+                                if sghGC.pinTriggerName[pin] == self.value:
+                                    print "trigger reset found",self.value
+                                    sghGC.pinTrigger[pin] = 0
+                                    sghGC.anyTrigger = 0
 
                     #self.send_scratch_command("broadcast Begin")
                     if self.bFind("stepper"):
@@ -2717,7 +2746,28 @@ class ScratchListener(threading.Thread):
                                 AdaMatrix.scroll("left")
                             if self.bFindValue('scrollright'):
                                 print "scrollr" 
-                                AdaMatrix.scroll("right")                        
+                                AdaMatrix.scroll("right")             
+                            
+                            if self.bFindValue("getmatrix"):
+                                print "gm found"
+                                if len(self.value) == 4:
+                                    xm = int(float(self.value[1]))
+                                    ym = int(float(self.value[3]))   
+                                if len(self.value) == 3:
+                                    xm = int(float(self.value[0]))
+                                    ym = int(float(self.value[2])) 
+                                if len(self.value) == 2:
+                                    xm = int(float(self.value[0]))
+                                    ym = int(float(self.value[1]))                                     
+                                mValue = AdaMatrix.getPixel(xm,ym) # get  value
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'matrixvalue'
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, mValue)
+                                #print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)
+
+                                                                
+                                
 
                                 
                     self.dataraw = origdataraw #restore oringal sell.dataraw                      

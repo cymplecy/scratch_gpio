@@ -86,6 +86,9 @@ class GPIOController :
         #print "pinValue" , self.pinValue
         #print "pin Value 3 = ", self.pinValue[3]
         self.pinUltraRef = [None] * self.numOfPins
+        self.pinTrigger = [0] * self.numOfPins
+        self.pinTriggerName = ["x"] * self.numOfPins
+        self.anyTrigger = 0
         
         self.pinEventEnabled = True
 		
