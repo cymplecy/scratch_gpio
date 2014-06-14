@@ -17,7 +17,8 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.03' # 14June2014 PyGame commented out due to random errors
+Version =  'v5.3.04' # 14June2014 PyGame commented out due to random errors
+import threading
 import socket
 import time
 import sys
