@@ -14,11 +14,11 @@ class sgh_EightByEight:
 
   # Constructor
   def __init__(self, address=0x70, debug=False):
-    if (debug):
-      print "Initializing a new instance of LEDBackpack at 0x%02X" % address
-    self.disp = sgh_LEDBackpack(address=address, debug=debug)
-    self.matrix = [0] * 64
-    self.rotate = 0
+        if (debug):
+            print "Initializing a new instance of LEDBackpack at 0x%02X" % address
+        self.disp = sgh_LEDBackpack(address=address, debug=debug)
+        self.matrix = [0] * 64
+        self.rotate = 0
     
   def checkRotate(self, x , y):
       if self.rotate == 0:
@@ -33,6 +33,10 @@ class sgh_EightByEight:
   def setRotate(self, rotate):
       self.rotate = rotate
       print self.rotate
+      
+  def getPixel(self, x , y):
+        return self.matrix[(x)+(y*8)]
+
 
   def writeRowRaw(self, charNumber, value):
     "Sets a row of pixels using a raw 16-bit value"

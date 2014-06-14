@@ -17,8 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.18' # 08June14 - AdaFruit bi-color changes
-import threading
+Version =  'v5.3.03' # 14June2014 PyGame commented out due to random errors
 import socket
 import time
 import sys
@@ -36,7 +35,7 @@ import sgh_Minecraft
 import logging
 import subprocess
 import sgh_RasPiCamera
-import pygame
+#import pygame removed becasue causing random failures
 import re
 try:
     from Adafruit_PWM_Servo_Driver import PWM
@@ -179,7 +178,7 @@ def rtnNumeric(value,default):
 
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
 
-def xgetValue(searchString, dataString):
+def getValue(searchString, dataString):
     outputall_pos = dataString.find((searchString + ' '))
     sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
     return sensor_value[0]
@@ -248,7 +247,8 @@ class ScratchSender(threading.Thread):
         self.distlist = [0.0,0.0,0.0]
         self.sleepTime = 0.1
         print "Sender Init"
-        self.loopCmd = ""
+        self.loopCmd = "" # sensor update string
+        self.triggerCmd = "" # broadcast update string
 
 
 
@@ -344,6 +344,21 @@ class ScratchSender(threading.Thread):
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
         self.addtosend_scratch_command(bcast_str)
+        if sghGC.pinTrigger[pin] == 1:
+            #print "broadcast trigger for pin:",pin
+            cmd = 'broadcast "Trigger' + sensor_name + '"'
+            n = len(cmd)
+            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+            self.triggerCmd = self.triggerCmd + b + cmd
+            sghGC.pinTriggerName[pin] = sensor_name
+            sghGC.pinTrigger[pin] = 2
+            if sghGC.anyTrigger == 0:
+                #print "Any trigger broadcast"
+                cmd = 'broadcast "Trigger"'
+                n = len(cmd)
+                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
+                self.triggerCmd = self.triggerCmd + b + cmd
+                sghGC.anyTrigger = 2
        
 
     def addtosend_scratch_command(self, cmd):
@@ -354,7 +369,7 @@ class ScratchSender(threading.Thread):
         n = len(cmd)
         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
         self.scratch_socket.send(b + cmd)
-        #print 'sent: %s' %cmd
+        logging.debug("Sent to Scratch:%s", cmd) 
         #time.sleep(2)
         
     def setsleepTime(self, sleepTime):
@@ -399,8 +414,10 @@ class ScratchSender(threading.Thread):
                             #logging.debug("afte uipdating pin patterm:",pin_bit_pattern[listIndex] )
                             if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
                                 logging.debug("pinEvent but pin state the same as before...")
-                                pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex]
+                                pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex] #change pin pattern - warning pinpattern now has !pin state
                             #logging.debug("after checking states pin patterm,last pattern:",pin_bit_pattern[listIndex],last_bit_pattern[listIndex])
+                            if sghGC.pinTrigger[pin] == 0:
+                                sghGC.pinTrigger[pin] = 1
                             time.sleep(0)
 
 
@@ -459,7 +476,12 @@ class ScratchSender(threading.Thread):
             if self.loopCmd <> "":
                 #print "loop:",self.loopCmd
                 self.send_scratch_command("sensor-update " + self.loopCmd)
+                self.scratch_socket.send(self.triggerCmd)
+                logging.debug("Sent to Scratch:%s",self.triggerCmd)
+   
+                
             self.loopCmd = ""
+            self.triggerCmd = ""
 
 class ScratchListener(threading.Thread):
     def __init__(self, socket):
@@ -488,7 +510,10 @@ class ScratchListener(threading.Thread):
     def getValue(self,searchString):
         outputall_pos = self.dataraw.find((searchString + ' '))
         sensor_value = self.dataraw[(outputall_pos+1+len(searchString)):].split()
-        return sensor_value[0]
+        try:
+            return sensor_value[0]
+        except IndexError:
+            return ""
 
     # Find pos of searchStr - must be preceded by a delimiting  space to be found
     def bFind(self,searchStr):
@@ -624,6 +649,7 @@ class ScratchListener(threading.Thread):
         self.valueIsNumeric = False
         self.OnOrOff = None
         if self.vFind(searchStr):
+
             self.value = self.getValue(searchStr)
             if str(self.value) in ["high","on","1"]:
                 self.valueNumeric = 1
@@ -2097,6 +2123,20 @@ class ScratchListener(threading.Thread):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
                         PiGlow_Brightness = sghGC.ledDim
                         print sghGC.ledDim
+                        
+                      
+                    if self.bFindValue("triggerreset"):
+                        if self.value == "":
+                            #print "any trigger reset found"
+                            sghGC.anyTrigger = 0
+                            for pin in sghGC.validPins:
+                                sghGC.pinTrigger[pin] = 0
+                        else:
+                            for pin in sghGC.validPins:
+                                if sghGC.pinTriggerName[pin] == self.value:
+                                    #print "trigger reset found",self.value
+                                    sghGC.pinTrigger[pin] = 0
+                                    sghGC.anyTrigger = 0
 
                     #self.send_scratch_command("broadcast Begin")
                     if self.bFind("stepper"):
@@ -2717,7 +2757,28 @@ class ScratchListener(threading.Thread):
                                 AdaMatrix.scroll("left")
                             if self.bFindValue('scrollright'):
                                 print "scrollr" 
-                                AdaMatrix.scroll("right")                        
+                                AdaMatrix.scroll("right")             
+                            
+                            if self.bFindValue("getmatrix"):
+                                print "gm found"
+                                if len(self.value) == 4:
+                                    xm = int(float(self.value[1]))
+                                    ym = int(float(self.value[3]))   
+                                if len(self.value) == 3:
+                                    xm = int(float(self.value[0]))
+                                    ym = int(float(self.value[2])) 
+                                if len(self.value) == 2:
+                                    xm = int(float(self.value[0]))
+                                    ym = int(float(self.value[1]))                                     
+                                mValue = AdaMatrix.getPixel(xm,ym) # get  value
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'matrixvalue'
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, mValue)
+                                #print 'sending: %s' % bcast_str
+                                self.send_scratch_command(bcast_str)
+
+                                                                
+                                
 
                                 
                     self.dataraw = origdataraw #restore oringal sell.dataraw                      
@@ -2857,24 +2918,24 @@ class ScratchListener(threading.Thread):
                     if self.bFind('photo'):
                         RasPiCamera.take_photo()
                         
-                    if self.bFindValue('displayphoto'):
-                        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (600,100)
-                        pygame.init()
-                        screen = pygame.display.set_mode((320, 240))
-                        search_dir = "/home/pi/photos/"
-                        os.chdir(search_dir)
-                        files = filter(os.path.isfile, os.listdir(search_dir))
-                        files = [os.path.join(search_dir, f) for f in files] # add path to each file
-                        files.sort(key=lambda x: os.path.getmtime(x))
-                        print files
-                        #os.system('gpicview '+ files[-1])
-                        image1 = pygame.image.load(files[-1])#"/home/pi/photos/0.jpg")
-                        image2 = pygame.transform.scale(image1, (320,240))
-                        screen.fill((255,255,255))
-                        screen.blit(image2,(0,0))
-                        pygame.display.flip()
-                        time.sleep(3)
-                        pygame.display.quit()
+                    # if self.bFindValue('displayphoto'):
+                        # os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (600,100)
+                        # pygame.init()
+                        # screen = pygame.display.set_mode((320, 240))
+                        # search_dir = "/home/pi/photos/"
+                        # os.chdir(search_dir)
+                        # files = filter(os.path.isfile, os.listdir(search_dir))
+                        # files = [os.path.join(search_dir, f) for f in files] # add path to each file
+                        # files.sort(key=lambda x: os.path.getmtime(x))
+                        # print files
+                        # #os.system('gpicview '+ files[-1])
+                        # image1 = pygame.image.load(files[-1])#"/home/pi/photos/0.jpg")
+                        # image2 = pygame.transform.scale(image1, (320,240))
+                        # screen.fill((255,255,255))
+                        # screen.blit(image2,(0,0))
+                        # pygame.display.flip()
+                        # time.sleep(3)
+                        # pygame.display.quit()
                         
                     if self.bFindValue('minecraft'):
                         if self.value == "start":

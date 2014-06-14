@@ -17,8 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.01' # 11June2014 Pin trigger broadcasts2
-import threading
+Version =  'v5.3.03' # 14June2014 PyGame commented out due to random errors
 import socket
 import time
 import sys
@@ -36,7 +35,7 @@ import sgh_Minecraft
 import logging
 import subprocess
 import sgh_RasPiCamera
-import pygame
+#import pygame removed becasue causing random failures
 import re
 try:
     from Adafruit_PWM_Servo_Driver import PWM
@@ -179,7 +178,7 @@ def rtnNumeric(value,default):
 
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
 
-def xgetValue(searchString, dataString):
+def getValue(searchString, dataString):
     outputall_pos = dataString.find((searchString + ' '))
     sensor_value = dataString[(outputall_pos+1+len(searchString)):].split()
     return sensor_value[0]
@@ -511,7 +510,10 @@ class ScratchListener(threading.Thread):
     def getValue(self,searchString):
         outputall_pos = self.dataraw.find((searchString + ' '))
         sensor_value = self.dataraw[(outputall_pos+1+len(searchString)):].split()
-        return sensor_value[0]
+        try:
+            return sensor_value[0]
+        except IndexError:
+            return ""
 
     # Find pos of searchStr - must be preceded by a delimiting  space to be found
     def bFind(self,searchStr):
@@ -647,6 +649,7 @@ class ScratchListener(threading.Thread):
         self.valueIsNumeric = False
         self.OnOrOff = None
         if self.vFind(searchStr):
+
             self.value = self.getValue(searchStr)
             if str(self.value) in ["high","on","1"]:
                 self.valueNumeric = 1
@@ -2915,24 +2918,24 @@ class ScratchListener(threading.Thread):
                     if self.bFind('photo'):
                         RasPiCamera.take_photo()
                         
-                    if self.bFindValue('displayphoto'):
-                        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (600,100)
-                        pygame.init()
-                        screen = pygame.display.set_mode((320, 240))
-                        search_dir = "/home/pi/photos/"
-                        os.chdir(search_dir)
-                        files = filter(os.path.isfile, os.listdir(search_dir))
-                        files = [os.path.join(search_dir, f) for f in files] # add path to each file
-                        files.sort(key=lambda x: os.path.getmtime(x))
-                        print files
-                        #os.system('gpicview '+ files[-1])
-                        image1 = pygame.image.load(files[-1])#"/home/pi/photos/0.jpg")
-                        image2 = pygame.transform.scale(image1, (320,240))
-                        screen.fill((255,255,255))
-                        screen.blit(image2,(0,0))
-                        pygame.display.flip()
-                        time.sleep(3)
-                        pygame.display.quit()
+                    # if self.bFindValue('displayphoto'):
+                        # os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (600,100)
+                        # pygame.init()
+                        # screen = pygame.display.set_mode((320, 240))
+                        # search_dir = "/home/pi/photos/"
+                        # os.chdir(search_dir)
+                        # files = filter(os.path.isfile, os.listdir(search_dir))
+                        # files = [os.path.join(search_dir, f) for f in files] # add path to each file
+                        # files.sort(key=lambda x: os.path.getmtime(x))
+                        # print files
+                        # #os.system('gpicview '+ files[-1])
+                        # image1 = pygame.image.load(files[-1])#"/home/pi/photos/0.jpg")
+                        # image2 = pygame.transform.scale(image1, (320,240))
+                        # screen.fill((255,255,255))
+                        # screen.blit(image2,(0,0))
+                        # pygame.display.flip()
+                        # time.sleep(3)
+                        # pygame.display.quit()
                         
                     if self.bFindValue('minecraft'):
                         if self.value == "start":
