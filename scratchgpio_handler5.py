@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.05' # 15June2014 Event detection and Triggering changed around
+Version =  'v5.3.06' # 17June2014 PiDisp & piGlow changes
 import threading
 import socket
 import time
@@ -59,6 +59,11 @@ try:
 except:
     print "8x8 NOT imported OK"
     pass    
+    
+from nunchuck import nunchuck
+print "nunchuck imported"
+
+        
 
     
 try:
@@ -379,7 +384,7 @@ class ScratchSender(threading.Thread):
 
 
     def run(self):
-        global firstRun,ADDON,compass
+        global firstRun,ADDON,compass,wii
         print lock
         # while firstRun:
             # print "first run running"
@@ -437,6 +442,64 @@ class ScratchSender(threading.Thread):
                         bcast_str = '"' + sensor_name + '" ' + str(adc)
                         self.addtosend_scratch_command(bcast_str)
                         lastADC[channel] = adc
+            print wii
+            if wii != None: #if wii  found
+                x = 0
+                y = 0
+                #print dt.datetime.now()
+                try:
+                    x,y,accelx,accely,accelz,button = wii.raw()
+                    if (x == 255) or (y == 255) or (accelx == 255) or (accely == 255) or (accelz == 255):
+                        print dt.datetime.now()
+                        print "try ok but seems to have locked up"
+                        print x,y,accelx,accely,accelz
+                        print "restarting wii"
+                        wii = nunchuck()
+                        print "wii restarted"
+                        print wii.raw()
+                        raise Escape
+                    #print x , y
+                    sensor_name = 'joystickx'
+                    bcast_str = '"' + sensor_name + '" ' + str(x - 0x7E)
+                    self.addtosend_scratch_command(bcast_str)
+                    sensor_name = 'joysticky'
+                    bcast_str = '"' + sensor_name + '" ' + str(y - 0x7B)
+                    self.addtosend_scratch_command(bcast_str)
+                    sensor_name = 'accelx'
+                    bcast_str = '"' + sensor_name + '" ' + str(accelx -0x7D)
+                    self.addtosend_scratch_command(bcast_str)
+                    sensor_name = 'accely'
+                    bcast_str = '"' + sensor_name + '" ' + str(accely - 0x7A)
+                    self.addtosend_scratch_command(bcast_str)
+                    sensor_name = 'accelz'
+                    bcast_str = '"' + sensor_name + '" ' + str(accelz - 0x7E)
+                    self.addtosend_scratch_command(bcast_str)
+                    button = button & 0x3
+                    sensor_name = 'buttonc'
+                    bcast_str = '"' + sensor_name + '" '
+                    if (button == 1 or button == 2):
+                        bcast_str += "on"
+                    else:
+                        bcast_str += "off"
+                    self.addtosend_scratch_command(bcast_str)               
+                    sensor_name = 'buttonz'
+                    bcast_str = '"' + sensor_name + '" '
+                    if (button == 0 or button == 2):
+                        bcast_str += "on"
+                    else:
+                        bcast_str += "off"
+                    self.addtosend_scratch_command(bcast_str)                             
+                    sensor_name = 'button'
+                    bcast_str = '"' + sensor_name + '" ' + str(button & 0x3)
+                    self.addtosend_scratch_command(bcast_str)
+
+                except:
+                    logging.debug(dt.datetime.now())
+                    logging.debug("exception:Read from Nunchuck failed")
+                    pass
+
+                time.sleep(0.1)
+                    
 
             # if there is a change in the input pins
             for listIndex in range(len(sghGC.validPins)):
@@ -906,6 +969,11 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUse[16] = sghGC.POUTPUT
                 sghGC.pinUse[18] = sghGC.POUTPUT
                 sghGC.setPinMode()
+                
+        if "piglow" != None:      
+            PiGlow_Values = [0] * 18
+            PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
+            PiGlow_Brightness = 255                  
 
 
         #This is main listening routine
@@ -1048,14 +1116,11 @@ class ScratchListener(threading.Thread):
                             logging.getLogger().setLevel(logging.INFO)
                             debugLogging = False                            
 
-                    if (debugLogging == False):
-                        logging.getLogger().setLevel(logging.INFO)
-
-
                     if self.vFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
                         PiGlow_Brightness = sghGC.ledDim
                         print sghGC.ledDim
+                        
 
                     pinsoraddon = None
                     if self.vFindValue("setpins"):
@@ -1146,9 +1211,6 @@ class ScratchListener(threading.Thread):
                         if "piglow" in ADDON:        
                             with lock:
                                 sghGC.resetPinMode()
-                                PiGlow_Values = [0] * 18
-                                PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
-                                PiGlow_Brightness = 255  
                                 anyAddOns = True
 
                         if "gpio" in ADDON:
@@ -1454,6 +1516,75 @@ class ScratchListener(threading.Thread):
                 #Listen for Variable changes
                 if 'sensor-update' in self.dataraw:
                 
+                    if piglow != None:
+                        #do PiGlow stuff but make sure PiGlow physically detected             
+
+                        #check LEDS
+                        for i in range(1,19):
+                            if self.vFindValue('led' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                        for i in range(1,4):
+                            if self.vFindValue('leg' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                            if self.vFindValue('arm' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                        pcolours = ['red','orange','yellow','green','blue','white']
+                        for i in range(len(pcolours)):
+                            if self.vFindValue(pcolours[i]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[i+0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[i+6]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[i+12]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+
+
+                        #Use bit pattern to control leds
+                        if self.vFindValue('ledpattern'):
+                            #print 'Found ledpattern'
+                            num_of_bits = 18
+                            bit_pattern = ('00000000000000000000000000' + self.value)[-num_of_bits:]
+                            #print 'led_pattern %s' % bit_pattern
+                            j = 0
+                            for i in range(18):
+                            #bit_state = ((2**i) & sensor_value) >> i
+                            #print 'dummy pin %d state %d' % (i, bit_state)
+                                if bit_pattern[-(j+1)] == '0':
+                                    PiGlow_Values[PiGlow_Lookup[i]] = 0
+                                else:
+                                    PiGlow_Values[PiGlow_Lookup[i]] = 1
+                                j = j + 1
+
+                            piglow.update_pwm_values(PiGlow_Values)
+
+                        #Replaced by global bright variable code
+                        #if self.vFindValue('bright'):
+                        #    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        #    svalue= min(255,max(svalue,0))
+                        #    PiGlow_Brightness = svalue                
+                
                     if self.vFindValue("x"):
                         self.matrixX = int(self.valueNumeric) if self.valueIsNumeric else 0
                         self.matrixX = min(7,max(self.matrixX,0))
@@ -1564,7 +1695,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
 
 
-                    elif (("piglow" in ADDON) and (piglow != None)):
+                    elif (("piglow" != None) and ("piglow" in ADDON)):      
                         #do PiGlow stuff but make sure PiGlow physically detected             
 
                         #check LEDS
@@ -1631,7 +1762,7 @@ class ScratchListener(threading.Thread):
                         #if self.vFindValue('bright'):
                         #    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                         #    svalue= min(255,max(svalue,0))
-                        #    PiGlow_Brightness = svalue
+                        #    PiGlow_Brightness = svalue             
 
                     elif "gpio" in ADDON:
                         #do gPiO stuff
@@ -2050,11 +2181,74 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue('ultradelay'):
                         sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
                             
-                            
-                  
-                                
+                    if (("piglow" != None) and ("piglow" not in ADDON)):      
+                        #do PiGlow stuff but make sure PiGlow physically detected             
+
+                        #check LEDS
+                        for i in range(1,19):
+                            if self.vFindValue('pgled' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[i-1]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                        for i in range(1,4):
+                            if self.vFindValue('pgleg' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                            if self.vFindValue('pgarm' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                        pcolours = ['pgred','pgorange','pgyellow','pggreen','pgblue','pgwhite']
+                        for i in range(len(pcolours)):
+                            if self.vFindValue(pcolours[i]):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                svalue= min(255,max(svalue,0))
+                                PiGlow_Values[PiGlow_Lookup[i+0]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[i+6]] = svalue
+                                PiGlow_Values[PiGlow_Lookup[i+12]] = svalue
+                                piglow.update_pwm_values(PiGlow_Values)
+
+
+                        #Use bit pattern to control leds
+                        if self.vFindValue('pgledpattern'):
+                            #print 'Found ledpattern'
+                            num_of_bits = 18
+                            bit_pattern = ('00000000000000000000000000' + self.value)[-num_of_bits:]
+                            #print 'led_pattern %s' % bit_pattern
+                            j = 0
+                            for i in range(18):
+                            #bit_state = ((2**i) & sensor_value) >> i
+                            #print 'dummy pin %d state %d' % (i, bit_state)
+                                if bit_pattern[-(j+1)] == '0':
+                                    PiGlow_Values[PiGlow_Lookup[i]] = 0
+                                else:
+                                    PiGlow_Values[PiGlow_Lookup[i]] = 1
+                                j = j + 1
+
+                            piglow.update_pwm_values(PiGlow_Values)
+                                           
 
         ### Check for Broadcast type messages being received
+                print "loggin level",debugLogging
+                if (debugLogging == False):
+                    logging.getLogger().setLevel(logging.INFO)
 
                 if 'broadcast' in self.dataraw:
                     #print 'broadcast:' , self.dataraw
@@ -2160,6 +2354,7 @@ class ScratchListener(threading.Thread):
                         sghGC.pinUse[7]  = sghGC.POUTPUT
                         sghGC.setPinMode()
 
+
                     if "ladder" in ADDON: # Gordon's Ladder Board
                         #do ladderboard stuff
                         #print ("Ladder broadcast processing")                    
@@ -2192,8 +2387,8 @@ class ScratchListener(threading.Thread):
                         if self.bFind('ultra2'):
                             print 'start pinging on', str(7)
                             self.startUltra(7,0,self.OnOrOff)
-
-                    elif (("piglow" in ADDON) and (piglow != None)): # Pimoroni PiGlow
+                            
+                    elif (("piglow" != None) and ("piglow"  in ADDON)):  
                         #print "processing piglow variables"
 
                         if self.bFindOnOff('all'):
@@ -2246,7 +2441,9 @@ class ScratchListener(threading.Thread):
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
                                 PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
-                                piglow.update_pwm_values(PiGlow_Values)
+                                piglow.update_pwm_values(PiGlow_Values)                        
+                                
+                            
 
                     elif "gpio" in ADDON: # gPiO
                         #print ("gPiO broadcast processing")
@@ -2611,6 +2808,62 @@ class ScratchListener(threading.Thread):
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
+                                
+                    if (("piglow" != None) and ("piglow" not in ADDON)):  
+                        #print "processing piglow variables"
+
+                        if self.bFindOnOff('all'):
+                            #print "found allon/off"
+                            for i in range(1,19):
+                                #print i
+                                PiGlow_Values[i-1] = PiGlow_Brightness * self.OnOrOff
+                                #print "Values", PiGlow_Values
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                        #check LEDS
+                        for i in range(1,19):
+                            #check_broadcast = str(i) + 'on'
+                            #print check_broadcast
+                            if self.bFindOnOff('pgled'+str(i)):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                            if self.bFindOnOff('pglight'+str(i)):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[i-1]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                        pcolours = ['pgred','pgorange','pgyellow','pggreen','pgblue','pgwhite']
+                        for i in range(len(pcolours)):
+                            if self.bFindOnOff(pcolours[i]):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[i+0]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[i+6]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[i+12]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                        for i in range(1,4):
+                            if self.bFindOnOff('pgleg'+str(i)):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)
+
+                            if self.bFindOnOff('pgarm'+str(i)):
+                                #print dataraw
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 0]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 1]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 2]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 3]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 4]] = PiGlow_Brightness * self.OnOrOff
+                                PiGlow_Values[PiGlow_Lookup[((i-1)*6) + 5]] = PiGlow_Brightness * self.OnOrOff
+                                piglow.update_pwm_values(PiGlow_Values)                        
+                                
 
 
 
@@ -2922,7 +3175,15 @@ class ScratchListener(threading.Thread):
                                 sensor_name = 'temperature'
                                 bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                                 self.send_scratch_command(bcast_str)
-                    
+                                
+                    if self.bFind("pidisp"): #display IP
+                        print "PiDisp"
+                        try:
+                            os.system("sudo python ipd03.py")
+                        except:
+                            print "error from PiDisp"
+                            pass
+                            
                     if self.bFind('photo'):
                         RasPiCamera.take_photo()
                         
@@ -3272,6 +3533,15 @@ except:
     print "No PiMatrix Detected"
 #PiMatrix.start()
     #time.sleep(5)
+    
+wii = None
+try:
+    print "looking for nunchuck"
+    wii = nunchuck()
+    print nunchuck()
+    print "NunChuck Detected"
+except:
+    print "No NunChuck Detected"    
     
 RasPiCamera = None
 try:

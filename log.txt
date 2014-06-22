@@ -1,0 +1,636 @@
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:          -- -- -- -- -- -- -- -- -- -- -- -- -- 
+10: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+40: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+50: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+60: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+70: -- -- -- -- -- -- -- --                         
+PWM/Servo imported OK
+ADC/DAC imported OK
+Error accessing device at address 0x70
+8x8 NOT imported OK
+nunchuck imported
+Minecraft imported OK
+Board Revision 2
+Debug enabled
+2
+PiGlow init
+i2cbus: 1
+self.bus: <SMBus object at 0x23a9608>
+No PiGlow Detected
+No Compass Detected
+<Adafruit_I2C.Adafruit_I2C instance at 0x23a3260>
+Error accessing device at address 0x40
+No PWM/Servo Board PCA9685 detected
+init PCF8591
+No ADC/DAC PCF8591 Detected
+No AdaMatrix Detected
+No PiMatrix Detected
+looking for nunchuck
+<nunchuck.nunchuck instance at 0x23a3300>
+NunChuck Detected
+pi camera init
+starting at 8
+<sgh_RasPiCamera.RasPiCamera instance at 0x23a3300>
+PATH: /home/pi/sghdev/scratch_gpio
+Starting to connect... Trying
+Connected!
+Sender Init
+Running....
+<thread.lock object at 0xb6d8c1e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+2014-06-22 23:27:34.813217
+try ok but seems to have locked up
+129 132 132 255 160
+restarting wii
+wii restarted
+[130, 132, 132, 160, 162, 55]
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+2014-06-22 23:28:00.742496
+try ok but seems to have locked up
+130 132 138 130 255
+restarting wii
+wii restarted
+[129, 132, 142, 131, 172, 139]
+<nunchuck.nunchuck instance at 0x23c23f0>
+<nunchuck.nunchuck instance at 0x23c23f0>
+<nunchuck.nunchuck instance at 0x23c23f0>
+<nunchuck.nunchuck instance at 0x23c23f0>
+2014-06-22 23:28:02.270407
+try ok but seems to have locked up
+129 132 168 125 255
+restarting wii
+wii restarted
+[129, 132, 169, 125, 149, 215]
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+2014-06-22 23:28:22.986710
+try ok but seems to have locked up
+129 132 116 255 76
+restarting wii
+wii restarted
+[130, 132, 114, 76, 111, 215]
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+2014-06-22 23:28:27.250092
+try ok but seems to have locked up
+129 132 128 255 175
+restarting wii
+wii restarted
+[129, 132, 129, 178, 123, 255]
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+<nunchuck.nunchuck instance at 0x23c23c8>
+2014-06-22 23:28:48.878263
+try ok but seems to have locked up
+129 132 85 110 255
+restarting wii
+wii restarted
+[129, 131, 88, 109, 91, 103]
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+<nunchuck.nunchuck instance at 0x23a34e0>
+2014-06-22 23:29:04.108647
+try ok but seems to have locked up
+129 132 73 121 255
+restarting wii
+wii restarted
+[129, 131, 75, 118, 112, 79]
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+<nunchuck.nunchuck instance at 0x23bbb98>
+2014-06-22 23:29:07.465824
+try ok but seems to have locked up
+129 131 165 118 255
+restarting wii
+wii restarted
+[129, 132, 145, 123, 169, 95]
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+<nunchuck.nunchuck instance at 0x23c2260>
+2014-06-22 23:29:40.660281
+try ok but seems to have locked up
+129 132 98 87 255
+restarting wii
+wii restarted
+[129, 132, 94, 121, 137, 95]
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+<nunchuck.nunchuck instance at 0x23c2058>
+2014-06-22 23:29:53.451843
+try ok but seems to have locked up
+129 132 101 163 255
+restarting wii
+wii restarted
+[129, 132, 104, 172, 128, 191]
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunchuck.nunchuck instance at 0x23bbbc0>
+<nunc
