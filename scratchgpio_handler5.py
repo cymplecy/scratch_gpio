@@ -396,6 +396,7 @@ class ScratchSender(threading.Thread):
         lastTimeSinceLastSleep = time.time()
         self.sleepTime = 0.1
         lastADC = [256,256,256,256]
+        joyx,joyy,accelx,accely,accelz,button = [0,0,0,0,0,0]
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
@@ -442,63 +443,152 @@ class ScratchSender(threading.Thread):
                         bcast_str = '"' + sensor_name + '" ' + str(adc)
                         self.addtosend_scratch_command(bcast_str)
                         lastADC[channel] = adc
-            print wii
+                        
+            #print wii
             if wii != None: #if wii  found
-                x = 0
-                y = 0
-                #print dt.datetime.now()
                 try:
-                    x,y,accelx,accely,accelz,button = wii.raw()
-                    if (x == 255) or (y == 255) or (accelx == 255) or (accely == 255) or (accelz == 255):
+                    joyx,joyy,accelx,accely,accelz,button = wii.raw()
+                    
+                    if (joyx == 255) or (joyy == 255) or (accelx == 255) or (accely == 255) or (accelz == 255):
                         print dt.datetime.now()
                         print "try ok but seems to have locked up"
-                        print x,y,accelx,accely,accelz
+                        print joyx,joyy,accelx,accely,accelz
                         print "restarting wii"
                         wii = nunchuck()
                         print "wii restarted"
                         print wii.raw()
                         raise Escape
-                    #print x , y
-                    sensor_name = 'joystickx'
-                    bcast_str = '"' + sensor_name + '" ' + str(x - 0x7E)
-                    self.addtosend_scratch_command(bcast_str)
-                    sensor_name = 'joysticky'
-                    bcast_str = '"' + sensor_name + '" ' + str(y - 0x7B)
-                    self.addtosend_scratch_command(bcast_str)
-                    sensor_name = 'accelx'
-                    bcast_str = '"' + sensor_name + '" ' + str(accelx -0x7D)
-                    self.addtosend_scratch_command(bcast_str)
-                    sensor_name = 'accely'
-                    bcast_str = '"' + sensor_name + '" ' + str(accely - 0x7A)
-                    self.addtosend_scratch_command(bcast_str)
-                    sensor_name = 'accelz'
-                    bcast_str = '"' + sensor_name + '" ' + str(accelz - 0x7E)
-                    self.addtosend_scratch_command(bcast_str)
-                    button = button & 0x3
-                    sensor_name = 'buttonc'
-                    bcast_str = '"' + sensor_name + '" '
-                    if (button == 1 or button == 2):
-                        bcast_str += "on"
-                    else:
-                        bcast_str += "off"
-                    self.addtosend_scratch_command(bcast_str)               
-                    sensor_name = 'buttonz'
-                    bcast_str = '"' + sensor_name + '" '
-                    if (button == 0 or button == 2):
-                        bcast_str += "on"
-                    else:
-                        bcast_str += "off"
-                    self.addtosend_scratch_command(bcast_str)                             
-                    sensor_name = 'button'
-                    bcast_str = '"' + sensor_name + '" ' + str(button & 0x3)
-                    self.addtosend_scratch_command(bcast_str)
-
                 except:
                     logging.debug(dt.datetime.now())
                     logging.debug("exception:Read from Nunchuck failed")
-                    pass
+                    continue            
+                    
+                #Always send button info
+                button = button & 0x3
+                sensor_name = 'buttonc'
+                bcast_str = '"' + sensor_name + '" '
+                if (button == 1 or button == 0):
+                    bcast_str += "on"
+                else:
+                    bcast_str += "off"
+                self.addtosend_scratch_command(bcast_str)       
+                
+                sensor_name = 'buttonz'
+                bcast_str = '"' + sensor_name + '" '
+                if (button == 2 or button == 0):
+                    bcast_str += "on"
+                else:
+                    bcast_str += "off"
+                self.addtosend_scratch_command(bcast_str)                        
 
-                time.sleep(0.1)
+                if sghGC.nunchuckLevel == 1: #If simple mode just reading joystick digitally
+
+                    joyx = joyx - 0x7E
+                    joyy = joyy - 0x7B
+                    
+                    if joyx > 50:
+                        joyx = 100
+                    elif joyx < -50:
+                        joyx = -100
+                    else:
+                        joyx = 0
+                        
+                    if joyy > 50:
+                        joyy = 100
+                    elif joyy < -50:
+                        joyy = -100
+                    else:
+                        joyy = 0                        
+                    sensor_name = 'joystickx'
+                    bcast_str = '"' + sensor_name + '" ' + str(joyx)
+                    self.addtosend_scratch_command(bcast_str)
+                    sensor_name = 'joysticky'
+                    bcast_str = '"' + sensor_name + '" ' + str(joyy)
+                    self.addtosend_scratch_command(bcast_str)
+                    
+                  
+                if sghGC.nunchuckLevel == 2:
+
+                    joyx = joyx - 0x7E
+                    joyy = joyy - 0x7B
+                    sensor_name = 'joystickx'
+                    bcast_str = '"' + sensor_name + '" ' + str(joyx)
+                    self.addtosend_scratch_command(bcast_str)
+                    sensor_name = 'joysticky'
+                    bcast_str = '"' + sensor_name + '" ' + str(joyy)
+                    self.addtosend_scratch_command(bcast_str)
+                    
+                    accelx = int(min(max(1.8 * (accelx -0x7F),-90),90))
+                    accely = - int(min(max(1.8 * (accely -0x7F),-90),90))
+                    accelz = int(min(max(1.8 * (accelz-0x7F),-90),90))
+
+                    
+                    #accelx = 45
+                    #accely = 45
+                    turnx = accelx
+                    turny = accely
+                    if accelz < 0:
+                        if turnx >= 0:
+                            turnx = 90
+                        else:
+                            turnx = -90
+                    
+                    if abs(turny) > 80:
+                        turnx = 0
+
+                    button = button & 0x3
+                    sensor_name = 'buttonc'
+                    bcast_str = '"' + sensor_name + '" '
+                    if (button == 1 or button == 0):
+                        bcast_str += "on"
+                    else:
+                        bcast_str += "off"
+                    self.addtosend_scratch_command(bcast_str)       
+                    
+                    sensor_name = 'buttonz'
+                    bcast_str = '"' + sensor_name + '" '
+                    if (button == 2 or button == 0):
+                        bcast_str += "on"
+                    else:
+                        bcast_str += "off"
+                    self.addtosend_scratch_command(bcast_str)     
+                    
+                    if (button == 2 or button == 0):
+                        angle = 0 - (math.atan2(-y, -x) * 180.0 / math.pi) - 90
+                        sensor_name = 'angle'
+                        bcast_str = '"' + sensor_name + '" ' + str(angle)
+                        self.addtosend_scratch_command(bcast_str)
+                    else:
+                        angle = 0 - (math.atan2(-turny, -turnx) * 180.0 / math.pi) - 90
+                        sensor_name = 'angle'
+                        bcast_str = '"' + sensor_name + '" ' + str(angle)
+                        self.addtosend_scratch_command(bcast_str)
+                        
+                        leftright = turnx * 100 / 90
+                        
+                        sensor_name = 'leftright'
+                        bcast_str = '"' + sensor_name + '" ' + str(leftright)
+                        self.addtosend_scratch_command(bcast_str) 
+                        
+                        updown = turny * 100 / 90
+
+                        sensor_name = 'updown'
+                        bcast_str = '"' + sensor_name + '" ' + str(updown)
+                        self.addtosend_scratch_command(bcast_str)                     
+                        
+                    sensor_name = 'accelx'
+                    bcast_str = '"' + sensor_name + '" ' + str(accelx)
+                    self.addtosend_scratch_command(bcast_str)                         
+                    
+                    sensor_name = 'accely'
+                    bcast_str = '"' + sensor_name + '" ' + str(accely)
+                    self.addtosend_scratch_command(bcast_str)
+                    
+                    sensor_name = 'accelz'
+                    bcast_str = '"' + sensor_name + '" ' + str(accelz)
+                    self.addtosend_scratch_command(bcast_str)
+
+                time.sleep(0.2)
                     
 
             # if there is a change in the input pins
@@ -545,10 +635,10 @@ class ScratchSender(threading.Thread):
             if self.loopCmd <> "":
                 #print "loop:",self.loopCmd
                 self.send_scratch_command("sensor-update " + self.loopCmd)
-                logging.debug("Sensor update sent to Scratch:%s", self.loopCmd)
+                #logging.debug("Sensor update sent to Scratch:%s", self.loopCmd)
             if self.triggerCmd <> "":
                 self.scratch_socket.send(self.triggerCmd)
-                logging.debug("Trigger broadcast sent to Scratch:%s",self.triggerCmd)
+                #logging.debug("Trigger broadcast sent to Scratch:%s",self.triggerCmd)
    
                 
             self.loopCmd = ""
