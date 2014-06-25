@@ -561,9 +561,11 @@ class GPIOController :
             for loop in possSensors:
                 if loop[:2] == "28":
                      self.dsSensorId = loop
+                     print "DS18B found"
                      return True
         except:
             pass
+        print "ds18b not found"
         return False
 
     def getDS180Temp(self):
@@ -576,8 +578,10 @@ class GPIOController :
             tfile.close()
             # Split the text with new lines (\n) and select the second line.
             secondline = text.split("\n")[1]
+            #print "2nd line",secondline
             # Split the line into words, referring to the spaces, and select the 10th word (counting from 0).
             temperaturedata = secondline.split(" ")[9]
+            #print "temp data", temperaturedata
             # The first two characters are "t=", so get rid of those and convert the temperature from a string to a number.
             temperature = float(temperaturedata[2:]) / 1000.0
         except:

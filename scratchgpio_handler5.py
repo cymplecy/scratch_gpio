@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.06' # 17June2014 PiDisp & piGlow changes
+Version =  'v5.3.07' # 25June2014 NunChuck code
 import threading
 import socket
 import time
@@ -485,7 +485,7 @@ class ScratchSender(threading.Thread):
 
                     joyx = joyx - 0x7E
                     joyy = joyy - 0x7B
-                    
+
                     if joyx > 50:
                         joyx = 100
                     elif joyx < -50:
@@ -3257,14 +3257,16 @@ class ScratchListener(threading.Thread):
 
                     if self.bFind("gettemp"): #find temp address
                         if sghGC.dsSensorId == "":
+                            print "checking for DS18B"
                             sghGC.findDS180()
-                            if sghGC.dsSensorId == "":
-                                print "ds:", sghGC.dsSensorId
-                                print "getting temp"
-                                temperature = sghGC.getDS180Temp( sghGC.dsSensorId)
-                                sensor_name = 'temperature'
-                                bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
-                                self.send_scratch_command(bcast_str)
+                            time.sleep(1)
+                        if sghGC.dsSensorId != "":
+                            print "ds:", sghGC.dsSensorId
+                            print "getting temp"
+                            temperature = sghGC.getDS180Temp() #sghGC.dsSensorId)
+                            sensor_name = 'temperature'
+                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
+                            self.send_scratch_command(bcast_str)
                                 
                     if self.bFind("pidisp"): #display IP
                         print "PiDisp"
