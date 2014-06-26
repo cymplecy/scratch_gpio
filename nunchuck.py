@@ -8,7 +8,8 @@
 ## v0.1 03/05/14 - Initital release
 ## v0.2 21/06/14 - Retrieve one byte at a time [Simon Walters - @cymplecy]
 ## v0.3 22/06/14 - Minor Refactoring [Jack Wearden - @JackWeirdy]
-## v0.31 25/6/14 - XOR each data byte with 0x17 and then add 0x17 to produce corrent values - Simon Walters @cymplecy
+## v0.32 25/6/14 - XOR each data byte with 0x17 and then add 0x17 to produce corrent values - Simon Walters @cymplecy
+## v0.4 26/6/14 - Change method of XOR and add delay parameter - Simon Walters @cymplecy
 
 from smbus import SMBus
 import RPi.GPIO as rpi
@@ -18,7 +19,8 @@ bus = 0
 
 class nunchuck:
 
-  def __init__(self):
+  def __init__(self,delay = 0.05):
+    self.delay = delay
     if rpi.RPI_REVISION == 1:
       i2c_bus = 0
     elif rpi.RPI_REVISION == 2:
@@ -32,11 +34,8 @@ class nunchuck:
 
   def read(self):
     self.bus.write_byte(0x52,0x00)
-    time.sleep(0.05)
-    temp = [self.bus.read_byte(0x52) for i in range(6)]
-    new_temp = []
-    for i in temp:
-        new_temp.append((i ^ 0x17 ) + 0x17)
+    time.sleep(self.delay)
+    temp = [(0x17 + (0x17 ^ self.bus.read_byte(0x52))) for i in range(6)]
     return temp
 
   def raw(self):
@@ -82,6 +81,9 @@ class nunchuck:
   def accelerometer_z(self):
     data = self.read()
     return data[4]
+    
+  def setdelay(self,delay):
+    self.delay = delay
 
 
   def scale(self,value,_min,_max,_omin,_omax):

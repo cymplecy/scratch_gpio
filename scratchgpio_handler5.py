@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.07' # 25June2014 NunChuck code
+Version =  'v5.3.20' # 26June2014 NunChuck code released
 import threading
 import socket
 import time
@@ -400,9 +400,11 @@ class ScratchSender(threading.Thread):
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
-            #print loopTime * 1000
+            #print "how many millisecs since last loop", (loopTime * 1000)
             if loopTime < self.sleepTime:
-                time.sleep(self.sleepTime-(time.time() - lastTimeSinceLastSleep)) # be kind to cpu  :)
+                sleepdelay = self.sleepTime -loopTime 
+                #print "add in sleep of milliesec:",(sleepdelay) * 1000                
+                time.sleep(sleepdelay) # be kind to cpu  :)
             lastTimeSinceLastSleep = time.time() 
 
             #print "before lock"
@@ -486,27 +488,77 @@ class ScratchSender(threading.Thread):
                     joyx = joyx - 0x7E
                     joyy = joyy - 0x7B
 
-                    if joyx > 50:
-                        joyx = 100
-                    elif joyx < -50:
-                        joyx = -100
-                    else:
-                        joyx = 0
+                    joyx = math.copysign(100, joyx) if abs(joyx) > 50 else 0
                         
-                    if joyy > 50:
-                        joyy = 100
-                    elif joyy < -50:
-                        joyy = -100
-                    else:
-                        joyy = 0                        
+                    joyy = math.copysign(100, joyy) if abs(joyy) > 50 else 0   
+                    #if (abs(joyx) + abs(joyy)) == 200:
+                    #    joyx = math.copysign(70, joyx)
+                    #    joyy = math.copysign(70, joyy)
+                    
+                    jx = "middle"
+                    jy = "middle"
+                    
+                    if joyx > 25:
+                        jx = "right"
+                    elif joyx < -25:
+                        jx = "left"
+                        
+                    if joyy > 25:
+                        jy = "up"
+                    elif joyy < -25:
+                        jy = "down"                        
+                    
+                    
                     sensor_name = 'joystickx'
-                    bcast_str = '"' + sensor_name + '" ' + str(joyx)
+                    bcast_str = '"' + sensor_name + '" ' + jx
                     self.addtosend_scratch_command(bcast_str)
                     sensor_name = 'joysticky'
-                    bcast_str = '"' + sensor_name + '" ' + str(joyy)
+                    bcast_str = '"' + sensor_name + '" ' + jy
                     self.addtosend_scratch_command(bcast_str)
                     
-                  
+                    if (abs(joyx) + abs(joyy)) != 0:
+                        #print joyx,joyy 
+                        angle = (math.atan2(-joyy, -joyx) * 180.0 / math.pi)
+                        angle = angle + 180 # "Normal" non-scratch angle
+                        angle =  angle -90 
+                        #angle = angle - 90
+                        angle = (angle + 720) % 360
+                        angle = (-angle) if (angle) < 180 else (360 - angle)
+                        sensor_name = 'angle'
+                        bcast_str = '"' + sensor_name + '" ' + str(int(angle))
+                        self.addtosend_scratch_command(bcast_str)
+
+
+                    accelx = int(min(max(1.8 * (accelx -0x7F),-90),90))
+                    accely = - int(min(max(1.8 * (accely -0x7F),-90),90))
+                    accelz = int(min(max(1.8 * (accelz-0x7F),-90),90))
+
+                    #accelx = 45
+                    #accely = 45
+                    turnx = accelx
+                    turny = accely
+                    if accelz < 0:
+                        if turnx >= 0:
+                            turnx = 90
+                        else:
+                            turnx = -90
+                    
+                    if abs(turny) > 80:
+                        turnx = 0
+                    
+                    leftright = turnx 
+                    
+                    sensor_name = 'leftright'
+                    bcast_str = '"' + sensor_name + '" ' + str(leftright)
+                    self.addtosend_scratch_command(bcast_str) 
+                    
+                    updown = turny
+
+                    sensor_name = 'updown'
+                    bcast_str = '"' + sensor_name + '" ' + str(updown)
+                    self.addtosend_scratch_command(bcast_str)                     
+                        
+
                 if sghGC.nunchuckLevel == 2:
 
                     joyx = joyx - 0x7E
@@ -588,7 +640,7 @@ class ScratchSender(threading.Thread):
                     bcast_str = '"' + sensor_name + '" ' + str(accelz)
                     self.addtosend_scratch_command(bcast_str)
 
-                time.sleep(0.2)
+
                     
 
             # if there is a change in the input pins
