@@ -548,13 +548,13 @@ class ScratchSender(threading.Thread):
                     
                     leftright = turnx 
                     
-                    sensor_name = 'leftright'
+                    sensor_name = 'tiltx'
                     bcast_str = '"' + sensor_name + '" ' + str(leftright)
                     self.addtosend_scratch_command(bcast_str) 
                     
                     updown = turny
 
-                    sensor_name = 'updown'
+                    sensor_name = 'tilty'
                     bcast_str = '"' + sensor_name + '" ' + str(updown)
                     self.addtosend_scratch_command(bcast_str)                     
                         

@@ -71,6 +71,7 @@ cp Adafruit_I2C.py $HDIR/scratchgpio${SGHVER}
 cp Adafruit_PWM_Servo_Driver.py $HDIR/scratchgpio${SGHVER}
 cp sgh_servod $HDIR/scratchgpio${SGHVER}
 cp killsgh.sh $HDIR/scratchgpio${SGHVER}
+cp nunchuck.py $HDIR/scratchgpio${SGHVER}
 cp sgh_*.py $HDIR/scratchgpio${SGHVER}
 
 cp ./mcpi/* $HDIR/scratchgpio${SGHVER}/mcpi
