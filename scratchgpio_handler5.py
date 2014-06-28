@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.22' # 28June2014 PiGlow/Motor interaction bug fixed
+Version =  'v5.3.23' # 28June2014 NunChuck import wrapped in try except
 import threading
 import socket
 import time
@@ -60,8 +60,11 @@ except:
     print "8x8 NOT imported OK"
     pass    
     
-from nunchuck import nunchuck
-print "nunchuck imported"
+try:
+    from nunchuck import nunchuck
+    print "nunchuck imported"
+except:
+    print "nunchuck not imported - check I2c is setup"
 
         
 
