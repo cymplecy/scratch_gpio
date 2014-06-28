@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.20' # 26June2014 NunChuck code released
+Version =  'v5.3.22' # 28June2014 PiGlow/Motor interaction bug fixed
 import threading
 import socket
 import time
@@ -448,6 +448,7 @@ class ScratchSender(threading.Thread):
                         
             #print wii
             if wii != None: #if wii  found
+                #time.sleep(1)
                 try:
                     joyx,joyy,accelx,accely,accelz,button = wii.raw()
                     
@@ -467,6 +468,7 @@ class ScratchSender(threading.Thread):
                     
                 #Always send button info
                 button = button & 0x3
+                #print button, wii.button_c(),wii.button_z()
                 sensor_name = 'buttonc'
                 bcast_str = '"' + sensor_name + '" '
                 if (button == 1 or button == 0):
@@ -1112,7 +1114,7 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUse[18] = sghGC.POUTPUT
                 sghGC.setPinMode()
                 
-        if "piglow" != None:      
+        if piglow != None:      
             PiGlow_Values = [0] * 18
             PiGlow_Lookup = [0,1,2,3,14,12,17,16,15,13,11,10,6,7,8,5,4,9]
             PiGlow_Brightness = 255                  
@@ -1837,7 +1839,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][2],0)
 
 
-                    elif (("piglow" != None) and ("piglow" in ADDON)):      
+                    elif ((piglow != None) and ("piglow" in ADDON)):      
                         #do PiGlow stuff but make sure PiGlow physically detected             
 
                         #check LEDS
@@ -2323,7 +2325,7 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue('ultradelay'):
                         sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
                             
-                    if (("piglow" != None) and ("piglow" not in ADDON)):      
+                    if ((piglow != None) and ("piglow" not in ADDON)):      
                         #do PiGlow stuff but make sure PiGlow physically detected             
 
                         #check LEDS
@@ -2530,7 +2532,7 @@ class ScratchListener(threading.Thread):
                             print 'start pinging on', str(7)
                             self.startUltra(7,0,self.OnOrOff)
                             
-                    elif (("piglow" != None) and ("piglow"  in ADDON)):  
+                    elif ((piglow != None) and ("piglow"  in ADDON)):  
                         #print "processing piglow variables"
 
                         if self.bFindOnOff('all'):
@@ -2951,7 +2953,7 @@ class ScratchListener(threading.Thread):
                                 #print 'sending: %s' % bcast_str
                                 self.send_scratch_command(bcast_str)
                                 
-                    if (("piglow" != None) and ("piglow" not in ADDON)):  
+                    if ((piglow != None) and ("piglow" not in ADDON)):  
                         #print "processing piglow variables"
 
                         if self.bFindOnOff('all'):
