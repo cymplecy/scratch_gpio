@@ -27,6 +27,9 @@ class RasPiCamera:
         self.num = 0
 
         self.user = os.getenv("SUDO_USER")
+        #get uid/gid so we can chown the photo 
+        self.uid = pwd.getpwnam(self.user).pw_uid
+        self.gid = grp.getgrnam(self.user).gr_gid
         self.dir = ("/home/"+ self.user + "/photos/")
 
         try:
@@ -47,20 +50,22 @@ class RasPiCamera:
 
 
     def take_photo(self):
-        try:
-            photo_file = self.dir + str(self.num) + '.jpg'
-            os.system("raspistill -n -t 1 -o " + photo_file)
-            #chown the photo so it can be modified by the user
-            uid = pwd.getpwnam(self.user).pw_uid
-            #assume group is same name as user
-            gid = grp.getgrnam(self.user).gr_gid
-            os.chown(photo_file, uid, gid)
+
+        photo_file = self.dir + str(self.num) + '.jpg'
+        os.system("raspistill -n -t 1 -o " + photo_file)
+    
+        #try with fswebcam for usb devices
+        if not os.path.isfile(photo_file):
+            os.system("fswebcam -r 1024x768 " + photo_file)
+
+        #change ownership if we have a photo   
+        if os.path.isfile(photo_file):
+            os.chown(photo_file, self.uid, self.gid)
             print "photo taken: " + photo_file
             self.num += 1
-        except:
+        #otherwise, error message
+        else:
             print "Error taking photo - camera probably not correctly fitted"
-            pass
-
 
 
 
