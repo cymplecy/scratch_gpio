@@ -1926,6 +1926,7 @@ class ScratchListener(threading.Thread):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
                                 sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)
+                                
 
                         ######### End of gPiO Variable handling
 
@@ -2221,7 +2222,7 @@ class ScratchListener(threading.Thread):
                         self.vPinCheck() # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
                         #logging.debug("Steppers in use")
                         if steppersInUse == True:
-                            #logging.debug("Steppers in use")
+                            logging.debug("Steppers in use")
                             stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
                             for listLoop in range(0,2):
                                 if self.vFindValue(stepperList[listLoop][0]):
