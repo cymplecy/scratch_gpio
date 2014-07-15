@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.23' # 28June2014 NunChuck import wrapped in try except
+Version =  'v5.3.23' # 15Jul14 Pi2Go4 added
 import threading
 import socket
 import time
@@ -323,7 +323,7 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass
             sensorValue = ("on","off")[value == 1]                   
-        elif "pi2go" in ADDON:
+        elif "pi2go3" in ADDON:
             #print pin
             try:
                 sensor_name = ["left","front","right","lineleft","lineright","switch1","switch2","switch3"][([7,15,11,12,13,16,18,22].index(pin))]
@@ -332,6 +332,15 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass 
             sensorValue = ("on","off")[value == 1]      
+        elif "pi2go4" in ADDON:
+            #print pin
+            try:
+                sensor_name = ["left","front","right","lineleft","lineright","switch1","switch2","switch3"][([11,13,7,12,15,16,18,22].index(pin))]
+            except:
+                print "pi2go input out of range"
+                sensor_name = "pin" + str(pin)
+                pass 
+            sensorValue = ("on","off")[value == 1]              
         elif "pizazz" in ADDON:
             #print pin
             try:
@@ -1494,7 +1503,41 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
-                        if "pi2go" in ADDON:
+                        if "pi2go3" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[7]  = sghGC.PINPUT #ObjLeft
+                                sghGC.pinUse[11] = sghGC.PINPUT #ObjRight
+                                sghGC.pinUse[15] = sghGC.PINPUT #ObjMid                                
+                                sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[13] = sghGC.PINPUT #LFRight                                
+                                sghGC.pinUse[16]  = sghGC.PINPUT 
+                                sghGC.pinUse[18]  = sghGC.PINPUT        
+                                sghGC.pinUse[22]  = sghGC.PINPUT 
+
+                                sghGC.setPinMode()
+                                sghGC.motorUpdate(19,21,0,0)
+                                sghGC.motorUpdate(26,24,0,0)      
+                                
+                                try:
+                                    for i in range(0, 16): # go thru PowerPWM on PCA Board
+                                        pcaPWM.setPWM(i, 0, 4095)
+                                except:
+                                    pass
+                                
+                                self.startUltra(8,0,self.OnOrOff)               
+                         
+                                #sghGC.pinEventEnabled = 0
+                            #sghGC.startServod([12,10]) # servos testing motorpitx
+
+                            print "pi2go setup"
+                            anyAddOns = True
+                            
+                        if "pi2go4" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
                                 #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
@@ -2116,7 +2159,7 @@ class ScratchListener(threading.Thread):
                         if self.vFindOnOff('buzzer'):
                             self.index_pin_update(24,self.valueNumeric)
 
-                    elif "pi2go" in ADDON:
+                    elif "pi2go3" in ADDON:
                         #do PiRoCon stuff
                         #logging.debug("Processing variables for Pi2Go")
 
@@ -2158,7 +2201,50 @@ class ScratchListener(threading.Thread):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 0                          
                                     svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                       
-                                    pcaPWM.setPWM((i*3)+2, 0, svalue)                                                                    
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)                                                   
+                    elif "pi2go4" in ADDON:
+                        #do PiRoCon stuff
+                        #logging.debug("Processing variables for Pi2Go")
+
+                        #check for motor variable commands
+                        motorList = [['motorb',19,21,0,False],['motora',26,24,0,False]]
+                        #logging.debug("ADDON:%s", ADDON)
+                        
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)                        
+                        # for listLoop in range(0,2):
+                            # if self.vFindValue(motorList[listLoop][0]):
+                                # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                # #logging.debug("svalue %s %s", motorList[listLoop][0],svalue)
+                                # if svalue > 0:
+                                    # sghGC.pinUpdate(motorList[listLoop][2],1)
+                                    # sghGC.pinUpdate(motorList[listLoop][1],(100-svalue),"pwmmotor")
+                                # elif svalue < 0:
+                                    # sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    # sghGC.pinUpdate(motorList[listLoop][1],(svalue),"pwmmotor")
+                                # else:
+                                    # sghGC.pinUpdate(motorList[listLoop][1],0)
+                                    # sghGC.pinUpdate(motorList[listLoop][2],0)
+                                    
+                        if (pcaPWM != None):
+                            ledList = [0,3,6,9,12]
+                            for i in range(0, 5): # go thru PowerPWM on PCA Board
+                                if self.vFindValue('blue'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3), 0, svalue)    
+                                if self.vFindValue('green'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3)+1, 0, svalue)  
+                                if self.vFindValue('red'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0                          
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                      
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)                                                                           
 
                     elif "happi" in ADDON:
                         #do happi stuff
@@ -2747,7 +2833,7 @@ class ScratchListener(threading.Thread):
                         if self.bFindOnOff('buzzer'):
                             sghGC.pinUpdate(24,self.OnOrOff)
                             
-                    elif "pi2go" in ADDON:
+                    elif "pi2go3" in ADDON:
                         if (pcaPWM != None):
                             for i in range(0, 5): # go thru PowerPWM on PCA Board
                                 if self.bFindValue('blue'):
@@ -2777,6 +2863,37 @@ class ScratchListener(threading.Thread):
                         #Start using ultrasonic sensor on a pin    
                         if self.bFindOnOff('ultra'):
                            self.startUltra(8,0,self.OnOrOff)
+                           
+                    elif "pi2go4" in ADDON:
+                        if (pcaPWM != None):
+                            for i in range(0, 5): # go thru PowerPWM on PCA Board
+                                if self.bFindValue('blue'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
+                                    svalue = svalue * sghGC.ledDim / 100
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3), 0, svalue)    
+                                if self.bFindValue('green'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
+                                    svalue = svalue * sghGC.ledDim / 100
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3)+1, 0, svalue)  
+                                if self.bFindValue('red'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
+                                    svalue = svalue * sghGC.ledDim / 100
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)
+                                if self.bFindOnOff('all'):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
+                                    svalue = svalue * sghGC.ledDim / 100
+                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))  
+                                    pcaPWM.setPWM((i*3), 0, svalue)
+                                    pcaPWM.setPWM((i*3)+1, 0, svalue)
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)    
+                                    
+                                    
+                        #Start using ultrasonic sensor on a pin    
+                        if self.bFindOnOff('ultra'):
+                           self.startUltra(8,0,self.OnOrOff)                           
 
                     elif "raspibot2" in ADDON: 
                         self.bCheckAll() # Check for all off/on type broadcasrs
