@@ -335,7 +335,7 @@ class ScratchSender(threading.Thread):
         elif "pi2go4" in ADDON:
             #print pin
             try:
-                sensor_name = ["left","front","right","lineleft","lineright","switch1","switch2","switch3"][([11,13,7,12,15,16,18,22].index(pin))]
+                sensor_name = ["left","front","right","lineleft","lineright","switch1"][([11,13,7,12,15,16].index(pin))]
             except:
                 print "pi2go input out of range"
                 sensor_name = "pin" + str(pin)
@@ -2866,26 +2866,26 @@ class ScratchListener(threading.Thread):
                            
                     elif "pi2go4" in ADDON:
                         if (pcaPWM != None):
-                            for i in range(0, 5): # go thru PowerPWM on PCA Board
+                            for i in range(0, 4): # go thru PowerPWM on PCA Board
                                 if self.bFindValue('blue'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
                                     svalue = svalue * sghGC.ledDim / 100
-                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    svalue = min(4095,max((((svalue) * 4096) /100),0))
                                     pcaPWM.setPWM((i*3), 0, svalue)    
                                 if self.bFindValue('green'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 100 if self.value == "on" else 0
                                     svalue = svalue * sghGC.ledDim / 100
-                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    svalue = min(4095,max((((svalue) * 4096) /100),0))
                                     pcaPWM.setPWM((i*3)+1, 0, svalue)  
                                 if self.bFindValue('red'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
                                     svalue = svalue * sghGC.ledDim / 100
-                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))
+                                    svalue = min(4095,max((((svalue) * 4096) /100),0))
                                     pcaPWM.setPWM((i*3)+2, 0, svalue)
                                 if self.bFindOnOff('all'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric  else 100 if self.value == "on" else 0
                                     svalue = svalue * sghGC.ledDim / 100
-                                    svalue = min(4095,max((((100-svalue) * 4096) /100),0))  
+                                    svalue = min(4095,max((((svalue) * 4096) /100),0))  
                                     pcaPWM.setPWM((i*3), 0, svalue)
                                     pcaPWM.setPWM((i*3)+1, 0, svalue)
                                     pcaPWM.setPWM((i*3)+2, 0, svalue)    
