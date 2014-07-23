@@ -42,7 +42,9 @@ class GPIOController :
         GPIO.setwarnings(False)
         GPIO.cleanup()
         self.piRevision = self.getPiRevision()
+        print "RPi.GPIO Version" , GPIO.VERSION
         print "Board Revision" , self.piRevision
+        
 
         #Set some constants and initialise lists
         self.numOfPins = 27 #there are actually 26 but python can't count properly :)

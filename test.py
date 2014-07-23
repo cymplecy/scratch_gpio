@@ -3,11 +3,11 @@ import time
 bus = smbus.SMBus(1)
 
 bus.write_byte_data(0x52,0x40,0x00)
-time.sleep(0.1)
+time.sleep(0.31)
 while True:
  try:
   bus.write_byte(0x52,0x00)
-  time.sleep(0.2)
+  time.sleep(0.)
   data0 = bus.read_byte(0x52)
   data1 = bus.read_byte(0x52)
   data2 = bus.read_byte(0x52)

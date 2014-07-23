@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.23' # 15Jul14 Pi2Go4 added
+Version =  'v5.3.23' # 21Jul14 Initial servo support
 import threading
 import socket
 import time
@@ -2244,7 +2244,23 @@ class ScratchListener(threading.Thread):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 0                          
                                     svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                       
-                                    pcaPWM.setPWM((i*3)+2, 0, svalue)                                                                           
+                                    pcaPWM.setPWM((i*3)+2, 0, svalue)
+                                    
+                            for i in range(12, 16): # go thru servos on PCA Board
+                                if self.vFindValue('servo' + str(i)):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
+                                    #print i, svalue
+                                    pcaPWM.setPWM(i, 0, svalue)           
+
+                            if self.vFindValue('tilt'):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
+                                #print i, svalue
+                                pcaPWM.setPWM(12, 0, svalue)        
+
+                            if self.vFindValue('pan'):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
+                                #print i, svalue
+                                pcaPWM.setPWM(13, 0, svalue)                                   
 
                     elif "happi" in ADDON:
                         #do happi stuff
