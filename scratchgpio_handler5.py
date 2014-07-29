@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.23' # 21Jul14 Initial servo support
+Version =  'v5.3.24' # 29Jul14 Initial servo support
 import threading
 import socket
 import time
@@ -2248,19 +2248,21 @@ class ScratchListener(threading.Thread):
                                     
                             for i in range(12, 16): # go thru servos on PCA Board
                                 if self.vFindValue('servo' + str(i)):
-                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 450
                                     #print i, svalue
-                                    pcaPWM.setPWM(i, 0, svalue)           
-
-                            if self.vFindValue('tilt'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
-                                #print i, svalue
-                                pcaPWM.setPWM(12, 0, svalue)        
+                                    pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))           
 
                             if self.vFindValue('pan'):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
+                                i = 12
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 450
                                 #print i, svalue
-                                pcaPWM.setPWM(13, 0, svalue)                                   
+                                pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))   
+
+                            if self.vFindValue('tilt'):
+                                i = 13
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 450
+                                #print i, svalue
+                                pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))            
 
                     elif "happi" in ADDON:
                         #do happi stuff
