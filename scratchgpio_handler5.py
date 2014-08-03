@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.24' # 29Jul14 Initial servo support
+Version =  'v5.3.25' # 04Aug14 tech tom added 
 import threading
 import socket
 import time
@@ -773,8 +773,8 @@ class ScratchListener(threading.Thread):
                     #print pin
                     sghGC.pinUpdate(pin,self.OnOrOff)
 
-    def bPinCheck(self):
-        for pin in sghGC.validPins:
+    def bPinCheck(self,pinList = sghGC.validPins):
+        for pin in pinList:
             logging.debug("bPinCheck:%s",pin )    
             if self.bFindOnOff('pin' + str(pin)):
                 sghGC.pinUpdate(pin,self.OnOrOff)
@@ -1657,13 +1657,34 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[18]  = sghGC.POUTPUT #Blue
                                 sghGC.pinUse[7]  = sghGC.POUTPUT #Buzzer
 
-
- 
                                 sghGC.setPinMode()
                                 sghGC.pinUpdate(7,0)
 
                                 print "SimPie setup"
                                 anyAddOns = True   
+                                
+                        if "techtom" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.pinUse[15] = sghGC.PINPUT #Red 
+                                sghGC.pinUse[19] = sghGC.PINPUT #Amber
+                                sghGC.pinUse[21] = sghGC.PINPUT #Green
+                                sghGC.pinUse[23] = sghGC.PINPUT #Green                                
+                                sghGC.pinUse[8] = sghGC.POUTPUT #Red
+                                sghGC.pinUse[10]  = sghGC.POUTPUT #Green
+                                sghGC.pinUse[12]  = sghGC.POUTPUT #Blue
+                                sghGC.pinUse[16]  = sghGC.POUTPUT #Buzzer
+                                sghGC.pinUse[18] = sghGC.POUTPUT #Red
+                                sghGC.pinUse[22]  = sghGC.POUTPUT #Green
+                                sghGC.pinUse[24]  = sghGC.POUTPUT #Blue
+                                sghGC.pinUse[24]  = sghGC.POUTPUT #Buzzer                                
+
+                                sghGC.setPinMode()
+
+
+                                print "SimPie setup"
+                                anyAddOns = True                                   
 
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
@@ -2315,7 +2336,14 @@ class ScratchListener(threading.Thread):
                         self.vListCheck([12,16,18],["red","green","blue"]) # Check for LEDs
 
                         if self.vFindOnOff('buzzer'):
-                            self.index_pin_update(7,100-self.valueNumeric)                                    
+                            self.index_pin_update(7,100-self.valueNumeric)
+                            
+                    elif "techtom" in ADDON:
+                        #do ladderboard stuff
+
+                        self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+
+                        self.vLEDCheck(ladderOutputs)                            
 
 
                                     
@@ -2949,7 +2977,13 @@ class ScratchListener(threading.Thread):
                         self.bListCheck([12,16,18],["red","green","blue"]) # Check for LEDs
 
                         if self.bFindOnOff('buzzer'):
-                            sghGC.pinUpdate(7,1 - self.OnOrOff)                                   
+                            sghGC.pinUpdate(7,1 - self.OnOrOff)          
+                            
+                    elif "techtom" in ADDON: # Gordon's Ladder Board
+                        #do techtom stuff
+                        #print ("TechTom broadcast processing")                    
+                        self.bCheckAll() # Check for all off/on type broadcasrs
+                        self.bPinCheck([8,10,12,16,18,22,24,26]) # Check for pin on off              
 
                     else: # Plain GPIO Broadcast processing
 
