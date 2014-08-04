@@ -92,7 +92,6 @@ echo "#Version 0.2 - add in & to allow simultaneous running of handler and Scrat
 echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >>$RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "sudo pkill -f scratch_gpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "sudo pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "cd $RDIR/scratchgpio"$SGHVER >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "sudo python scratchgpio_handler6.py 127.0.0.1 standard &" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
@@ -124,10 +123,9 @@ echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scrat
 echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch Projects\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo pkill -f scratch_gpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "sudo pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "cd $RDIR/scratchgpio"$SGHVER >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
-echo "sudo python scratchgpio_handler5.py &" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
+echo "sudo python scratchgpio_handler6.py &" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
 
 chmod +x $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}plus.sh
