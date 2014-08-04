@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.3.25' # 04Aug14 tech tom added 
+Version =  'v6alpha1' # 04Aug14 Initial version
 import threading
 import socket
 import time
