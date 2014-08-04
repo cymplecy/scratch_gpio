@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v5.2.12' # 29May14 - Changes to PiRoCon/MicRoCon motors
+Version =  'v5.2.13' # 03Aug14 - Hotfix PiRoCon/MicRoCon motors
 import threading
 import socket
 import time
@@ -1661,7 +1661,7 @@ class ScratchListener(threading.Thread):
                         motorList = [['motora',21,26,0],['motorb',19,24]]
                         if "piroconb" in ADDON:
                             logging.debug("PiRoConB Found:%s", ADDON)
-                            motorList = [['motora',21,19,0,False],['motorb',26,24,0,False]]
+                            motorList = [['motora',19,21,0,False],['motorb',24,26,0,False]]
                        
                         for listLoop in range(0,2):
                             if self.vFindValue(motorList[listLoop][0]):
