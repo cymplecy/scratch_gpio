@@ -31,7 +31,7 @@ then
 HDIR="/home/pi"
 USERID="pi"
 GROUPID="pi"
-RDIR="/usr/local/bin"
+RDIR="/opt"
 RUSERID="root"
 RGROUPID="root"
 else

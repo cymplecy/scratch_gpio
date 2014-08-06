@@ -773,7 +773,7 @@ class ScratchListener(threading.Thread):
                     #print pin
                     sghGC.pinUpdate(pin,self.OnOrOff)
 
-    def bPinCheck(self,pinList = sghGC.validPins):
+    def bPinCheck(self,pinList):
         for pin in pinList:
             logging.debug("bPinCheck:%s",pin )    
             if self.bFindOnOff('pin' + str(pin)):
@@ -2728,7 +2728,7 @@ class ScratchListener(threading.Thread):
                     elif "gpio" in ADDON: # gPiO
                         #print ("gPiO broadcast processing")
                         self.bCheckAll() # Check for all off/on type broadcasts
-                        self.bPinCheck() # Check for pin off/on type broadcasts
+                        self.bPinCheck(sghGC.validPins) # Check for pin off/on type broadcasts
 
                     elif "berry" in ADDON: # BerryClip
 
@@ -2741,7 +2741,7 @@ class ScratchListener(threading.Thread):
                     elif "pirocon" in ADDON: # pirocon         
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
-                        self.bPinCheck() # Check for pin off/on type broadcasts
+                        self.bPinCheck(sghGC.validPins) # Check for pin off/on type broadcasts
 
                         #check pins
                         for pin in sghGC.validPins:
@@ -2988,7 +2988,7 @@ class ScratchListener(threading.Thread):
                     else: # Plain GPIO Broadcast processing
 
                         self.bCheckAll() # Check for all off/on type broadcasrs
-                        #self.bPinCheck() # Check for pin off/on type broadcasts
+                        #self.bPinCheck(sghGC.validPins) # Check for pin off/on type broadcasts
 
                         #check pins
                         for pin in sghGC.validPins:
