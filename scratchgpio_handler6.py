@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha1' # 04Aug14 Initial version
+Version =  'v6alpha2' # 08Aug14 meArm added
 import threading
 import socket
 import time
@@ -1684,7 +1684,16 @@ class ScratchListener(threading.Thread):
 
 
                                 print "SimPie setup"
+                                anyAddOns = True                 
+
+                        if "mearm" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.setPinMode()
+                                print "MeArm setup"
                                 anyAddOns = True                                   
+
 
 
                 # if (firstRun == True) and (anyAddOns == False): # if no addon found in firstrun then assume default configuration
@@ -2343,10 +2352,8 @@ class ScratchListener(threading.Thread):
 
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
-                        self.vLEDCheck(ladderOutputs)                            
+                        self.vLEDCheck(ladderOutputs)     
 
-
-                                    
                     else:   #normal variable processing with no add on board
 
                         self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
@@ -2523,7 +2530,17 @@ class ScratchListener(threading.Thread):
                                 j = j + 1
 
                             piglow.update_pwm_values(PiGlow_Values)
-                                           
+                            
+                    if "mearm" in ADDON:
+                        print pcaPWM
+                    
+                        if (pcaPWM != None):
+                                   
+                            for i in range(0, 16): # go thru servos on PCA Board
+                                if self.vFindValue('servo' + str(i)):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                    #print i, svalue
+                                    pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))           
 
         ### Check for Broadcast type messages being received
                 print "loggin level",debugLogging
