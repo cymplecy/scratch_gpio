@@ -38,6 +38,7 @@ import subprocess
 import sgh_RasPiCamera
 #import pygame removed becasue causing random failures
 import re
+import meArm
 try:
     from Adafruit_PWM_Servo_Driver import PWM
     print "PWM/Servo imported OK"
@@ -65,6 +66,8 @@ try:
     print "nunchuck imported"
 except:
     print "nunchuck not imported - check I2c is setup"
+
+
 
         
 
@@ -1091,7 +1094,8 @@ class ScratchListener(threading.Thread):
 
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
-               Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass,ADDON
+               Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass,ADDON, \
+               meVertical, meHorizontal, meDistance
 
 
 
@@ -1691,6 +1695,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.resetPinMode()
                                 #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 sghGC.setPinMode()
+
                                 print "MeArm setup"
                                 anyAddOns = True                                   
 
@@ -2278,19 +2283,19 @@ class ScratchListener(threading.Thread):
                                     
                             for i in range(12, 16): # go thru servos on PCA Board
                                 if self.vFindValue('servo' + str(i)):
-                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 450
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                     #print i, svalue
                                     pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))           
 
                             if self.vFindValue('pan'):
                                 i = 12
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 450
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 #print i, svalue
                                 pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))   
 
                             if self.vFindValue('tilt'):
                                 i = 13
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 450
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 #print i, svalue
                                 pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))            
 
@@ -2441,17 +2446,38 @@ class ScratchListener(threading.Thread):
                             pcfSensor.writeDAC(max(0,min(255,svalue)))
                             
                     if pcaPWM is not None:
-                        for i in range(0, 16): # go thru servos on PCA Board
-                            if self.vFindValue('adaservo' + str(i + 1)):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 180
-                                #print i, svalue
-                                pcaPWM.setPWM(i, 0, svalue)
-
+                        # for i in range(0, 16): # go thru servos on PCA Board
+                            # if self.vFindValue('adaservo' + str(i)):
+                                # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                # #print i, svalue
+                                # pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))                                   
                         for i in range(0, 16): # go thru PowerPWM on PCA Board
                             if self.vFindValue('adapower' + str(i + 1)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 svalue = min(4095,max(((svalue * 4096) /100),0))
                                 pcaPWM.setPWM(i, 0, svalue)
+                        
+                        meArmAction = False
+                        if self.vFindValue('mehorizontal'):
+                            meHorizontal = max(-50,min(50,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                            meArmAction = True
+                            
+                        if self.vFindValue('medistance'):
+                            meDistance = max(70,min(150,int(self.valueNumeric)))  if self.valueIsNumeric else 100
+                            meArmAction = True
+                       
+                        if self.vFindValue('mevertical'):
+                            meVertical = max(-0,min(100,int(self.valueNumeric)))  if self.valueIsNumeric else 50
+                            meArmAction = True         
+                            
+                        if self.vFindValue('megripper'):
+                            if self.value == "close":
+                                arm.closeGripper()
+                            else:
+                                arm.openGripper() 
+
+                        if meArmAction:
+                            arm.gotoPoint(meHorizontal, meDistance, meVertical)
 
                     if self.vFindValue("minex"):
                         print "minex"
@@ -2532,8 +2558,7 @@ class ScratchListener(threading.Thread):
                             piglow.update_pwm_values(PiGlow_Values)
                             
                     if "mearm" in ADDON:
-                        print pcaPWM
-                    
+                   
                         if (pcaPWM != None):
                                    
                             for i in range(0, 16): # go thru servos on PCA Board
@@ -3831,8 +3856,12 @@ try:
 except:
     print "No PWM/Servo Board PCA9685 detected"
     
-
- 
+if pcaPWM != None:
+    arm = meArm.meArm()
+    arm.begin()
+    meHorizontal = 0
+    meDistance = 100
+    meVertical = 50
 
 pcfSensor = None
 try:
