@@ -730,6 +730,10 @@ class ScratchListener(threading.Thread):
         self.matrixX = 0
         self.matrixY = 0        
         self.matrixUse = 64
+        
+    def meArmGotoPoint(self,meHorizontal,meDistance,meVertical):
+        arm.gotoPoint(int(max(-50,min(50,meHorizontal))),int(max(70,min(150,meDistance))),int(max(0,min(60,meVertical))))
+        print "moved"
 
 
     def send_scratch_command(self, cmd):
@@ -2446,18 +2450,22 @@ class ScratchListener(threading.Thread):
                             pcfSensor.writeDAC(max(0,min(255,svalue)))
                             
                     if pcaPWM is not None:
-                        # for i in range(0, 16): # go thru servos on PCA Board
-                            # if self.vFindValue('adaservo' + str(i)):
-                                # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                # #print i, svalue
-                                # pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))                                   
+                        for i in range(0, 16): # go thru servos on PCA Board
+                            if self.vFindValue('adaservo' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                #print i, svalue
+                                pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))                                   
                         for i in range(0, 16): # go thru PowerPWM on PCA Board
                             if self.vFindValue('adapower' + str(i + 1)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 svalue = min(4095,max(((svalue * 4096) /100),0))
                                 pcaPWM.setPWM(i, 0, svalue)
+                                print svalue
                         
                         meArmAction = False
+                        oldmeH = meHorizontal
+                        oldmeD = meDistance
+                        oldmeV = meVertical
                         if self.vFindValue('mehorizontal'):
                             meHorizontal = max(-50,min(50,int(self.valueNumeric))) if self.valueIsNumeric else 0
                             meArmAction = True
@@ -2467,17 +2475,32 @@ class ScratchListener(threading.Thread):
                             meArmAction = True
                        
                         if self.vFindValue('mevertical'):
-                            meVertical = max(-0,min(100,int(self.valueNumeric)))  if self.valueIsNumeric else 50
+                            meVertical = max(-0,min(60,int(self.valueNumeric)))  if self.valueIsNumeric else 50
                             meArmAction = True         
                             
                         if self.vFindValue('megripper'):
                             if self.value == "close":
                                 arm.closeGripper()
+                                print "gripper closed"
                             else:
                                 arm.openGripper() 
+                                print "Gripper opened"
 
                         if meArmAction:
-                            arm.gotoPoint(meHorizontal, meDistance, meVertical)
+                            s = 5
+                            deltaH = (meHorizontal - oldmeH) / s  
+                            deltaD = (meDistance - oldmeD) / s  
+                            deltaV = (meVertical - oldmeV) / s
+                            for loop in range(s):
+                                oldmeH = oldmeH + deltaH
+                                oldmeD = oldmeD + deltaD
+                                oldmeV = oldmeV + deltaV
+                                self.meArmGotoPoint(oldmeH,oldmeD,oldmeV)
+                                time.sleep(0.1)
+                        
+                            time.sleep(0.1)
+                            self.meArmGotoPoint(meHorizontal,meDistance,meVertical)
+                                
 
                     if self.vFindValue("minex"):
                         print "minex"
