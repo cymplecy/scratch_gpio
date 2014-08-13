@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha2' # 08Aug14 meArm added
+Version =  'v6alpha2' # 13Aug14 minor mod to angle for Nunchuck
 import threading
 import socket
 import time
@@ -412,6 +412,11 @@ class ScratchSender(threading.Thread):
         self.sleepTime = 0.1
         lastADC = [256,256,256,256]
         joyx,joyy,accelx,accely,accelz,button = [0,0,0,0,0,0]
+        lastAngle = 0
+        if wii != None:
+            sensor_name = 'angle'
+            bcast_str = '"' + sensor_name + '" ' + str(int(0))
+            self.addtosend_scratch_command(bcast_str)
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
@@ -3921,6 +3926,8 @@ except:
     print "No PiMatrix Detected"
 #PiMatrix.start()
     #time.sleep(5)
+    
+
     
 wii = None
 try:
