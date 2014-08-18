@@ -36,17 +36,17 @@ class PWM :
     self.i2c.write8(self.__MODE1, 0x00)
 
   def setPWMFreq(self, freq):
-    "Sets the PWM frequency"
+    print "Sets the PWM frequency"
     prescaleval = 25000000.0    # 25MHz
     prescaleval /= 4096.0       # 12-bit
     prescaleval /= float(freq)
     prescaleval -= 1.0
-    if (self.debug):
-      print "Setting PWM frequency to %d Hz" % freq
-      print "Estimated pre-scale: %d" % prescaleval
+    #if (self.debug):
+    print "Setting PWM frequency to %d Hz" % freq
+    print "Estimated pre-scale: %d" % prescaleval
     prescale = math.floor(prescaleval + 0.5)
-    if (self.debug):
-      print "Final pre-scale: %d" % prescale
+    #if (self.debug):
+    print "Final pre-scale: %d" % prescale
 
     oldmode = self.i2c.readU8(self.__MODE1);
     newmode = (oldmode & 0x7F) | 0x10             # sleep

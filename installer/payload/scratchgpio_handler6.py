@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha2' # 13Aug14 minor mod to angle for Nunchuck
+Version =  'v6alpha3' # 18Aug14 Pi2GoLite added
 import threading
 import socket
 import time
@@ -344,6 +344,15 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass 
             sensorValue = ("on","off")[value == 1]              
+        elif "p2gl" in ADDON:
+            #print pin
+            try:
+                sensor_name = ["left","right","lineleft","lineright","switch"][([7,11,12,13,23].index(pin))]
+            except:
+                print "pi2go input out of range"
+                sensor_name = "pin" + str(pin)
+                pass 
+            sensorValue = ("on","off")[value == 1]               
         elif "pizazz" in ADDON:
             #print pin
             try:
@@ -807,7 +816,9 @@ class ScratchListener(threading.Thread):
 
     def bListCheck(self,pinList,nameList):
         for loop in range(0,len(pinList)): # loop thru list
+            print str(nameList[loop]) , pinList[loop]
             if self.bFindOnOff(str(nameList[loop])):
+                print str(nameList[loop]) , "found"
                 sghGC.pinUpdate(pinList[loop],self.OnOrOff)
 
             if self.bFindValue('power' + str(nameList[loop])+","):
@@ -1584,6 +1595,33 @@ class ScratchListener(threading.Thread):
                             print "pi2go setup"
                             anyAddOns = True
                             
+                        if "p2gl" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[7]  = sghGC.PINPUT #ObjLeft
+                                sghGC.pinUse[11] = sghGC.PINPUT #ObjRight
+                                sghGC.pinUse[12] = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[13] = sghGC.PINPUT #LFRight                                
+                                sghGC.pinUse[23]  = sghGC.PINPUT 
+                                sghGC.pinUse[18]  = sghGC.POUTPUT        
+                                sghGC.pinUse[22]  = sghGC.POUTPUT 
+
+                                sghGC.setPinMode()
+                                sghGC.motorUpdate(19,21,0,0)
+                                sghGC.motorUpdate(26,24,0,0)      
+                                
+                                self.startUltra(8,0,self.OnOrOff)               
+                         
+                                #sghGC.pinEventEnabled = 0
+                            #sghGC.startServod([12,10]) # servos testing motorpitx
+
+                            print "pi2golite setup"
+                            anyAddOns = True                            
+                            
                         if "happi" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -2306,7 +2344,21 @@ class ScratchListener(threading.Thread):
                                 i = 13
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 #print i, svalue
-                                pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))            
+                                pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))      
+
+                    elif "p2gl" in ADDON:
+                        #logging.debug("Processing variables for Pi2GoLite")
+
+                        #check for motor variable commands
+                        motorList = [['motorb',19,21,0,False],['motora',26,24,0,False]]
+                        #logging.debug("ADDON:%s", ADDON)
+                        
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)                        
+
 
                     elif "happi" in ADDON:
                         #do happi stuff
@@ -3009,7 +3061,13 @@ class ScratchListener(threading.Thread):
                                     
                         #Start using ultrasonic sensor on a pin    
                         if self.bFindOnOff('ultra'):
-                           self.startUltra(8,0,self.OnOrOff)                           
+                           self.startUltra(8,0,self.OnOrOff)   
+						   
+                    elif "p2gl" in ADDON: # pidie
+                        #do piringo stuff
+
+                        self.bListCheck([15,16],["frontleds","backleds"])
+					   
 
                     elif "raspibot2" in ADDON: 
                         self.bCheckAll() # Check for all off/on type broadcasrs
