@@ -1609,6 +1609,10 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[23]  = sghGC.PINPUT 
                                 sghGC.pinUse[18]  = sghGC.POUTPUT        
                                 sghGC.pinUse[22]  = sghGC.POUTPUT 
+                                sghGC.pinInvert[15] = True
+                                sghGC.pinInvert[16] = True
+                                sghGC.pinUse[15]  = sghGC.POUTPUT        
+                                sghGC.pinUse[16]  = sghGC.POUTPUT                                 
 
                                 sghGC.setPinMode()
                                 sghGC.motorUpdate(19,21,0,0)
@@ -1765,8 +1769,18 @@ class ScratchListener(threading.Thread):
 
 
                 #If outputs need globally inverting (7 segment common anode needs it - PiRingo etc)
-                if ('invert' in self.dataraw):
+                if ('invert ' in self.dataraw):
                     sghGC.INVERT = True
+                    
+                if self.bFind("invert"): #update pin count values
+                    pinfound = False
+                    for pin in sghGC.validPins: #loop thru all pins
+                        if sghGC.pinUse[pin] == sghGC.PCOUNT:
+                            if self.bFind('invert'+str(pin)):
+                                sghGC.pinInvert[pin] = self.OnOrOff
+                                pinfound = True
+                    if pinfound == False:
+                        sghGC.INVERT = True
 
                 #Change pins from input to output if more needed
                 if self.bFind('config'):
@@ -3767,7 +3781,9 @@ class ScratchListener(threading.Thread):
                                     b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
                                     totalcmd = totalcmd + b + cmd
                             #print "Sending to Alt:",totalcmd									
-                            self.scratch_socket2.send(totalcmd)                        
+                            self.scratch_socket2.send(totalcmd)       
+
+                        
 
                     if  '1coil' in dataraw:
                         print "1coil broadcast"

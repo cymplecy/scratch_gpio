@@ -85,6 +85,7 @@ class GPIOController :
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins
         self.pinValue = [0] * self.numOfPins
+        self.pinInvert = [False] * self.numOfPins
         #print "pinValue" , self.pinValue
         #print "pin Value 3 = ", self.pinValue[3]
         self.pinUltraRef = [None] * self.numOfPins
@@ -153,6 +154,7 @@ class GPIOController :
             self.pinUse[pin] = self.PUNUSED
             print "reset pin", pin
             self.pinValue[pin] = 0
+            self.pinInvert[pin] = False
             
 
     #Procedure to set pin mode for each pin
@@ -170,11 +172,11 @@ class GPIOController :
                 except:
                     pass                    
                 GPIO.setup(pin,GPIO.OUT)
-                if self.INVERT == True:
+                if (self.pinInvert[pin] == True) or (sghGC.INVERT == True):
                     GPIO.output(pin,1)
                 else:
                     GPIO.output(pin,0)
-                self.pinValue[pin]=0
+                self.pinValue[pin] = 0
             elif (self.pinUse[pin] == self.PINPUT):
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
@@ -225,7 +227,7 @@ class GPIOController :
             if type[0:3] == "pwm": # 
                 #print "processing pwm"
                 #return
-                if self.INVERT == True: # Invert data value (needed for active low devices)
+                if (self.pinInvert[pin] == True) or (sghGC.INVERT == True): # Invert data value (needed for active low devices)
                     value = 100 - abs(value)
                     
                 print "motor freq calc", self.mFreq
@@ -272,7 +274,7 @@ class GPIOController :
          
             elif type == "plain":
                 #print "Plain processing- Pin " , pin , " commanded to be " , value
-                if self.INVERT == True: # Invert data value (useful for 7 segment common anode displays)
+                if (self.pinInvert[pin] == True) or (sghGC.INVERT == True): # Invert data value (useful for 7 segment common anode displays)
                     value = 1 - abs(value)
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
@@ -591,7 +593,8 @@ class GPIOController :
         print temperature
         return temperature
 
-
+    def setPinInvert(self, pin, state = False):
+        self.pinInvert[pin] = state
 
 
 #### End of main program
