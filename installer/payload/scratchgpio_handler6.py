@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha3' # 18Aug14 Pi2GoLite added
+Version =  'v6alpha4' # 20Aug14 Invert functions made pin indvidual
 import threading
 import socket
 import time
@@ -765,7 +765,11 @@ class ScratchListener(threading.Thread):
 
     # Find pos of searchStr - must be preceded by a delimiting  space to be found
     def bFind(self,searchStr):
+        print "looking in" ,self.dataraw , "for" , searchStr
         self.searchPos = self.dataraw.find(' ' + searchStr) + 1 
+        #time.sleep(0.1)
+        if (' '+searchStr in self.dataraw):
+            print "Found"
         return (' '+searchStr in self.dataraw)
 
     def bFindOn(self,searchStr):
@@ -776,10 +780,10 @@ class ScratchListener(threading.Thread):
 
     def bFindOnOff(self,searchStr):
         self.OnOrOff = None
-        if (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 ')):
+        if (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 ') or self.bFind(searchStr + 'true ')):
             self.OnOrOff = 1
             return True
-        elif (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(searchStr + '0 ')):
+        elif (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(searchStr + '0 ') or self.bFind(searchStr + 'false ')):
             self.OnOrOff = 0
             return True
         else:
@@ -1455,7 +1459,7 @@ class ScratchListener(threading.Thread):
                             with lock:
                                 sghGC.resetPinMode()
                                 print "piringo detected"
-                                sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.setAllInvert(True)# GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 piringoOutputs = [7,11,12,13,15,16,18,22, 24, 26, 8,10] # these are pins used for LEDS for PiRingo
                                 piringoInputs = [19,21] # These are the pins connected to the switches
                                 for pin in piringoOutputs:
@@ -1502,9 +1506,10 @@ class ScratchListener(threading.Thread):
 
                         if "pidie" in ADDON:
                             print "pidie detected"
-                            sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                            
                             with lock:
                                 sghGC.resetPinMode()
+                                sghGC.setAllInvert(True) # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 pidieOutputs = [7,11,12,13,15,16,18,22,8]
                                 for pin in pidieOutputs:
                                     sghGC.pinUse[pin] = sghGC.POUTPUT
@@ -1679,7 +1684,7 @@ class ScratchListener(threading.Thread):
                         if "pizazz" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.setAllInvert(True)# GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
                                 #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
@@ -1703,7 +1708,7 @@ class ScratchListener(threading.Thread):
                         if "simpie" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.setAllInvert(True)# GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 sghGC.pinUse[11] = sghGC.PINPUT #Red 
                                 sghGC.pinUse[13] = sghGC.PINPUT #Amber
                                 sghGC.pinUse[15] = sghGC.PINPUT #Green
@@ -1768,19 +1773,18 @@ class ScratchListener(threading.Thread):
                         # firstRun = False
 
 
-                #If outputs need globally inverting (7 segment common anode needs it - PiRingo etc)
-                if ('invert ' in self.dataraw):
-                    sghGC.INVERT = True
+                #If outputs need  inverting (7 segment common anode needs it - PiRingo etc)
                     
                 if self.bFind("invert"): #update pin count values
-                    pinfound = False
-                    for pin in sghGC.validPins: #loop thru all pins
-                        if sghGC.pinUse[pin] == sghGC.PCOUNT:
-                            if self.bFind('invert'+str(pin)):
+                    if self.bFindOnOff('invert'):
+                        print "global invert set"
+                        for pin in sghGC.validPins: #loop thru all pins
+                            sghGC.pinInvert[pin] = self.OnOrOff
+                    else:
+                        for pin in sghGC.validPins: #loop thru all pins
+                            if self.bFindOnOff('invert'+str(pin)):
                                 sghGC.pinInvert[pin] = self.OnOrOff
-                                pinfound = True
-                    if pinfound == False:
-                        sghGC.INVERT = True
+                                print "invert status pin", pin,  "is" , sghGC.pinInvert[pin]
 
                 #Change pins from input to output if more needed
                 if self.bFind('config'):
@@ -2494,7 +2498,7 @@ class ScratchListener(threading.Thread):
                         svalue = self.value 
                         bit_pattern = ('00000000000000000000000000'+svalue)[-sghGC.numOfPins:]
                         j = 0
-                        onSense = '1' if sghGC.INVERT else '0' # change to look for 0 if invert on
+                        #onSense = '1' if sghGC.INVERT else '0' # change to look for 0 if invert on
                         onSense = '0'
                         for pin in sghGC.validPins:
                             if (sghGC.pinUse[pin] == sghGC.POUTPUT):
@@ -4093,7 +4097,7 @@ while True:
         cleanup_threads((listener, sender))
         print "Thread cleanup done after disconnect"
         #time.sleep(5)
-        sghGC.INVERT = False
+        #sghGC.INVERT = False
         sghGC.resetPinMode()
         print ("Pin Reset Done")
         sys.exit()

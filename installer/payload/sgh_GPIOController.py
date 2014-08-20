@@ -62,7 +62,7 @@ class GPIOController :
         self.PPWMMOTOR = 2048
         self.PPWMLED = 4096
 
-        self.INVERT = False
+        #self.INVERT = False
         self.ledDim = 100
 
         self.PWMFREQ = 200
@@ -172,7 +172,7 @@ class GPIOController :
                 except:
                     pass                    
                 GPIO.setup(pin,GPIO.OUT)
-                if (self.pinInvert[pin] == True) or (self.INVERT == True):
+                if (self.pinInvert[pin] == True):
                     GPIO.output(pin,1)
                 else:
                     GPIO.output(pin,0)
@@ -227,7 +227,7 @@ class GPIOController :
             if type[0:3] == "pwm": # 
                 #print "processing pwm"
                 #return
-                if (self.pinInvert[pin] == True) or (self.INVERT == True): # Invert data value (needed for active low devices)
+                if (self.pinInvert[pin] == True): # Invert data value (needed for active low devices)
                     value = 100 - abs(value)
                     
                 print "motor freq calc", self.mFreq
@@ -274,7 +274,7 @@ class GPIOController :
          
             elif type == "plain":
                 #print "Plain processing- Pin " , pin , " commanded to be " , value
-                if (self.pinInvert[pin] == True) or (self.INVERT == True): # Invert data value (useful for 7 segment common anode displays)
+                if (self.pinInvert[pin] == True): # Invert data value (useful for 7 segment common anode displays)
                     value = 1 - abs(value)
                 if (self.pinUse[pin] == self.POUTPUT): # if already an output
                     GPIO.output(pin, int(value)) # set output to 1 ot 0
@@ -595,6 +595,10 @@ class GPIOController :
 
     def setPinInvert(self, pin, state = False):
         self.pinInvert[pin] = state
+        
+    def setAllInvert(self, state = False):
+        for pin in self.validPins:
+            self.pinInvert[pin] = state  
 
 
 #### End of main program
