@@ -765,11 +765,11 @@ class ScratchListener(threading.Thread):
 
     # Find pos of searchStr - must be preceded by a delimiting  space to be found
     def bFind(self,searchStr):
-        print "looking in" ,self.dataraw , "for" , searchStr
+        #print "looking in" ,self.dataraw , "for" , searchStr
         self.searchPos = self.dataraw.find(' ' + searchStr) + 1 
         #time.sleep(0.1)
-        if (' '+searchStr in self.dataraw):
-            print "Found"
+        #if (' '+searchStr in self.dataraw):
+            #print "Found"
         return (' '+searchStr in self.dataraw)
 
     def bFindOn(self,searchStr):
@@ -820,9 +820,9 @@ class ScratchListener(threading.Thread):
 
     def bListCheck(self,pinList,nameList):
         for loop in range(0,len(pinList)): # loop thru list
-            print str(nameList[loop]) , pinList[loop]
+            #print str(nameList[loop]) , pinList[loop]
             if self.bFindOnOff(str(nameList[loop])):
-                print str(nameList[loop]) , "found"
+                #print str(nameList[loop]) , "found"
                 sghGC.pinUpdate(pinList[loop],self.OnOrOff)
 
             if self.bFindValue('power' + str(nameList[loop])+","):
@@ -2666,7 +2666,7 @@ class ScratchListener(threading.Thread):
                                     pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))           
 
         ### Check for Broadcast type messages being received
-                print "loggin level",debugLogging
+                #print "loggin level",debugLogging
                 if (debugLogging == False):
                     logging.getLogger().setLevel(logging.INFO)
 
