@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha4' # 20Aug14 Invert functions made pin indvidual
+Version =  'v6alpha5' # 23Aug14 Pi2GoLite with servos
 import threading
 import socket
 import time
@@ -1619,9 +1619,11 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinInvert[15] = True
                                 sghGC.pinInvert[16] = True
                                 sghGC.pinUse[15]  = sghGC.POUTPUT        
-                                sghGC.pinUse[16]  = sghGC.POUTPUT                                 
+                                sghGC.pinUse[16]  = sghGC.POUTPUT
+                                
 
                                 sghGC.setPinMode()
+                                sghGC.startServod([18,22]) # servos
                                 sghGC.motorUpdate(19,21,0,0)
                                 sghGC.motorUpdate(26,24,0,0)      
                                 
@@ -2377,7 +2379,111 @@ class ScratchListener(threading.Thread):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
-                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)                        
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],0,svalue)        
+
+                        moveServos = False
+
+                        if self.vFindValue('tiltoffset'):
+                            tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            moveServos = True
+
+                        if self.vFindValue('panoffset'):
+                            panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            moveServos = True
+
+                        if self.vFindValue('tilt'):
+                            #print "tilt command rcvd"
+                            if self.valueIsNumeric:
+                                tilt = int(self.valueNumeric) 
+                                moveServos = True
+                                #print "tilt=", tilt
+                            elif self.value == "off":
+                                os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                        else:
+                            if self.vFindValue('servo18'):
+                                #print "tilt command rcvd"
+                                if self.valueIsNumeric:
+                                    tilt = int(self.valueNumeric) 
+                                    moveServos = True
+                                    #print "tilt=", tilt
+                                elif self.value == "off":
+                                    os.system("echo " + "0" + "=0 > /dev/servoblaster")
+
+                        if self.vFindValue('pan'):
+                            #print "pan command rcvd"
+                            if self.valueIsNumeric:
+                                pan = int(self.valueNumeric) 
+                                moveServos = True
+                                #print "pan=", pan
+                            elif self.value == "off":
+                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                        else:
+                            if self.vFindValue('servo22'):
+                                #print "pan command rcvd"
+                                if self.valueIsNumeric:
+                                    pan = int(self.valueNumeric) 
+                                    moveServos = True
+                                    #print "pan=", pan
+                                elif self.value == "off":
+                                    os.system("echo " + "1" + "=0 > /dev/servoblaster")
+
+                        if moveServos == True:
+                            degrees = int(tilt + tiltoffset)
+                            degrees = min(80,max(degrees,-60))
+                            servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            #print "sending", servodvalue, "to servod"
+                            #os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                            sghGC.pinServod(18,servodvalue) # orig =18
+                            #os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
+                            degrees = int(pan + panoffset)
+                            degrees = min(90,max(degrees,-90))
+                            servodvalue = 50+ ((90 - degrees) * 200 / 180)
+                            sghGC.pinServod(22,servodvalue) #orig =22
+                            #os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
+
+
+                        ######### End of PiRoCon Variable handling
+                    elif "piringo" in ADDON:
+                        #do piringo stuff
+
+                        self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
+
+                        self.vLEDCheck(piringoOutputs)
+
+
+                    elif "pibrella" in ADDON: # PiBrella
+
+                        self.vAllCheck("allpins") # check All On/Off/High/Low/1/0
+
+                        self.vListCheck([13,11,7,15,16,18,22],["led1","led2","led3","led4","led5","led6","led7"])
+                        self.vListCheck([13,11,11,11,7,15,16,18,22],["red","amber","yellow","orange","green","outpute","outputf","outputg","outputh"])
+                        self.vListCheckMotorOnly([15,16,18,22],["e","f","g","h"])                        
+
+                        if self.vFindValue('stepper'):
+                            if self.valueIsNumeric:
+                                self.stepperUpdate([15,16,18,22],self.valueNumeric)
+                            else:
+                                self.stepperUpdate([15,16,18,22],0)                        
+
+                        if self.vFindValue("beep"):
+                            try:
+                                bn,bd = self.value.split(",")
+                            except:
+                                bn = "60"
+                                bd = "1"
+                            beepNote = int(float(bn))
+                            beepDuration = (float(bd))
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
+                            beepThread = threading.Thread(target=self.beep, args=[12,440* 2**((beepNote - 69)/12.0),beepDuration])
+                            beepThread.start()
+
+                        # if self.vFindValue("beepnote"):
+                            # beepNote = max(12,int(self.valueNumeric)) if self.valueIsNumeric else 60
+
+                        # if self.vFindValue("beepduration"):
+                            # beepDuration = max(0.125,int(self.valueNumeric)) if self.valueIsNumeric else 0.5
+
+                                
 
 
                     elif "happi" in ADDON:
@@ -3085,7 +3191,7 @@ class ScratchListener(threading.Thread):
 						   
                     elif "pi2golite" in ADDON: # pidie
                         #do piringo stuff
-                        self.bCheckAll(False,[15,16,18,22])
+                        self.bCheckAll(False,[15,16])
                         self.bListCheck([15,16],["frontleds","backleds"])
 					   
 
