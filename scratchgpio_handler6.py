@@ -326,30 +326,30 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass
             sensorValue = ("on","off")[value == 1]                   
-        elif "pi2go3" in ADDON:
+        elif "p2g3" in ADDON:
             #print pin
             try:
                 sensor_name = ["left","front","right","lineleft","lineright","switch1","switch2","switch3"][([7,15,11,12,13,16,18,22].index(pin))]
             except:
-                print "pi2go input out of range"
+                print "p2g3 input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
             sensorValue = ("on","off")[value == 1]      
-        elif "pi2go4" in ADDON:
+        elif "p2g4" in ADDON:
             #print pin
             try:
                 sensor_name = ["left","front","right","lineleft","lineright","switch1"][([11,13,7,12,15,16].index(pin))]
             except:
-                print "pi2go input out of range"
+                print "p2g4 input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
             sensorValue = ("on","off")[value == 1]              
-        elif "p2gl" in ADDON:
+        elif "pi2golite" in ADDON:
             #print pin
             try:
                 sensor_name = ["left","right","lineleft","lineright","switch"][([7,11,12,13,23].index(pin))]
             except:
-                print "pi2go input out of range"
+                print "pi2golite input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
             sensorValue = ("on","off")[value == 1]               
@@ -358,7 +358,7 @@ class ScratchSender(threading.Thread):
             try:
                 sensor_name = ["left","right",][([13,12].index(pin))]
             except:
-                print "pi2go input out of range"
+                print "pizazz input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
             sensorValue = ("on","off")[value == 1]             
@@ -790,9 +790,11 @@ class ScratchListener(threading.Thread):
             return False
 
 
-    def bCheckAll(self):
+    def bCheckAll(self,default = True,pinList = None):
         if self.bFindOnOff('all'):
-            for pin in sghGC.validPins:
+            if default == True:
+                pinList = sghGC.validPins
+            for pin in pinList:
                 #print pin
                 if sghGC.pinUse[pin] in [sghGC.POUTPUT,sghGC.PPWM,sghGC.PPWMMOTOR]:
                     #print pin
@@ -1532,7 +1534,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
-                        if "pi2go3" in ADDON:
+                        if "p2g3" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
                                 #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
@@ -1563,10 +1565,10 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinEventEnabled = 0
                             #sghGC.startServod([12,10]) # servos testing motorpitx
 
-                            print "pi2go setup"
+                            print "p2g3 setup"
                             anyAddOns = True
                             
-                        if "pi2go4" in ADDON:
+                        if "p2g4" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
                                 #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
@@ -1597,10 +1599,10 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinEventEnabled = 0
                             #sghGC.startServod([12,10]) # servos testing motorpitx
 
-                            print "pi2go setup"
+                            print "p2g4 setup"
                             anyAddOns = True
                             
-                        if "p2gl" in ADDON:
+                        if "pi2golite" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
                                 #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
@@ -2259,9 +2261,9 @@ class ScratchListener(threading.Thread):
                         if self.vFindOnOff('buzzer'):
                             self.index_pin_update(24,self.valueNumeric)
 
-                    elif "pi2go3" in ADDON:
+                    elif "p2g3" in ADDON:
                         #do PiRoCon stuff
-                        #logging.debug("Processing variables for Pi2Go")
+                        #logging.debug("Processing variables for P2G3")
 
                         #check for motor variable commands
                         motorList = [['motorb',19,21,0,False],['motora',26,24,0,False]]
@@ -2302,9 +2304,9 @@ class ScratchListener(threading.Thread):
                                     svalue = min(4095,max((((100-svalue) * 4096) /100),0))
                                       
                                     pcaPWM.setPWM((i*3)+2, 0, svalue)                                                   
-                    elif "pi2go4" in ADDON:
+                    elif "p2g4" in ADDON:
                         #do PiRoCon stuff
-                        #logging.debug("Processing variables for Pi2Go")
+                        #logging.debug("Processing variables for P2G4")
 
                         #check for motor variable commands
                         motorList = [['motorb',19,21,0,False],['motora',26,24,0,False]]
@@ -2364,8 +2366,8 @@ class ScratchListener(threading.Thread):
                                 #print i, svalue
                                 pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))      
 
-                    elif "p2gl" in ADDON:
-                        #logging.debug("Processing variables for Pi2GoLite")
+                    elif "pi2golite" in ADDON:
+                        #logging.debug("Processing variables for pi2golite")
 
                         #check for motor variable commands
                         motorList = [['motorb',19,21,0,False],['motora',26,24,0,False]]
@@ -3019,7 +3021,7 @@ class ScratchListener(threading.Thread):
                         if self.bFindOnOff('buzzer'):
                             sghGC.pinUpdate(24,self.OnOrOff)
                             
-                    elif "pi2go3" in ADDON:
+                    elif "p2g3" in ADDON:
                         if (pcaPWM != None):
                             for i in range(0, 5): # go thru PowerPWM on PCA Board
                                 if self.bFindValue('blue'):
@@ -3050,7 +3052,7 @@ class ScratchListener(threading.Thread):
                         if self.bFindOnOff('ultra'):
                            self.startUltra(8,0,self.OnOrOff)
                            
-                    elif "pi2go4" in ADDON:
+                    elif "p2g4" in ADDON:
                         if (pcaPWM != None):
                             for i in range(0, 4): # go thru PowerPWM on PCA Board
                                 if self.bFindValue('blue'):
@@ -3081,9 +3083,9 @@ class ScratchListener(threading.Thread):
                         if self.bFindOnOff('ultra'):
                            self.startUltra(8,0,self.OnOrOff)   
 						   
-                    elif "p2gl" in ADDON: # pidie
+                    elif "pi2golite" in ADDON: # pidie
                         #do piringo stuff
-
+                        self.bCheckAll(False,[15,16,18,22])
                         self.bListCheck([15,16],["frontleds","backleds"])
 					   
 
