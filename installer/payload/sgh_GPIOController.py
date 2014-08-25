@@ -47,7 +47,7 @@ class GPIOController :
         
 
         #Set some constants and initialise lists
-        self.numOfPins = 27 #there are actually 26 but python can't count properly :)
+        self.numOfPins = 41 #there are actually 40 but python can't count properly :)
         self.PINPUT = 4
         self.POUTPUT = 1
         self.PPWM = 2
@@ -92,19 +92,20 @@ class GPIOController :
         self.pinTrigger = [0] * self.numOfPins
         self.pinTriggerName = ["x"] * self.numOfPins
         self.anyTrigger = 0
+        self.pinServoValue = [None] * self.numOfPins
         
         self.pinEventEnabled = True
         
         self.nunchuckLevel = 1
 		
         if self.piRevision == 1:
-        #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
+        #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40
         #                     [ 3, 5,99,99, 7,99,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
-            self.gpioLookup = [99,99,99, 0,99, 1,99, 4,14,99,15,17,18,21,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
+            self.gpioLookup = [99,99,99, 0,99, 1,99, 4,14,99,15,17,18,21,99,22,23,99,24,10,99, 9,25,11, 8,99, 7,99,99,99,99,99,99,99,99,99,99,99,99,99,99]
         else:                #[99,99, 2,99, 7, 3,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
-            self.gpioLookup = [99,99,99, 2,99, 3,99, 4,14,99,15,17,18,27,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
+            self.gpioLookup = [99,99,99, 2,99, 3,99, 4,14,99,15,17,18,27,99,22,23,99,24,10,99, 9,25,11, 8,99, 7,99,99, 5,99, 6,12,13,99,19,16,26,20,99,21]
             
-        self.validPins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26]
+        self.validPins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26,29,31,32,33,35,36,37,38,40]
         
         
         #self.ULTRA_IN_USE = [False] * self.PINS
@@ -152,6 +153,8 @@ class GPIOController :
             elif (self.pinUse[pin] == self.PCOUNT):
                 GPIO.setup(pin,GPIO.IN)
             self.pinUse[pin] = self.PUNUSED
+            self.pinServoValue[pin] = None
+            
             print "reset pin", pin
             self.pinValue[pin] = 0
             self.pinInvert[pin] = False
@@ -543,15 +546,27 @@ class GPIOController :
         os.system("sudo pkill -f servod")
         for pin in pins:
             self.pinUse[pin] = self.PSERVOD
+            
+        pins = []
+        for pin in self.validPins:
+            if self.pinUse[pin] == self.PSERVOD:
+                pins.append(pin)
+        print pins
+        
         os.system(SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
         print (SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
         
         self.servodPins = pins
 
     def pinServod(self, pin, value):
-        #print ("echo " + str(self.servodPins.index(pin)) + "=" + str(value) + " > /dev/servoblaster")
-        os.system("echo " + str(self.servodPins.index(pin)) + "=" + str(value) + " > /dev/servoblaster")
-        
+        print pin , "=" , value
+        if self.pinUse[pin] != self.PSERVOD:
+            self.startServod([pin])
+        self.pinServoValue[pin] = value
+        for pin in self.servodPins:
+            os.system("echo " + str(self.servodPins.index(pin)) + "=" + str(self.pinServoValue[pin]) + " > /dev/servoblaster")
+            print ("echo " + str(self.servodPins.index(pin)) + "=" + str(self.pinServoValue[pin]) + " > /dev/servoblaster")
+
     def stopServod(self):
         os.system("sudo pkill -f servod")
         

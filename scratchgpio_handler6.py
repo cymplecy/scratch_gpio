@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha5' # 23Aug14 Pi2GoLite with servos
+Version =  'v6alpha5' # 25Aug14 Servos now supported on all pins and supporting B+
 import threading
 import socket
 import time
@@ -2600,6 +2600,16 @@ class ScratchListener(threading.Thread):
                                         sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwmmotor")
                                     else:
                                         sghGC.pinUpdate(motorList[listLoop][1],0,type="pwmmotor")
+                        # end of motor checking
+                        
+                        if self.bFindValue('servo'):
+                            print "servo"
+                            for pin in sghGC.validPins:
+                                if self.vFindValue('servo'+str(pin)):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else -150
+                                    svalue = (svalue + 150)
+                                    sghGC.pinServod(pin,svalue)
+                                    
 
                     #Use bit pattern to control ports
                     if self.vFindValue('pinpattern'):
