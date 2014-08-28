@@ -118,7 +118,8 @@ class GPIOController :
     
     def my_callback(self,pin):
         self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
-        #print('Edge detected on channel',pin,self.pinCount[pin]) 
+        print('Edge detected on channel',pin,self.pinCount[pin]) 
+        print ('State =' , GPIO.input(pin))
         
     #reset pinmode
     def resetPinMode(self):
