@@ -82,6 +82,7 @@ class GPIOController :
         self.pinRef = [None] * self.numOfPins
         self.pinCount = [0] * self.numOfPins
         self.countDirection = [1] * self.numOfPins
+        self.pinEncoderDiff = [0] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins
         self.pinValue = [0] * self.numOfPins
@@ -117,9 +118,14 @@ class GPIOController :
         # End init
     
     def my_callback(self,pin):
-        self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
+
         print('Edge detected on channel',pin,self.pinCount[pin]) 
-        print ('State =' , GPIO.input(pin))
+        print ('Initial State =' , GPIO.input(pin))
+        if GPIO.input(pin) == 1:
+            time.sleep(0.010)
+            print ('Final State =' , GPIO.input(pin))
+            if GPIO.input(pin) == 1:
+                self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
         
     #reset pinmode
     def resetPinMode(self):
@@ -207,7 +213,7 @@ class GPIOController :
                     print 'setting pin' , pin , ' as counting pin' 
                     GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                     try: # add event callback but use try block jsut in case its already set
-                        GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback,bouncetime=2)  # add rising edge detection on a channel
+                        GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback,bouncetime=10)  # add rising edge detection on a channel
                         self.callbackInUse[pin] = True
                     except Exception,e: 
                         print "Error on event detection setup on pin" ,pin
