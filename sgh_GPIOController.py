@@ -83,6 +83,7 @@ class GPIOController :
         self.pinCount = [0] * self.numOfPins
         self.countDirection = [1] * self.numOfPins
         self.pinEncoderDiff = [0] * self.numOfPins
+        self.pinLastState = [0] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins
         self.pinValue = [0] * self.numOfPins
@@ -94,6 +95,7 @@ class GPIOController :
         self.pinTriggerName = ["x"] * self.numOfPins
         self.anyTrigger = 0
         self.pinServoValue = [None] * self.numOfPins
+        self.encoderCallback = 0
         
         self.pinEventEnabled = True
         
@@ -114,18 +116,80 @@ class GPIOController :
         #self.ultraSleep = 1.0
         self.debug = debug
         if self.debug:
-            print "Debug enabled"
+            print "sghGC Debug enabled"
         # End init
     
-    def my_callback(self,pin):
-
-        print('Edge detected on channel',pin,self.pinCount[pin]) 
-        print ('Initial State =' , GPIO.input(pin))
-        if GPIO.input(pin) == 1:
-            time.sleep(0.010)
-            print ('Final State =' , GPIO.input(pin))
-            if GPIO.input(pin) == 1:
+    def my_callbackA(self,pin):
+        #return
+        name = "A"
+        if self.debug:
+            print name, "Callback"
+        if self.debug:
+            print name, "event ", dt.datetime.now(), pin
+        #if pin != 12:
+            #return
+        
+        val = self.pinRead(pin)
+        if self.debug:
+            print name, "callback pin ", dt.datetime.now(), pin , val
+        
+        time.sleep(0.010)
+        if self.debug:
+            print name, "callback pin after delay",  dt.datetime.now(),pin , val
+        val2 = self.pinRead(pin)
+        if val == val2:
+            if val != self.pinLastState[pin]:
                 self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
+                self.pinLastState[pin] = val2
+                if self.debug:
+                    print  name, "1 count ",dt.datetime.now(),self.pinCount[pin]
+            else:
+                if val == 1:
+                    self.pinCount[pin] += (self.countDirection[pin] * 2) # inc or dec count based on direction required
+                    self.pinLastState[pin] = val2
+                    if self.debug:
+                        print  name, "2count on 1 ",dt.datetime.now(),self.pinCount[pin]     
+                else:
+                    self.pinLastState[pin] = val2
+                    self.pinCount[pin] += (self.countDirection[pin] * 0)
+                    if self.debug:
+                        print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]  
+                    
+                    
+    def my_callbackB(self,pin):
+        name = "B"
+        if self.debug:
+            print name, "Callback"
+        if self.debug:
+            print name, "event ", dt.datetime.now(), pin
+        #if pin != 12:
+            #return
+        
+        val = self.pinRead(pin)
+        if self.debug:
+            print name, "callback pin ", dt.datetime.now(), pin , val
+        
+        time.sleep(0.010)
+        if self.debug:
+            print name, "callback pin after delay",  dt.datetime.now(),pin , val
+        val2 = self.pinRead(pin)
+        if val == val2:
+            if val != self.pinLastState[pin]:
+                self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
+                self.pinLastState[pin] = val2
+                if self.debug:
+                    print  name, "1 count ",dt.datetime.now(),self.pinCount[pin]
+            else:
+                if val == 1:
+                    self.pinCount[pin] += (self.countDirection[pin] * 2) # inc or dec count based on direction required
+                    self.pinLastState[pin] = val2
+                    if self.debug:
+                        print  name, "2count on 1 ",dt.datetime.now(),self.pinCount[pin]     
+                else:
+                    self.pinLastState[pin] = val2
+                    self.pinCount[pin] += (self.countDirection[pin] * 0)
+                    if self.debug:
+                        print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]                  
         
     #reset pinmode
     def resetPinMode(self):
@@ -211,10 +275,22 @@ class GPIOController :
             elif (self.pinUse[pin] == self.PCOUNT):
                 if self.callbackInUse[pin] == False:
                     print 'setting pin' , pin , ' as counting pin' 
-                    GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-                    try: # add event callback but use try block jsut in case its already set
-                        GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callback,bouncetime=10)  # add rising edge detection on a channel
-                        self.callbackInUse[pin] = True
+                    GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)#,pull_up_down=GPIO.PUD_DOWN)
+                    try: # add event callback but use try block just in case its already set
+                        if self.encoderCallback == 1:
+                            GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.my_callbackB,bouncetime=10)  # add rising edge detection on a channel
+                            self.callbackInUse[pin] = True
+                            self.encoderCallback = 2
+                            if self.debug:
+                                print "callback B set for pin ", pin
+                            
+                        if self.encoderCallback == 0:
+                            GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.my_callbackA,bouncetime=10)  # add rising edge detection on a channel
+                            self.callbackInUse[pin] = True
+                            self.encoderCallback = 1
+                            if self.debug:
+                                print "callback A set for pin ", pin
+                            
                     except Exception,e: 
                         print "Error on event detection setup on pin" ,pin
                         print str(e)
@@ -240,7 +316,7 @@ class GPIOController :
                 if (self.pinInvert[pin] == True): # Invert data value (needed for active low devices)
                     value = 100 - abs(value)
                     
-                print "motor freq calc", self.mFreq
+                #print "motor freq calc", self.mFreq
                 try: 
                     #print "try jsut updating pwm"
                     #if type == "pwmmotor":
@@ -254,9 +330,9 @@ class GPIOController :
                         self.pinRef[pin].ChangeFrequency(self.mFreq) # change freq to motor freq
                     else:
                         self.pinRef[pin].ChangeFrequency(self.PWMFREQ) # change freq to power/led freq                 
-                    print "updating pwm suceceed"
+                    #print "updating pwm suceceed"
                 except:
-                    print "pwm not set so now setting up"
+                    #print "pwm not set so now setting up"
                     try:
                         #print ("Stopping previous instance")
                         sghGC.pinRef[pin].stop()
