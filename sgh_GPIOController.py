@@ -118,7 +118,80 @@ class GPIOController :
         if self.debug:
             print "sghGC Debug enabled"
         # End init
-    
+        
+    # def my_callbackA(self,pin):
+        # #return
+        # name = "A"
+        # if self.debug:
+            # print name, "Callback"
+        # if self.debug:
+            # print name, "event ", dt.datetime.now(), pin
+        # #if pin != 12:
+            # #return
+        
+        # val = self.pinRead(pin)
+        # if self.debug:
+            # print name, "callback pin ", dt.datetime.now(), pin , val
+        
+        # time.sleep(0.010)
+        # if self.debug:
+            # print name, "callback pin after delay",  dt.datetime.now(),pin , val
+        # val2 = self.pinRead(pin)
+        # if val == val2:
+            # if val != self.pinLastState[pin]:
+                # self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
+                # self.pinLastState[pin] = val2
+                # if self.debug:
+                    # print  name, "1 count ",dt.datetime.now(),self.pinCount[pin]
+            # else:
+                # if val == 1:
+                    # self.pinCount[pin] += (self.countDirection[pin] * 2) # inc or dec count based on direction required
+                    # self.pinLastState[pin] = val2
+                    # if self.debug:
+                        # print  name, "2count on 1 ",dt.datetime.now(),self.pinCount[pin]     
+                # else:
+                    # self.pinLastState[pin] = val2
+                    # self.pinCount[pin] += (self.countDirection[pin] * 0)
+                    # if self.debug:
+                        # print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]  
+                    
+                    
+    # def my_callbackB(self,pin):
+        # name = "B"
+        # if self.debug:
+            # print name, "Callback"
+        # if self.debug:
+            # print name, "event ", dt.datetime.now(), pin
+        # #if pin != 12:
+            # #return
+        
+        # val = self.pinRead(pin)
+        # if self.debug:
+            # print name, "callback pin ", dt.datetime.now(), pin , val
+        
+        # time.sleep(0.010)
+        # if self.debug:
+            # print name, "callback pin after delay",  dt.datetime.now(),pin , val
+        # val2 = self.pinRead(pin)
+        # if val == val2:
+            # if val != self.pinLastState[pin]:
+                # self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
+                # self.pinLastState[pin] = val2
+                # if self.debug:
+                    # print  name, "1 count ",dt.datetime.now(),self.pinCount[pin]
+            # else:
+                # if val == 1:
+                    # self.pinCount[pin] += (self.countDirection[pin] * 2) # inc or dec count based on direction required
+                    # self.pinLastState[pin] = val2
+                    # if self.debug:
+                        # print  name, "2count on 1 ",dt.datetime.now(),self.pinCount[pin]     
+                # else:
+                    # self.pinLastState[pin] = val2
+                    # self.pinCount[pin] += (self.countDirection[pin] * 0)
+                    # if self.debug:
+                        # print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]               
+
+                        
     def my_callbackA(self,pin):
         #return
         name = "A"
@@ -138,22 +211,11 @@ class GPIOController :
             print name, "callback pin after delay",  dt.datetime.now(),pin , val
         val2 = self.pinRead(pin)
         if val == val2:
-            if val != self.pinLastState[pin]:
+            if val == 1:
                 self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
                 self.pinLastState[pin] = val2
                 if self.debug:
-                    print  name, "1 count ",dt.datetime.now(),self.pinCount[pin]
-            else:
-                if val == 1:
-                    self.pinCount[pin] += (self.countDirection[pin] * 2) # inc or dec count based on direction required
-                    self.pinLastState[pin] = val2
-                    if self.debug:
-                        print  name, "2count on 1 ",dt.datetime.now(),self.pinCount[pin]     
-                else:
-                    self.pinLastState[pin] = val2
-                    self.pinCount[pin] += (self.countDirection[pin] * 0)
-                    if self.debug:
-                        print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]  
+                    print  name, "1count on 1 ",dt.datetime.now(),self.pinCount[pin]   
                     
                     
     def my_callbackB(self,pin):
@@ -174,22 +236,12 @@ class GPIOController :
             print name, "callback pin after delay",  dt.datetime.now(),pin , val
         val2 = self.pinRead(pin)
         if val == val2:
-            if val != self.pinLastState[pin]:
+            if val == 1:
                 self.pinCount[pin] += (self.countDirection[pin] * 1) # inc or dec count based on direction required
                 self.pinLastState[pin] = val2
                 if self.debug:
-                    print  name, "1 count ",dt.datetime.now(),self.pinCount[pin]
-            else:
-                if val == 1:
-                    self.pinCount[pin] += (self.countDirection[pin] * 2) # inc or dec count based on direction required
-                    self.pinLastState[pin] = val2
-                    if self.debug:
-                        print  name, "2count on 1 ",dt.datetime.now(),self.pinCount[pin]     
-                else:
-                    self.pinLastState[pin] = val2
-                    self.pinCount[pin] += (self.countDirection[pin] * 0)
-                    if self.debug:
-                        print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]                  
+                    print  name, "1count on 1 ",dt.datetime.now(),self.pinCount[pin]     
+                   
         
     #reset pinmode
     def resetPinMode(self):
@@ -275,17 +327,17 @@ class GPIOController :
             elif (self.pinUse[pin] == self.PCOUNT):
                 if self.callbackInUse[pin] == False:
                     print 'setting pin' , pin , ' as counting pin' 
-                    GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)#,pull_up_down=GPIO.PUD_DOWN)
+                    GPIO.setup(pin,GPIO.IN)#,pull_up_down=GPIO.PUD_DOWN)#,pull_up_down=GPIO.PUD_DOWN)
                     try: # add event callback but use try block just in case its already set
                         if self.encoderCallback == 1:
-                            GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.my_callbackB,bouncetime=10)  # add rising edge detection on a channel
+                            #GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callbackB)#,bouncetime=10)  # add rising edge detection on a channel
                             self.callbackInUse[pin] = True
                             self.encoderCallback = 2
                             if self.debug:
                                 print "callback B set for pin ", pin
                             
                         if self.encoderCallback == 0:
-                            GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.my_callbackA,bouncetime=10)  # add rising edge detection on a channel
+                            #GPIO.add_event_detect(pin, GPIO.RISING, callback=self.my_callbackA)#,bouncetime=10)  # add rising edge detection on a channel
                             self.callbackInUse[pin] = True
                             self.encoderCallback = 1
                             if self.debug:
