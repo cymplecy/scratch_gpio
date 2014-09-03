@@ -65,13 +65,11 @@ def wheelCount():
     while running:
         time.sleep(0.002)
         val = GPIO.input(lineLeft)
-        #time.sleep(0.002)
-        if val == val:#GPIO.input(lineLeft):
-            if val == lastL and val != lastValidL:
-                countL += 1
-                lastValidL = val
-                #print countL
-            lastL = val
+        if val == lastL and val != lastValidL:
+            countL += 1
+            lastValidL = val
+            #print countL
+        lastL = val
         val = GPIO.input(lineRight)
         if val == lastR and val != lastValidR:
             countR += 1

@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha6' # 28Aug14 playing with encoders again :)
+Version =  'v6alpha6' # 03Sep14 Encoders working with queing commands :)
 import threading
 import socket
 import time
@@ -1056,7 +1056,7 @@ class ScratchListener(threading.Thread):
 
 
     def stopTurning(self,motorList,count,countingPin):
-        self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+        print "encoder count at thread start" , sghGC.encoderInUse
         print "counting pin" , countingPin
         print "motor pins" ,sghGC.pinValue[motorList[1]] , sghGC.pinValue[motorList[2]] 
         #countingPin = motorList[1][3] # use 1st motor counting pin only  
@@ -1070,7 +1070,7 @@ class ScratchListener(threading.Thread):
         if count >= 0:
             
             lastL = sghGC.pinRead(countingPin)
-            print "start" ,countingPin , lastL
+            #print "start" ,countingPin , lastL
             lastValidL = lastL
             sghGC.pinUpdate(motorList[2],1)
             sghGC.pinUpdate(motorList[1],(100-self.turnSpeed),"pwmmotor")
@@ -1078,15 +1078,15 @@ class ScratchListener(threading.Thread):
             while ((sghGC.pinCount[countingPin]  < int(countattempted)) and ((time.time()-turningStartTime) < 10)):
                 time.sleep(0.002)
                 val = sghGC.pinRead(countingPin)
-                print "val", countingPin, val
+                #print "val", countingPin, val
                 if val == lastL and val != lastValidL:
                     sghGC.pinCount[countingPin] += (sghGC.countDirection[countingPin] * 1)
                     lastValidL = val
-                    print "count" ,countingPin , sghGC.pinCount[countingPin]
+                    #print "count" ,countingPin , sghGC.pinCount[countingPin]
                 lastL = val
         else:
             lastL = sghGC.pinRead(countingPin)
-            print "start" ,countingPin , lastL
+            #print "start" ,countingPin , lastL
             lastValidL = lastL
             sghGC.pinUpdate(motorList[1],1)
             sghGC.pinUpdate(motorList[2],(100-self.turnSpeed),"pwmmotor") 
@@ -1096,7 +1096,7 @@ class ScratchListener(threading.Thread):
                 if val == lastL and val != lastValidL:
                     sghGC.pinCount[countingPin] += (sghGC.countDirection[countingPin] * 1)
                     lastValidL = val
-                    print "count" ,countingPin , sghGC.pinCount[countingPin]
+                    #print "count" ,countingPin , sghGC.pinCount[countingPin]
                 lastL = val
 
 
@@ -1120,11 +1120,13 @@ class ScratchListener(threading.Thread):
         sghGC.pinEncoderDiff[countingPin] = (countwanted - (sghGC.pinCount[countingPin])) #work out new error in position
 
         print "countattempted/Diff:" , countattempted , " / " , sghGC.pinEncoderDiff[countingPin]
-        self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
+
         self.send_scratch_command('sensor-update "count" "' +str(sghGC.pinCount[countingPin]) + '"') # inform Scratch that turning is finished
         print "turning finished"
         print " "
-        
+        sghGC.encoderInUse -= 1
+        print "encoder count at end" , sghGC.encoderInUse
+                
     def beep(self,pin,freq,duration):
         logging.debug("Freq:%s", freq) 
         if sghGC.pinUse != sghGC.PPWM: # Checks use of pin if not PWM mode then
@@ -1319,6 +1321,20 @@ class ScratchListener(threading.Thread):
             #if (firstRun == True) or (anyAddOns == False):
             #print 
             logging.debug("dataList: %s",dataList)
+            if any("move" in s for s in dataList) or any("move" in s for s in dataList):
+                print "move/turn found"
+                newList = []
+                for item in dataList:
+                    print "item" , item
+                    if "sensor-update" in item:
+                        newList.append(item)
+                    if "broadcast" in item:
+                        bList = shlex.split(item)#item.split(" ")
+                        for bItem in bList[1:]:
+                            newList.append('broadcast ' + bItem)
+                print "newList", newList
+                dataList = newList
+            
             #print "GPIOPLus" , GPIOPlus
             for dataItem in dataList:
                 dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
@@ -3259,11 +3275,19 @@ class ScratchListener(threading.Thread):
                         motorList = [['turnl',24,26,12],['turnr',21,19,13]]
 
 
-                        moveFound = False            
+                        moveFound = False       
+
+                        
                         if self.bFindValue("movea"):
+                            while sghGC.encoderInUse > 0:
+                                time.sleep(0.1)
+                            sghGC.encoderInUse = 1
+                            self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+                            time.sleep(0.2)
                             moveFound = True 
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            svalue = int(float(svalue * 4) / 10.0)
                             print "movea" , svalue
                             sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
                             print "direction" , sghGC.countDirection[motorList[0][3]]
@@ -3271,18 +3295,19 @@ class ScratchListener(threading.Thread):
                             print "encoder state before turning starts",motorList[0][3],sghGC.pinLastState[motorList[0][3]]
                             turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList[0],svalue,motorList[0][3]])
                             turnDualThread.start()
-                            # for listLoop in range(0,1):
-                                # if svalue > 0:
-                                    # sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    # sghGC.pinUpdate(motorList[listLoop][1],(100-self.turnSpeed),"pwmmotor")
-                                # elif svalue < 0:
-                                    # sghGC.pinUpdate(motorList[listLoop][1],1)
-                                    # sghGC.pinUpdate(motorList[listLoop][2],(100-self.turnSpeed),"pwmmotor")                                    
+                                 
                                     
                         if self.bFindValue("moveb"):
+                            while sghGC.encoderInUse > 0:
+                                time.sleep(0.1)
+                            sghGC.encoderInUse = 1
+                                
+                            self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+                            time.sleep(0.2)
                             moveFound = True 
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            svalue = int(float(svalue * 4) / 10.0)
                             print "moveb" , svalue
                             sghGC.countDirection[motorList[1][3]] = -1 if svalue < 0 else 1
                             print "direction" , sghGC.countDirection[motorList[1][3]]
@@ -3290,17 +3315,17 @@ class ScratchListener(threading.Thread):
                             print "encoder state before turning starts",motorList[1][3],sghGC.pinLastState[motorList[1][3]]
                             turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList[1],svalue,motorList[1][3]])
                             turnDualThread.start()
-                            # for listLoop in range(1,2):
-                                # if svalue > 0:
-                                    # sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    # sghGC.pinUpdate(motorList[listLoop][1],(100-self.turnSpeed),"pwmmotor")
-                                # elif svalue < 0:
-                                    # sghGC.pinUpdate(motorList[listLoop][1],1)
-                                    # sghGC.pinUpdate(motorList[listLoop][2],(100-self.turnSpeed),"pwmmotor")     
+  
 
                         if self.bFindValue("move") and moveFound == False:
+                            while sghGC.encoderInUse > 0:
+                                time.sleep(0.1)
+                            sghGC.encoderInUse = 2                        
+                            self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+                            time.sleep(0.2)
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            svalue = int(float(svalue * 4) / 10.0)
                             print "move ", svalue
                             sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
                             sghGC.countDirection[motorList[1][3]] = -1 if svalue < 0 else 1
@@ -3310,13 +3335,26 @@ class ScratchListener(threading.Thread):
                             turnDualThread1.start()
                             turnDualThread2 = threading.Thread(target=self.stopTurning, args=[motorList[1],svalue,motorList[1][3]])
                             turnDualThread2.start()
-                            # for listLoop in range(0,2):
-                                # if svalue > 0:
-                                    # sghGC.pinUpdate(motorList[listLoop][2],1)
-                                    # sghGC.pinUpdate(motorList[listLoop][1],(100-self.turnSpeed),"pwmmotor")
-                                # elif svalue < 0:
-                                    # sghGC.pinUpdate(motorList[listLoop][1],1)
-                                    # sghGC.pinUpdate(motorList[listLoop][2],(100-self.turnSpeed),"pwmmotor")                                 
+      
+                                    
+                        if self.bFindValue("turn"):
+                            while sghGC.encoderInUse > 0:
+                                time.sleep(0.1)
+                            sghGC.encoderInUse = 2                           
+                            self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+                            time.sleep(1)
+                            print " "
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            svalue = int(float(svalue) / 22.5)
+                            print "turn ", svalue
+                            sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
+                            sghGC.countDirection[motorList[1][3]] = 1 if svalue < 0 else -1
+
+                            turnDualThread1 = threading.Thread(target=self.stopTurning, args=[motorList[0],svalue,motorList[0][3]])
+                            turnDualThread1.start()
+                            turnDualThread2 = threading.Thread(target=self.stopTurning, args=[motorList[1],-svalue,motorList[1][3]])
+                            turnDualThread2.start()
+                                    
                   
 					   
 
@@ -4053,6 +4091,12 @@ class ScratchListener(threading.Thread):
 
                     if self.bFind('shutdownpi'):
                         os.system('sudo shutdown -h "now"')
+                        
+                    
+                    print "encoderinUse state" ,sghGC.encoderInUse
+                    if sghGC.encoderInUse == 0:
+                        self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
+
 
                 if 'stop handler' in dataraw:
                     print "stop handler msg setn from Scratch"

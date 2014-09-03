@@ -98,6 +98,7 @@ class GPIOController :
         self.encoderCallback = 0
         
         self.pinEventEnabled = True
+        self.encoderInUse = 0
         
         self.nunchuckLevel = 1
 		
