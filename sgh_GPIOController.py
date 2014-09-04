@@ -83,6 +83,7 @@ class GPIOController :
         self.pinCount = [0] * self.numOfPins
         self.countDirection = [1] * self.numOfPins
         self.pinEncoderDiff = [0] * self.numOfPins
+        self.encoderStopCounting = [0] * self.numOfPins
         self.pinLastState = [0] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins

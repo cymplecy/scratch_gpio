@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha6' # 03Sep14 Encoders working with queing commands :)
+Version =  'v6alpha7' # 04Sep14 Encoders working with queing commands :)
 import threading
 import socket
 import time
@@ -186,6 +186,15 @@ def rtnNumeric(value,default):
         return float(value)
     except ValueError:
         return default     
+        
+def rtnSign(s):
+    try:
+        if abs(s) == s:
+            return 1
+        else:
+            return -1
+    except ValueError:
+        return 0            
         
 
 def removeNonAscii(s): return "".join(i for i in s if ord(i)<128)
@@ -1055,51 +1064,54 @@ class ScratchListener(threading.Thread):
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
 
 
-    def stopTurning(self,motorList,count,countingPin):
+    def encoderCount(self,pin):
+        lastL = sghGC.pinRead(pin)
+        print "start" ,pin , lastL
+        lastValidL = lastL
+        while sghGC.encoderStopCounting[pin]  == False:
+            time.sleep(0.002)
+            val = sghGC.pinRead(pin)
+            #print "val", countingPin, val
+            if val == lastL and val != lastValidL:
+                sghGC.pinCount[pin] += (sghGC.countDirection[pin] * 1)
+                lastValidL = val
+                print "count" ,pin , sghGC.pinCount[pin]
+            lastL = val
+        print "encoderCountExit for pin", pin
+                
+    def moveMotor(self,motorList,count,pin):
+        #This thread gets invoked when a command is given to turn the motor a number of steps
         print "encoder count at thread start" , sghGC.encoderInUse
-        print "counting pin" , countingPin
+        print "counting pin" , pin
         print "motor pins" ,sghGC.pinValue[motorList[1]] , sghGC.pinValue[motorList[2]] 
         #countingPin = motorList[1][3] # use 1st motor counting pin only  
-        print "Previous EncoderDiff:",sghGC.pinEncoderDiff[countingPin]
+        print "Previous EncoderDiff:",sghGC.pinEncoderDiff[pin]
         #sghGC.pinEncoderDiff[countingPin] = 0
-        startCount = sghGC.pinCount[countingPin]
-        countwanted = startCount + count + sghGC.pinEncoderDiff[countingPin] # modifiy count based on previous result
-        countattempted = startCount + count + int(1 * sghGC.pinEncoderDiff[countingPin]) # allow for modified behaviour
-        print "count wanted/going to attempt" , countwanted,countattempted
+        sghGC.encoderStopCounting[pin] = False
+        #start encoder count thread for this motor encoder
+        encoderMoveThread = threading.Thread(target=self.encoderCount, args=[pin])
+        encoderMoveThread.start()
+        startCount = sghGC.pinCount[pin]
+        countwanted = startCount + count + sghGC.pinEncoderDiff[pin] # modifiy count based on previous result
+        if (rtnSign(sghGC.pinEncoderDiff[pin]) != rtnSign(count)):
+            print "doubling diff on pin " ,pin
+            countattempted = startCount + count + int(2 * sghGC.pinEncoderDiff[pin]) # allow for modified behaviour
+        else:
+            countattempted = startCount + count + int(1 * sghGC.pinEncoderDiff[pin]) # allow for modified behaviour
+        print "extra count wanted/going to attempt" , (countwanted-startCount),(countattempted-startCount)
         turningStartTime = time.time() # used to timeout if necessary 
         if count >= 0:
-            
-            lastL = sghGC.pinRead(countingPin)
-            #print "start" ,countingPin , lastL
-            lastValidL = lastL
             sghGC.pinUpdate(motorList[2],1)
             sghGC.pinUpdate(motorList[1],(100-self.turnSpeed),"pwmmotor")
-            
-            while ((sghGC.pinCount[countingPin]  < int(countattempted)) and ((time.time()-turningStartTime) < 10)):
+            while ((sghGC.pinCount[pin]  < int(countattempted)) and ((time.time()-turningStartTime) < 10)):
                 time.sleep(0.002)
-                val = sghGC.pinRead(countingPin)
-                #print "val", countingPin, val
-                if val == lastL and val != lastValidL:
-                    sghGC.pinCount[countingPin] += (sghGC.countDirection[countingPin] * 1)
-                    lastValidL = val
-                    #print "count" ,countingPin , sghGC.pinCount[countingPin]
-                lastL = val
         else:
-            lastL = sghGC.pinRead(countingPin)
-            #print "start" ,countingPin , lastL
-            lastValidL = lastL
             sghGC.pinUpdate(motorList[1],1)
             sghGC.pinUpdate(motorList[2],(100-self.turnSpeed),"pwmmotor") 
-            while ((sghGC.pinCount[countingPin]  > int(countattempted)) and ((time.time()-turningStartTime) < 10)):
+            while ((sghGC.pinCount[pin]  > int(countattempted)) and ((time.time()-turningStartTime) < 10)):
                 time.sleep(0.002)
-                val = sghGC.pinRead(countingPin)
-                if val == lastL and val != lastValidL:
-                    sghGC.pinCount[countingPin] += (sghGC.countDirection[countingPin] * 1)
-                    lastValidL = val
-                    #print "count" ,countingPin , sghGC.pinCount[countingPin]
-                lastL = val
 
-
+        
         if count > 0:
             if sghGC.pinValue[motorList[2]] == 1: # if control pin is 1 
                 sghGC.pinUpdate(motorList[1],1) # stop control pin 
@@ -1114,18 +1126,21 @@ class ScratchListener(threading.Thread):
             else:
                 sghGC.pinUpdate(motorList[1],0) # stop control pin
                 sghGC.pinUpdate(motorList[2],(0)) # stop control pin
+        print "motors off " , pin
                 
-        time.sleep(0.25) #wait until motors have actually stopped
-        print ("how many moved",(sghGC.pinCount[countingPin] - startCount))
-        sghGC.pinEncoderDiff[countingPin] = (countwanted - (sghGC.pinCount[countingPin])) #work out new error in position
+        time.sleep(1) #wait until motors have actually stopped
+        sghGC.encoderStopCounting[pin] = True
+        print ("how many moved",(sghGC.pinCount[pin] - startCount))
+        sghGC.pinEncoderDiff[pin] = (countwanted - (sghGC.pinCount[pin])) #work out new error in position
 
-        print "countattempted/Diff:" , countattempted , " / " , sghGC.pinEncoderDiff[countingPin]
+        print "count wantedDiff:" , countwanted, " / " , sghGC.pinEncoderDiff[pin]
 
-        self.send_scratch_command('sensor-update "count" "' +str(sghGC.pinCount[countingPin]) + '"') # inform Scratch that turning is finished
+        self.send_scratch_command('sensor-update "count" "' +str(sghGC.pinCount[pin]) + '"') # inform Scratch that turning is finished
         print "turning finished"
         print " "
-        sghGC.encoderInUse -= 1
-        print "encoder count at end" , sghGC.encoderInUse
+        with lock:
+            sghGC.encoderInUse -= 1
+            print "encoder count at end of moveMotor for pin" , pin, sghGC.encoderInUse
                 
     def beep(self,pin,freq,duration):
         logging.debug("Freq:%s", freq) 
@@ -2715,7 +2730,9 @@ class ScratchListener(threading.Thread):
                             if self.vFindValue('adaservo' + str(i)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 #print i, svalue
-                                pcaPWM.setPWM(i, 0, int(min(780,max(120,450 - (svalue * 3.33333)))))                                   
+                                svalue = int(min(720,max(120,420 - (svalue * 3.33333))))
+                                pcaPWM.setPWM(i, 0, svalue)   
+                                print "pwm sent" , i, svalue                     
                         for i in range(0, 16): # go thru PowerPWM on PCA Board
                             if self.vFindValue('adapower' + str(i + 1)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -3282,19 +3299,24 @@ class ScratchListener(threading.Thread):
                             while sghGC.encoderInUse > 0:
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 1
+                            
                             self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
                             time.sleep(0.2)
                             moveFound = True 
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue = int(float(svalue * 4) / 10.0)
+                            #svalue = int(float(svalue * 4) / 10.0)
                             print "movea" , svalue
                             sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
                             print "direction" , sghGC.countDirection[motorList[0][3]]
                             sghGC.pinLastState[motorList[0][3]] = -1#sghGC.pinRead(motorList[0][3])
                             print "encoder state before turning starts",motorList[0][3],sghGC.pinLastState[motorList[0][3]]
-                            turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList[0],svalue,motorList[0][3]])
-                            turnDualThread.start()
+                            moveMotorAThread = threading.Thread(target=self.moveMotor, args=[motorList[0],svalue,motorList[0][3]])
+                            moveMotorAThread.start()
+
+                            
+                            
+                            
                                  
                                     
                         if self.bFindValue("moveb"):
@@ -3307,14 +3329,14 @@ class ScratchListener(threading.Thread):
                             moveFound = True 
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue = int(float(svalue * 4) / 10.0)
-                            print "moveb" , svalue
+                            #svalue = int(float(svalue * 4) / 10.0)
+                            print "movea" , svalue
                             sghGC.countDirection[motorList[1][3]] = -1 if svalue < 0 else 1
                             print "direction" , sghGC.countDirection[motorList[1][3]]
-                            sghGC.pinLastState[motorList[1][3]] = -1#sghGC.pinRead(motorList[1][3])
+                            sghGC.pinLastState[motorList[1][3]] = -1#sghGC.pinRead(motorList[0][3])
                             print "encoder state before turning starts",motorList[1][3],sghGC.pinLastState[motorList[1][3]]
-                            turnDualThread = threading.Thread(target=self.stopTurning, args=[motorList[1],svalue,motorList[1][3]])
-                            turnDualThread.start()
+                            moveMotorBThread = threading.Thread(target=self.moveMotor, args=[motorList[1],svalue,motorList[1][3]])
+                            moveMotorBThread.start()
   
 
                         if self.bFindValue("move") and moveFound == False:
@@ -3325,16 +3347,15 @@ class ScratchListener(threading.Thread):
                             time.sleep(0.2)
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue = int(float(svalue * 4) / 10.0)
+                            #svalue = int(float(svalue * 4) / 10.0)
                             print "move ", svalue
                             sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
                             sghGC.countDirection[motorList[1][3]] = -1 if svalue < 0 else 1
                             print "sghdir" , sghGC.countDirection[motorList[0][3]]
-
-                            turnDualThread1 = threading.Thread(target=self.stopTurning, args=[motorList[0],svalue,motorList[0][3]])
-                            turnDualThread1.start()
-                            turnDualThread2 = threading.Thread(target=self.stopTurning, args=[motorList[1],svalue,motorList[1][3]])
-                            turnDualThread2.start()
+                            moveMotorAThread = threading.Thread(target=self.moveMotor, args=[motorList[0],svalue,motorList[0][3]])
+                            moveMotorAThread.start()
+                            moveMotorBThread = threading.Thread(target=self.moveMotor, args=[motorList[1],svalue,motorList[1][3]])
+                            moveMotorBThread.start()
       
                                     
                         if self.bFindValue("turn"):
@@ -3345,15 +3366,14 @@ class ScratchListener(threading.Thread):
                             time.sleep(1)
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                            svalue = int(float(svalue) / 22.5)
+                            #svalue = int(float(svalue) / 22.5)
                             print "turn ", svalue
                             sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
                             sghGC.countDirection[motorList[1][3]] = 1 if svalue < 0 else -1
-
-                            turnDualThread1 = threading.Thread(target=self.stopTurning, args=[motorList[0],svalue,motorList[0][3]])
-                            turnDualThread1.start()
-                            turnDualThread2 = threading.Thread(target=self.stopTurning, args=[motorList[1],-svalue,motorList[1][3]])
-                            turnDualThread2.start()
+                            moveMotorAThread = threading.Thread(target=self.moveMotor, args=[motorList[0],svalue,motorList[0][3]])
+                            moveMotorAThread.start()
+                            moveMotorBThread = threading.Thread(target=self.moveMotor, args=[motorList[1],-svalue,motorList[1][3]])
+                            moveMotorBThread.start()
                                     
                   
 					   
