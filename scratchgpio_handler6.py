@@ -750,7 +750,9 @@ class ScratchListener(threading.Thread):
         self.OnOrOff = None
         self.searchPos = 0
         self.encoderDiff = 0
-        self.turnSpeed = 20
+        self.turnSpeed = 40
+        self.turnSpeedAdj = 0
+
         self.matrixX = 0
         self.matrixY = 0        
         self.matrixUse = 64
@@ -1100,17 +1102,22 @@ class ScratchListener(threading.Thread):
             countattempted = startCount + count + int(1 * sghGC.pinEncoderDiff[pin]) # allow for modified behaviour
         print "extra count wanted/going to attempt" , (countwanted-startCount),(countattempted-startCount)
         turningStartTime = time.time() # used to timeout if necessary 
+        thisTurnSpeed = self.turnSpeed
+        if pin == 13:
+            thisTurnSpeed= self.turnSpeed + self.turnSpeedAdj
+            print "pin turnspeed" , pin, thisTurnSpeed
         if count >= 0:
             sghGC.pinUpdate(motorList[2],1)
-            sghGC.pinUpdate(motorList[1],(100-self.turnSpeed),"pwmmotor")
+            sghGC.pinUpdate(motorList[1],(100-thisTurnSpeed),"pwmmotor")
+            sghGC.pinRef[motorList[1]].ChangeFrequency(15)
             while ((sghGC.pinCount[pin]  < int(countattempted)) and ((time.time()-turningStartTime) < 10)):
                 time.sleep(0.002)
         else:
             sghGC.pinUpdate(motorList[1],1)
-            sghGC.pinUpdate(motorList[2],(100-self.turnSpeed),"pwmmotor") 
+            sghGC.pinUpdate(motorList[2],(100-thisTurnSpeed),"pwmmotor") 
+            sghGC.pinRef[motorList[2]].ChangeFrequency(15)
             while ((sghGC.pinCount[pin]  > int(countattempted)) and ((time.time()-turningStartTime) < 10)):
                 time.sleep(0.002)
-
         
         if count > 0:
             if sghGC.pinValue[motorList[2]] == 1: # if control pin is 1 
@@ -1128,10 +1135,11 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUpdate(motorList[2],(0)) # stop control pin
         print "motors off " , pin
                 
-        time.sleep(1) #wait until motors have actually stopped
+        time.sleep(0.2) #wait until motors have actually stopped
         sghGC.encoderStopCounting[pin] = True
         print ("how many moved",(sghGC.pinCount[pin] - startCount))
         sghGC.pinEncoderDiff[pin] = (countwanted - (sghGC.pinCount[pin])) #work out new error in position
+        self.send_scratch_command('sensor-update "encoderdiff' + str(pin) + '"' + str(sghGC.pinEncoderDiff[pin]) + '"') # inform Scratch that turning is finished
 
         print "count wantedDiff:" , countwanted, " / " , sghGC.pinEncoderDiff[pin]
 
@@ -1140,7 +1148,7 @@ class ScratchListener(threading.Thread):
         print " "
         with lock:
             sghGC.encoderInUse -= 1
-            print "encoder count at end of moveMotor for pin" , pin, sghGC.encoderInUse
+            print "encoders in use count at end of moveMotor for pin" , pin, sghGC.encoderInUse
                 
     def beep(self,pin,freq,duration):
         logging.debug("Freq:%s", freq) 
@@ -1380,10 +1388,13 @@ class ScratchListener(threading.Thread):
                         PiGlow_Brightness = sghGC.ledDim
                         print sghGC.ledDim
                         
-                    if self.vFindValue("turnspeed"):
-                        self.turnSpeed = int(self.valueNumeric) if self.valueIsNumeric else 100
+                    if self.vFindValue("turnspeedadj"):
+                        self.turnSpeedAdj = int(self.valueNumeric) if self.valueIsNumeric else 0
+                        print "TurnSpeedAdj" , self.turnSpeed                            
+                    elif self.vFindValue("turnspeed"):
+                        self.turnSpeed = int(self.valueNumeric) if self.valueIsNumeric else 0
                         print "TurnSpeed" , self.turnSpeed                        
-                        
+                                                
 
                     pinsoraddon = None
                     if self.vFindValue("setpins"):
