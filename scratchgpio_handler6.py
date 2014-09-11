@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha7' # 04Sep14 Encoders working with queing commands :)
+Version =  'v6alpha8' # 11Sep14 Tidy up encoder messages and make sure sensor updates sent every 3 secs
 import threading
 import socket
 import time
@@ -700,7 +700,7 @@ class ScratchSender(threading.Thread):
             #print ("this:%s",pin_bit_pattern)
             
 
-            if (time.time() - lastPinUpdateTime)  > 1000:  #This is to force the pin names to be read out even if they don't change
+            if (time.time() - lastPinUpdateTime)  > 3:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for listIndex in range(len(sghGC.validPins)):
@@ -1146,7 +1146,6 @@ class ScratchListener(threading.Thread):
 
         print "count wantedDiff:" , countwanted, " / " , sghGC.pinEncoderDiff[pin]
 
-        self.send_scratch_command('sensor-update "count" "' +str(sghGC.pinCount[pin]) + '"') # inform Scratch that turning is finished
         print "turning finished"
         print " "
         with lock:
@@ -1719,9 +1718,7 @@ class ScratchListener(threading.Thread):
                                     logging.debug("Encoders Found:%s", ADDON)
                                     sghGC.pinUse[12] = sghGC.PCOUNT 
                                     sghGC.pinUse[13] = sghGC.PCOUNT 
-                                    self.send_scratch_command('sensor-update "encoder" "stopped"') 
-                                    self.send_scratch_command('sensor-update "count7" "0"')                                 
-                                
+                                    self.send_scratch_command('sensor-update "motors" "stopped"')                               
 
                                 sghGC.setPinMode()
                                 sghGC.startServod([18,22]) # servos
@@ -1730,9 +1727,6 @@ class ScratchListener(threading.Thread):
                                 
                                 self.startUltra(8,0,self.OnOrOff)               
                          
-                                #sghGC.pinEventEnabled = 0
-                            #sghGC.startServod([12,10]) # servos testing motorpitx
-
                             print "pi2golite setup"
                             anyAddOns = True                            
                             
@@ -3318,7 +3312,7 @@ class ScratchListener(threading.Thread):
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 1
                             
-                            self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+                            self.send_scratch_command('sensor-update "motors" "turning"') #set turning sensor to turning
                             time.sleep(0.2)
                             moveFound = True 
                             print " "
@@ -3342,7 +3336,7 @@ class ScratchListener(threading.Thread):
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 1
                                 
-                            self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+                            self.send_scratch_command('sensor-update "motors" "turning"') #set turning sensor to turning
                             time.sleep(0.2)
                             moveFound = True 
                             print " "
@@ -3361,7 +3355,7 @@ class ScratchListener(threading.Thread):
                             while sghGC.encoderInUse > 0:
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 2                        
-                            self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+                            self.send_scratch_command('sensor-update "motors" "turning"') #set turning sensor to turning
                             time.sleep(0.2)
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -3380,7 +3374,7 @@ class ScratchListener(threading.Thread):
                             while sghGC.encoderInUse > 0:
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 2                           
-                            self.send_scratch_command('sensor-update "encoder" "turning"') #set turning sensor to turning
+                            self.send_scratch_command('sensor-update "motors" "turning"') #set turning sensor to turning
                             time.sleep(0.2)
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
