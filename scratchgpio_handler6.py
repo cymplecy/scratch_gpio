@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha8' # 11Sep14 Tidy up encoder messages and make sure sensor updates sent every 3 secs
+Version =  'v6alpha9' # 21Sep14 Add in MCP23008
 import threading
 import socket
 import time
@@ -39,6 +39,7 @@ import sgh_RasPiCamera
 #import pygame removed becasue causing random failures
 import re
 import meArm
+from sgh_MCP23008 import sgh_MCP23008
 try:
     from Adafruit_PWM_Servo_Driver import PWM
     print "PWM/Servo imported OK"
@@ -4116,7 +4117,16 @@ class ScratchListener(threading.Thread):
                         self.send_scratch_command(bcast_str)
                         
                     if self.bFindValue('ultradelay'):
-                        sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1                        
+                        sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1    
+
+                    if self.bFindValue("getir"):
+                        print "ir found"
+                                 
+                        value = 0b11111 & MCP23008.readU8(0x09) # get  value
+                        sensor_name = 'irsensor'
+                        bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)                        
 
 
                     #end of broadcast check
@@ -4314,7 +4324,21 @@ except:
 #PiMatrix.start()
     #time.sleep(5)
     
+MCP23008 = None
+#PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
+try:
+    if sghGC.getPiRevision() == 1:
+        print "Rev1 Board" 
+        MCP23008 = sgh_MCP23008(0x20,0)
+    else:
+        MCP23008 = sgh_MCP23008(0x20,1)
+    print MCP23008
 
+    print "MCP23008 Detected"
+except:
+    print "No MCP23008 Detected"    
+    
+print "GPIO" , MCP23008.readU8(0x09)
     
 wii = None
 try:
