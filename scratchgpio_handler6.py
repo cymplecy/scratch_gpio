@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha9' # 21Sep14 Add in MCP23008
+Version =  'v6alpha10' # 24Sep14 Motor control improvements
 import threading
 import socket
 import time
@@ -1080,7 +1080,7 @@ class ScratchListener(threading.Thread):
             if val == lastL and val != lastValidL:
                 sghGC.pinCount[pin] += (sghGC.countDirection[pin] * 1)
                 lastValidL = val
-                print "count" ,pin , sghGC.pinCount[pin]
+                #print "count" ,pin , sghGC.pinCount[pin]
             lastL = val
         print "encoderCountExit for pin", pin
                 
@@ -1109,17 +1109,45 @@ class ScratchListener(threading.Thread):
         turningStartTime = time.time() # used to timeout if necessary 
         thisTurnSpeed = self.turnSpeed
         if pin == 13:
+            if sghGC.pinCount[13] > sghGC.pinCount[12]:
+                self.turnSpeedAdj += 1 
+            if sghGC.pinCount[13] > sghGC.pinCount[12]:
+                self.turnSpeedAdj -= 1                 
             thisTurnSpeed= self.turnSpeed + self.turnSpeedAdj
-        print "pin turnspeed" , pin, thisTurnSpeed
+            print "pin turnspeed at start" , pin, (self.turnSpeed + self.turnSpeedAdj)
         
         if count >= 0:
-            sghGC.motorUpdate(motorList[1],motorList[2],thisTurnSpeed)
-            while ((sghGC.pinCount[pin]  < int(countattempted)) and ((time.time()-turningStartTime) < 10)):
+            while ((sghGC.pinCount[pin]  < int(countattempted)) and ((time.time()-turningStartTime) < 20)):
+                if pin == 13:
+                    if sghGC.pinCount[13] > sghGC.pinCount[12]:
+                        self.turnSpeedAdj -= 1 
+                        time.sleep(0.005)       
+                    if sghGC.pinCount[13] < sghGC.pinCount[12]:
+                        self.turnSpeedAdj += 1
+                        time.sleep(0.005)         
+                    self.turnSpeedAdj = min(max(-5,self.turnSpeedAdj),5)
+                    sghGC.motorUpdate(motorList[1],motorList[2],(self.turnSpeed + self.turnSpeedAdj ))                      
+                else:
+                    sghGC.motorUpdate(motorList[1],motorList[2],thisTurnSpeed) 
+                    
                 time.sleep(0.002)
         else:
-            sghGC.motorUpdate(motorList[1],motorList[2],(0 - thisTurnSpeed))
-            while ((sghGC.pinCount[pin]  > int(countattempted)) and ((time.time()-turningStartTime) < 10)):
+            while ((sghGC.pinCount[pin]  > int(countattempted)) and ((time.time()-turningStartTime) < 20)):
+                if pin == 13:
+                    if sghGC.pinCount[13] > sghGC.pinCount[12]:
+                        self.turnSpeedAdj -= 1 
+                        time.sleep(0.005)     
+                    if sghGC.pinCount[13] < sghGC.pinCount[12]:
+                        self.turnSpeedAdj += 1 
+                        time.sleep(0.005)       
+                    self.turnSpeedAdj = min(max(-5,self.turnSpeedAdj),5)
+                    sghGC.motorUpdate(motorList[1],motorList[2],(self.turnSpeed + self.turnSpeedAdj ))                      
+                else:
+                    sghGC.motorUpdate(motorList[1],motorList[2],thisTurnSpeed) 
+                    
                 time.sleep(0.002)
+        if pin == 13:                
+            print "pin turnspeed at end" , pin, (self.turnSpeed + self.turnSpeedAdj )              
         
         sghGC.motorUpdate(motorList[1],motorList[2],0)
         print "motors off " , pin
@@ -4110,7 +4138,7 @@ class ScratchListener(threading.Thread):
                         sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1    
 
                     if self.bFindValue("getir"):
-                        print "ir found"
+                        #print "ir found"
                                  
                         value = 0b11111 & MCP23008.readU8(0x09) # get  val
                         sensor_name = 'irsensor'
