@@ -85,6 +85,8 @@ class GPIOController :
         self.pinEncoderDiff = [0] * self.numOfPins
         self.encoderStopCounting = [0] * self.numOfPins
         self.pinLastState = [0] * self.numOfPins
+        self.encoderTime = [0] * self.numOfPins
+        self.encoderTimeDiff = [0.0] * self.numOfPins
         self.gpioLookup = [0] * self.numOfPins
         self.callbackInUse = [False] * self.numOfPins
         self.pinValue = [0] * self.numOfPins
@@ -358,7 +360,7 @@ class GPIOController :
         #print "pin",pin
         #print "pvalue",self.pinValue
         self.pinValue[pin] = value
-        self.mFreq = max(11,abs(value/2))
+        #self.mFreq = max(11,abs(value/2))
         if (self.ledDim < 100) and (type == 'plain'):
             type = "pwm"
             value = value * self.ledDim
@@ -450,7 +452,7 @@ class GPIOController :
             
     def motorUpdate(self, Pin1, Pin2, value):
         #print "motUpdate called" , Pin1, Pin2,value 
-        self.mFreq = max(11,abs(value/2))
+        #self.mFreq = max(11,abs(value/2))
         #print "mFreq= " , self.mFreq
         PinPWM = Pin1
         PinC = Pin2

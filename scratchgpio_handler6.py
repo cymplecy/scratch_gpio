@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha10' # 24Sep14 Motor control improvements
+Version =  'v6alpha10' # 29Sep14 Wrap try/except around a few imports
 import threading
 import socket
 import time
@@ -39,13 +39,29 @@ import sgh_RasPiCamera
 #import pygame removed becasue causing random failures
 import re
 import meArm
-from sgh_MCP23008 import sgh_MCP23008
+
+try:
+    import meArm
+    print "meArm imported OK"
+except:
+    print ""meArm  NOT imported OK"
+    pass
+    
+try:
+    from sgh_MCP23008 import sgh_MCP23008
+    print "MCP23008 imported OK"
+except:
+    print ""MCP23008  NOT imported OK"
+    pass
+    
 try:
     from Adafruit_PWM_Servo_Driver import PWM
     print "PWM/Servo imported OK"
 except:
     print "PWM/Servo NOT imported OK"
     pass
+    
+    
     
 try:
     from sgh_PCF8591P import sgh_PCF8591P
@@ -754,7 +770,7 @@ class ScratchListener(threading.Thread):
         self.encoderDiff = 0
         self.turnSpeed = 40
         self.turnSpeedAdj = 0
-        self.mFreq = 20
+
 
         self.matrixX = 0
         self.matrixY = 0        
@@ -1079,6 +1095,10 @@ class ScratchListener(threading.Thread):
             #print "val", countingPin, val
             if val == lastL and val != lastValidL:
                 sghGC.pinCount[pin] += (sghGC.countDirection[pin] * 1)
+                sghGC.encoderTimeDiff[pin] = time.time() - sghGC.encoderTime[pin]
+                sghGC.encoderTime[pin] = time.time()
+                if pin == 12:
+                    print "encodeer time diff" ,sghGC.encoderTimeDiff[pin]
                 lastValidL = val
                 #print "count" ,pin , sghGC.pinCount[pin]
             lastL = val
@@ -1108,42 +1128,50 @@ class ScratchListener(threading.Thread):
         print "extra count wanted/going to attempt" , (countwanted-startCount),(countattempted-startCount)
         turningStartTime = time.time() # used to timeout if necessary 
         thisTurnSpeed = self.turnSpeed
-        if pin == 13:
-            if sghGC.pinCount[13] > sghGC.pinCount[12]:
-                self.turnSpeedAdj += 1 
-            if sghGC.pinCount[13] > sghGC.pinCount[12]:
-                self.turnSpeedAdj -= 1                 
+        if pin == 12:
             thisTurnSpeed= self.turnSpeed + self.turnSpeedAdj
-            print "pin turnspeed at start" , pin, (self.turnSpeed + self.turnSpeedAdj)
+        print "pin turnspeed at start" , pin, (self.turnSpeed + self.turnSpeedAdj)
         
         if count >= 0:
+            sghGC.motorUpdate(motorList[1],motorList[2],thisTurnSpeed)
             while ((sghGC.pinCount[pin]  < int(countattempted)) and ((time.time()-turningStartTime) < 20)):
                 if pin == 13:
                     if sghGC.pinCount[13] > sghGC.pinCount[12]:
-                        self.turnSpeedAdj -= 1 
+                        self.turnSpeedAdj = 0 - ( self.turnSpeed / 2)
+                        #print "turnspeeed sub" ,self.turnSpeedAdj
                         time.sleep(0.005)       
                     if sghGC.pinCount[13] < sghGC.pinCount[12]:
-                        self.turnSpeedAdj += 1
-                        time.sleep(0.005)         
-                    self.turnSpeedAdj = min(max(-5,self.turnSpeedAdj),5)
-                    sghGC.motorUpdate(motorList[1],motorList[2],(self.turnSpeed + self.turnSpeedAdj ))                      
+                        self.turnSpeedAdj =  ( self.turnSpeed / 2)
+                        #print "turnspeeed add" ,self.turnSpeedAdj
+                        time.sleep(0.005)    
+                    if sghGC.pinCount[13] == sghGC.pinCount[12]:
+                        self.turnSpeedAdj = 0 
+                        #print "turnspeeed stay" ,self.turnSpeedAdj
+                        time.sleep(0.005)                          
+                    sghGC.motorUpdate(motorList[1],motorList[2],max(0,min(100,(self.turnSpeed + self.turnSpeedAdj ))))                      
                 else:
                     sghGC.motorUpdate(motorList[1],motorList[2],thisTurnSpeed) 
                     
                 time.sleep(0.002)
         else:
+            sghGC.motorUpdate(motorList[1],motorList[2],0 - thisTurnSpeed)
             while ((sghGC.pinCount[pin]  > int(countattempted)) and ((time.time()-turningStartTime) < 20)):
                 if pin == 13:
-                    if sghGC.pinCount[13] > sghGC.pinCount[12]:
-                        self.turnSpeedAdj -= 1 
-                        time.sleep(0.005)     
                     if sghGC.pinCount[13] < sghGC.pinCount[12]:
-                        self.turnSpeedAdj += 1 
+                        self.turnSpeedAdj = 0 - ( self.turnSpeed / 2)
+                        #print "turnspeeed sub" ,self.turnSpeedAdj
                         time.sleep(0.005)       
-                    self.turnSpeedAdj = min(max(-5,self.turnSpeedAdj),5)
-                    sghGC.motorUpdate(motorList[1],motorList[2],(self.turnSpeed + self.turnSpeedAdj ))                      
+                    if sghGC.pinCount[13] > sghGC.pinCount[12]:
+                        self.turnSpeedAdj = ( self.turnSpeed / 2)
+                        #print "turnspeeed add" ,self.turnSpeedAdj
+                        time.sleep(0.005)    
+                    if sghGC.pinCount[13] == sghGC.pinCount[12]:
+                        self.turnSpeedAdj = 0 
+                        #print "turnspeeed stay" ,self.turnSpeedAdj
+                        time.sleep(0.005)                          
+                    sghGC.motorUpdate(motorList[1],motorList[2],0 - max(0,min(100,(self.turnSpeed + self.turnSpeedAdj ))))                      
                 else:
-                    sghGC.motorUpdate(motorList[1],motorList[2],thisTurnSpeed) 
+                    sghGC.motorUpdate(motorList[1],motorList[2],0 - thisTurnSpeed) 
                     
                 time.sleep(0.002)
         if pin == 13:                
@@ -1413,8 +1441,8 @@ class ScratchListener(threading.Thread):
                         print "TurnSpeed" , self.turnSpeed                        
                                                 
                     if self.vFindValue("mfreq"):
-                        self.mFreq = int(self.valueNumeric) if self.valueIsNumeric else 20
-                        print "mFreq" , self.mFreq   
+                        sghGC.mFreq = int(self.valueNumeric) if self.valueIsNumeric else 20
+                        print "mFreq" , sghGC.mFreq   
 
                     if self.vFindValue("pfreq"):
                         sghGC.pFreq = int(self.valueNumeric) if self.valueIsNumeric else 200
