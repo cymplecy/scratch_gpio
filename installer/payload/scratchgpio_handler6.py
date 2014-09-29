@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha10' # 29Sep14 Wrap try/except around a few imports
+Version =  'v6alpha11' # 29Sep14 Wrap try/except around a few imports
 import threading
 import socket
 import time
@@ -44,14 +44,14 @@ try:
     import meArm
     print "meArm imported OK"
 except:
-    print ""meArm  NOT imported OK"
+    print "meArm  NOT imported OK"
     pass
     
 try:
     from sgh_MCP23008 import sgh_MCP23008
     print "MCP23008 imported OK"
 except:
-    print ""MCP23008  NOT imported OK"
+    print "MCP23008  NOT imported OK"
     pass
     
 try:
