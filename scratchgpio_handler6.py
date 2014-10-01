@@ -4388,7 +4388,6 @@ try:
 except:
     print "No MCP23008 Detected"    
     
-print "GPIO" , MCP23008.readU8(0x09)
     
 wii = None
 try:
