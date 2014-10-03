@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha11' # 29Sep14 Wrap try/except around a few imports
+Version =  'v6alpha11' # 3Oct14 Add in connect statement
 import threading
 import socket
 import time
@@ -1097,8 +1097,6 @@ class ScratchListener(threading.Thread):
                 sghGC.pinCount[pin] += (sghGC.countDirection[pin] * 1)
                 sghGC.encoderTimeDiff[pin] = time.time() - sghGC.encoderTime[pin]
                 sghGC.encoderTime[pin] = time.time()
-                if pin == 12:
-                    print "encodeer time diff" ,sghGC.encoderTimeDiff[pin]
                 lastValidL = val
                 #print "count" ,pin , sghGC.pinCount[pin]
             lastL = val
@@ -1151,6 +1149,9 @@ class ScratchListener(threading.Thread):
                     sghGC.motorUpdate(motorList[1],motorList[2],max(0,min(100,(self.turnSpeed + self.turnSpeedAdj ))))                      
                 else:
                     sghGC.motorUpdate(motorList[1],motorList[2],thisTurnSpeed) 
+                    print "encoder time diff" ,sghGC.encoderTimeDiff[pin]
+                    if ((sghGC.encoderTimeDiff[pin] > 0.04) and (sghGC.encoderTimeDiff[pin] < 1)):
+                        thisTurnSpeed += 1
                     
                 time.sleep(0.002)
         else:
@@ -1232,7 +1233,7 @@ class ScratchListener(threading.Thread):
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
                Ultra,ultraTotalInUse,piglow,PiGlow_Brightness,compass,ADDON, \
-               meVertical, meHorizontal, meDistance
+               meVertical, meHorizontal, meDistance,host
 
 
 
@@ -1300,6 +1301,7 @@ class ScratchListener(threading.Thread):
                         cycle_trace = 'disconnected'
                         print "cycle_trace has changed to" ,cycle_trace
                         break
+
 
                 if len(data) > 0: # Connection still valid so process the data received
 
@@ -4135,7 +4137,13 @@ class ScratchListener(threading.Thread):
                                     b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
                                     totalcmd = totalcmd + b + cmd
                             #print "Sending to Alt:",totalcmd									
-                            self.scratch_socket2.send(totalcmd)       
+                            self.scratch_socket2.send(totalcmd)     
+                            
+                    if self.bFindValue('connect'):
+                        cycle_trace = 'disconnected'
+                        host = self.value
+                        print "cycle_trace has changed to" ,cycle_trace
+                        break                            
 
                         
 

@@ -360,7 +360,7 @@ class GPIOController :
         #print "pin",pin
         #print "pvalue",self.pinValue
         self.pinValue[pin] = value
-        #self.mFreq = max(11,abs(value/2))
+        self.mFreq = max(5,abs(value/2))
         if (self.ledDim < 100) and (type == 'plain'):
             type = "pwm"
             value = value * self.ledDim
