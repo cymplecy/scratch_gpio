@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha11' # 3Oct14 Add in connect statement
+Version =  'v6alpha12' # 6Oct14 modify motor encodeer codecode
 import threading
 import socket
 import time
@@ -1150,8 +1150,8 @@ class ScratchListener(threading.Thread):
                 else:
                     sghGC.motorUpdate(motorList[1],motorList[2],thisTurnSpeed) 
                     print "encoder time diff" ,sghGC.encoderTimeDiff[pin]
-                    if ((sghGC.encoderTimeDiff[pin] > 0.04) and (sghGC.encoderTimeDiff[pin] < 1)):
-                        thisTurnSpeed += 1
+                    #if ((sghGC.encoderTimeDiff[pin] > 0.04) and (sghGC.encoderTimeDiff[pin] < 1)):
+                        #thisTurnSpeed += 1
                     
                 time.sleep(0.002)
         else:
