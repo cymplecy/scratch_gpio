@@ -39,19 +39,20 @@ class RasPiCamera:
             pass
 
         photos = glob.glob(self.dir + '*.jpg')
+        #if there are existing photos, find the highest numbered
         if len(photos):
-            latest_photo = sorted(photos)[-1]
-            latest_photo = latest_photo.replace(self.dir,'')
-            latest_photo = latest_photo.replace('.jpg','')
-            latest_photo_num = int(latest_photo)
+            photos = [ x.replace(self.dir,'') for x in photos]
+            photos = [ x.replace('.jpg','') for x in photos]
+            photos = [ int(x) for x in photos ]
+            latest_photo_num = sorted(photos)[-1]
             self.num = latest_photo_num + 1
-
         print("starting at %d" % self.num)
 
 
     def take_photo(self):
 
         photo_file = self.dir + str(self.num) + '.jpg'
+        #try with raspistill for the RasPi camera board
         os.system("raspistill -n -t 1 -o " + photo_file)
     
         #try with fswebcam for usb devices
