@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha12' # 6Oct14 modify motor encodeer codecode
+Version =  'v6alpha14' # 12Oct14 remove another smbus dependacny
 import threading
 import socket
 import time
@@ -38,7 +38,6 @@ import subprocess
 import sgh_RasPiCamera
 #import pygame removed becasue causing random failures
 import re
-import meArm
 
 try:
     import meArm
@@ -1251,6 +1250,10 @@ class ScratchListener(threading.Thread):
         steppersInUse = None
         beepDuration = 0.5
         beepNote = 60
+        arm = None
+        meHorizontal = 0
+        meDistance = 100
+        meVertical = 50
 
 
         if GPIOPlus == False:
@@ -1899,6 +1902,11 @@ class ScratchListener(threading.Thread):
                                 sghGC.resetPinMode()
                                 #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 sghGC.setPinMode()
+                                if pcaPWM != None:
+                                    arm = meArm.meArm()
+                                    arm.begin()
+
+                                
 
                                 print "MeArm setup"
                                 anyAddOns = True                                   
@@ -4338,13 +4346,7 @@ try:
     print "AdaFruit PWM/Servo Board PCA9685 detected"
 except:
     print "No PWM/Servo Board PCA9685 detected"
-    
-if pcaPWM != None:
-    arm = meArm.meArm()
-    arm.begin()
-    meHorizontal = 0
-    meDistance = 100
-    meVertical = 50
+
 
 pcfSensor = None
 try:
