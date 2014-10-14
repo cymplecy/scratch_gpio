@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha14' # 12Oct14 remove another smbus dependacny
+Version =  'v6alpha14' # 14Oct14 cputempadded
 import threading
 import socket
 import time
@@ -4000,6 +4000,21 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'temperature'
                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                             self.send_scratch_command(bcast_str)
+                            
+                    if self.bFind("getcputemp"): #find cputemp
+                        logging.debug("Finding CPUTemp")
+                        cmd = '/opt/vc/bin/vcgencmd measure_temp'
+                        line = os.popen(cmd).readline().strip()
+                        temp = line.split('=')[1].split("'")[0]
+                        #arg = 'ip route list'
+                        #p=subprocess.Popen(arg,shell=True,stdout=subprocess.PIPE)
+                        #ipdata = p.communicate()
+                        #split_data = ipdata[0].split()
+                        #ipaddr = split_data[split_data.index('src')+1]
+                        #logging.debug("IP:%s", ipaddr)
+                        sensor_name = 'cputemp'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, temp)
+                        self.send_scratch_command(bcast_str)                            
                                 
                     if self.bFind("pidisp"): #display IP
                         print "PiDisp"
