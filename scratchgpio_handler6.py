@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha14' # 14Oct14 cputempadded
+Version =  'v6alpha15' # 18Oct14 LedBorg added
 import threading
 import socket
 import time
@@ -1896,6 +1896,14 @@ class ScratchListener(threading.Thread):
 
                                 print "SimPie setup"
                                 anyAddOns = True                 
+                                
+                        if "ledborg" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                for pin in [11,13,15]:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                sghGC.setPinMode()
+                                anyAddOns = True                                
 
                         if "mearm" in ADDON:
                             with lock:
@@ -1909,7 +1917,14 @@ class ScratchListener(threading.Thread):
                                 
 
                                 print "MeArm setup"
-                                anyAddOns = True                                   
+                                anyAddOns = True    
+
+                        if "flotilla" in ADDON:
+                            print "flotilla", ADDON
+                            with lock:
+                                sghGC.resetPinMode()
+                                anyAddOns = True                                
+                                
 
 
 
@@ -2697,6 +2712,13 @@ class ScratchListener(threading.Thread):
                         self.vAllCheck("leds") # check All LEDS On/Off/High/Low/1/0
 
                         self.vLEDCheck(ladderOutputs)     
+
+                    elif "ledborg" in ADDON:
+                        self.vAllCheck("all") # check All LEDS On/Off/High/Low/1/0
+                        self.vListCheck([11,13,15],["red","green","blue"]) # Check for LEDs
+
+                        ######### End of BerryClip Variable handling
+                        
 
                     else:   #normal variable processing with no add on board
 
@@ -3490,6 +3512,13 @@ class ScratchListener(threading.Thread):
                         #print ("TechTom broadcast processing")                    
                         self.bCheckAll() # Check for all off/on type broadcasrs
                         self.bPinCheck([8,10,12,16,18,22,24,26]) # Check for pin on off              
+                        
+                    elif "ledborg" in ADDON: # LedBorg
+
+                        if self.bFindOnOff('all'):
+                            for pin in [11,13,15]:
+                                sghGC.pinUpdate(pin,self.OnOrOff)
+                        self.bListCheck([11,13,15],["red","green","blue"]) # Check for LEDs                      
 
                     else: # Plain GPIO Broadcast processing
 
