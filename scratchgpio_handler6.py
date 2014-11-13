@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6alpha15' # 18Oct14 LedBorg added
+Version =  'v6beta1' # 13Nov PiTT added
 import threading
 import socket
 import time
@@ -397,7 +397,8 @@ class ScratchSender(threading.Thread):
         if ("fishdish" in ADDON):
             sensor_name = "switch"
             sensorValue = ("on","off")[value == 1]
-
+            
+         
         bcast_str = '"' + sensor_name + '" ' + sensorValue
         self.addtosend_scratch_command(bcast_str)
         
@@ -480,7 +481,7 @@ class ScratchSender(threading.Thread):
                             #logging.debug("afte uipdating pin patterm:",pin_bit_pattern[listIndex] )
                             if pin_bit_pattern[listIndex] == last_bit_pattern[listIndex]:
                                 logging.debug("pinEvent but pin state the same as before...")
-                                #pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex] #change pin pattern - warning pinpattern now has !pin state
+                                #pin_bit_pattern[listIndex] = 1 - pin_bit_pattern[listIndex] #change pin pattern - warning pin_bit_pattern now has !pin state
                             #logging.debug("after checking states pin patterm,last pattern:",pin_bit_pattern[listIndex],last_bit_pattern[listIndex])
                             
                             if sghGC.pinTrigger[pin] == 0:
@@ -715,6 +716,12 @@ class ScratchSender(threading.Thread):
             last_bit_pattern = list(pin_bit_pattern)
             #print ("last:%s",last_bit_pattern)
             #print ("this:%s",pin_bit_pattern)
+            
+            if ("pitt" in ADDON):
+                sensor_name = "input"
+                bcast_str = '"' + sensor_name + '" ' + str(sghGC.pinRead(15) + 2* sghGC.pinRead(19)+ 4* sghGC.pinRead(21)+ 8* sghGC.pinRead(23))
+                self.addtosend_scratch_command(bcast_str)
+
             
 
             if (time.time() - lastPinUpdateTime)  > 3:  #This is to force the pin names to be read out even if they don't change
@@ -1392,7 +1399,7 @@ class ScratchListener(threading.Thread):
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             #if (firstRun == True) or (anyAddOns == False):
             #print 
-            logging.debug("dataList: %s",dataList)
+            #logging.debug("dataList: %s",dataList)
             if any("move" in s for s in dataList) or any("move" in s for s in dataList):
                 print "move/turn found"
                 newList = []
@@ -1412,6 +1419,8 @@ class ScratchListener(threading.Thread):
                 dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
                 dataraw = " "+dataraw + " "
                 self.dataraw = dataraw
+                
+                logging.debug("processing dataItems: %s",self.dataraw)
                 #print "Loop processing"
                 #print self.dataraw
                 #print
@@ -1923,7 +1932,17 @@ class ScratchListener(threading.Thread):
                             print "flotilla", ADDON
                             with lock:
                                 sghGC.resetPinMode()
-                                anyAddOns = True                                
+                                anyAddOns = True    
+                                
+                        if "pitt" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                for pin in [8,10,12,16,18,22,24,26]:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                for pin in [15,19,21,23]:
+                                    sghGC.pinUse[pin] = sghGC.PINPUT
+                                sghGC.setPinMode()
+                                anyAddOns = True                                   
                                 
 
 
@@ -1976,6 +1995,22 @@ class ScratchListener(threading.Thread):
 
                 #Listen for Variable changes
                 if 'sensor-update' in self.dataraw:
+                    if "pitt" in ADDON:
+                        if self.vFindValue("output"):
+                            if self.valueIsNumeric:
+                                binstring = bin(max(0,min(int(self.valueNumeric),255)))[2:]
+                                print binstring
+                                bit_pattern = ('00000000'+binstring)[-8:]
+                                print 'bit_pattern %s' % bit_pattern
+                                j = 0
+                                for pin in [8,10,12,16,18,22,24,26]:
+                                    #print "pin" , bit_pattern[-(j+1)]
+                                    if bit_pattern[-(j+1)] == '0':
+                                        sghGC.pinUpdate(pin,0)
+                                    else:
+                                        sghGC.pinUpdate(pin,1)
+                                    j = j + 1
+                            
                 
                     if piglow != None:
                         #do PiGlow stuff but make sure PiGlow physically detected             
@@ -2787,19 +2822,31 @@ class ScratchListener(threading.Thread):
 
                     #Use bit pattern to control ports
                     if self.vFindValue('pinpattern'):
-                        svalue = self.value 
-                        bit_pattern = ('00000000000000000000000000'+svalue)[-sghGC.numOfPins:]
-                        j = 0
-                        #onSense = '1' if sghGC.INVERT else '0' # change to look for 0 if invert on
-                        onSense = '0'
-                        for pin in sghGC.validPins:
-                            if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                        if "pitt" in ADDON:
+                            bit_pattern = ('00000000'+self.value)[-8:]
+                            print 'bit_pattern %s' % bit_pattern
+                            j = 0
+                            for pin in [8,10,12,16,18,22,24,26]:
                                 #print "pin" , bit_pattern[-(j+1)]
-                                if bit_pattern[-(j+1)] == onSense:
+                                if bit_pattern[-(j+1)] == '0':
                                     sghGC.pinUpdate(pin,0)
                                 else:
                                     sghGC.pinUpdate(pin,1)
-                                j = j + 1                   
+                                j = j + 1
+                        else:
+                            svalue = self.value 
+                            bit_pattern = ('0000000000000000000000000000000000000000'+svalue)[-sghGC.numOfPins:]
+                            j = 0
+                            #onSense = '1' if sghGC.INVERT else '0' # change to look for 0 if invert on
+                            onSense = '0'
+                            for pin in sghGC.validPins:
+                                if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                                    #print "pin" , bit_pattern[-(j+1)]
+                                    if bit_pattern[-(j+1)] == onSense:
+                                        sghGC.pinUpdate(pin,0)
+                                    else:
+                                        sghGC.pinUpdate(pin,1)
+                                    j = j + 1                   
 
                     checkStr = 'stepdelay'
                     if  (checkStr + ' ') in dataraw:
@@ -3630,26 +3677,39 @@ class ScratchListener(threading.Thread):
                                     # sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
                             
 
-                    if self.bFind('pinpattern'):
-                        #print 'Found pinpattern broadcast'
-                        #print dataraw
-                        #num_of_bits = PINS
-                        outputall_pos = self.dataraw.find('pinpattern')
-                        sensor_value = self.dataraw[(outputall_pos+10):].split()
-                        #print sensor_value
-                        #sensor_value[0] = sensor_value[0][:-1]                    
-                        #print sensor_value[0]
-                        bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-sghGC.numOfPins:]
-                        #print 'bit_pattern %s' % bit_pattern
-                        j = 0
-                        for pin in sghGC.validPins:
-                            if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                    if self.bFindValue('pinpattern'):
+                        if "pitt" in ADDON:
+                            sensor_value = self.value
+                            bit_pattern = ('00000000'+self.value)[-8:]
+                            print 'bit_pattern %s' % bit_pattern
+                            j = 0
+                            for pin in [8,10,12,16,18,22,24,26]:
                                 #print "pin" , bit_pattern[-(j+1)]
                                 if bit_pattern[-(j+1)] == '0':
                                     sghGC.pinUpdate(pin,0)
                                 else:
                                     sghGC.pinUpdate(pin,1)
                                 j = j + 1
+                        else:
+                            #print 'Found pinpattern broadcast'
+                            #print dataraw
+                            #num_of_bits = PINS
+                            outputall_pos = self.dataraw.find('pinpattern')
+                            sensor_value = self.dataraw[(outputall_pos+10):].split()
+                            #print sensor_value
+                            #sensor_value[0] = sensor_value[0][:-1]                    
+                            #print sensor_value[0]
+                            bit_pattern = ('00000000000000000000000000'+sensor_value[0])[-sghGC.numOfPins:]
+                            #print 'bit_pattern %s' % bit_pattern
+                            j = 0
+                            for pin in sghGC.validPins:
+                                if (sghGC.pinUse[pin] == sghGC.POUTPUT):
+                                    #print "pin" , bit_pattern[-(j+1)]
+                                    if bit_pattern[-(j+1)] == '0':
+                                        sghGC.pinUpdate(pin,0)
+                                    else:
+                                        sghGC.pinUpdate(pin,1)
+                                    j = j + 1
 
                     if pcfSensor != None: #if PCF ADC found
                         for channel in range(1,5): #loop thru all 4 inputs
@@ -4237,7 +4297,9 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'irsensor' +str(led)
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, int(value & 2**led)>>led)
                             #print 'sending: %s' % bcast_str
-                            self.send_scratch_command(bcast_str)             
+                            self.send_scratch_command(bcast_str)     
+         
+                            
 
                     #end of broadcast check
 
