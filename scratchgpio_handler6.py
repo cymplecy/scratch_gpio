@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta1' # 13Nov PiTT added
+Version =  'v6beta2' # 21Nov PiiTT modded for inverted output
 import threading
 import socket
 import time
@@ -719,7 +719,9 @@ class ScratchSender(threading.Thread):
             
             if ("pitt" in ADDON):
                 sensor_name = "input"
-                bcast_str = '"' + sensor_name + '" ' + str(sghGC.pinRead(15) + 2* sghGC.pinRead(19)+ 4* sghGC.pinRead(21)+ 8* sghGC.pinRead(23))
+                nibble = sghGC.pinRead(15) + 2* sghGC.pinRead(19)+ 4* sghGC.pinRead(21)+ 8* sghGC.pinRead(23)
+                nibble = 15 - nibble
+                bcast_str = '"' + sensor_name + '" ' + str(nibble)
                 self.addtosend_scratch_command(bcast_str)
 
             
@@ -1942,6 +1944,8 @@ class ScratchListener(threading.Thread):
                                 for pin in [15,19,21,23]:
                                     sghGC.pinUse[pin] = sghGC.PINPUT
                                 sghGC.setPinMode()
+                                for pin in [8,10,12,16,18,22,24,26]:
+                                    sghGC.pinUpdate(pin,1) # turn all the pins physically off
                                 anyAddOns = True                                   
                                 
 
@@ -2006,9 +2010,9 @@ class ScratchListener(threading.Thread):
                                 for pin in [8,10,12,16,18,22,24,26]:
                                     #print "pin" , bit_pattern[-(j+1)]
                                     if bit_pattern[-(j+1)] == '0':
-                                        sghGC.pinUpdate(pin,0)
+                                        sghGC.pinUpdate(pin,1) #output inverted as board is physically active low
                                     else:
-                                        sghGC.pinUpdate(pin,1)
+                                        sghGC.pinUpdate(pin,0)
                                     j = j + 1
                             
                 
@@ -3686,9 +3690,9 @@ class ScratchListener(threading.Thread):
                             for pin in [8,10,12,16,18,22,24,26]:
                                 #print "pin" , bit_pattern[-(j+1)]
                                 if bit_pattern[-(j+1)] == '0':
-                                    sghGC.pinUpdate(pin,0)
+                                    sghGC.pinUpdate(pin,1) # output inverted as board is active low
                                 else:
-                                    sghGC.pinUpdate(pin,1)
+                                    sghGC.pinUpdate(pin,0)
                                 j = j + 1
                         else:
                             #print 'Found pinpattern broadcast'
