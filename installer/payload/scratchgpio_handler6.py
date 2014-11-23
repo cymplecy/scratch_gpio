@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta2' # 21Nov PiiTT modded for inverted output
+Version =  'v6beta4' # 23Nov PiTT individ sensors inverted
 import threading
 import socket
 import time
@@ -393,6 +393,8 @@ class ScratchSender(threading.Thread):
         elif "simpie" in ADDON:
             sensor_name = ["red","amber","green"][([11,13,15].index(pin))]        
             sensorValue = ("on","off")[value == 1]
+        elif "pitt" in ADDON:
+            sensorValue = ("1","0")[value == 1]
          
         if ("fishdish" in ADDON):
             sensor_name = "switch"
@@ -4145,24 +4147,48 @@ class ScratchListener(threading.Thread):
                             #mc.setBlocks(-100, 0, -100, 100, 63, 100, 0, 0)
                             #mc.setBlocks(-100, -63, -100, 100, -2, 100, 1, 0)
                             #mc.setBlocks(-100, -1, -100, 100, -1, 100, 2, 0)
-                            mc.player.setPos(0, 0, 0)
+                            #mc.player.setPos(0, 0, 0)
                             #mc.camera.setFixed() 
                             #mc.camera.setFollow(1)
                             #mc.camera.setPos(0,0,0)                            
                             mc.postToChat("ScratchGPIO connected to Minecraft Pi.")
                             
+                        if self.value == "camnormal":
+                            entityId = mc.getPlayerEntityIds()
+                            mc.camera.setNormal(entityId)
+                            mc.postToChat("camnormal")
+
+                        if self.value == "camfollow":
+                            entityId = mc.getPlayerEntityIds()
+                            mc.camera.setFollow(entityId)
+                            mc.postToChat("camfollow")
+                            
+                        if self.value == "camfixed":
+                            #entityId = mc.getPlayerEntityIds()
+                            mc.camera.setFixed()
+                            mc.postToChat("camfixed")                            
+                            
+
+                            
                         if self.value == "move":
                             x,y,z = mc.player.getTilePos()
-                            print "old pos",x,y,z
-                            print "old pos",sghMC.getxPos(),y,z
                             
-                            mc.player.setTilePos(sghMC.getxPos(),y,z)
+                            print "old pos",x,y,z
+                            print "moving to",sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos()
+                            
+                            mc.player.setTilePos(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos())
                             mc.postToChat("moved")
                             
                         if self.value == "cammove":
                             x,y,z = mc.player.getTilePos()
                             mc.camera.setPos(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos())
                             mc.postToChat("cammoved")    
+
+                        if self.value == "setblock":
+                            mc.setBlock(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos(), 1)         
+
+                        if self.value == "clearblock":
+                            mc.setBlock(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos(), 0)     
                              
                             
                         if self.value == "movex-":
