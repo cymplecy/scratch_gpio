@@ -4203,6 +4203,12 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'playerz'
                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(z))
                             self.send_scratch_command(bcast_str)    
+                            
+                        if self.value == "getblock":                        
+                            blockType = mc.getBlock(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos())
+                            sensor_name = 'blocktype'
+                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(blockType))
+                            self.send_scratch_command(bcast_str)                             
                              
                             
                         if self.value == "movex-":
