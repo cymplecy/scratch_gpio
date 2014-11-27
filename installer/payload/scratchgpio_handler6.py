@@ -4188,7 +4188,21 @@ class ScratchListener(threading.Thread):
                             mc.setBlock(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos(), 1)         
 
                         if self.value == "clearblock":
-                            mc.setBlock(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos(), 0)     
+                            mc.setBlock(sghMC.getxPos(),sghMC.getyPos(),sghMC.getzPos(), 0)   
+
+                        if self.value == "getpos":
+                            x,y,z = mc.player.getTilePos()
+                            print "pos",x,y,z
+                            mc.postToChat(str(x) + " " + str(y) + " " +str(z))   
+                            sensor_name = 'playerx'
+                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(x))
+                            self.send_scratch_command(bcast_str)    
+                            sensor_name = 'playery'
+                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(y))
+                            self.send_scratch_command(bcast_str)    
+                            sensor_name = 'playerz'
+                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(z))
+                            self.send_scratch_command(bcast_str)    
                              
                             
                         if self.value == "movex-":
