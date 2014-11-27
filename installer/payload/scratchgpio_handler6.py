@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta4' # 23Nov PiTT individ sensors inverted
+Version =  'v6beta5' # 27Nov Minecraft Updated
 import threading
 import socket
 import time
