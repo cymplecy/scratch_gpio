@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta5' # 27Nov Minecraft Updated
+Version =  'v6beta6' # 29Nov14 Add in APB01
 import threading
 import socket
 import time
@@ -372,12 +372,21 @@ class ScratchSender(threading.Thread):
         elif "pi2golite" in ADDON:
             #print pin
             try:
+                sensor_name = ["left","right"][([7,11].index(pin))]
+            except:
+                print "pi2golite input out of range"
+                sensor_name = "pin" + str(pin)
+                pass 
+            sensorValue = ("off","on")[value == 1]        
+        elif "apb01" in ADDON:
+            #print pin
+            try:
                 sensor_name = ["left","right","lineleft","lineright","switch"][([7,11,12,13,23].index(pin))]
             except:
                 print "pi2golite input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
-            sensorValue = ("on","off")[value == 1]               
+            sensorValue = ("on","off")[value == 1]              
         elif "pizazz" in ADDON:
             #print pin
             try:
@@ -1793,7 +1802,23 @@ class ScratchListener(threading.Thread):
                                 self.startUltra(8,0,self.OnOrOff)               
                          
                             print "pi2golite setup"
-                            anyAddOns = True                            
+                            anyAddOns = True                  
+
+                        if "apb01" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.pinUse[7]  = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[11] = sghGC.PINPUT #LFRight
+                           
+
+                                sghGC.setPinMode()
+                                sghGC.motorUpdate(21,19,0)
+                                sghGC.motorUpdate(24,26,0)      
+                                
+                                self.startUltra(23,0,self.OnOrOff)               
+                         
+                            print "pi2golite setup"
+                            anyAddOns = True                               
                             
                         if "happi" in ADDON:
                             with lock:
@@ -2651,6 +2676,22 @@ class ScratchListener(threading.Thread):
 
 
                         ######### End of PiRoCon Variable handling
+                        
+                    elif "apb01" in ADDON:
+                        #logging.debug("Processing variables for pi2golite")
+
+                        #check for motor variable commands
+                        motorList = [['motorb',21,19,0,False],['motora',24,26,0,False]]
+                        #logging.debug("ADDON:%s", ADDON)
+                        
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],svalue)        
+
+
+                        ######### End of apb01 variable handling                        
                     elif "piringo" in ADDON:
                         #do piringo stuff
 
@@ -4241,36 +4282,7 @@ class ScratchListener(threading.Thread):
                             print x,y,z
                             mc.player.setTilePos(x,y-1,z)
                             mc.postToChat("moved")            
-                        # if self.value == "movex-":
-                            # x,y,z = mc.player.getTilePos()
-                            # print x,y,z
-                            # mc.camera.setPos(x+1,y,z)
-                            # mc.postToChat("moved")
-                        # if self.value == "movex+":
-                            # x,y,z = mc.player.getTilePos()
-                            # print x,y,z
-                            # mc.camera.setPos(x-1,y,z)
-                            # mc.postToChat("moved")        
-                        # if self.value == "movez-":
-                            # x,y,z = mc.player.getTilePos()
-                            # print x,y,z
-                            # mc.camera.setPos(x,y,z+1)
-                            # mc.postToChat("moved")
-                        # if self.value == "movez+":
-                            # x,y,z = mc.player.getTilePos()
-                            # print x,y,z
-                            # mc.camera.setPos(x,y,z-1)
-                            # mc.postToChat("moved")  
-                        # if self.value == "movey-":
-                            # x,y,z = mc.player.getTilePos()
-                            # print x,y,z
-                            # mc.camera.setPos(x,y+1,z)
-                            # mc.postToChat("moved")
-                        # if self.value == "movey+":
-                            # x,y,z = mc.player.getTilePos()
-                            # print x,y,z
-                            # mc.camera.setPos(x,y-1,z)
-                            # mc.postToChat("moved")       
+      
                             
                     if self.bFindValue('link'):
                         try:
