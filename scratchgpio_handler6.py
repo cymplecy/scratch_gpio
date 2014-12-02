@@ -412,9 +412,9 @@ class ScratchSender(threading.Thread):
          
         bcast_str = '"' + sensor_name + '" ' + sensorValue
         self.addtosend_scratch_command(bcast_str)
-        
+        print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
-            #print "trigger beinng processed for pin:",pin
+            print "trigger beinng processed for pin:",pin
             cmd = 'broadcast "Trigger' + sensor_name + '"'
             n = len(cmd)
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
@@ -482,7 +482,7 @@ class ScratchSender(threading.Thread):
                     pin_bit_pattern[listIndex] = 0
                     if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                         #logging.debug("Checking event on pin:%s", pin )
-                        pinEvent = False #sghGC.pinEvent(pin)
+                        pinEvent = sghGC.pinEvent(pin)
                         pinValue = sghGC.pinRead(pin)                
                         pin_bit_pattern[listIndex] = pinValue
                         if pinEvent:
@@ -3137,14 +3137,14 @@ class ScratchListener(threading.Thread):
                       
                     if self.bFindValue("triggerreset"):
                         if self.value == "":
-                            #print "any trigger reset found"
+                            print "any trigger reset found"
                             sghGC.anyTrigger = 0
                             for pin in sghGC.validPins:
                                 sghGC.pinTrigger[pin] = 0
                         else:
                             for pin in sghGC.validPins:
                                 if sghGC.pinTriggerName[pin] == self.value:
-                                    #print "trigger reset found",self.value
+                                    print "trigger reset found",self.value
                                     sghGC.pinTrigger[pin] = 0
                                     sghGC.anyTrigger = 0
 
