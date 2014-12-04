@@ -1,5 +1,0 @@
-include README
-include CHANGELOG
-include LICENSE.txt
-include unicornhat.py
-include setup.py
