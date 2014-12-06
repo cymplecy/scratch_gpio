@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta6' # 03Nov14 Add in Unicorn
+Version =  'v6beta7' # 05Dec14 Add in Unicorn
 import threading
 import socket
 import time
@@ -3644,6 +3644,9 @@ class ScratchListener(threading.Thread):
                             #print "inside loop", self.dataraw
                                                             
                             #print "self.matrixuse", self.matrixUse
+                            
+                            tcolours = {'off' : (0,0,0),'on' : (255,255,255),'white' : (255,255,255),'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'yellow' : (255,255,0),'cyan' :(0,255,255),'magenta' : (255,0,255)}
+                                
                             mult = 1
                             limit = 1
                             rangemax = 8
@@ -3660,13 +3663,14 @@ class ScratchListener(threading.Thread):
                                 mult = 2
                                 limit = 2
                                 rangemax = 4
-                            if self.bFindOnOff("allon"):
+                                
+                            if self.bFind("allon"):
                                 for y in range(0, 8):
                                     for x in range(0, 8):
                                         UH.set_pixel(x,y,self.matrixRed,self.matrixGreen,self.matrixBlue)
                                 UH.show()
                                 
-                            if self.bFindOnOff("alloff"):
+                            if self.bFind("alloff"):
                                 for y in range(0, 8):
                                     for x in range(0, 8):
                                         UH.set_pixel(x,y,0,0,0)
@@ -3675,20 +3679,36 @@ class ScratchListener(threading.Thread):
 
                             if self.bFindOnOff("sweep"):
                                 #print "sweep"
-                                for y in range(0, 8):
-                                    for x in range(0, 8):
-                                        UH.set_pixel(x,y,random.randint(32,255),random.randint(32,255),random.randint(32,255))
+                                
+                                for ym in range(0,rangemax):
+                                    for xm in range(0,rangemax):
+                                        rr = random.randint(32,255)
+                                        rg = random.randint(32,255)
+                                        rb = random.randint(32,255)
+                                        for yy in range(0,limit):
+                                                for xx in range(0,limit):                    
+                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),rr,rg,rb)
                                         UH.show()
                                         time.sleep(0.05)
                                         
                             if self.bFindValue("red"):
                                 self.matrixRed = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if self.value == "on": self.matrixRed = 255 
+                                if self.value == "off": self.matrixRed = 0 
+                                    
                             if self.bFindValue("green"):
                                 self.matrixGreen = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if self.value == "on": self.matrixGreen = 255 
+                                if self.value == "off": self.matrixGreen = 0 
+                                
                             if self.bFindValue("blue"):
                                 self.matrixBlue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if self.value == "on": self.matrixBlue = 255 
+                                if self.value == "off": self.matrixBlue = 0 
                                 
-
+                            if self.bFindValue("colour"):
+                                self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0))                           
+                                
                             if self.bFindValue("matrixo"):
                                 for ym in range(0,rangemax):
                                     for xm in range(0,rangemax):
@@ -3696,17 +3716,40 @@ class ScratchListener(threading.Thread):
                                         #print xm,ym
                                             for yy in range(0,limit):
                                                 for xx in range(0,limit):                    
-                                                    UH.set_pixel((xm * mult)+xx,(ym * mult)+yy,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
                                             UH.show()
                                         if self.bFindValue("matrixoffx"+str(xm)+"y"+str(ym)):
                                             for yy in range(0,limit):
                                                 for xx in range(0,limit):                    
-                                                    UH.set_pixel((xm * mult)+xx,(ym * mult)+yy,0,0,0)
+                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),0,0,0)
                                             UH.show()
+                                            
+                            if self.bFindValue("pixel"):
+                                for ym in range(0,rangemax):
+                                    for xm in range(0,rangemax):
+                                        if self.bFindValue("pixelx"+str(xm)+"y"+str(ym)):
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0))
+                                            #print xm,ym
+                                            for yy in range(0,limit):
+                                                for xx in range(0,limit):
+                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                            UH.show()   
+
+                            if self.bFindValue("led"):
+                                for led in range(0,self.matrixUse):
+                                    if self.bFindValue("led"+str(led +1)):
+                                        ym = int(int(led) / rangemax)
+                                        xm  = led % rangemax
+                                        #print "xm,ym" ,xm,ym
+                                        self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0))
+                                        for yy in range(0,limit):
+                                            for xx in range(0,limit):
+                                                UH.set_pixel((xm * mult)+xx,((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                        UH.show() 
 
                             if self.bFindValue("brightness"):
                                 if self.valueIsNumeric:
-                                    UH.brightness(max(0,min(1,self.valueNumeric)))
+                                    UH.brightness(max(0,min(1,float(self.valueNumeric / 100))))
                                     UH.show()
 
                             if self.bFindValue('matrixpattern'):
