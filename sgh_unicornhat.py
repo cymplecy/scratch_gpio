@@ -1,3 +1,4 @@
+''' cymplecy version '''
 import ws2812, atexit
 
 def clean_shutdown():

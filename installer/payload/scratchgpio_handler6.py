@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta6' # 29Nov14 Add in APB01
+Version =  'v6beta8' # 07Dec14 More unicorn
 import threading
 import socket
 import time
@@ -38,6 +38,7 @@ import subprocess
 import sgh_RasPiCamera
 #import pygame removed becasue causing random failures
 import re
+import random
 
 try:
     import meArm
@@ -83,9 +84,12 @@ try:
 except:
     print "nunchuck not imported - check I2c is setup"
 
-
-
-        
+try:
+    import sgh_unicornhat as UH
+    print "UnicornHat imported OK"
+except:
+    print "UnicornHat NOT imported OK"
+    pass  
 
     
 try:
@@ -412,9 +416,9 @@ class ScratchSender(threading.Thread):
          
         bcast_str = '"' + sensor_name + '" ' + sensorValue
         self.addtosend_scratch_command(bcast_str)
-        
+        print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
-            #print "trigger beinng processed for pin:",pin
+            print "trigger beinng processed for pin:",pin
             cmd = 'broadcast "Trigger' + sensor_name + '"'
             n = len(cmd)
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >>  8) & 0xFF)) + (chr(n & 0xFF))
@@ -482,7 +486,7 @@ class ScratchSender(threading.Thread):
                     pin_bit_pattern[listIndex] = 0
                     if (sghGC.pinUse[pin]  in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
                         #logging.debug("Checking event on pin:%s", pin )
-                        pinEvent = False #sghGC.pinEvent(pin)
+                        pinEvent = sghGC.pinEvent(pin)
                         pinValue = sghGC.pinRead(pin)                
                         pin_bit_pattern[listIndex] = pinValue
                         if pinEvent:
@@ -794,6 +798,11 @@ class ScratchListener(threading.Thread):
         self.matrixX = 0
         self.matrixY = 0        
         self.matrixUse = 64
+        self.matrixColour = 'FFFFFF'
+        self.matrixRed = 255
+        self.matrixGreen = 255
+        self.matrixBlue = 255
+        
         
     def meArmGotoPoint(self,meHorizontal,meDistance,meVertical):
         arm.gotoPoint(int(max(-50,min(50,meHorizontal))),int(max(70,min(150,meDistance))),int(max(0,min(60,meVertical))))
@@ -829,6 +838,7 @@ class ScratchListener(threading.Thread):
         return (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(searchStr + '0 '))
 
     def bFindOnOff(self,searchStr):
+        #print "searching for" ,searchStr 
         self.OnOrOff = None
         if (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 ') or self.bFind(searchStr + 'true ')):
             self.OnOrOff = 1
@@ -1455,8 +1465,13 @@ class ScratchListener(threading.Thread):
                             debugLogging = False                            
 
                     if self.vFindValue("bright"):
-                        sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
+                        sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
                         PiGlow_Brightness = sghGC.ledDim
+                        try:
+                            UH.brightness(max(0,min(1,float(float(sghGC.ledDim) / 100))))
+                            UH.show()
+                        except:
+                            pass
                         print sghGC.ledDim
                         
                     if self.vFindValue("turnspeedadj"):
@@ -2121,14 +2136,22 @@ class ScratchListener(threading.Thread):
                         self.matrixY = min(7,max(self.matrixY,0))       
                         
                     if self.vFindValue("matrixuse"):
-                        self.matrixUse= int(self.valueNumeric) if self.valueIsNumeric else 64
-                        self.matrixUse = min(64,max(self.matrixUse,1))      
+                        self.matrixUse= int(self.valueNumeric) if self.value in ['64','16','9','4'] else 64
+    
+                            
+                    # if self.vFindValue("matrixuse"):
+                        # self.matrixUse= int(self.valueNumeric) if self.valueIsNumeric else 64
+                        # if self.matrixUse == 0:
+                            # self.matrixUse = 64
+                        # else:
+                            # self.matrixUse = min(64,max(self.matrixUse,1))                               
                         
                     if self.vFindValue("matrixrotate"):
                         print "mr"
-                        
-                        AdaMatrix.setRotate(min(3,max(int(self.valueNumeric) if self.valueIsNumeric else 0,0)))    
-
+                        try:
+                            AdaMatrix.setRotate(min(3,max(int(self.valueNumeric) if self.valueIsNumeric else 0,0)))    
+                        except:
+                            pass
                     #print "sensor-update rcvd" , dataraw
 
 
@@ -3137,14 +3160,14 @@ class ScratchListener(threading.Thread):
                       
                     if self.bFindValue("triggerreset"):
                         if self.value == "":
-                            #print "any trigger reset found"
+                            print "any trigger reset found"
                             sghGC.anyTrigger = 0
                             for pin in sghGC.validPins:
                                 sghGC.pinTrigger[pin] = 0
                         else:
                             for pin in sghGC.validPins:
                                 if sghGC.pinTriggerName[pin] == self.value:
-                                    #print "trigger reset found",self.value
+                                    print "trigger reset found",self.value
                                     sghGC.pinTrigger[pin] = 0
                                     sghGC.anyTrigger = 0
 
@@ -3612,7 +3635,179 @@ class ScratchListener(threading.Thread):
                         if self.bFindOnOff('all'):
                             for pin in [11,13,15]:
                                 sghGC.pinUpdate(pin,self.OnOrOff)
-                        self.bListCheck([11,13,15],["red","green","blue"]) # Check for LEDs                      
+                        self.bListCheck([11,13,15],["red","green","blue"]) # Check for LEDs         
+
+
+                    elif "unicorn" in ADDON: #Matrix connected
+                        #print self.dataraw
+                        #print
+                        origdataraw = self.dataraw
+                        self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:] # split dataraw so that operations are sequential
+                        #print "inside unicorn" , self.dataraw
+                        #print
+                        #print self.dataraw.split('broadcast')
+                        broadcastList = self.dataraw.split(' ')
+                        #print "broadcastList" , broadcastList
+                        for broadcastListLoop in broadcastList:
+                            self.dataraw = " " + str(broadcastListLoop) + " "
+                            #print "inside loop", self.dataraw
+                                                            
+                            #print "self.matrixuse", self.matrixUse
+                            ledcolours = ['off','on','white','red','green','blue','yellow','cyan','magenta','random']
+                            tcolours = {'off' : (0,0,0),'on' : (255,255,255),'white' : (255,255,255),'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'yellow' : (255,255,0),'cyan' :(0,255,255),'magenta' : (255,0,255)}
+                                
+                            mult = 1
+                            limit = 1
+                            rangemax = 8
+                            
+                            if self.bFindValue("matrixuse"):
+                                self.matrixUse= int(self.valueNumeric) if self.value in ['64','16','9','4'] else 64
+                            
+                            if self.matrixUse == 4:
+                                mult = 4
+                                limit = 4    
+                                rangemax = 2                           
+                            if self.matrixUse == 9:
+                                mult = 3
+                                limit = 2
+                                rangemax = 3   
+                            if self.matrixUse == 16:
+                                mult = 2
+                                limit = 2
+                                rangemax = 4
+                                
+                            if self.bFind("allon"):
+                                for y in range(0, 8):
+                                    for x in range(0, 8):
+                                        UH.set_pixel(x,y,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                UH.show()
+                                
+                            if self.bFind("alloff"):
+                                for y in range(0, 8):
+                                    for x in range(0, 8):
+                                        UH.set_pixel(x,y,0,0,0)
+                                UH.show()                                
+
+
+                            if self.bFindOnOff("sweep"):
+                                #print "sweep"
+                                
+                                for ym in range(0,rangemax):
+                                    for xm in range(0,rangemax):
+                                        self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0)) 
+                                        for yy in range(0,limit):
+                                                for xx in range(0,limit):                         
+                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                        UH.show()
+                                        time.sleep(0.05)
+                                        
+                            if self.bFindValue("red"):
+                                self.matrixRed = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if self.value == "on": self.matrixRed = 255 
+                                if self.value == "off": self.matrixRed = 0 
+                                    
+                            if self.bFindValue("green"):
+                                self.matrixGreen = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if self.value == "on": self.matrixGreen = 255 
+                                if self.value == "off": self.matrixGreen = 0 
+                                
+                            if self.bFindValue("blue"):
+                                self.matrixBlue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if self.value == "on": self.matrixBlue = 255 
+                                if self.value == "off": self.matrixBlue = 0 
+                                
+                            if self.bFindValue("colour"):
+                                self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0))                           
+                                
+                            
+                                            
+                            if self.bFindValue("pixel"):
+                                for ym in range(0,rangemax):
+                                    for xm in range(0,rangemax):
+                                        if self.bFindValue("pixel"+str(xm+1)+","+str(ym+1)):
+                                            ledcolour = self.value
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(0,0,0))
+                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))
+                                            #print xm,ym
+                                            for yy in range(0,limit):
+                                                for xx in range(0,limit):
+                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                            UH.show()                                            
+                            
+   
+                                for led in range(0,self.matrixUse):
+                                    for ledcolour in ledcolours :
+                                        if self.bFindValue("pixel" + str(led +1) + ledcolour):
+                                            ym = int(int(led) / rangemax)
+                                            xm  = led % rangemax
+                                            #print "xm,ym" ,xm,ym
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(0,0,0))
+                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))
+                                            #print self.matrixRed,self.matrixGreen,self.matrixBlue
+                                            for yy in range(0,limit):
+                                                for xx in range(0,limit):
+                                                    UH.set_pixel((xm * mult)+xx,((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                            UH.show() 
+
+                            if self.bFindValue("bright"):
+                                if self.valueIsNumeric:
+                                    UH.brightness(max(0,min(1,float(self.valueNumeric / 100))))
+                                    UH.show()
+
+                            if self.bFindValue('matrixpattern'):
+                                bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
+                                #print 'bit_pattern %s' % bit_pattern
+                                for j in range(0,64):
+                                    ym = j // 8
+                                    xm = j - (8 * ym)
+                                    if bit_pattern[j] != '0':
+                                        UH.set_pixel(xm,ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                    else:
+                                        UH.set_pixel(xm,ym,0,0,0)
+                                    j = j + 1
+                                UH.show()
+                                
+                            if self.bFind("scrollleft"):
+                                for y in range(0, rangemax ):
+                                    for x in range(0, rangemax -1):
+                                        oldr,oldg,oldb = UH.get_pixel(x + 1, y)
+                                        #print "oldpixel" , oldpixel
+                                        UH.set_pixel(x,y,oldr,oldg,oldb)
+                                for y in range(0,rangemax):
+                                    UH.set_pixel(7,y,0,0,0)
+                                UH.show()                                
+                                
+                            rowList = ['a','b','c','d','e','f','g','h']
+                            for i in range(0,8):
+                                if self.bFindValue('row'+rowList[i]):
+                                    bit_pattern = (self.value + "00000000")[0:8]
+                                    #print 'bit_pattern %s' % bit_pattern
+                                    for j in range(0,8):
+                                        ym = i
+                                        xm = j
+                                        if bit_pattern[j] != '0':
+                                            UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                        else:
+                                            UH.set_pixel(xm,7-ym,0,0,0)
+                                    UH.show()
+
+                            colList = ['a','b','c','d','e','f','g','h']
+                            for i in range(0,8):
+                                if self.bFindValue('col'+colList[i]):
+                                    #print self.value
+                                    bit_pattern = (self.value + "00000000")[0:8]
+                                    for j in range(0,8):
+                                        ym = j
+                                        xm = i
+                                        if bit_pattern[j] != '0':
+                                            UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                        else:
+                                            UH.set_pixel(xm,7-ym,0,0,0)
+                                    UH.show()   
+
+  
+
+                        self.dataraw = origdataraw                        
 
                     else: # Plain GPIO Broadcast processing
 
@@ -4072,6 +4267,7 @@ class ScratchListener(threading.Thread):
                                 PiMatrix.scroll("right")    
 
                     self.dataraw = origdataraw
+                    
 
                     if self.bFind('gettime'):
                         now = dt.datetime.now()
@@ -4369,7 +4565,7 @@ class ScratchListener(threading.Thread):
                         os.system('sudo shutdown -h "now"')
                         
                     
-                    print "encoderinUse state" ,sghGC.encoderInUse
+                    #print "encoderinUse state" ,sghGC.encoderInUse
                     if sghGC.encoderInUse == 0:
                         self.send_scratch_command('sensor-update "encoder" "stopped"') # inform Scratch that turning is finished
 

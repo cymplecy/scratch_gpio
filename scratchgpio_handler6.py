@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta7' # 05Dec14 Add in Unicorn
+Version =  'v6beta8' # 07Dec14 More unicorn
 import threading
 import socket
 import time
@@ -85,7 +85,7 @@ except:
     print "nunchuck not imported - check I2c is setup"
 
 try:
-    import unicornhat as UH
+    import sgh_unicornhat as UH
     print "UnicornHat imported OK"
 except:
     print "UnicornHat NOT imported OK"
@@ -1465,8 +1465,13 @@ class ScratchListener(threading.Thread):
                             debugLogging = False                            
 
                     if self.vFindValue("bright"):
-                        sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
+                        sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
                         PiGlow_Brightness = sghGC.ledDim
+                        try:
+                            UH.brightness(max(0,min(1,float(float(sghGC.ledDim) / 100))))
+                            UH.show()
+                        except:
+                            pass
                         print sghGC.ledDim
                         
                     if self.vFindValue("turnspeedadj"):
@@ -2131,11 +2136,15 @@ class ScratchListener(threading.Thread):
                         self.matrixY = min(7,max(self.matrixY,0))       
                         
                     if self.vFindValue("matrixuse"):
-                        self.matrixUse= int(self.valueNumeric) if self.valueIsNumeric else 64
-                        if self.matrixUse == 0:
-                            self.matrixUse = 64
-                        else:
-                            self.matrixUse = min(64,max(self.matrixUse,1))      
+                        self.matrixUse= int(self.valueNumeric) if self.value in ['64','16','9','4'] else 64
+    
+                            
+                    # if self.vFindValue("matrixuse"):
+                        # self.matrixUse= int(self.valueNumeric) if self.valueIsNumeric else 64
+                        # if self.matrixUse == 0:
+                            # self.matrixUse = 64
+                        # else:
+                            # self.matrixUse = min(64,max(self.matrixUse,1))                               
                         
                     if self.vFindValue("matrixrotate"):
                         print "mr"
@@ -3644,12 +3653,15 @@ class ScratchListener(threading.Thread):
                             #print "inside loop", self.dataraw
                                                             
                             #print "self.matrixuse", self.matrixUse
-                            
+                            ledcolours = ['off','on','white','red','green','blue','yellow','cyan','magenta','random']
                             tcolours = {'off' : (0,0,0),'on' : (255,255,255),'white' : (255,255,255),'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'yellow' : (255,255,0),'cyan' :(0,255,255),'magenta' : (255,0,255)}
                                 
                             mult = 1
                             limit = 1
                             rangemax = 8
+                            
+                            if self.bFindValue("matrixuse"):
+                                self.matrixUse= int(self.valueNumeric) if self.value in ['64','16','9','4'] else 64
                             
                             if self.matrixUse == 4:
                                 mult = 4
@@ -3682,12 +3694,10 @@ class ScratchListener(threading.Thread):
                                 
                                 for ym in range(0,rangemax):
                                     for xm in range(0,rangemax):
-                                        rr = random.randint(32,255)
-                                        rg = random.randint(32,255)
-                                        rb = random.randint(32,255)
+                                        self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0)) 
                                         for yy in range(0,limit):
-                                                for xx in range(0,limit):                    
-                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),rr,rg,rb)
+                                                for xx in range(0,limit):                         
+                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
                                         UH.show()
                                         time.sleep(0.05)
                                         
@@ -3709,45 +3719,37 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue("colour"):
                                 self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0))                           
                                 
-                            if self.bFindValue("matrixo"):
-                                for ym in range(0,rangemax):
-                                    for xm in range(0,rangemax):
-                                        if self.bFindValue("matrixonx"+str(xm)+"y"+str(ym)):
-                                        #print xm,ym
-                                            for yy in range(0,limit):
-                                                for xx in range(0,limit):                    
-                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                            UH.show()
-                                        if self.bFindValue("matrixoffx"+str(xm)+"y"+str(ym)):
-                                            for yy in range(0,limit):
-                                                for xx in range(0,limit):                    
-                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),0,0,0)
-                                            UH.show()
+                            
                                             
                             if self.bFindValue("pixel"):
                                 for ym in range(0,rangemax):
                                     for xm in range(0,rangemax):
-                                        if self.bFindValue("pixelx"+str(xm)+"y"+str(ym)):
-                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0))
+                                        if self.bFindValue("pixel"+str(xm+1)+","+str(ym+1)):
+                                            ledcolour = self.value
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(0,0,0))
+                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))
                                             #print xm,ym
                                             for yy in range(0,limit):
                                                 for xx in range(0,limit):
                                                     UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                            UH.show()   
-
-                            if self.bFindValue("led"):
+                                            UH.show()                                            
+                            
+   
                                 for led in range(0,self.matrixUse):
-                                    if self.bFindValue("led"+str(led +1)):
-                                        ym = int(int(led) / rangemax)
-                                        xm  = led % rangemax
-                                        #print "xm,ym" ,xm,ym
-                                        self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0))
-                                        for yy in range(0,limit):
-                                            for xx in range(0,limit):
-                                                UH.set_pixel((xm * mult)+xx,((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                        UH.show() 
+                                    for ledcolour in ledcolours :
+                                        if self.bFindValue("pixel" + str(led +1) + ledcolour):
+                                            ym = int(int(led) / rangemax)
+                                            xm  = led % rangemax
+                                            #print "xm,ym" ,xm,ym
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(0,0,0))
+                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))
+                                            #print self.matrixRed,self.matrixGreen,self.matrixBlue
+                                            for yy in range(0,limit):
+                                                for xx in range(0,limit):
+                                                    UH.set_pixel((xm * mult)+xx,((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                            UH.show() 
 
-                            if self.bFindValue("brightness"):
+                            if self.bFindValue("bright"):
                                 if self.valueIsNumeric:
                                     UH.brightness(max(0,min(1,float(self.valueNumeric / 100))))
                                     UH.show()
