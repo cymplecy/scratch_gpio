@@ -3653,6 +3653,7 @@ class ScratchListener(threading.Thread):
                             #print "inside loop", self.dataraw
                                                             
                             #print "self.matrixuse", self.matrixUse
+                            lettercolours = ['0','1','w','r','g','b','y','c','m','z']
                             ledcolours = ['off','on','white','red','green','blue','yellow','cyan','magenta','random']
                             tcolours = {'off' : (0,0,0),'on' : (255,255,255),'white' : (255,255,255),'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'yellow' : (255,255,0),'cyan' :(0,255,255),'magenta' : (255,0,255)}
                                 
@@ -3689,8 +3690,8 @@ class ScratchListener(threading.Thread):
                                 UH.show()                                
 
 
-                            if self.bFindOnOff("sweep"):
-                                #print "sweep"
+                            if self.bFind("sweep"):
+                                print "sweep"
                                 
                                 for ym in range(0,rangemax):
                                     for xm in range(0,rangemax):
@@ -3717,16 +3718,16 @@ class ScratchListener(threading.Thread):
                                 if self.value == "off": self.matrixBlue = 0 
                                 
                             if self.bFindValue("colour"):
-                                self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0))                           
+                                ledcolour = self.value
+                                self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0)) 
+                                if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))                                
                                 
-                            
-                                            
                             if self.bFindValue("pixel"):
                                 for ym in range(0,rangemax):
                                     for xm in range(0,rangemax):
                                         if self.bFindValue("pixel"+str(xm+1)+","+str(ym+1)):
                                             ledcolour = self.value
-                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(0,0,0))
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
                                             if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))
                                             #print xm,ym
                                             for yy in range(0,limit):
@@ -3741,69 +3742,135 @@ class ScratchListener(threading.Thread):
                                             ym = int(int(led) / rangemax)
                                             xm  = led % rangemax
                                             #print "xm,ym" ,xm,ym
-                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(0,0,0))
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
                                             if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))
                                             #print self.matrixRed,self.matrixGreen,self.matrixBlue
                                             for yy in range(0,limit):
                                                 for xx in range(0,limit):
-                                                    UH.set_pixel((xm * mult)+xx,((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                            UH.show() 
+                                                    UH.set_pixel((xm * mult)+xx,7 - ((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                            UH.show()
+
+                                            
 
                             if self.bFindValue("bright"):
-                                if self.valueIsNumeric:
-                                    UH.brightness(max(0,min(1,float(self.valueNumeric / 100))))
+                                sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
+                                try:
+                                    UH.brightness(max(0,min(1,float(float(sghGC.ledDim) / 100))))
                                     UH.show()
+                                except:
+                                    pass
 
                             if self.bFindValue('matrixpattern'):
-                                bit_pattern = (self.value+'00000000000000000000000000000000000000000000000000000000000000000')[0:64]
+                                bit_pattern = (self.value+'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[0:64]
                                 #print 'bit_pattern %s' % bit_pattern
                                 for j in range(0,64):
                                     ym = j // 8
                                     xm = j - (8 * ym)
-                                    if bit_pattern[j] != '0':
-                                        UH.set_pixel(xm,ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                    else:
-                                        UH.set_pixel(xm,ym,0,0,0)
-                                    j = j + 1
+                                    bp = bit_pattern[j]
+                                    if bp in lettercolours:
+                                        self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[lettercolours.index(bp)],(self.matrixRed,self.matrixGreen,self.matrixBlue))
+                                        UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
                                 UH.show()
                                 
-                            if self.bFind("scrollleft"):
+                            if self.bFind("moveleft"):
                                 for y in range(0, rangemax ):
                                     for x in range(0, rangemax -1):
                                         oldr,oldg,oldb = UH.get_pixel(x + 1, y)
                                         #print "oldpixel" , oldpixel
                                         UH.set_pixel(x,y,oldr,oldg,oldb)
-                                for y in range(0,rangemax):
                                     UH.set_pixel(7,y,0,0,0)
+                                UH.show()   
+                                
+                            if self.bFind("moveright"):
+                                for y in range(0, rangemax ):
+                                    for x in range(rangemax-1,0,-1):
+                                        print "y,x",y,x
+                                        oldr,oldg,oldb = UH.get_pixel(x - 1, y)
+                                        #print "oldpixel" , oldpixel
+                                        UH.set_pixel(x,y,oldr,oldg,oldb)
+                                    UH.set_pixel(0,y,0,0,0)
+                                UH.show()    
+
+                            if self.bFind("moveup"):
+                                for x in range(0, rangemax ):
+                                    for y in range(0, rangemax -1):
+                                        oldr,oldg,oldb = UH.get_pixel(x , y + 1)
+                                        #print "oldpixel" , oldpixel
+                                        UH.set_pixel(x,y,oldr,oldg,oldb)
+                                    UH.set_pixel(x,7,0,0,0)
                                 UH.show()                                
+
+                            if self.bFind("movedown"):
+                                for x in range(0, rangemax ):
+                                    for y in range(rangemax-1,0,-1):
+                                        #print "y,x",y,x
+                                        oldr,oldg,oldb = UH.get_pixel(x, y-1)
+                                        #print "oldpixel" , oldpixel
+                                        UH.set_pixel(x,y,oldr,oldg,oldb)
+                                    UH.set_pixel(x,0,0,0,0)
+                                UH.show()                                
+                                
+                            if self.bFind("invert"):
+                                for y in range(0, rangemax ):
+                                    for x in range(0, rangemax ):
+                                        oldr,oldg,oldb = UH.get_pixel(x , y)
+                                        #print "oldpixel" , oldpixel
+                                        UH.set_pixel(x,y,255-oldr,255-oldg,255-oldb)
+                                UH.show() 
                                 
                             rowList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
                                 if self.bFindValue('row'+rowList[i]):
-                                    bit_pattern = (self.value + "00000000")[0:8]
+                                    bit_pattern = (self.value + "xxxxxxxx")[0:8]
                                     #print 'bit_pattern %s' % bit_pattern
                                     for j in range(0,8):
                                         ym = i
                                         xm = j
-                                        if bit_pattern[j] != '0':
+                                        bp = bit_pattern[j]
+                                        if bp in lettercolours:
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[lettercolours.index(bp)],(self.matrixRed,self.matrixGreen,self.matrixBlue))
                                             UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                        else:
-                                            UH.set_pixel(xm,7-ym,0,0,0)
                                     UH.show()
+                                    
+                            for i in range(0,8):
+                                if self.bFindValue('row'+str(i+1)):
+                                    bit_pattern = (self.value + "xxxxxxxx")[0:8]
+                                    #print 'bit_pattern %s' % bit_pattern
+                                    for j in range(0,8):
+                                        ym = i
+                                        xm = j
+                                        bp = bit_pattern[j]
+                                        if bp in lettercolours:
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[lettercolours.index(bp)],(self.matrixRed,self.matrixGreen,self.matrixBlue))
+                                            UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                    UH.show()                                    
 
                             colList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
                                 if self.bFindValue('col'+colList[i]):
                                     #print self.value
-                                    bit_pattern = (self.value + "00000000")[0:8]
+                                    bit_pattern = (self.value + "xxxxxxxx")[0:8]
                                     for j in range(0,8):
                                         ym = j
                                         xm = i
-                                        if bit_pattern[j] != '0':
+                                        bp = bit_pattern[j]
+                                        if bp in lettercolours:
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[lettercolours.index(bp)],(self.matrixRed,self.matrixGreen,self.matrixBlue))
                                             UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                        else:
-                                            UH.set_pixel(xm,7-ym,0,0,0)
-                                    UH.show()   
+                                    UH.show()  
+                                    
+                            for i in range(0,8):
+                                if self.bFindValue('col'+str(i+1)):
+                                    #print self.value
+                                    bit_pattern = (self.value + "xxxxxxxx")[0:8]
+                                    for j in range(0,8):
+                                        ym = j
+                                        xm = i
+                                        bp = bit_pattern[j]
+                                        if bp in lettercolours:
+                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[lettercolours.index(bp)],(self.matrixRed,self.matrixGreen,self.matrixBlue))
+                                            UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                    UH.show()                                      
 
   
 
