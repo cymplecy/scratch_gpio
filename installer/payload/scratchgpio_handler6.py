@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta8' # 07Dec14 More unicorn
+Version =  'v6beta9' # 11Dec14 More unicorn
 import threading
 import socket
 import time
@@ -39,6 +39,7 @@ import sgh_RasPiCamera
 #import pygame removed becasue causing random failures
 import re
 import random
+import numpy
 
 try:
     import meArm
@@ -802,6 +803,9 @@ class ScratchListener(threading.Thread):
         self.matrixRed = 255
         self.matrixGreen = 255
         self.matrixBlue = 255
+        self.matrixMult = 1
+        self.matrixLimit = 1
+        self.matrixRangemax = 8
         
         
     def meArmGotoPoint(self,meHorizontal,meDistance,meVertical):
@@ -822,7 +826,7 @@ class ScratchListener(threading.Thread):
         except IndexError:
             return ""
 
-    # Find pos of searchStr - must be preceded by a delimiting  space to be found
+    # Find pos of searchStr - must be preceded by a deself.matrixLimiting  space to be found
     def bFind(self,searchStr):
         #print "looking in" ,self.dataraw , "for" , searchStr
         self.searchPos = self.dataraw.find(' ' + searchStr) + 1 
@@ -901,7 +905,7 @@ class ScratchListener(threading.Thread):
                 else:
                     sghGC.pinUpdate(pinList[loop],0,type="pwm")                       
 
-    def bFindValue(self,searchStr):
+    def bFindValue(self,searchStr,searchSuffix = ''):
         #logging.debug("Searching for:%s",searchStr )
         #return the value of the charachters following the searchstr as float if possible
         #If not then try to return string
@@ -909,37 +913,72 @@ class ScratchListener(threading.Thread):
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
-        if self.bFind(searchStr):
-            #logging.debug("SearchStr Found in:%s at:%s",self.dataraw,self.searchPos )
-            # try:
-                # if (self.dataraw[self.searchPos + len(searchStr):][0]) == " ":
-                    # logging.debug("space found in bfindvalue when searching for:%s",searchStr)
-                    # print self.dataraw
-                    # print self.searchPos
-                    # print searchStr
-                    # print self.dataraw[self.searchPos + len(searchStr):]
-                    # self.value = ""
-                    # return True
-            # except IndexError:
-                # print "IndexError in bfindvalue"
-                # self.value = ""
-                # return True
-            sensor_value = self.dataraw[(self.searchPos + len(searchStr)):].split()
-            #print "s value",sensor_value
-            try:
-                self.value = sensor_value[0]
-            except IndexError:
-                self.value = ""
-                pass
-            #print self.value
-            if isNumeric(self.value):
-                self.valueNumeric = float(self.value)
-                self.valueIsNumeric = True
-                #print "numeric" , self.valueNumeric
-            return True
-        else:
-            return False                
 
+        if self.bFind(searchStr):
+            if searchSuffix == '':
+                #print "$$$" + self.dataraw + "$$$"
+                #print "search" , searchStr
+                #print "pos", self.searchPos
+                #print "svalue",(self.dataraw[(self.searchPos + len(searchStr)):] + "   ")
+                self.value = (self.dataraw[(self.searchPos + len(searchStr)):] + "  $ $").split()[0]
+                #print "1 s value",self.value
+                #print self.value
+                if isNumeric(self.value):
+                    self.valueNumeric = float(self.value)
+                    self.valueIsNumeric = True
+                    #print "numeric" , self.valueNumeric
+                return True
+            else:
+                self.value = (self.dataraw[(self.searchPos + len(searchStr)):] + "   ").split()[0]
+                if self.value.endswith(searchSuffix):
+                    self.value=self.value[:-len(searchSuffix)]
+                    #print "2 s value",self.value
+                    #print self.value
+                    if isNumeric(self.value):
+                        self.valueNumeric = float(self.value)
+                        self.valueIsNumeric = True
+                        #print "numeric" , self.valueNumeric
+                    return True
+                else:
+                    return False
+        else:
+            return False           
+
+        # if self.bFind(searchStr):
+            # if searchSuffix == '':
+                # sensor_value = self.dataraw[(self.searchPos + len(searchStr)):].split()
+                # #print "1 s value",sensor_value
+                # try:
+                    # self.value = sensor_value[0]
+                # except IndexError:
+                    # self.value = ""
+                    # pass
+                # #print self.value
+                # if isNumeric(self.value):
+                    # self.valueNumeric = float(self.value)
+                    # self.valueIsNumeric = True
+                    # #print "numeric" , self.valueNumeric
+                # return True
+            # else:
+                # sensor_value = self.dataraw[(self.searchPos + len(searchStr)):].split()[0]
+                # if sensor_value.endswith(searchSuffix):
+                    # sensor_value=sensor_value[:-len(searchSuffix)]
+                    # print "2 s value",sensor_value
+                    # try:
+                        # self.value = sensor_value[0]
+                    # except IndexError:
+                        # self.value = ""
+                        # pass
+                    # #print self.value
+                    # if isNumeric(self.value):
+                        # self.valueNumeric = float(self.value)
+                        # self.valueIsNumeric = True
+                        # #print "numeric" , self.valueNumeric
+                    # return True
+                # else:
+                    # return False
+        # else:
+            # return False                
 
     def bLEDPowerCheck(self,ledList):
         for led in range(1,(1+ len(ledList))): # loop thru led numbers
@@ -3648,35 +3687,48 @@ class ScratchListener(threading.Thread):
                         #print self.dataraw.split('broadcast')
                         broadcastList = self.dataraw.split(' ')
                         #print "broadcastList" , broadcastList
+                        
+                        
                         for broadcastListLoop in broadcastList:
                             self.dataraw = " " + str(broadcastListLoop) + " "
                             #print "inside loop", self.dataraw
                                                             
                             #print "self.matrixuse", self.matrixUse
-                            lettercolours = ['0','1','w','r','g','b','y','c','m','z']
-                            ledcolours = ['off','on','white','red','green','blue','yellow','cyan','magenta','random']
-                            tcolours = {'off' : (0,0,0),'on' : (255,255,255),'white' : (255,255,255),'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'yellow' : (255,255,0),'cyan' :(0,255,255),'magenta' : (255,0,255)}
+                            lettercolours = ['r','g','b','c','m','y','w','0','1','z']
+                            ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','random']
+                            tcolours = {'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'cyan' :(0,255,255),'magenta' : (255,0,255),'yellow' : (255,255,0),'white' : (255,255,255),'off' : (0,0,0),'on' : (255,255,255)}
                                 
-                            mult = 1
-                            limit = 1
-                            rangemax = 8
+                            
                             
                             if self.bFindValue("matrixuse"):
-                                self.matrixUse= int(self.valueNumeric) if self.value in ['64','16','9','4'] else 64
+                                #print "mu" , self.value
+                                if self.value == '4':
+                                    self.matrixUse = 4
+                                    self.matrixMult = 4
+                                    self.matrixLimit = 4    
+                                    self.matrixRangemax = 2      
+                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax                                    
+                                elif self.value == '9':
+                                    self.matrixUse = 9
+                                    self.matrixMult = 3
+                                    self.matrixLimit = 2
+                                    self.matrixRangemax = 3         
+                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax   
+                                elif self.value == '16':
+                                    self.matrixUse = 16
+                                    self.matrixMult = 2
+                                    self.matrixLimit = 2
+                                    self.matrixRangemax = 4      
+                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax   
+                                else:
+                                    self.matrixUse = 64
+                                    self.matrixMult = 1
+                                    self.matrixLimit = 1
+                                    self.matrixRangemax = 8            
+                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax                                 
                             
-                            if self.matrixUse == 4:
-                                mult = 4
-                                limit = 4    
-                                rangemax = 2                           
-                            if self.matrixUse == 9:
-                                mult = 3
-                                limit = 2
-                                rangemax = 3   
-                            if self.matrixUse == 16:
-                                mult = 2
-                                limit = 2
-                                rangemax = 4
-                                
+                            #print "outside", self.matrixMult,self.matrixLimit,self.matrixRangemax
+                            
                             if self.bFind("allon"):
                                 for y in range(0, 8):
                                     for x in range(0, 8):
@@ -3693,12 +3745,12 @@ class ScratchListener(threading.Thread):
                             if self.bFind("sweep"):
                                 print "sweep"
                                 
-                                for ym in range(0,rangemax):
-                                    for xm in range(0,rangemax):
-                                        self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0)) 
-                                        for yy in range(0,limit):
-                                                for xx in range(0,limit):                         
-                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                for ym in range(0,self.matrixRangemax):
+                                    for xm in range(0,self.matrixRangemax):
+                                        self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0)) 
+                                        for yy in range(0,self.matrixLimit):
+                                                for xx in range(0,self.matrixLimit):                         
+                                                    UH.set_pixel((xm * self.matrixMult)+xx,7-((ym * self.matrixMult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
                                         UH.show()
                                         time.sleep(0.05)
                                         
@@ -3718,39 +3770,58 @@ class ScratchListener(threading.Thread):
                                 if self.value == "off": self.matrixBlue = 0 
                                 
                             if self.bFindValue("colour"):
-                                ledcolour = self.value
-                                self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0)) 
-                                if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))                                
+                                if self.valueIsNumeric:
+                                    colourIndex = max(1,min(8,int(self.value))) - 1
+                                    self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[colourIndex],(0,0,0)) 
+                                else:
+                                    ledcolour = self.value
+                                    self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0)) 
+                                    if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0))                                
                                 
-                            if self.bFindValue("pixel"):
-                                for ym in range(0,rangemax):
-                                    for xm in range(0,rangemax):
+                            if self.bFind("pixel"):
+                                pixelProcessed = False
+                                for ym in range(0,self.matrixRangemax):
+                                    for xm in range(0,self.matrixRangemax):
                                         if self.bFindValue("pixel"+str(xm+1)+","+str(ym+1)):
                                             ledcolour = self.value
                                             self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
-                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))
+                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0))
                                             #print xm,ym
-                                            for yy in range(0,limit):
-                                                for xx in range(0,limit):
-                                                    UH.set_pixel((xm * mult)+xx,7-((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                            UH.show()                                            
-                            
-   
-                                for led in range(0,self.matrixUse):
-                                    for ledcolour in ledcolours :
-                                        if self.bFindValue("pixel" + str(led +1) + ledcolour):
-                                            ym = int(int(led) / rangemax)
-                                            xm  = led % rangemax
-                                            #print "xm,ym" ,xm,ym
-                                            self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
-                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(2,8)],(0,0,0))
-                                            #print self.matrixRed,self.matrixGreen,self.matrixBlue
-                                            for yy in range(0,limit):
-                                                for xx in range(0,limit):
-                                                    UH.set_pixel((xm * mult)+xx,7 - ((ym * mult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                            for yy in range(0,self.matrixLimit):
+                                                for xx in range(0,self.matrixLimit):
+                                                    UH.set_pixel((xm * self.matrixMult)+xx,7-((ym * self.matrixMult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
                                             UH.show()
-
+                                            pixelProcessed = True
                                             
+                                if pixelProcessed == False:
+                                    for led in range(0,self.matrixUse):
+                                        if (self.bFindValue("pixel") and self.value == str(led + 1)): 
+                                            ym = int(int(led) / self.matrixRangemax)
+                                            xm  = led % self.matrixRangemax
+                                            #print "xm,ym" ,xm,ym
+                                            #print self.matrixRed,self.matrixGreen,self.matrixBlue
+                                            #print self.matrixMult,self.matrixLimit,self.matrixRangemax,led, ym, ym
+                                            for yy in range(0,self.matrixLimit):
+                                                for xx in range(0,self.matrixLimit):
+                                                    UH.set_pixel((xm * self.matrixMult)+xx,7 - ((ym * self.matrixMult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                            UH.show()   
+                                            pixelProcessed = True                                         
+                            
+                                if pixelProcessed == False:
+                                    for led in range(0,self.matrixUse):
+                                        for ledcolour in ledcolours :
+                                            if (self.bFindValue("pixel",ledcolour) and self.value == str(led +1)) : 
+                                                ym = int(int(led) / self.matrixRangemax)
+                                                xm  = led % self.matrixRangemax
+                                                #print "xm,ym" ,xm,ym
+                                                self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
+                                                if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0))
+                                                #print self.matrixRed,self.matrixGreen,self.matrixBlue
+                                                for yy in range(0,self.matrixLimit):
+                                                    for xx in range(0,self.matrixLimit):
+                                                        UH.set_pixel((xm * self.matrixMult)+xx,7 - ((ym * self.matrixMult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                                UH.show()
+
 
                             if self.bFindValue("bright"):
                                 sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
@@ -3773,8 +3844,8 @@ class ScratchListener(threading.Thread):
                                 UH.show()
                                 
                             if self.bFind("moveleft"):
-                                for y in range(0, rangemax ):
-                                    for x in range(0, rangemax -1):
+                                for y in range(0, self.matrixRangemax ):
+                                    for x in range(0, self.matrixRangemax -1):
                                         oldr,oldg,oldb = UH.get_pixel(x + 1, y)
                                         #print "oldpixel" , oldpixel
                                         UH.set_pixel(x,y,oldr,oldg,oldb)
@@ -3782,8 +3853,8 @@ class ScratchListener(threading.Thread):
                                 UH.show()   
                                 
                             if self.bFind("moveright"):
-                                for y in range(0, rangemax ):
-                                    for x in range(rangemax-1,0,-1):
+                                for y in range(0, self.matrixRangemax ):
+                                    for x in range(self.matrixRangemax-1,0,-1):
                                         print "y,x",y,x
                                         oldr,oldg,oldb = UH.get_pixel(x - 1, y)
                                         #print "oldpixel" , oldpixel
@@ -3792,8 +3863,8 @@ class ScratchListener(threading.Thread):
                                 UH.show()    
 
                             if self.bFind("moveup"):
-                                for x in range(0, rangemax ):
-                                    for y in range(0, rangemax -1):
+                                for x in range(0, self.matrixRangemax ):
+                                    for y in range(0, self.matrixRangemax -1):
                                         oldr,oldg,oldb = UH.get_pixel(x , y + 1)
                                         #print "oldpixel" , oldpixel
                                         UH.set_pixel(x,y,oldr,oldg,oldb)
@@ -3801,8 +3872,8 @@ class ScratchListener(threading.Thread):
                                 UH.show()                                
 
                             if self.bFind("movedown"):
-                                for x in range(0, rangemax ):
-                                    for y in range(rangemax-1,0,-1):
+                                for x in range(0, self.matrixRangemax ):
+                                    for y in range(self.matrixRangemax-1,0,-1):
                                         #print "y,x",y,x
                                         oldr,oldg,oldb = UH.get_pixel(x, y-1)
                                         #print "oldpixel" , oldpixel
@@ -3811,12 +3882,22 @@ class ScratchListener(threading.Thread):
                                 UH.show()                                
                                 
                             if self.bFind("invert"):
-                                for y in range(0, rangemax ):
-                                    for x in range(0, rangemax ):
+                                for y in range(0, self.matrixRangemax ):
+                                    for x in range(0, self.matrixRangemax ):
                                         oldr,oldg,oldb = UH.get_pixel(x , y)
                                         #print "oldpixel" , oldpixel
                                         UH.set_pixel(x,y,255-oldr,255-oldg,255-oldb)
                                 UH.show() 
+                                
+                            if self.bFindValue("level"):
+                                if self.valueIsNumeric:
+                                    for y in range(0, self.matrixRangemax ):
+                                        for x in range(0, self.matrixRangemax ):
+                                            oldr,oldg,oldb = tuple([max(0,min(255,int(elim * (self.valueNumeric / 100.0)))) for elim in UH.get_pixel(x , y)])
+                                            #print "old" , oldr,oldg,oldb
+                                            #print "oldpixel" , oldpixel
+                                            UH.set_pixel(x,y,oldr,oldg,oldb)
+                                    UH.show()                                 
                                 
                             rowList = ['a','b','c','d','e','f','g','h']
                             for i in range(0,8):
@@ -3870,7 +3951,100 @@ class ScratchListener(threading.Thread):
                                         if bp in lettercolours:
                                             self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[lettercolours.index(bp)],(self.matrixRed,self.matrixGreen,self.matrixBlue))
                                             UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
-                                    UH.show()                                      
+                                    UH.show()                       
+
+                            if self.bFindValue('loadimage'):
+                                try:
+                                    sb = subprocess.Popen(['convert', '-scale', '8x8!', '+matte', self.value , 'sghimage.bmp']).wait()
+                                except:
+                                    pass
+                                #time.sleep(1)
+                                # When reading a binary file, always add a 'b' to the file open mode
+                                with open('sghimage.bmp', 'rb') as f:
+                                #with open(self.value + '.bmp', 'rb') as f:
+                                    # BMP files store their width and height statring at byte 18 (12h), so seek
+                                    # to that position
+                                    f.seek(10)
+
+                                    # The width and height are 4 bytes each, so read 8 bytes to get both of them
+                                    bytes = f.read(4)
+
+                                    # Here, we decode the byte array from the last step. The width and height
+                                    # are each unsigned, little endian, 4 byte integers, so they have the format
+                                    # code '<II'. See http://docs.python.org/3/library/struct.html for more info
+                                    bmpdata = int(struct.unpack('<I', bytes)[0])
+                                    #print bmpdata
+
+                                    # Print the width and height of the image
+                                    print('Data starts at:  ' + str(bmpdata))
+                                    f.seek(bmpdata)
+                                      
+                                    bytes = f.read(192) # move to start of pixel data
+                                    pixel = struct.unpack('192B',  bytes) #get 64 pixels * 3 for BGR
+                                    #print "pixel",pixel
+                                    for i in range(0,64):
+                                        UH.set_pixel( i % 8, 7 - (i // 8), pixel[(i * 3) +2], pixel[(i * 3) +1], pixel[(i * 3) +0])
+                                        
+                                    UH.show()          
+
+                            if self.bFindValue('saveimage'):
+                                # try:
+                                    # sb = subprocess.Popen(['convert', '-scale', '8x8!', '+matte', self.value , 'sghimage.bmp']).wait()
+                                # except:
+                                    # pass
+                                #time.sleep(1)
+                                # When reading a binary file, always add a 'b' to the file open mode
+                                with open('sghimage.bmp', 'wb') as f:
+                                    header = [0x42, 0x4D, 0xF6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x36, 0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x13, 0x0B, 0x00, 0x00, 0x13, 0x0B, 0x00, 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00 , 0x00]
+                                    for i in header:
+                                        f.write(chr(i))
+                                    for i in range(0,64):
+                                        r,g,b = UH.get_pixel( i % 8, 7 - (i // 8))
+                                        #print "rgb",r,g,b
+                                        f.write(chr(b))
+                                        f.write(chr(g))
+                                        f.write(chr(r))
+                                sb = subprocess.Popen(['cp', 'sghimage.bmp', self.value + '.bmp']).wait()
+                                        
+                                        
+                            if self.bFindValue('load2image'):
+                                try:
+                                    sb = subprocess.Popen(['convert', '-scale', '16x16!', '+matte', self.value , 'sghimage.bmp']).wait()
+                                except:
+                                    pass
+                                #time.sleep(1)
+                                # When reading a binary file, always add a 'b' to the file open mode
+                                with open('sghimage.bmp', 'rb') as f:
+                                #with open(self.value + '.bmp', 'rb') as f:
+                                    # BMP files store their width and height statring at byte 18 (12h), so seek
+                                    # to that position
+                                    f.seek(10)
+
+                                    # The width and height are 4 bytes each, so read 8 bytes to get both of them
+                                    bytes = f.read(4)
+
+                                    # Here, we decode the byte array from the last step. The width and height
+                                    # are each unsigned, little endian, 4 byte integers, so they have the format
+                                    # code '<II'. See http://docs.python.org/3/library/struct.html for more info
+                                    bmpdata = int(struct.unpack('<I', bytes)[0])
+
+                                    # Print the width and height of the image
+                                    print('Data starts at:  ' + str(bmpdata))
+                                    f.seek(bmpdata)
+                                      
+                                    bytes = f.read(768) # move to start of pixel data
+                                    pixel = struct.unpack('768B',  bytes) #get 64 pixels * 3 for BGR
+                                    #print "pixel",pixel
+
+                                    j = -18
+                                    for i in range(0,64):
+                                        if i % 8 == 0:
+                                            j = j + 18
+                                        else:
+                                            j = j + 2
+                                        #print "i,j",i,j
+                                        UH.set_pixel( i % 8, 7 - (i // 8), pixel[(j * 3) +2], pixel[(j * 3) +1], pixel[(j * 3) +0])
+                                    UH.show()
 
   
 
@@ -4118,17 +4292,17 @@ class ScratchListener(threading.Thread):
                                         AdaMatrix.setPixel((x),y,3)
                                 time.sleep(0.01)    
                                         
-                            mult = 1
-                            limit = 1
+                            self.matrixMult = 1
+                            self.matrixLimit = 1
                             if self.matrixUse == 4:
-                                mult = 4
-                                limit = 4                            
+                                self.matrixMult = 4
+                                self.matrixLimit = 4                            
                             if self.matrixUse == 9:
-                                mult = 3
-                                limit = 2
+                                self.matrixMult = 3
+                                self.matrixLimit = 2
                             if self.matrixUse == 16:
-                                mult = 2
-                                limit = 2            
+                                self.matrixMult = 2
+                                self.matrixLimit = 2            
                                 
                             colours = ["off","green","red","yellow"]
                             
@@ -4136,9 +4310,9 @@ class ScratchListener(threading.Thread):
                                 # if self.bFind("led"+str(led + 1)+"on"):
                                     # ym = int(led / math.sqrt(self.matrixUse))
                                     # xm = led - int((math.sqrt(self.matrixUse) * ym))
-                                    # for yy in range(0,limit):
-                                        # for xx in range(0,limit):
-                                            # AdaMatrix.setPixel((7 - (xm * mult)-xx),(ym * mult)+yy,1) 
+                                    # for yy in range(0,self.matrixLimit):
+                                        # for xx in range(0,self.matrixLimit):
+                                            # AdaMatrix.setPixel((7 - (xm * self.matrixMult)-xx),(ym * self.matrixMult)+yy,1) 
                                                 
                                 if self.bFind("led"+str(led + 1)):
                                     for colour in colours:
@@ -4148,9 +4322,9 @@ class ScratchListener(threading.Thread):
                                             
                                             print colour
                                             print "led found",xm,ym
-                                            for yy in range(0,limit):
-                                                for xx in range(0,limit):
-                                                    AdaMatrix.setPixel(( (xm * mult)+xx),(ym * mult)+yy,colours.index(colour)) 
+                                            for yy in range(0,self.matrixLimit):
+                                                for xx in range(0,self.matrixLimit):
+                                                    AdaMatrix.setPixel(( (xm * self.matrixMult)+xx),(ym * self.matrixMult)+yy,colours.index(colour)) 
 
                             for colour in range(0,3):
                                 if self.bFindValue(["green","red","yellow"][colour] + "on"):
@@ -4158,9 +4332,9 @@ class ScratchListener(threading.Thread):
                                         xm = self.matrixX
                                         ym = self.matrixY
                                         #print xm,ym
-                                        for yy in range(0,limit):
-                                            for xx in range(0,limit):
-                                                AdaMatrix.setPixel(((xm * mult)+xx),(ym * mult)+yy,colour + 1) 
+                                        for yy in range(0,self.matrixLimit):
+                                            for xx in range(0,self.matrixLimit):
+                                                AdaMatrix.setPixel(((xm * self.matrixMult)+xx),(ym * self.matrixMult)+yy,colour + 1) 
                                                 
                             for ym in range(0,8):
                                 for xm in range(0,8):
@@ -4185,9 +4359,9 @@ class ScratchListener(threading.Thread):
                                         if len(self.value) == 2:
                                             xm = int(float(self.value[0]))
                                             ym = int(float(self.value[1]))                               
-                                        for yy in range(0,limit):
-                                            for xx in range(0,limit):
-                                                AdaMatrix.setPixel(((xm * mult)+xx),(ym * mult)+yy,colour + 1)                                    
+                                        for yy in range(0,self.matrixLimit):
+                                            for xx in range(0,self.matrixLimit):
+                                                AdaMatrix.setPixel(((xm * self.matrixMult)+xx),(ym * self.matrixMult)+yy,colour + 1)                                    
 
                             if self.bFindValue("brightness"):
                                 if self.valueIsNumeric:
