@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6beta9' # 11Dec14 More unicorn
+Version =  'v6.0.0' # 13Dec14 ScratchGPIO6 Release
 import threading
 import socket
 import time
