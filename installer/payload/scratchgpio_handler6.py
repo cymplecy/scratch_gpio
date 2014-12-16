@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.0.0' # 13Dec14 ScratchGPIO6 Release
+Version =  'v6.0.1' # 14Dec14 Cheerlights added
 import threading
 import socket
 import time
@@ -40,6 +40,8 @@ import sgh_RasPiCamera
 import re
 import random
 import numpy
+import urllib2
+import json
 
 try:
     import meArm
@@ -470,6 +472,8 @@ class ScratchSender(threading.Thread):
             sensor_name = 'angle'
             bcast_str = '"' + sensor_name + '" ' + str(int(0))
             self.addtosend_scratch_command(bcast_str)
+
+        
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
@@ -1323,6 +1327,7 @@ class ScratchListener(threading.Thread):
         meHorizontal = 0
         meDistance = 100
         meVertical = 50
+        tcolours = None # set tcolours to None so it can be detected later
 
 
         if GPIOPlus == False:
@@ -3688,15 +3693,17 @@ class ScratchListener(threading.Thread):
                         broadcastList = self.dataraw.split(' ')
                         #print "broadcastList" , broadcastList
                         
+                        lettercolours = ['r','g','b','c','m','y','w','0','1','z']
+                        ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','random']
                         
+                        if tcolours == None: #only define dictionary on first pass
+                            tcolours = {'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'cyan' :(0,255,255),'magenta' : (255,0,255),'yellow' : (255,255,0),'white' : (255,255,255),'off' : (0,0,0),'on' : (255,255,255)}
+                            
                         for broadcastListLoop in broadcastList:
                             self.dataraw = " " + str(broadcastListLoop) + " "
                             #print "inside loop", self.dataraw
                                                             
                             #print "self.matrixuse", self.matrixUse
-                            lettercolours = ['r','g','b','c','m','y','w','0','1','z']
-                            ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','random']
-                            tcolours = {'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'cyan' :(0,255,255),'magenta' : (255,0,255),'yellow' : (255,255,0),'white' : (255,255,255),'off' : (0,0,0),'on' : (255,255,255)}
                                 
                             
                             
@@ -3776,7 +3783,8 @@ class ScratchListener(threading.Thread):
                                 else:
                                     ledcolour = self.value
                                     self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0)) 
-                                    if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0))                                
+                                    if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0))  
+                                tcolours["on"] = self.matrixRed,self.matrixGreen,self.matrixBlue
                                 
                             if self.bFind("pixel"):
                                 pixelProcessed = False
@@ -3855,7 +3863,7 @@ class ScratchListener(threading.Thread):
                             if self.bFind("moveright"):
                                 for y in range(0, self.matrixRangemax ):
                                     for x in range(self.matrixRangemax-1,0,-1):
-                                        print "y,x",y,x
+                                        #print "y,x",y,x
                                         oldr,oldg,oldb = UH.get_pixel(x - 1, y)
                                         #print "oldpixel" , oldpixel
                                         UH.set_pixel(x,y,oldr,oldg,oldb)
@@ -3942,14 +3950,17 @@ class ScratchListener(threading.Thread):
                                     
                             for i in range(0,8):
                                 if self.bFindValue('col'+str(i+1)):
+                                    #print tcolours
+                                    #print self.matrixRed,self.matrixGreen,self.matrixBlue
                                     #print self.value
                                     bit_pattern = (self.value + "xxxxxxxx")[0:8]
                                     for j in range(0,8):
                                         ym = j
                                         xm = i
                                         bp = bit_pattern[j]
-                                        if bp in lettercolours:
+                                        if bp in lettercolours:                     
                                             self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[lettercolours.index(bp)],(self.matrixRed,self.matrixGreen,self.matrixBlue))
+                                            
                                             UH.set_pixel(xm,7-ym,self.matrixRed,self.matrixGreen,self.matrixBlue)
                                     UH.show()                       
 
@@ -4797,7 +4808,20 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, int(value & 2**led)>>led)
                             #print 'sending: %s' % bcast_str
                             self.send_scratch_command(bcast_str)     
-         
+                            
+                    if self.bFind("getcheerlights"):
+                        try:
+                            jsonFeed = urllib2.urlopen("http://api.thingspeak.com/channels/1417/" +"field/1/last.json")
+                            feedData = jsonFeed.read()
+                            #print feedData
+                            jsonFeed.close()
+                            data = json.loads(feedData)
+                            print "new colour", data["field1"]   
+                            bcast_str = 'sensor-update "%s" %s' % ("cheerlights", data["field1"])
+                            #print 'sending: %s' % bcast_str
+                            self.send_scratch_command(bcast_str)
+                        except:
+                            pass
                             
 
                     #end of broadcast check
