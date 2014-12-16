@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.0.1' # 14Dec14 Cheerlights added
+Version =  'v6.0.2' # 14Dec14 Cheerlights added
 import threading
 import socket
 import time
@@ -3779,12 +3779,23 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue("colour"):
                                 if self.valueIsNumeric:
                                     colourIndex = max(1,min(8,int(self.value))) - 1
-                                    self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[colourIndex],(0,0,0)) 
+                                    self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[colourIndex],(128,128,128)) 
                                 else:
-                                    ledcolour = self.value
-                                    self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(0,0,0)) 
-                                    if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0))  
+                                    if self.value[0] == "#":
+                                        try:
+                                            self.value =(self.value + "00000000")[0:7]
+                                            self.matrixRed = int(self.value[1:3],16)
+                                            self.matrixGreen = int(self.value[3:5],16)
+                                            self.matrixBlue = int(self.value[5:],16)
+                                            print "matrxired", self.matrixRed
+                                        except:
+                                            pass
+                                    else:    
+                                        ledcolour = self.value
+                                        self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(128,128,128)) 
+                                        if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(128,128,128))  
                                 tcolours["on"] = self.matrixRed,self.matrixGreen,self.matrixBlue
+                                #print "rgb", self.matrixRed,self.matrixGreen,self.matrixBlue
                                 
                             if self.bFind("pixel"):
                                 pixelProcessed = False
@@ -3793,7 +3804,7 @@ class ScratchListener(threading.Thread):
                                         if self.bFindValue("pixel"+str(xm+1)+","+str(ym+1)):
                                             ledcolour = self.value
                                             self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
-                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0))
+                                            if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(32,32,32))
                                             #print xm,ym
                                             for yy in range(0,self.matrixLimit):
                                                 for xx in range(0,self.matrixLimit):
@@ -3823,8 +3834,8 @@ class ScratchListener(threading.Thread):
                                                 xm  = led % self.matrixRangemax
                                                 #print "xm,ym" ,xm,ym
                                                 self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
-                                                if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(0,0,0))
-                                                #print self.matrixRed,self.matrixGreen,self.matrixBlue
+                                                if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(64,64,64))
+                                                #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
                                                 for yy in range(0,self.matrixLimit):
                                                     for xx in range(0,self.matrixLimit):
                                                         UH.set_pixel((xm * self.matrixMult)+xx,7 - ((ym * self.matrixMult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
@@ -4866,6 +4877,10 @@ def create_socket(host, port):
 
 def cleanup_threads(threads):
     print ("cleanup threads started")
+    try:
+        UH.clean_shutdown()
+    except:
+        pass
     for thread in threads:
         thread.stop()
     print "Threads told to stop"

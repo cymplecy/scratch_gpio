@@ -6,6 +6,7 @@ lastID = 0      #most recent entry_id
   
 #main program
 
+
 #check for new colour requests
 while True:
     jsonFeed = urllib2.urlopen("http://api.thingspeak.com/channels/1417/" +"field/1/last.json")
