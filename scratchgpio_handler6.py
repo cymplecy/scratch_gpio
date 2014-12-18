@@ -1511,6 +1511,9 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
                         PiGlow_Brightness = sghGC.ledDim
+                        bcast_str = 'sensor-update "%s" %d' % ('bright', sghGC.ledDim)
+                        #print 'sending: %s' % bcast_str
+                        self.send_scratch_command(bcast_str)
                         try:
                             UH.brightness(max(0,min(1,float(float(sghGC.ledDim) / 100))))
                             UH.show()
@@ -3694,10 +3697,10 @@ class ScratchListener(threading.Thread):
                         #print "broadcastList" , broadcastList
                         
                         lettercolours = ['r','g','b','c','m','y','w','0','1','z']
-                        ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','random']
+                        ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','invert','random']
                         
                         if tcolours == None: #only define dictionary on first pass
-                            tcolours = {'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'cyan' :(0,255,255),'magenta' : (255,0,255),'yellow' : (255,255,0),'white' : (255,255,255),'off' : (0,0,0),'on' : (255,255,255)}
+                            tcolours = {'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'cyan' :(0,255,255),'magenta' : (255,0,255),'yellow' : (255,255,0),'white' : (255,255,255),'off' : (0,0,0),'on' : (255,255,255),'invert' : (0,0,0)}
                             
                         for broadcastListLoop in broadcastList:
                             self.dataraw = " " + str(broadcastListLoop) + " "
@@ -3777,6 +3780,9 @@ class ScratchListener(threading.Thread):
                                 if self.value == "off": self.matrixBlue = 0 
                                 
                             if self.bFindValue("colour"):
+                                #print "colour" ,self.value
+                                if self.value == "invert":
+                                    tcolours["invert"] = 255 - self.matrixRed,255 - self.matrixGreen,255 - self.matrixBlue
                                 if self.valueIsNumeric:
                                     colourIndex = max(1,min(8,int(self.value))) - 1
                                     self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[colourIndex],(128,128,128)) 
@@ -3795,7 +3801,9 @@ class ScratchListener(threading.Thread):
                                         self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(self.value,(128,128,128)) 
                                         if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(128,128,128))  
                                 tcolours["on"] = self.matrixRed,self.matrixGreen,self.matrixBlue
+                                
                                 #print "rgb", self.matrixRed,self.matrixGreen,self.matrixBlue
+                                #print tcolours
                                 
                             if self.bFind("pixel"):
                                 pixelProcessed = False
@@ -3847,6 +3855,10 @@ class ScratchListener(threading.Thread):
                                 try:
                                     UH.brightness(max(0,min(1,float(float(sghGC.ledDim) / 100))))
                                     UH.show()
+                                    sensor_name = 'bright'
+                                    bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.ledDim)
+                                    #print 'sending: %s' % bcast_str
+                                    self.send_scratch_command(bcast_str)
                                 except:
                                     pass
 
@@ -4540,12 +4552,12 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, fulldatetime)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
-                        hrs = now.strftime('%H')
+                        hrs = fulldatetime[-6:-4]
                         sensor_name = 'hours'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, hrs)
                         #print 'sending: %s' % bcast_str
                         self.send_scratch_command(bcast_str)
-                        minutes = now.strftime('%M')
+                        minutes = fulldatetime[-4:-2]
                         sensor_name = 'minutes'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, minutes)
                         #print 'sending: %s' % bcast_str
@@ -4609,7 +4621,13 @@ class ScratchListener(threading.Thread):
                         #logging.debug("IP:%s", ipaddr)
                         sensor_name = 'cputemp'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, temp)
-                        self.send_scratch_command(bcast_str)                            
+                        self.send_scratch_command(bcast_str)                      
+
+                    if self.bFindValue('savedata'):
+                        with open('data.txt', 'w') as f:
+                            f.write(self.value)
+                            print "data saved"
+                   
                                 
                     if self.bFind("pidisp"): #display IP
                         print "PiDisp"
