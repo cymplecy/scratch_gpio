@@ -4895,10 +4895,7 @@ def create_socket(host, port):
 
 def cleanup_threads(threads):
     print ("cleanup threads started")
-    try:
-        UH.clean_shutdown()
-    except:
-        pass
+
     for thread in threads:
         thread.stop()
     print "Threads told to stop"
@@ -5154,6 +5151,12 @@ while True:
         #sghGC.INVERT = False
         sghGC.resetPinMode()
         print ("Pin Reset Done")
+        try:
+            print "trying uh clean"
+            UH.clean_shutdown()
+            print "uhclean done"
+        except:
+            pass
         sys.exit()
         print "CleanUp complete"
 
