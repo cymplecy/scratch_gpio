@@ -47,7 +47,9 @@ class GPIOController :
         
 
         #Set some constants and initialise lists
-        self.numOfPins = 41 #there are actually 40 but python can't count properly :)
+        self.numOfPins = 27 #there are actually 26 but python can't count properly :)
+        if self.piRevision > 2:
+            self.numOfPins = 41
         self.PINPUT = 4
         self.POUTPUT = 1
         self.PPWM = 2
@@ -104,17 +106,21 @@ class GPIOController :
         self.encoderInUse = 0
         
         self.nunchuckLevel = 1
-		
+        
+        self.validPins =      [ 3,         5,       7, 8,   10,11,12,13,   15,16,   18,19,   21,22,23,24,   26]
+        
+        
         if self.piRevision == 1:
         #                       0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40
         #                     [ 3, 5,99,99, 7,99,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
-            self.gpioLookup = [99,99,99, 0,99, 1,99, 4,14,99,15,17,18,21,99,22,23,99,24,10,99, 9,25,11, 8,99, 7,99,99,99,99,99,99,99,99,99,99,99,99,99,99]
-        else:                #[99,99, 2,99, 7, 3,99,26,24,21,19,23,99,99, 8,10,99,11,12,99,99,13,15,16,18,22,99]
+            self.gpioLookup = [99,99,99, 0,99, 1,99, 4,14,99,15,17,18,21,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
+        if self.piRevision == 2:
+            self.gpioLookup = [99,99,99, 2,99, 3,99, 4,14,99,15,17,18,27,99,22,23,99,24,10,99, 9,25,11, 8,99, 7]
+            
+        if self.piRevision > 2:
+            self.validPins =  [3,          5,       7, 8,   10,11,12,13,   15,16,   18,19,   21,22,23,24,   26,      29,   31,32,33,   35,36,37,38,   40]
             self.gpioLookup = [99,99,99, 2,99, 3,99, 4,14,99,15,17,18,27,99,22,23,99,24,10,99, 9,25,11, 8,99, 7,99,99, 5,99, 6,12,13,99,19,16,26,20,99,21]
             
-        self.validPins = [3,5,7,8,10,11,12,13,15,16,18,19,21,22,23,24,26,29,31,32,33,35,36,37,38,40]
-        
-        
         #self.ULTRA_IN_USE = [False] * self.PINS
         #self.ultraTotalInUse = 0
         #self.ultraSleep = 1.0
