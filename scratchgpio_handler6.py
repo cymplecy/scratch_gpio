@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.0.2' # 14Dec14 Cheerlights added
+Version =  'v6.0.2' # 18Dec14 Pi and bashh support started
 import threading
 import socket
 import time
@@ -33,6 +33,7 @@ import sgh_PiGlow
 import sgh_PiMatrix
 import sgh_Stepper
 import sgh_Minecraft
+import sgh_pnbLCD
 import logging
 import subprocess
 import sgh_RasPiCamera
@@ -42,6 +43,7 @@ import random
 import numpy
 import urllib2
 import json
+
 
 try:
     import meArm
@@ -55,6 +57,13 @@ try:
     print "MCP23008 imported OK"
 except:
     print "MCP23008  NOT imported OK"
+    pass
+    
+try:
+    from sgh_MCP230xx import Adafruit_MCP230XX
+    print "sgh_MCP230xx imported OK"
+except:
+    print "sgh_MCP230xx  NOT imported OK"
     pass
     
 try:
@@ -1328,6 +1337,7 @@ class ScratchListener(threading.Thread):
         meDistance = 100
         meVertical = 50
         tcolours = None # set tcolours to None so it can be detected later
+        pnblcd = None
 
 
         if GPIOPlus == False:
@@ -1357,6 +1367,7 @@ class ScratchListener(threading.Thread):
         debugLogging = False
 
         listenLoopTime = time.time() + 10000
+        datawithCAPS = ''
         #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
         while not self.stopped():
             
@@ -1383,6 +1394,7 @@ class ScratchListener(threading.Thread):
                 if len(data) > 0: # Connection still valid so process the data received
 
                     dataIn = data 
+                    datawithCAPS = data
                     #dataOut = ""
                     dataList = [] # used to hold series of broadcasts or sensor updates
                     dataPrefix = "" # data to be re-added onto front of incoming data
@@ -1396,7 +1408,6 @@ class ScratchListener(threading.Thread):
                         #print "size:", size
                         if size > 0:
                             #print dataIn[4:size + 4]
-                            #dataOut = dataOut + dataIn[4:size + 4].lower() + " "
                             dataMsg = dataIn[4:size + 4].lower() # turn msg into lower case
                             #print "msg:",dataMsg
                             if len(dataMsg) < size: # if msg recieved is too small
@@ -1483,13 +1494,25 @@ class ScratchListener(threading.Thread):
             
             #print "GPIOPLus" , GPIOPlus
             for dataItem in dataList:
-                dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
-                dataraw = " "+dataraw + " "
+                print dataItem 
+                #dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
+                dataraw = ' '
+                print "CAPS", datawithCAPS
+                for item in shlex.split(dataItem):
+                    print item
+                    if item[0:4] == 'line':
+                        origpos = datawithCAPS.lower().find(item)
+                        item = datawithCAPS[origpos:origpos+len(item)]
+                        item = 'line' + item[4:].strip()
+                        item = item[0:5] + item[5:].lstrip()
+                        dataraw = dataraw + ''.join(item.replace(' ',chr(254))) + ' '
+                    else:
+                        dataraw = dataraw + ''.join(item.replace(' ','')) + ' '
                 self.dataraw = dataraw
                 
                 logging.debug("processing dataItems: %s",self.dataraw)
                 #print "Loop processing"
-                #print self.dataraw
+                print self.dataraw
                 #print
                 if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
@@ -2036,6 +2059,31 @@ class ScratchListener(threading.Thread):
                                 for pin in [8,10,12,16,18,22,24,26]:
                                     sghGC.pinUpdate(pin,1) # turn all the pins physically off
                                 anyAddOns = True                                   
+                                
+                        if "piandbash" in ADDON:     
+                            mcp.config(0, mcp.OUTPUT) # LCD Backlight
+                            mcp.config(8, mcp.OUTPUT) # Green LED
+                            mcp.config(10, mcp.OUTPUT) # Amber LED
+                            mcp.config(12, mcp.OUTPUT) # Red LED
+                            
+                            
+                            # Inputs:
+                            mcp.config(15, mcp.INPUT) # LCD Lower Line Select Button
+                            mcp.pullup(15, 1)
+                            mcp.config(14, mcp.INPUT) # LCD Upper Line Select Button
+                            mcp.pullup(14, 1)
+                            mcp.config(13, mcp.INPUT) # Down Button
+                            mcp.pullup(13, 1)
+                            mcp.config(11, mcp.INPUT) # Enter Button
+                            mcp.pullup(11, 1)
+                            mcp.config(9, mcp.INPUT) # Up Button
+                            mcp.pullup(9, 1)
+                            
+                            mcp.output(8,0)
+                            mcp.output(10,0)
+                            mcp.output(12,0)
+                            pnblcd = sgh_pnbLCD.sgh_pnbLCD()
+                            
                                 
 
 
@@ -4082,7 +4130,38 @@ class ScratchListener(threading.Thread):
 
   
 
-                        self.dataraw = origdataraw                        
+                        self.dataraw = origdataraw                  
+
+                    if "piandbash" in ADDON:
+                        if self.bFindOnOff('all'):
+                            mcp.output(8,self.OnOrOff)
+                            mcp.output(12,self.OnOrOff)
+                            mcp.output(10,self.OnOrOff) 
+                            if self.OnOrOff == 0:
+                                pnblcd.lcd_byte(pnblcd.LCD_LINE_1, pnblcd.LCD_CMD)
+                                pnblcd.lcd_string('')
+                                pnblcd.lcd_byte(pnblcd.LCD_LINE_2, pnblcd.LCD_CMD)
+                                pnblcd.lcd_string('')
+                                
+                            
+                        if self.bFindOnOff('green'):
+                            mcp.output(8,self.OnOrOff)
+                        if self.bFindOnOff('red'):
+                            mcp.output(12,self.OnOrOff)
+                        if self.bFindOnOff('yellow'):
+                            mcp.output(10,self.OnOrOff)         
+                        if self.bFindOnOff('amber'):
+                            mcp.output(10,self.OnOrOff)    
+
+                        if self.bFindValue('line1'):
+                            if self.value == 'clear': self.value = ''
+                            pnblcd.lcd_byte(pnblcd.LCD_LINE_1, pnblcd.LCD_CMD)
+                            pnblcd.lcd_string(self.value)
+                        if self.bFindValue('line2'):
+                            if self.value == 'clear': self.value = ''
+                            pnblcd.lcd_byte(pnblcd.LCD_LINE_2, pnblcd.LCD_CMD)
+                            pnblcd.lcd_string(self.value)
+                            
 
                     else: # Plain GPIO Broadcast processing
 
@@ -5043,20 +5122,34 @@ except:
 #PiMatrix.start()
     #time.sleep(5)
     
-MCP23008 = None
-#PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
+# MCP23008 = None
+# #PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
+# try:
+    # if sghGC.getPiRevision() == 1:
+        # print "Rev1 Board" 
+        # MCP23008 = sgh_MCP23008(0x20,0)
+    # else:
+        # MCP23008 = sgh_MCP23008(0x20,1)
+    # print MCP23008
+
+    # print "MCP23008 Detected"
+# except:
+    # print "No MCP23008 Detected"    
+    
+mcp = None
+#mcp = Adafruit_MCP230XX(address = 0x20, num_gpios = 16,busnum = 1)
+#print mcp
 try:
     if sghGC.getPiRevision() == 1:
         print "Rev1 Board" 
-        MCP23008 = sgh_MCP23008(0x20,0)
+        mcp = Adafruit_MCP230XX(address = 0x20, num_gpios = 16,busnum = 0) # MCP23017
     else:
-        MCP23008 = sgh_MCP23008(0x20,1)
-    print MCP23008
+        mcp = Adafruit_MCP230XX(address = 0x20, num_gpios = 16,busnum = 1) # MCP23017
+    print mcp
 
-    print "MCP23008 Detected"
+    print "MCP23017 Detected"
 except:
-    print "No MCP23008 Detected"    
-    
+    print "No MCP23017 Detected"     
     
 wii = None
 try:
