@@ -67,6 +67,13 @@ except:
     pass
     
 try:
+    import spidev
+    print "spidev imported OK"
+except:
+    print "Not imported OK"
+    pass    
+    
+try:
     from Adafruit_PWM_Servo_Driver import PWM
     print "PWM/Servo imported OK"
 except:
@@ -460,7 +467,21 @@ class ScratchSender(threading.Thread):
     def setsleepTime(self, sleepTime):
         self.sleepTime = sleepTime
         #print("sleeptime:%s", self.sleepTime ) 
-
+        
+    # Function to read SPI data from MCP3008 chip
+    # Channel must be an integer 0-7
+    def ReadChannel(self,channel):
+        global spi
+        #print spi 
+        try:
+            adc = spi.xfer2([1,(8+channel)<<4,0])
+            data = ((adc[1]&3) << 8) + adc[2]
+            #print "channel ok", channel
+            return data
+        except:
+            spi = spidev.SpiDev()
+            spi.open(0,0)
+            return 0
 
     def run(self):
         global firstRun,ADDON,compass,wii
@@ -481,7 +502,7 @@ class ScratchSender(threading.Thread):
             sensor_name = 'angle'
             bcast_str = '"' + sensor_name + '" ' + str(int(0))
             self.addtosend_scratch_command(bcast_str)
-
+        lastmcpInput = 0
         
         while not self.stopped():
 
@@ -532,6 +553,31 @@ class ScratchSender(threading.Thread):
                         self.addtosend_scratch_command(bcast_str)
                         lastADC[channel] = adc
                         
+                        
+            if "piandbash" in ADDON:
+                # if (mcp.input(15) + mcp.input(14) + mcp.input(13) +mcp.input(11) +mcp.input(9)) <> lastmcpInput:
+                    # dict2 = {15: 'botsel', 14 :'topsel',13 : 'down',11 : 'enter',9 :'up'
+
+                    # for key in dict2.keys():
+                        # print 'key=%s, value=%s' % (key, dict2[key])
+                    # for i in [15,14,13,11,9]:
+                        # sensor_name = ['botsel','topsel','down','enter','up'].index(i)
+                        # sensor_value = ("on","off")[mcp.input(i) > 0]
+                        # bcast_str = '"' + sensor_name + '" ' + sensor_value
+                        # self.addtosend_scratch_command(bcast_str)
+                    # lastmcpInput = (mcp.input(15) + mcp.input(14) + mcp.input(13) +mcp.input(11) +mcp.input(9))
+                for channel in range(0,8):
+                    adc = self.ReadChannel(channel)
+                    sensor_name = 'adc'+str(channel)
+                    bcast_str = '"' + sensor_name + '" ' + str(adc)
+                    self.addtosend_scratch_command(bcast_str)
+                    if channel == 0:
+                        sensor_name = 'temperature'
+                        bcast_str = '"' + sensor_name + '" ' + str(((adc * 472)/float(1023))-50)
+                        self.addtosend_scratch_command(bcast_str)
+                    
+                time.sleep(1)
+                
             #print wii
             if wii != None: #if wii  found
                 #time.sleep(1)
@@ -2083,6 +2129,9 @@ class ScratchListener(threading.Thread):
                             mcp.output(10,0)
                             mcp.output(12,0)
                             pnblcd = sgh_pnbLCD.sgh_pnbLCD()
+                            # Open SPI bus
+                            spi = spidev.SpiDev()
+                            spi.open(0,0)
                             
                                 
 
@@ -5149,7 +5198,10 @@ try:
 
     print "MCP23017 Detected"
 except:
-    print "No MCP23017 Detected"     
+    print "No MCP23017 Detected"  
+    
+    # Open SPI bus
+spi = None
     
 wii = None
 try:
