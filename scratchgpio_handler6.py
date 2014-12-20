@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.0.2' # 18Dec14 Pi and bashh support started
+Version =  'v6.0.3' # 19Dec14 More Pi and bash support 
 import threading
 import socket
 import time
@@ -479,6 +479,7 @@ class ScratchSender(threading.Thread):
             #print "channel ok", channel
             return data
         except:
+            print "spi exception"
             spi = spidev.SpiDev()
             spi.open(0,0)
             return 0
@@ -494,6 +495,7 @@ class ScratchSender(threading.Thread):
         last_bit_pattern = [1] * len(sghGC.validPins)
         lastPinUpdateTime = time.time() 
         lastTimeSinceLastSleep = time.time()
+        lastTimeSinceMCPAnalogRead = time.time()  
         self.sleepTime = 0.1
         lastADC = [256,256,256,256]
         joyx,joyy,accelx,accely,accelz,button = [0,0,0,0,0,0]
@@ -555,28 +557,26 @@ class ScratchSender(threading.Thread):
                         
                         
             if "piandbash" in ADDON:
-                # if (mcp.input(15) + mcp.input(14) + mcp.input(13) +mcp.input(11) +mcp.input(9)) <> lastmcpInput:
-                    # dict2 = {15: 'botsel', 14 :'topsel',13 : 'down',11 : 'enter',9 :'up'
-
-                    # for key in dict2.keys():
-                        # print 'key=%s, value=%s' % (key, dict2[key])
-                    # for i in [15,14,13,11,9]:
-                        # sensor_name = ['botsel','topsel','down','enter','up'].index(i)
-                        # sensor_value = ("on","off")[mcp.input(i) > 0]
-                        # bcast_str = '"' + sensor_name + '" ' + sensor_value
-                        # self.addtosend_scratch_command(bcast_str)
-                    # lastmcpInput = (mcp.input(15) + mcp.input(14) + mcp.input(13) +mcp.input(11) +mcp.input(9))
-                for channel in range(0,8):
-                    adc = self.ReadChannel(channel)
-                    sensor_name = 'adc'+str(channel)
-                    bcast_str = '"' + sensor_name + '" ' + str(adc)
-                    self.addtosend_scratch_command(bcast_str)
-                    if channel == 0:
-                        sensor_name = 'temperature'
-                        bcast_str = '"' + sensor_name + '" ' + str(((adc * 472)/float(1023))-50)
+                if (mcp.input(15) + mcp.input(14) + mcp.input(13) +mcp.input(11) +mcp.input(9)) <> lastmcpInput:
+                    dict2 = {15: 'botsel', 14 :'topsel',13 : 'down',11 : 'enter',9 :'up'}
+                    for i in dict2.keys():
+                        sensor_name = dict2[i]
+                        sensor_value = ("on","off")[mcp.input(i) > 0]
+                        bcast_str = '"' + sensor_name + '" ' + sensor_value
                         self.addtosend_scratch_command(bcast_str)
-                    
-                time.sleep(1)
+                    lastmcpInput = (mcp.input(15) + mcp.input(14) + mcp.input(13) +mcp.input(11) +mcp.input(9))
+                if (time.time() - lastTimeSinceMCPAnalogRead) > 0.5:
+                    for channel in range(0,8):
+                        adc = self.ReadChannel(channel)
+                        sensor_name = 'adc'+str(channel)
+                        bcast_str = '"' + sensor_name + '" ' + str(adc)
+                        self.addtosend_scratch_command(bcast_str)
+                        if channel == 0:
+                            sensor_name = 'temperature'
+                            bcast_str = '"' + sensor_name + '" ' + str(((adc * 472)/float(1023))-50)
+                            self.addtosend_scratch_command(bcast_str)
+                    lastTimeSinceMCPAnalogRead = time.time()   
+
                 
             #print wii
             if wii != None: #if wii  found
