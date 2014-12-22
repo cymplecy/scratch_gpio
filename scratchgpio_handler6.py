@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.0.3' # 19Dec14 More Pi and bash support 
+Version =  'v6.0.4' # 21Dec14 More Pi and bash support 
 import threading
 import socket
 import time
@@ -435,7 +435,7 @@ class ScratchSender(threading.Thread):
          
         bcast_str = '"' + sensor_name + '" ' + sensorValue
         self.addtosend_scratch_command(bcast_str)
-        print pin , sghGC.pinTrigger[pin]
+        #print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
             print "trigger beinng processed for pin:",pin
             cmd = 'broadcast "Trigger' + sensor_name + '"'
@@ -497,7 +497,8 @@ class ScratchSender(threading.Thread):
         lastTimeSinceLastSleep = time.time()
         lastTimeSinceMCPAnalogRead = time.time()  
         self.sleepTime = 0.1
-        lastADC = [256,256,256,256]
+        lastADC = [256,256,256,256,256,256,256,256]
+        
         joyx,joyy,accelx,accely,accelz,button = [0,0,0,0,0,0]
         lastAngle = 0
         if wii != None:
@@ -567,14 +568,16 @@ class ScratchSender(threading.Thread):
                     lastmcpInput = (mcp.input(15) + mcp.input(14) + mcp.input(13) +mcp.input(11) +mcp.input(9))
                 if (time.time() - lastTimeSinceMCPAnalogRead) > 0.5:
                     for channel in range(0,8):
-                        adc = self.ReadChannel(channel)
-                        sensor_name = 'adc'+str(channel)
-                        bcast_str = '"' + sensor_name + '" ' + str(adc)
-                        self.addtosend_scratch_command(bcast_str)
-                        if channel == 0:
-                            sensor_name = 'temperature'
-                            bcast_str = '"' + sensor_name + '" ' + str(((adc * 472)/float(1023))-50)
+                        adc = (self.ReadChannel(channel) + (2 * lastADC[channel])) / 3
+                        if adc <> lastADC[channel]:
+                            sensor_name = 'adc'+str(channel)
+                            bcast_str = '"' + sensor_name + '" ' + str(adc)
                             self.addtosend_scratch_command(bcast_str)
+                            if channel == 0:
+                                sensor_name = 'temperature'
+                                bcast_str = '"' + sensor_name + '" ' + str(((adc * 500)/float(1023))-50)
+                                self.addtosend_scratch_command(bcast_str)
+                        lastADC[channel] = adc
                     lastTimeSinceMCPAnalogRead = time.time()   
 
                 
@@ -1524,28 +1527,32 @@ class ScratchListener(threading.Thread):
             #if (firstRun == True) or (anyAddOns == False):
             #print 
             #logging.debug("dataList: %s",dataList)
-            if any("move" in s for s in dataList) or any("move" in s for s in dataList):
-                print "move/turn found"
+            #print
+            #print
+            #print "old datalist" , dataList
+            if any("move" in s for s in dataList) or any("turn" in s for s in dataList):
+                #print "move/turn found in dataList so going to expandList"
+                
                 newList = []
                 for item in dataList:
-                    print "item" , item
+                    #print "item" , item
                     if "sensor-update" in item:
                         newList.append(item)
                     if "broadcast" in item:
                         bList = shlex.split(item)#item.split(" ")
                         for bItem in bList[1:]:
-                            newList.append('broadcast ' + bItem)
-                print "newList", newList
+                            newList.append('broadcast "' + bItem + '"')
                 dataList = newList
+                #print "new dataList" ,dataList
             
             #print "GPIOPLus" , GPIOPlus
             for dataItem in dataList:
-                print dataItem 
+                #print dataItem 
                 #dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
                 dataraw = ' '
-                print "CAPS", datawithCAPS
+                #print "CAPS", datawithCAPS
                 for item in shlex.split(dataItem):
-                    print item
+                    #print "item in space remover" ,item
                     if item[0:4] == 'line':
                         origpos = datawithCAPS.lower().find(item)
                         item = datawithCAPS[origpos:origpos+len(item)]
@@ -1558,7 +1565,7 @@ class ScratchListener(threading.Thread):
                 
                 logging.debug("processing dataItems: %s",self.dataraw)
                 #print "Loop processing"
-                print self.dataraw
+                #print dataItem, " has been converted to " ,self.dataraw
                 #print
                 if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
@@ -1588,7 +1595,7 @@ class ScratchListener(threading.Thread):
                             UH.show()
                         except:
                             pass
-                        print sghGC.ledDim
+                        #print sghGC.ledDim
                         
                     if self.vFindValue("turnspeedadj"):
                         self.turnSpeedAdj = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -3783,22 +3790,23 @@ class ScratchListener(threading.Thread):
 
 
                     elif "unicorn" in ADDON: #Matrix connected
-                        #print self.dataraw
-                        #print
-                        origdataraw = self.dataraw
-                        self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:] # split dataraw so that operations are sequential
-                        #print "inside unicorn" , self.dataraw
-                        #print
-                        #print self.dataraw.split('broadcast')
-                        broadcastList = self.dataraw.split(' ')
-                        #print "broadcastList" , broadcastList
-                        
                         lettercolours = ['r','g','b','c','m','y','w','0','1','z']
                         ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','invert','random']
                         
                         if tcolours == None: #only define dictionary on first pass
                             tcolours = {'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'cyan' :(0,255,255),'magenta' : (255,0,255),'yellow' : (255,255,0),'white' : (255,255,255),'off' : (0,0,0),'on' : (255,255,255),'invert' : (0,0,0)}
                             
+                    
+                        
+                        #print
+                        origdataraw = self.dataraw
+                        self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:] # split dataraw so that operations are sequential
+                        #print "inside unicorn" , self.dataraw
+
+                        #print "data before split" ,self.dataraw
+                        broadcastList = ((self.dataraw).strip()).split(' ')
+                        #print "broadcastList" , broadcastList
+                        
                         for broadcastListLoop in broadcastList:
                             self.dataraw = " " + str(broadcastListLoop) + " "
                             #print "inside loop", self.dataraw
