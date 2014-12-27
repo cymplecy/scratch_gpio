@@ -3146,11 +3146,15 @@ class ScratchListener(threading.Thread):
                     if pcaPWM is not None:
                         for i in range(0, 16): # go thru servos on PCA Board
                             if self.vFindValue('adaservo' + str(i)):
-                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                if self.value != "off":
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 #print i, svalue
-                                svalue = int(min(720,max(120,420 - (svalue * 3.33333))))
-                                pcaPWM.setPWM(i, 0, svalue)   
-                                print "pwm sent" , i, svalue                     
+                                    svalue = int(min(720,max(120,420 - (svalue * 3.33333))))
+                                    pcaPWM.setPWM(i, 0, svalue)   
+                                    print "pwm sent" , i, svalue 
+                                else:
+                                    pcaPWM.setPWM(i, 0, 0)     
+                                    print "servo" , i, "switched off" 
                         for i in range(0, 16): # go thru PowerPWM on PCA Board
                             if self.vFindValue('adapower' + str(i + 1)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0

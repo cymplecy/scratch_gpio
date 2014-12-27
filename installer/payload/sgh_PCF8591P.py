@@ -51,13 +51,17 @@ class sgh_PCF8591P:
 # # Create a PCF8591P object
 # sensor = PCF8591P(i2c, 0x48)
     
+
     # Read single ADC Channel
     def readADC(self, __chan = 0):
         __checkedChan = self.__checkChannelNo(__chan)
-        self.__bus.write_byte(self.__addr, __checkedChan  | self.__DACEnabled)
+ 
+        self.__bus.write_byte(self.__addr, 0x40 | __checkedChan & 0x03)  # mod my Max - says it more reliable
+#       self.__bus.write_byte(self.__addr, __checkedChan  | self.__DACEnabled)
+ 
         __reading = self.__bus.read_byte(self.__addr) # seems to need to throw away first reading
         __reading = self.__bus.read_byte(self.__addr) # read A/D
-        return __reading
+        return __reading        
     
     # Read all ADC channels
     def readAllADC(self):
