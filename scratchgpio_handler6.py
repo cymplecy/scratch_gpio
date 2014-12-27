@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.0.4' # 21Dec14 More Pi and bash support 
+Version =  'v6.0.5' # 22Dec14 Agobo
 import threading
 import socket
 import time
@@ -43,6 +43,9 @@ import random
 import numpy
 import urllib2
 import json
+#import uinput
+
+#ui = UInput()
 
 
 try:
@@ -404,12 +407,21 @@ class ScratchSender(threading.Thread):
         elif "apb01" in ADDON:
             #print pin
             try:
-                sensor_name = ["left","right","lineleft","lineright","switch"][([7,11,12,13,23].index(pin))]
+                sensor_name = ["lineleft","lineright"][([7,11].index(pin))]
             except:
-                print "pi2golite input out of range"
+                print "agobo1 input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
-            sensorValue = ("on","off")[value == 1]              
+            sensorValue = ("on","off")[value == 1]          
+        elif "agobop2" in ADDON:
+            #print pin
+            try:
+                sensor_name = ["lineleft","lineright"][([7,11].index(pin))]
+            except:
+                print "agobo1 input out of range"
+                sensor_name = "pin" + str(pin)
+                pass 
+            sensorValue = ("on","off")[value == 0]                    
         elif "pizazz" in ADDON:
             #print pin
             try:
@@ -1574,8 +1586,25 @@ class ScratchListener(threading.Thread):
                     #firstRun = False
                     if self.vFindValue("autostart"):
                         if self.value == "true":
+                            print "Autostart GreenFlag event"
                             self.send_scratch_command("broadcast Scratch-StartClicked")
-
+                            time.sleep(1)
+                            #fred = subprocess.Popen(['xdotool', 'getactivewindow', 'key', 'Return'])
+                            #with open('info.txt', "w") as outfile:
+                            output = subprocess.Popen("xwininfo -tree -root | grep squeak | awk '{print $5}' | tr 'x' ',' | tr '+' ','",shell = True, stdout = subprocess.PIPE).communicate()
+                                #fred = subprocess.call(['xwininfo','-tree','-root','|','grep','squeak'], stdout = outfile)##'|', 'awk', "'{print $5}'", '|', 'tr', "'x'" ,"','", '|' ,'tr' ,"'+'", "','" 
+                            sizes = output[0][0:-1].split(',')
+                            print sizes
+                            xmid = (int(sizes[0]) + int(sizes[2]))/2
+                            ymid = (int(sizes[1]) + int(sizes[3]))/2
+                            #with open('info.txt', "w") as outfile:
+                            #    fred  = subprocess.Popen("xwininfo -tree -root | grep squeak | awk '{print $5}' | tr 'x' ',' | tr '+' ','",shell = True, stdout = outfile).wait()
+                            print "sizes" ,sizes
+                            fred = subprocess.Popen(['xdotool', 'mousemove', str(xmid), str(ymid)]).wait()
+                            fred = subprocess.Popen(['xdotool', 'click', '1',]).wait()
+                            fred = subprocess.Popen(['xdotool', 'key', 'Return'])
+                            #print "fred",fred
+                            
                     if self.vFindValue("sghdebug"):
                         if (self.value == "1") and (debugLogging == False):
                             logging.getLogger().setLevel(logging.DEBUG)
@@ -1956,7 +1985,24 @@ class ScratchListener(threading.Thread):
                                 self.startUltra(23,0,self.OnOrOff)               
                          
                             print "pi2golite setup"
-                            anyAddOns = True                               
+                            anyAddOns = True       
+                            
+                        if "agobop2" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.pinUse[7]  = sghGC.PINPUT #LFLeft
+                                sghGC.pinUse[11] = sghGC.PINPUT #LFRight
+                                sghGC.pinUse[12]  = sghGC.POUTPUT 
+                                sghGC.pinUse[13] = sghGC.POUTPUT 
+
+                                sghGC.setPinMode()
+                                sghGC.motorUpdate(19,21,0)
+                                sghGC.motorUpdate(26,24,0)      
+                                
+                                self.startUltra(23,0,self.OnOrOff)               
+                         
+                            print "Agobo2 setup"
+                            anyAddOns = True                                  
                             
                         if "happi" in ADDON:
                             with lock:
@@ -2863,9 +2909,22 @@ class ScratchListener(threading.Thread):
                                 svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
                                 sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],svalue)        
+                                
+                    elif "agobop2" in ADDON:
+                        #logging.debug("Processing variables for pi2golite")
+
+                        #check for motor variable commands
+                        motorList = [['motorb',19,21,0,False],['motora',26,24,0,False]]
+                        #logging.debug("ADDON:%s", ADDON)
+                        
+                        for listLoop in range(0,2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100,max(-100,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],svalue)                                       
 
 
-                        ######### End of apb01 variable handling                        
+                        ######### End of agobop2 variable handling                        
                     elif "piringo" in ADDON:
                         #do piringo stuff
 
@@ -3947,12 +4006,86 @@ class ScratchListener(threading.Thread):
                                                 xm  = led % self.matrixRangemax
                                                 #print "xm,ym" ,xm,ym
                                                 self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
-                                                if ledcolour == 'random': self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(64,64,64))
+                                                if ledcolour == 'random':
+                                                    self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(64,64,64))
                                                 #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
                                                 for yy in range(0,self.matrixLimit):
                                                     for xx in range(0,self.matrixLimit):
                                                         UH.set_pixel((xm * self.matrixMult)+xx,7 - ((ym * self.matrixMult)+yy),self.matrixRed,self.matrixGreen,self.matrixBlue)
                                                 UH.show()
+                                                pixelProcessed = True 
+                                                
+
+                            if self.bFind("neopixel"):
+                                pixelProcessed = False                                        
+                                for led in range(0,self.matrixUse):
+                                    if (self.bFindValue("neopixel") and self.value == str(led + 1)): 
+                                        UH.set_neopixel(led,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                        UH.show()   
+                                        pixelProcessed = True                                         
+                            
+                                if pixelProcessed == False:
+                                    for led in range(0,self.matrixUse):
+                                        for ledcolour in ledcolours :
+                                            if (self.bFindValue("neopixel",ledcolour) and self.value == str(led + 1)) : 
+                                                self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolour,(self.matrixRed,self.matrixGreen,self.matrixBlue))
+                                                if ledcolour == 'random':
+                                                    self.matrixRed,self.matrixGreen,self.matrixBlue = tcolours.get(ledcolours[random.randint(0,6)],(64,64,64))
+                                                #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
+                                                if self.valueIsNumeric:
+                                                    if (ledcolour != "invert"):
+                                                        UH.set_neopixel(led,self.matrixRed,self.matrixGreen,self.matrixBlue)
+                                                    else:
+                                                        gnp = UH.get_neopixel(led)
+                                                        #print "before" ,gnp
+                                                        gnpi = map(lambda a: (255 - a), gnp)
+                                                        #print "after", gnpi
+                                                        r,g,b = gnpi
+                                                        #print "rgb", r,g,b
+                                                        UH.set_neopixel(led,r,g,b)
+                                                    UH.show()   
+                                                    pixelProcessed = True    
+
+                                if pixelProcessed == False:
+                                    #print "#", self.value[-7:-7]
+                                    fullvalue = self.value
+                                    if ("xxxxxxx" + fullvalue)[-7] == "#":
+                                        for led in range(0,self.matrixUse):
+                                                if (self.bFindValue("neopixel",fullvalue[-7:]) and self.value == str(led + 1)) : 
+                                                    try:
+                                                        c =(fullvalue[-7:] + "00000000")[0:7]
+                                                        #print "full", c
+                                                        r = int(c[1:3],16)
+                                                        g = int(c[3:5],16)
+                                                        b = int(c[5:],16)
+                                                        UH.set_neopixel(led,r,g,b)
+                                                        UH.show()
+                                                        pixelProcessed = True   
+                                                    except:
+                                                        pass
+                                                                                                        
+                                                
+
+                            if self.bFind("getpixel"):
+                                for ym in range(0,self.matrixRangemax):
+                                    for xm in range(0,self.matrixRangemax):
+                                        if self.bFindValue("pixel"+str(xm+1)+","+str(ym+1)):
+                                            for yy in range(0,self.matrixLimit):
+                                                for xx in range(0,self.matrixLimit):
+                                                    self.matrixRed,self.matrixGreen,self.matrixBlue = UH.get_pixel((xm * self.matrixMult)+xx,7-((ym * self.matrixMult)+yy))
+                                               
+
+                            if self.bFind("getneopixel"):             
+                                for led in range(0,self.matrixUse):
+                                    if (self.bFindValue("getneopixel") and self.value == str(led + 1)): 
+                                        gnp = UH.get_neopixel(int(led))   
+                                        #print "gnp",gnp
+                                        bcolour = "#" + (str(hex(gnp[2] + (gnp[1] * 256) + (gnp[0] * 256 * 256))) + "000000")[2:8]
+                                        #print bcolour
+                                        sensor_name = 'colour'
+                                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolour)
+                                        #print 'sending: %s' % bcast_str
+                                        self.send_scratch_command(bcast_str)                                        
 
 
                             if self.bFindValue("bright"):
@@ -4185,8 +4318,6 @@ class ScratchListener(threading.Thread):
                                         UH.set_pixel( i % 8, 7 - (i // 8), pixel[(j * 3) +2], pixel[(j * 3) +1], pixel[(j * 3) +0])
                                     UH.show()
 
-  
-
                         self.dataraw = origdataraw                  
 
                     if "piandbash" in ADDON:
@@ -4218,6 +4349,18 @@ class ScratchListener(threading.Thread):
                             if self.value == 'clear': self.value = ''
                             pnblcd.lcd_byte(pnblcd.LCD_LINE_2, pnblcd.LCD_CMD)
                             pnblcd.lcd_string(self.value)
+                            
+                    if "agobop2" in ADDON:
+                        if self.bFindOnOff('all'):
+                            sghGC.pinUpdate(12,self.OnOrOff)
+                            sghGC.pinUpdate(13,self.OnOrOff)
+                                
+                            
+                        if self.bFindOnOff('left'):
+                            sghGC.pinUpdate(12,self.OnOrOff)
+                        if self.bFindOnOff('right'):
+                            sghGC.pinUpdate(13,self.OnOrOff)                            
+                      
                             
 
                     else: # Plain GPIO Broadcast processing
