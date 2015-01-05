@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # sgh_GPIOController - control Raspberry Pi GPIO ports using RPi.GPIO by Ben Crosten
 #                      and servod by Richard Hirst
-#Copyright (C) 2013 by Simon Walters 
+#                       Tidied up gpioBoth callback code kindly supplied by Charlotte Godley 
+#Copyright (C) 2013-2015 by Simon Walters 
 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -100,6 +101,8 @@ class GPIOController :
         self.pinTriggerName = ["x"] * self.numOfPins
         self.anyTrigger = 0
         self.pinServoValue = [None] * self.numOfPins
+        self.gpioMyPinEventDetected = [False] * self.numOfPins
+        self.pinTriggerLastState = [0] * self.numOfPins        
         self.encoderCallback = 0
         
         self.pinEventEnabled = True
@@ -201,7 +204,20 @@ class GPIOController :
                     # if self.debug:
                         # print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]               
 
-                        
+    def gpioBoth(self,pin,delay = 0.030): # Code supplied by Charwarz
+        #read pin state and check if it's different
+        firstRead = self.pinRead(pin) 
+        if self.pinTriggerLastState[pin] != firstRead: 
+        #confirm the new state by pausing and checking again
+            time.sleep(delay) 
+            confirmingRead = self.pinRead(pin) 
+            if firstRead == confirmingRead: 
+                # update the state if confirmed
+                self.gpioMyPinEventDetected[pin] = True
+                self.pinTriggerLastState[pin] = confirmingRead
+
+
+                    
     def my_callbackA(self,pin):
         #return
         name = "A"
@@ -317,7 +333,10 @@ class GPIOController :
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                 try:
-                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                    GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
+                    #GPIO.add_event_detect(pin, GPIO.FALLING, callback=self.gpioFalling,bouncetime=100)  # add rising edge detection on a channel
+                    #GPIO.add_event_detect(pin, GPIO.UP)  # add  event detection on a channel
+                    #GPIO.add_event_detect(pin, GPIO.DOWN)  # add  event detection on a channel
                 except:
                     pass
             elif (self.pinUse[pin] == self.PINPUTDOWN):
@@ -645,7 +664,12 @@ class GPIOController :
         #print pin ," being read"
         try:
             if self.pinEventEnabled == True:
-                return GPIO.event_detected(pin)
+                #return GPIO.event_detected(pin)
+                if self.gpioMyPinEventDetected[pin] == True:
+                    self.gpioMyPinEventDetected[pin] == False
+                    return True
+                else:
+                    return False
             else:
                 return False
         except Exception,e: 

@@ -489,6 +489,7 @@ class ScratchSender(threading.Thread):
         # set last pin pattern to inverse of current state
         pin_bit_pattern = [0] * len(sghGC.validPins)
         last_bit_pattern = [1] * len(sghGC.validPins)
+
         lastPinUpdateTime = time.time() 
         lastTimeSinceLastSleep = time.time()
         lastTimeSinceMCPAnalogRead = time.time()  
@@ -1830,8 +1831,9 @@ class ScratchListener(threading.Thread):
                                 pidieInputs = [21,19,24,26]
                                 for pin in pidieInputs:
                                     sghGC.pinUse[pin] = sghGC.PINPUT
-
                                 sghGC.setPinMode()
+                                for pin in  pidieInputs:
+                                    sghGC.pinTriggerLastState[pin] = sghGC.pinRead(pin)  
                                 anyAddOns = True 
 
 
@@ -3365,6 +3367,8 @@ class ScratchListener(threading.Thread):
                             sghGC.anyTrigger = 0
                             for pin in sghGC.validPins:
                                 sghGC.pinTrigger[pin] = 0
+                            print "delaying 5 secs"
+                            time.sleep(5)
                         else:
                             for pin in sghGC.validPins:
                                 if sghGC.pinTriggerName[pin] == self.value:
