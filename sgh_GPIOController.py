@@ -206,15 +206,29 @@ class GPIOController :
 
     def gpioBoth(self,pin,delay = 0.030): # Code supplied by Charwarz
         #read pin state and check if it's different
-        firstRead = self.pinRead(pin) 
-        if self.pinTriggerLastState[pin] != firstRead: 
-        #confirm the new state by pausing and checking again
-            time.sleep(delay) 
-            confirmingRead = self.pinRead(pin) 
-            if firstRead == confirmingRead: 
-                # update the state if confirmed
-                self.gpioMyPinEventDetected[pin] = True
-                self.pinTriggerLastState[pin] = confirmingRead
+        firstRead = self.pinRead(pin)
+        print dt.datetime.now() , "pin",pin,"firstread,laststate", firstRead, self.pinTriggerLastState[pin]
+        t0=time.time()
+        avg = 0.0
+        count = 1 # should be zero but this prevents a possible div by zero error later
+        while (time.time() - t0) < delay:
+            avg = avg + self.pinRead(pin)
+            count = count + 1
+            #print self.pinRead(pin)
+        avg = float(avg) / float(count)
+        print dt.datetime.now(), "pin",pin,"average value over delay",avg
+        pinStateOverDelayPeriod = 1 if avg > 0.5 else 0
+        if self.pinTriggerLastState[pin] != pinStateOverDelayPeriod: 
+            print dt.datetime.now(),"pin",pin,"diff state to last state"
+            #confirm the new state by pausing and checking again
+            #time.sleep(delay) 
+            #print time.time() - t0
+            #confirmingRead = self.pinRead(pin) 
+            #if pinStateOverDelayPeriod == confirmingRead: 
+            #print dt.datetime.now(), "pin",pin,"confirming read says legit"
+            # update the state if confirmed
+            self.gpioMyPinEventDetected[pin] = True
+        self.pinTriggerLastState[pin] = pinStateOverDelayPeriod
 
 
                     
@@ -271,7 +285,7 @@ class GPIOController :
         
     #reset pinmode
     def resetPinMode(self):
-        print "resetting pin mode" 
+        #print "resetting pin mode" 
         self.stopServod()
         for pin in self.validPins:
             try:
@@ -334,23 +348,20 @@ class GPIOController :
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                 try:
                     GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
-                    #GPIO.add_event_detect(pin, GPIO.FALLING, callback=self.gpioFalling,bouncetime=100)  # add rising edge detection on a channel
-                    #GPIO.add_event_detect(pin, GPIO.UP)  # add  event detection on a channel
-                    #GPIO.add_event_detect(pin, GPIO.DOWN)  # add  event detection on a channel
                 except:
                     pass
             elif (self.pinUse[pin] == self.PINPUTDOWN):
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                 try:
-                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                    GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
                 except:
                     pass             
             elif (self.pinUse[pin] == self.PINPUTNONE):
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN)
                 try:
-                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                    GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
                 except:
                     pass             
             elif (self.pinUse[pin] == self.PCOUNT):
@@ -666,7 +677,7 @@ class GPIOController :
             if self.pinEventEnabled == True:
                 #return GPIO.event_detected(pin)
                 if self.gpioMyPinEventDetected[pin] == True:
-                    self.gpioMyPinEventDetected[pin] == False
+                    self.gpioMyPinEventDetected[pin] = False
                     return True
                 else:
                     return False
