@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # sgh_GPIOController - control Raspberry Pi GPIO ports using RPi.GPIO by Ben Crosten
 #                      and servod by Richard Hirst
-#Copyright (C) 2013 by Simon Walters 
+#                       Tidied up gpioBoth callback code kindly supplied by Charlotte Godley 
+#Copyright (C) 2013-2015 by Simon Walters 
 
 #This program is free software; you can redistribute it and/or
 #modify it under the terms of the GNU General Public License
@@ -100,6 +101,8 @@ class GPIOController :
         self.pinTriggerName = ["x"] * self.numOfPins
         self.anyTrigger = 0
         self.pinServoValue = [None] * self.numOfPins
+        self.gpioMyPinEventDetected = [False] * self.numOfPins
+        self.pinTriggerLastState = [0] * self.numOfPins        
         self.encoderCallback = 0
         
         self.pinEventEnabled = True
@@ -201,7 +204,34 @@ class GPIOController :
                     # if self.debug:
                         # print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]               
 
-                        
+    ### Callback input edge detect routine that ignores transients - Readability inspired by @Charwarz
+    def gpioBoth(self,pin,delay = 0.030):
+        #print dt.datetime.now() , "pin",pin,"laststate", self.pinTriggerLastState[pin]
+        
+        ### Average out the pin state over the delay period
+        t0=time.time()
+        avg = 0.0
+        count = 1 # should be zero but this prevents a possible div by zero error later
+        while (time.time() - t0) < delay:
+            avg = avg + self.pinRead(pin)
+            count = count + 1
+        avg = float(avg) / float(count)
+        ###
+        
+        #print dt.datetime.now(), "pin",pin,"average value over delay",avg
+        pinStateOverDelayPeriod = 1 if avg > 0.5 else 0
+
+        if self.pinTriggerLastState[pin] != pinStateOverDelayPeriod: 
+            # update the state if confirmed change has occured
+            #print dt.datetime.now(),"pin",pin,"changed to", pinStateOverDelayPeriod
+            self.gpioMyPinEventDetected[pin] = True
+        #else:
+            #print dt.datetime.now(),"Transient Detected on pin",pin
+
+        self.pinTriggerLastState[pin] = pinStateOverDelayPeriod
+
+
+                    
     def my_callbackA(self,pin):
         #return
         name = "A"
@@ -255,7 +285,7 @@ class GPIOController :
         
     #reset pinmode
     def resetPinMode(self):
-        print "resetting pin mode" 
+        #print "resetting pin mode" 
         self.stopServod()
         for pin in self.validPins:
             try:
@@ -317,21 +347,21 @@ class GPIOController :
                 print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                 try:
-                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                    GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
                 except:
                     pass
             elif (self.pinUse[pin] == self.PINPUTDOWN):
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                 try:
-                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                    GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
                 except:
                     pass             
             elif (self.pinUse[pin] == self.PINPUTNONE):
                 print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN)
                 try:
-                    GPIO.add_event_detect(pin, GPIO.BOTH)  # add  event detection on a channel
+                    GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
                 except:
                     pass             
             elif (self.pinUse[pin] == self.PCOUNT):
@@ -645,7 +675,12 @@ class GPIOController :
         #print pin ," being read"
         try:
             if self.pinEventEnabled == True:
-                return GPIO.event_detected(pin)
+                #return GPIO.event_detected(pin)
+                if self.gpioMyPinEventDetected[pin] == True:
+                    self.gpioMyPinEventDetected[pin] = False
+                    return True
+                else:
+                    return False
             else:
                 return False
         except Exception,e: 

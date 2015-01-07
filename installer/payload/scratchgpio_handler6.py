@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.1.0' # msg queue stuff started
+Version =  'v6.1.1' # Trigggering improved
 import threading
 import socket
 import time
@@ -391,12 +391,12 @@ class ScratchSender(threading.Thread):
         elif "pi2golite" in ADDON:
             #print pin
             try:
-                sensor_name = ["left","right"][([7,11].index(pin))]
+                sensor_name = ["left","right","switch","lineleft","lineright"][([7,11,23,12,13].index(pin))]
             except:
-                print "pi2golite input out of range"
+                print "pi2golite input ", pin , " out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
-            sensorValue = ("off","on")[value == 1]        
+            sensorValue = ("on","off")[value == 1]        
         elif "apb01" in ADDON:
             #print pin
             try:
@@ -442,6 +442,7 @@ class ScratchSender(threading.Thread):
         msgQueue.put("sensor-update " + bcast_str)
         #print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
+            #print dt.datetime.now()
             print "trigger being sent for:",sensor_name
             msgQueue.put('broadcast "Trigger' + sensor_name + '"')
             sghGC.pinTriggerName[pin] = sensor_name
@@ -489,6 +490,7 @@ class ScratchSender(threading.Thread):
         # set last pin pattern to inverse of current state
         pin_bit_pattern = [0] * len(sghGC.validPins)
         last_bit_pattern = [1] * len(sghGC.validPins)
+
         lastPinUpdateTime = time.time() 
         lastTimeSinceLastSleep = time.time()
         lastTimeSinceMCPAnalogRead = time.time()  
@@ -824,7 +826,7 @@ class ScratchSender(threading.Thread):
                 self.time_last_compass = time.time()
 
 
-            #time.sleep(1)
+            #time.sleep(2)
 
 
 
@@ -1830,7 +1832,6 @@ class ScratchListener(threading.Thread):
                                 pidieInputs = [21,19,24,26]
                                 for pin in pidieInputs:
                                     sghGC.pinUse[pin] = sghGC.PINPUT
-
                                 sghGC.setPinMode()
                                 anyAddOns = True 
 
@@ -1915,6 +1916,7 @@ class ScratchListener(threading.Thread):
                             anyAddOns = True
                             
                         if "pi2golite" in ADDON:
+                            print "pi2golite found in" , ADDON
                             with lock:
                                 sghGC.resetPinMode()
                                 #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
@@ -1946,6 +1948,8 @@ class ScratchListener(threading.Thread):
                                 self.startUltra(8,0,self.OnOrOff)               
                          
                             print "pi2golite setup"
+                            if "encoders" in ADDON:
+                                print "with encoders"
                             anyAddOns = True                  
 
                         if "apb01" in ADDON:
@@ -2163,7 +2167,10 @@ class ScratchListener(threading.Thread):
                             spi = spidev.SpiDev()
                             spi.open(0,0)
                             
-                                
+                        for pin in sghGC.validPins:
+                            if (sghGC.pinUse[pin] in [sghGC.PINPUT,sghGC.PINPUTNONE,sghGC.PINPUTDOWN]):
+                                sghGC.pinTriggerLastState[pin] = sghGC.pinRead(pin)
+                                print "pinTriggerLastState" ,pin, sghGC.pinTriggerLastState[pin]
 
 
 
@@ -3359,12 +3366,14 @@ class ScratchListener(threading.Thread):
                       
                     if self.bFindValue("triggerreset"):
                         print "triggerreset detected"
-                        print len(self.value) , ("["+self.value+"]")
+                        #print len(self.value) , ("["+self.value+"]")
                         if self.value == "":
                             print "reset all triggers"
                             sghGC.anyTrigger = 0
                             for pin in sghGC.validPins:
                                 sghGC.pinTrigger[pin] = 0
+                            #print "delaying 5 secs"
+                            #time.sleep(5)
                         else:
                             for pin in sghGC.validPins:
                                 if sghGC.pinTriggerName[pin] == self.value:
