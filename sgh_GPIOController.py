@@ -204,30 +204,30 @@ class GPIOController :
                     # if self.debug:
                         # print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]               
 
-    def gpioBoth(self,pin,delay = 0.030): # Code supplied by Charwarz
-        #read pin state and check if it's different
-        firstRead = self.pinRead(pin)
-        print dt.datetime.now() , "pin",pin,"firstread,laststate", firstRead, self.pinTriggerLastState[pin]
+    ### Callback input edge detect routine that ignores transients - Readability inspired by @Charwarz
+    def gpioBoth(self,pin,delay = 0.030):
+        #print dt.datetime.now() , "pin",pin,"laststate", self.pinTriggerLastState[pin]
+        
+        ### Average out the pin state over the delay period
         t0=time.time()
         avg = 0.0
         count = 1 # should be zero but this prevents a possible div by zero error later
         while (time.time() - t0) < delay:
             avg = avg + self.pinRead(pin)
             count = count + 1
-            #print self.pinRead(pin)
         avg = float(avg) / float(count)
-        print dt.datetime.now(), "pin",pin,"average value over delay",avg
+        ###
+        
+        #print dt.datetime.now(), "pin",pin,"average value over delay",avg
         pinStateOverDelayPeriod = 1 if avg > 0.5 else 0
+
         if self.pinTriggerLastState[pin] != pinStateOverDelayPeriod: 
-            print dt.datetime.now(),"pin",pin,"diff state to last state"
-            #confirm the new state by pausing and checking again
-            #time.sleep(delay) 
-            #print time.time() - t0
-            #confirmingRead = self.pinRead(pin) 
-            #if pinStateOverDelayPeriod == confirmingRead: 
-            #print dt.datetime.now(), "pin",pin,"confirming read says legit"
-            # update the state if confirmed
+            # update the state if confirmed change has occured
+            #print dt.datetime.now(),"pin",pin,"changed to", pinStateOverDelayPeriod
             self.gpioMyPinEventDetected[pin] = True
+        #else:
+            #print dt.datetime.now(),"Transient Detected on pin",pin
+
         self.pinTriggerLastState[pin] = pinStateOverDelayPeriod
 
 

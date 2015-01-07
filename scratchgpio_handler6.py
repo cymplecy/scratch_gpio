@@ -442,7 +442,7 @@ class ScratchSender(threading.Thread):
         msgQueue.put("sensor-update " + bcast_str)
         #print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
-            print dt.datetime.now()
+            #print dt.datetime.now()
             print "trigger being sent for:",sensor_name
             msgQueue.put('broadcast "Trigger' + sensor_name + '"')
             sghGC.pinTriggerName[pin] = sensor_name
