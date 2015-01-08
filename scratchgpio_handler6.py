@@ -1572,17 +1572,15 @@ class ScratchListener(threading.Thread):
                             #with open('info.txt', "w") as outfile:
                             output = subprocess.Popen("xwininfo -tree -root | grep squeak | awk '{print $5}' | tr 'x' ',' | tr '+' ','",shell = True, stdout = subprocess.PIPE).communicate()
                                 #fred = subprocess.call(['xwininfo','-tree','-root','|','grep','squeak'], stdout = outfile)##'|', 'awk', "'{print $5}'", '|', 'tr', "'x'" ,"','", '|' ,'tr' ,"'+'", "','" 
-                            sizes = output[0][0:-1].split(',')
-                            print sizes
-                            xmid = (int(sizes[0]) + int(sizes[2]))/2
-                            ymid = (int(sizes[1]) + int(sizes[3]))/2
-                            #with open('info.txt', "w") as outfile:
-                            #    fred  = subprocess.Popen("xwininfo -tree -root | grep squeak | awk '{print $5}' | tr 'x' ',' | tr '+' ','",shell = True, stdout = outfile).wait()
-                            print "sizes" ,sizes
-                            fred = subprocess.Popen(['xdotool', 'mousemove', str(xmid), str(ymid)]).wait()
-                            fred = subprocess.Popen(['xdotool', 'click', '1',]).wait()
-                            fred = subprocess.Popen(['xdotool', 'key', 'Return'])
-                            #print "fred",fred
+                            # sizes = output[0][0:-1].split(',')
+                            # print sizes
+                            # xmid = (int(sizes[0]) + int(sizes[2]))/2
+                            # ymid = (int(sizes[1]) + int(sizes[3]))/2
+                            # print "sizes" ,sizes
+                            # fred = subprocess.Popen(['xdotool', 'mousemove', str(xmid), str(ymid)]).wait()
+                            # fred = subprocess.Popen(['xdotool', 'click', '1',]).wait()
+                            # fred = subprocess.Popen(['xdotool', 'key', 'Return'])
+                            # #print "fred",fred
                             
                     if self.vFindValue("sghdebug"):
                         if (self.value == "1") and (debugLogging == False):
