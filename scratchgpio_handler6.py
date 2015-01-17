@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.1.2' # Agobo V1 added
+Version =  'v6.1.3' # P18 22 on for RTK
 import threading
 import socket
 import time
@@ -1814,8 +1814,12 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[12] = sghGC.POUTPUT #Motor1
                                 sghGC.pinUse[15] = sghGC.POUTPUT #Motor2 
                                 sghGC.pinUse[16] = sghGC.POUTPUT #Motor2
-
+                                sghGC.pinUse[18] = sghGC.POUTPUT 
+                                sghGC.pinUse[22] = sghGC.POUTPUT 
+                                
                                 sghGC.setPinMode()
+                                sghGC.pinUpdate(18,1)
+                                sghGC.pinUpdate(22,1)
                                 print "rtkmotorcon setup"
                                 anyAddOns = True
 
