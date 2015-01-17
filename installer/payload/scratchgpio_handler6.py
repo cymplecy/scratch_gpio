@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.1.1' # Trigggering improved
+Version =  'v6.1.2' # Agobo V1 added
 import threading
 import socket
 import time
@@ -402,19 +402,20 @@ class ScratchSender(threading.Thread):
             try:
                 sensor_name = ["lineleft","lineright"][([7,11].index(pin))]
             except:
-                print "agobo1 input out of range"
+                print "agb01 input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
             sensorValue = ("on","off")[value == 1]          
-        elif "agobop2" in ADDON:
+        elif "agobo" in ADDON:
             #print pin
             try:
-                sensor_name = ["lineleft","lineright"][([7,11].index(pin))]
+                sensor_name = ["lineleft","lineright","mode"][([7,11,16].index(pin))]
             except:
-                print "agobo1 input out of range"
+                #print "agobo input out of range"
                 sensor_name = "pin" + str(pin)
                 pass 
-            sensorValue = ("on","off")[value == 0]                    
+            sensorValue = ("on","off")[value == 0]
+            if sensor_name == "mode": sensorValue = ("on","off")[value == 1]
         elif "pizazz" in ADDON:
             #print pin
             try:
@@ -1572,17 +1573,15 @@ class ScratchListener(threading.Thread):
                             #with open('info.txt', "w") as outfile:
                             output = subprocess.Popen("xwininfo -tree -root | grep squeak | awk '{print $5}' | tr 'x' ',' | tr '+' ','",shell = True, stdout = subprocess.PIPE).communicate()
                                 #fred = subprocess.call(['xwininfo','-tree','-root','|','grep','squeak'], stdout = outfile)##'|', 'awk', "'{print $5}'", '|', 'tr', "'x'" ,"','", '|' ,'tr' ,"'+'", "','" 
-                            sizes = output[0][0:-1].split(',')
-                            print sizes
-                            xmid = (int(sizes[0]) + int(sizes[2]))/2
-                            ymid = (int(sizes[1]) + int(sizes[3]))/2
-                            #with open('info.txt', "w") as outfile:
-                            #    fred  = subprocess.Popen("xwininfo -tree -root | grep squeak | awk '{print $5}' | tr 'x' ',' | tr '+' ','",shell = True, stdout = outfile).wait()
-                            print "sizes" ,sizes
-                            fred = subprocess.Popen(['xdotool', 'mousemove', str(xmid), str(ymid)]).wait()
-                            fred = subprocess.Popen(['xdotool', 'click', '1',]).wait()
-                            fred = subprocess.Popen(['xdotool', 'key', 'Return'])
-                            #print "fred",fred
+                            # sizes = output[0][0:-1].split(',')
+                            # print sizes
+                            # xmid = (int(sizes[0]) + int(sizes[2]))/2
+                            # ymid = (int(sizes[1]) + int(sizes[3]))/2
+                            # print "sizes" ,sizes
+                            # fred = subprocess.Popen(['xdotool', 'mousemove', str(xmid), str(ymid)]).wait()
+                            # fred = subprocess.Popen(['xdotool', 'click', '1',]).wait()
+                            # fred = subprocess.Popen(['xdotool', 'key', 'Return'])
+                            # #print "fred",fred
                             
                     if self.vFindValue("sghdebug"):
                         if (self.value == "1") and (debugLogging == False):
@@ -1935,7 +1934,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[15]  = sghGC.POUTPUT        
                                 sghGC.pinUse[16]  = sghGC.POUTPUT
                                 if "encoders" in ADDON:
-                                    logging.debug("Encoders Found:%s", ADDON)
+                                    logging.deb+ug("Encoders Found:%s", ADDON)
                                     sghGC.pinUse[12] = sghGC.PCOUNT 
                                     sghGC.pinUse[13] = sghGC.PCOUNT 
                                     msgQueue.put('sensor-update "motors" "stopped"')                               
@@ -1968,12 +1967,30 @@ class ScratchListener(threading.Thread):
                             print "pi2golite setup"
                             anyAddOns = True       
                             
-                        if "agobop2" in ADDON:
+                        # if "agobop2" in ADDON:
+                            # with lock:
+                                # sghGC.resetPinMode()
+                                # sghGC.pinUse[7]  = sghGC.PINPUT #LFLeft
+                                # sghGC.pinUse[11] = sghGC.PINPUT #LFRight
+                                # sghGC.pinUse[15]  = sghGC.POUTPUT 
+                                # sghGC.pinUse[13] = sghGC.POUTPUT 
+
+                                # sghGC.setPinMode()
+                                # sghGC.motorUpdate(19,21,0)
+                                # sghGC.motorUpdate(26,24,0)      
+                                
+                                # self.startUltra(23,0,self.OnOrOff)               
+                         
+                            # print "Agobo2 setup"
+                            # anyAddOns = True      
+                            
+                        if "agobo" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
                                 sghGC.pinUse[7]  = sghGC.PINPUT #LFLeft
                                 sghGC.pinUse[11] = sghGC.PINPUT #LFRight
-                                sghGC.pinUse[12]  = sghGC.POUTPUT 
+                                sghGC.pinUse[16] = sghGC.PINPUT #Switch
+                                sghGC.pinUse[15]  = sghGC.POUTPUT 
                                 sghGC.pinUse[13] = sghGC.POUTPUT 
 
                                 sghGC.setPinMode()
@@ -1982,8 +1999,8 @@ class ScratchListener(threading.Thread):
                                 
                                 self.startUltra(23,0,self.OnOrOff)               
                          
-                            print "Agobo2 setup"
-                            anyAddOns = True                                  
+                            print "Agobo setup"
+                            anyAddOns = True 
                             
                         if "happi" in ADDON:
                             with lock:
@@ -2592,7 +2609,7 @@ class ScratchListener(threading.Thread):
 
                         #check for motor variable commands
                         motorList = [['motora',21,26,0],['motorb',19,24]]
-                        if "piroconb" in ADDON:
+                        if "rb" in ADDON:
                             logging.debug("PiRoConB Found:%s", ADDON)
                             motorList = [['motora',21,19,0,False],['motorb',26,24,0,False]]
                        
@@ -2894,7 +2911,7 @@ class ScratchListener(threading.Thread):
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0],svalue)
                                 sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],svalue)        
                                 
-                    elif "agobop2" in ADDON:
+                    elif "agobo" in ADDON:
                         #logging.debug("Processing variables for pi2golite")
 
                         #check for motor variable commands
@@ -2908,7 +2925,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(motorList[listLoop][1],motorList[listLoop][2],svalue)                                       
 
 
-                        ######### End of agobop2 variable handling                        
+                        ######### End of agobo variable handling                        
                     elif "piringo" in ADDON:
                         #do piringo stuff
 
@@ -4540,15 +4557,15 @@ class ScratchListener(threading.Thread):
                             pnblcd.lcd_byte(pnblcd.LCD_LINE_2, pnblcd.LCD_CMD)
                             pnblcd.lcd_string(self.value)
                             
-                    if "agobop2" in ADDON:
+                    if "agobo" in ADDON:
                         if self.bFindOnOff('all'):
-                            sghGC.pinUpdate(12,self.OnOrOff)
+                            sghGC.pinUpdate(15,self.OnOrOff)
                             sghGC.pinUpdate(13,self.OnOrOff)
                                 
                             
-                        if self.bFindOnOff('left'):
-                            sghGC.pinUpdate(12,self.OnOrOff)
-                        if self.bFindOnOff('right'):
+                        if self.bFindOnOff('leftled'):
+                            sghGC.pinUpdate(15,self.OnOrOff)
+                        if self.bFindOnOff('rightled'):
                             sghGC.pinUpdate(13,self.OnOrOff)                            
                       
                             
