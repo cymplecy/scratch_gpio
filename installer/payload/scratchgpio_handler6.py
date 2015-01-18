@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.1.3' # P18 22 on for RTK
+Version =  'v6.1.31' # Change to Add on search for NeoPixels
 import threading
 import socket
 import time
@@ -3878,7 +3878,7 @@ class ScratchListener(threading.Thread):
                             tcolours = {'red' : (255,0,0),'green' :(0,255,0),'blue' : (0,0,255),'cyan' :(0,255,255),'magenta' : (255,0,255),'yellow' : (255,255,0),'white' : (255,255,255),'off' : (0,0,0),'on' : (255,255,255),'invert' : (0,0,0)}
                             
                         if ("neopixels" in ADDON):
-                            self.matrixUse = int(float(ADDON[9:]))
+                            self.matrixUse = int(rtnNumeric(ADDON[ADDON.index('neopixels'):],64))
                             print "neopixels",self.matrixUse
                         
                         #print
