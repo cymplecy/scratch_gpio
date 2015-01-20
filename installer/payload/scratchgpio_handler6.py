@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.1.31' # Change to Add on search for NeoPixels
+Version =  'v6.1.32' # Change to Add on search for NeoPixels
 import threading
 import socket
 import time
@@ -44,6 +44,7 @@ import numpy
 import urllib2
 import json
 from Queue import Queue
+from cheerlights import CheerLights
 #import uinput
 
 #ui = UInput()
@@ -974,6 +975,8 @@ class ScratchListener(threading.Thread):
                 #print "svalue",(self.dataraw[(self.searchPos + len(searchStr)):] + "   ")
                 #print "bfind",(self.dataraw[(self.searchPos + len(searchStr)):] + "    ").split()
                 self.value = (self.dataraw[(self.searchPos + len(searchStr)):] + "   ").strip()
+                if len(self.value) > 0:
+                    self.value = self.value.split()[0]
                 #print "1 s value",self.value
                 #print self.value
                 if isNumeric(self.value):
@@ -983,6 +986,8 @@ class ScratchListener(threading.Thread):
                 return True
             else:
                 self.value = (self.dataraw[(self.searchPos + len(searchStr)):] + "   ").strip()
+                if len(self.value) > 0:
+                    self.value = self.value.split()[0]
                 if self.value.endswith(searchSuffix):
                     self.value = (self.value[:-len(searchSuffix)]).strip()
                     #print "2 s value",self.value
@@ -1378,6 +1383,7 @@ class ScratchListener(threading.Thread):
         meVertical = 50
         tcolours = None # set tcolours to None so it can be detected later
         pnblcd = None
+        cheerList =  None
 
 
         if GPIOPlus == False:
@@ -5339,19 +5345,19 @@ class ScratchListener(threading.Thread):
                             #print 'sending: %s' % bcast_str
                             msgQueue.put(bcast_str)     
                             
-                    if self.bFind("getcheerlights"):
-                        try:
-                            jsonFeed = urllib2.urlopen("http://api.thingspeak.com/channels/1417/" +"field/1/last.json")
-                            feedData = jsonFeed.read()
-                            #print feedData
-                            jsonFeed.close()
-                            data = json.loads(feedData)
-                            print "new colour", data["field1"]   
-                            bcast_str = 'sensor-update "%s" %s' % ("cheerlights", data["field1"])
-                            #print 'sending: %s' % bcast_str
-                            msgQueue.put(bcast_str)
-                        except:
-                            pass
+                    if self.bFindValue("getcheerlights"):
+                        print self.value
+                        lookupColour = min(10,max(0,int(self.valueNumeric))) if self.valueIsNumeric else 0
+                        print(lookupColour)
+                        if (cheerList == None) or (lookupColour == 0):
+                            print("Fetching colour from internet")
+                            cheerList = cheerlights.get_colours()
+                        cheerColour = cheerList[lookupColour]
+                        print "new colour", cheerColour   
+                        bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
+                        #print 'sending: %s' % bcast_str
+                        msgQueue.put(bcast_str)
+
                             
 
                     #end of broadcast check
@@ -5496,6 +5502,7 @@ BUFFER_SIZE = 8192 #used to be 100
 SOCKET_TIMEOUT = 2
 firstRun = True
 lock = threading.Lock()
+cheerlights = CheerLights()
 
 piglow = None
 try:
