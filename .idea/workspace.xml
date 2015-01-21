@@ -2,27 +2,38 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/dictionaries/Simon.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" afterPath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NeoPixel.so" afterPath="$PROJECT_DIR$/NeoPixel.so" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/blink11.sb" afterPath="$PROJECT_DIR$/installer/payload/blink11.sb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/guru.png" afterPath="$PROJECT_DIR$/guru.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/rsc.sb" afterPath="$PROJECT_DIR$/installer/payload/rsc.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_servod" afterPath="$PROJECT_DIR$/sgh_servod" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_servod" afterPath="$PROJECT_DIR$/installer/payload/sgh_servod" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/.name" afterPath="$PROJECT_DIR$/.idea/.name" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/5plusscratchgpio.sh" afterPath="$PROJECT_DIR$/5plusscratchgpio.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/27.py" afterPath="$PROJECT_DIR$/27.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/Adafruit_I2C.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/RPiGPIOTest.py" afterPath="$PROJECT_DIR$/RPiGPIOTest.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/SGHVER.txt" afterPath="$PROJECT_DIR$/installer/payload/SGHVER.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/__init__.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/__init__.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/__init__.py" afterPath="$PROJECT_DIR$/mcpi/__init__.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/beebottest.py" afterPath="$PROJECT_DIR$/beebottest.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/blink11.py" afterPath="$PROJECT_DIR$/installer/payload/blink11.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/block.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/block.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/block.py" afterPath="$PROJECT_DIR$/mcpi/block.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.BACKUP.5802.sh" afterPath="$PROJECT_DIR$/installer/build.sh.BACKUP.5802.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.BASE.5802.sh" afterPath="$PROJECT_DIR$/installer/build.sh.BASE.5802.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.LOCAL.5802.sh" afterPath="$PROJECT_DIR$/installer/build.sh.LOCAL.5802.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.REMOTE.5802.sh" afterPath="$PROJECT_DIR$/installer/build.sh.REMOTE.5802.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.orig" afterPath="$PROJECT_DIR$/installer/build.sh.orig" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh" afterPath="$PROJECT_DIR$/installer/build.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/cheerlights.py" afterPath="$PROJECT_DIR$/cheerlights.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/cheerlights.py" afterPath="$PROJECT_DIR$/installer/payload/cheerlights.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/connection.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/connection.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/connection.py" afterPath="$PROJECT_DIR$/mcpi/connection.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/decompress.sh" afterPath="$PROJECT_DIR$/installer/decompress.sh" />
@@ -31,41 +42,65 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/event.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/event.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/event.py" afterPath="$PROJECT_DIR$/mcpi/event.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ex_8x8_pixels.py" afterPath="$PROJECT_DIR$/ex_8x8_pixels.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio.sh" afterPath="$PROJECT_DIR$/install_scratchgpio.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fgtest.py" afterPath="$PROJECT_DIR$/fgtest.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gtest.py" afterPath="$PROJECT_DIR$/gtest.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/i2c_outputs.py" afterPath="$PROJECT_DIR$/i2c_outputs.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio3.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio3.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio4.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio4.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.BACKUP.5861.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.BACKUP.5861.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio5.sh" afterPath="$PROJECT_DIR$/install_scratchgpio5.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.BASE.5861.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.BASE.5861.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.LOCAL.5861.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.LOCAL.5861.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.REMOTE.5861.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.REMOTE.5861.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio5dev.sh" afterPath="$PROJECT_DIR$/install_scratchgpio5dev.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio5rspbt2.sh" afterPath="$PROJECT_DIR$/install_scratchgpio5rspbt2.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5rspbt2.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5rspbt2.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5x.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5x.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio6.sh" afterPath="$PROJECT_DIR$/install_scratchgpio6.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6alpha.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6alpha.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6beta.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6beta.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/install_scratchgpio6dev.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/installer.sh" afterPath="$PROJECT_DIR$/installer/payload/installer.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ipd03.py" afterPath="$PROJECT_DIR$/ipd03.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/jazzy.py" afterPath="$PROJECT_DIR$/jazzy.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/killsgh.sh" afterPath="$PROJECT_DIR$/killsgh.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/killsgh.sh" afterPath="$PROJECT_DIR$/installer/payload/killsgh.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kinematics.py" afterPath="$PROJECT_DIR$/kinematics.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/kinematics.py" afterPath="$PROJECT_DIR$/installer/payload/kinematics.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/meArm.py" afterPath="$PROJECT_DIR$/meArm.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/meArm.py" afterPath="$PROJECT_DIR$/installer/payload/meArm.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/minecraft.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/minecraft.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/minecraft.py" afterPath="$PROJECT_DIR$/mcpi/minecraft.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nck.py" afterPath="$PROJECT_DIR$/nck.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ntest2.py" afterPath="$PROJECT_DIR$/ntest2.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nunchuck.py" afterPath="$PROJECT_DIR$/nunchuck.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/nunchuck.py" afterPath="$PROJECT_DIR$/installer/payload/nunchuck.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nuntest.py" afterPath="$PROJECT_DIR$/nuntest.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pwmtest.py" afterPath="$PROJECT_DIR$/pwmtest.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" afterPath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/scratch_gpio.iml" afterPath="$PROJECT_DIR$/.idea/scratch_gpio.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio4.desktop" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio4.desktop" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio4plus.desktop" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio4plus.desktop" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scratchgpio5.sh" afterPath="$PROJECT_DIR$/scratchgpio5.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler4.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler4.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scratchgpio_handler5.py" afterPath="$PROJECT_DIR$/scratchgpio_handler5.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5xxx.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5xxx.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scratchgpio_handler6.py" afterPath="$PROJECT_DIR$/scratchgpio_handler6.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Adafruit_8x8.py" afterPath="$PROJECT_DIR$/sgh_Adafruit_8x8.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_8x8.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_8x8.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Adafruit_LEDBackpack.py" afterPath="$PROJECT_DIR$/sgh_Adafruit_LEDBackpack.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_LEDBackpack.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_LEDBackpack.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Cheer.py" afterPath="$PROJECT_DIR$/sgh_Cheer.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Cheer.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Cheer.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_GPIOController.py" afterPath="$PROJECT_DIR$/sgh_GPIOController.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_GPIOController.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_GPIOController.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_InputTest.py" afterPath="$PROJECT_DIR$/sgh_InputTest.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_InputTest.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_InputTest.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_MCP23008.py" afterPath="$PROJECT_DIR$/sgh_MCP23008.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_MCP23008.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_MCP23008.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_MCP230xx.py" afterPath="$PROJECT_DIR$/sgh_MCP230xx.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_MCP230xx.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_MCP230xx.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Minecraft.py" afterPath="$PROJECT_DIR$/sgh_Minecraft.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Minecraft.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Minecraft.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_PCF8591P.py" afterPath="$PROJECT_DIR$/sgh_PCF8591P.py" />
@@ -86,21 +121,26 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Stepper.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Stepper.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Turn.py" afterPath="$PROJECT_DIR$/sgh_Turn.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Turn.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Turn.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_pnbLCD.py" afterPath="$PROJECT_DIR$/sgh_pnbLCD.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_pnbLCD.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_pnbLCD.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_unicornhat.py" afterPath="$PROJECT_DIR$/sgh_unicornhat.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_unicornhat.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_unicornhat.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sghsess.py" afterPath="$PROJECT_DIR$/sghsess.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/t2.py" afterPath="$PROJECT_DIR$/t2.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/temptest2.py" afterPath="$PROJECT_DIR$/temptest2.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test.py" afterPath="$PROJECT_DIR$/test.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test8591.py" afterPath="$PROJECT_DIR$/test8591.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/thymioscratchgpio_handler4.py" afterPath="$PROJECT_DIR$/thymioscratchgpio_handler4.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/tthymioscratchgpio_handler4.py" afterPath="$PROJECT_DIR$/tthymioscratchgpio_handler4.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testimu.py" afterPath="$PROJECT_DIR$/testimu.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/util.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/util.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/util.py" afterPath="$PROJECT_DIR$/mcpi/util.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/vec3.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/vec3.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/vec3.py" afterPath="$PROJECT_DIR$/mcpi/vec3.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/xscratchgpio_handler4.py" afterPath="$PROJECT_DIR$/xscratchgpio_handler4.py" />
     </list>
     <ignored path="scratch_gpio.iws" />
     <ignored path=".idea/workspace.xml" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -120,12 +160,13 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="ScA2.py" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://G:/Dropbox/Private/arduino/ScA/ScA2.py">
+      <file leaf-file-name="scratchgpio_handler6.py" pinned="false" current-in-tab="true">
+        <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="834" column="47" selection-start="33375" selection-end="33375" vertical-scroll-proportion="0.23098591" vertical-offset="14014" max-vertical-offset="39712">
+            <state vertical-scroll-proportion="0.5778098" vertical-offset="91501" max-vertical-offset="98804">
+              <caret line="5406" column="50" selection-start-line="5406" selection-start-column="50" selection-end-line="5406" selection-end-column="50" />
               <folding>
-                <element signature="e#959#975#0" expanded="true" />
+                <element signature="e#986#1002#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -147,19 +188,36 @@
     </option>
   </component>
   <component name="IdeDocumentHistory">
-    <option name="changedFiles">
+    <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/scratchgpio_handler4.py" />
-        <option value="$PROJECT_DIR$/scratchgpio_handler5.py" />
-        <option value="G:/Dropbox/Private/arduino/ScA/ScA2.py" />
+        <option value="$PROJECT_DIR$/scratchgpio_handler6.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-4" />
-    <option name="y" value="-4" />
+    <option name="x" value="382" />
+    <option name="y" value="43" />
     <option name="width" value="1160" />
     <option name="height" value="844" />
+  </component>
+  <component name="ProjectInspectionProfilesVisibleTreeState">
+    <entry key="Project Default">
+      <profile-state>
+        <expanded-state>
+          <State>
+            <id />
+          </State>
+          <State>
+            <id>Python</id>
+          </State>
+        </expanded-state>
+        <selected-state>
+          <State>
+            <id>Python</id>
+          </State>
+        </selected-state>
+      </profile-state>
+    </entry>
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -175,7 +233,7 @@
     <option name="STATE" value="0" />
   </component>
   <component name="ProjectView">
-    <navigator currentView="ProjectPane" proportions="" version="1" splitterProportion="0.5">
+    <navigator currentView="ProjectPane" proportions="" version="1">
       <flattenPackages />
       <showMembers />
       <showModules />
@@ -211,7 +269,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="options.lastSelected" value="vcs.Git" />
+    <property name="options.lastSelected" value="editor.preferences.appearance" />
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
@@ -225,51 +283,6 @@
     </option>
   </component>
   <component name="RunManager">
-    <configuration default="true" type="tests" factoryName="py.test">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="scratch_gpio" />
-      <option name="SCRIPT_NAME" value="" />
-      <option name="CLASS_NAME" value="" />
-      <option name="METHOD_NAME" value="" />
-      <option name="FOLDER_NAME" value="" />
-      <option name="TEST_TYPE" value="TEST_SCRIPT" />
-      <option name="PATTERN" value="" />
-      <option name="USE_PATTERN" value="false" />
-      <option name="testToRun" value="" />
-      <option name="keywords" value="" />
-      <option name="params" value="" />
-      <option name="USE_PARAM" value="false" />
-      <option name="USE_KEYWORD" value="false" />
-      <method />
-    </configuration>
-    <configuration default="true" type="tests" factoryName="Nosetests">
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <module name="scratch_gpio" />
-      <option name="SCRIPT_NAME" value="" />
-      <option name="CLASS_NAME" value="" />
-      <option name="METHOD_NAME" value="" />
-      <option name="FOLDER_NAME" value="" />
-      <option name="TEST_TYPE" value="TEST_SCRIPT" />
-      <option name="PATTERN" value="" />
-      <option name="USE_PATTERN" value="false" />
-      <option name="PARAMS" value="" />
-      <option name="USE_PARAM" value="false" />
-      <method />
-    </configuration>
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -284,6 +297,7 @@
       <module name="scratch_gpio" />
       <option name="SCRIPT_NAME" value="" />
       <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
       <method />
     </configuration>
     <configuration default="true" type="tests" factoryName="Unittests">
@@ -308,7 +322,7 @@
       <option name="USE_PARAM" value="false" />
       <method />
     </configuration>
-    <configuration default="true" type="tests" factoryName="Doctests">
+    <configuration default="true" type="tests" factoryName="py.test">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs />
@@ -325,6 +339,11 @@
       <option name="TEST_TYPE" value="TEST_SCRIPT" />
       <option name="PATTERN" value="" />
       <option name="USE_PATTERN" value="false" />
+      <option name="testToRun" value="" />
+      <option name="keywords" value="" />
+      <option name="params" value="" />
+      <option name="USE_PARAM" value="false" />
+      <option name="USE_KEYWORD" value="false" />
       <method />
     </configuration>
     <configuration default="true" type="tests" factoryName="Attests">
@@ -346,59 +365,99 @@
       <option name="USE_PATTERN" value="false" />
       <method />
     </configuration>
+    <configuration default="true" type="tests" factoryName="Doctests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="scratch_gpio" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="tests" factoryName="Nosetests">
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="scratch_gpio" />
+      <option name="SCRIPT_NAME" value="" />
+      <option name="CLASS_NAME" value="" />
+      <option name="METHOD_NAME" value="" />
+      <option name="FOLDER_NAME" value="" />
+      <option name="TEST_TYPE" value="TEST_SCRIPT" />
+      <option name="PATTERN" value="" />
+      <option name="USE_PATTERN" value="false" />
+      <option name="PARAMS" value="" />
+      <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
     <list size="0" />
   </component>
   <component name="ShelveChangesManager" show_recycled="false" />
-  <component name="SvnConfiguration" maxAnnotateRevisions="500" myUseAcceleration="nothing" myAutoUpdateAfterCommit="false" cleanupOnStartRun="false" SSL_PROTOCOLS="all">
-    <option name="USER" value="" />
-    <option name="PASSWORD" value="" />
-    <option name="mySSHConnectionTimeout" value="30000" />
-    <option name="mySSHReadTimeout" value="30000" />
-    <option name="LAST_MERGED_REVISION" />
-    <option name="MERGE_DRY_RUN" value="false" />
-    <option name="MERGE_DIFF_USE_ANCESTRY" value="true" />
-    <option name="UPDATE_LOCK_ON_DEMAND" value="false" />
-    <option name="IGNORE_SPACES_IN_MERGE" value="false" />
-    <option name="CHECK_NESTED_FOR_QUICK_MERGE" value="false" />
-    <option name="IGNORE_SPACES_IN_ANNOTATE" value="true" />
-    <option name="SHOW_MERGE_SOURCES_IN_ANNOTATE" value="true" />
-    <option name="FORCE_UPDATE" value="false" />
-    <option name="IGNORE_EXTERNALS" value="false" />
-    <myIsUseDefaultProxy>false</myIsUseDefaultProxy>
+  <component name="SvnConfiguration" myUseAcceleration="nothing">
+    <configuration />
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="" />
       <created>1389377212109</created>
+      <option name="number" value="Default" />
       <updated>1389377212109</updated>
     </task>
+    <task id="LOCAL-00001" summary="PyCharm refactor">
+      <created>1421861085758</created>
+      <option name="number" value="00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1421861085758</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-4" y="-4" width="1160" height="844" extended-state="6" />
-    <editor active="false" />
+    <frame x="382" y="43" width="1160" height="844" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.14756945" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.14685315" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32977304" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32977304" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="Vcs.Log.UiProperties">
     <option name="RECENTLY_FILTERED_USER_GROUPS">
+      <collection />
+    </option>
+    <option name="RECENTLY_FILTERED_BRANCH_GROUPS">
       <collection />
     </option>
   </component>
@@ -409,47 +468,23 @@
     <option name="myTodoPanelSettings">
       <TodoPanelSettings />
     </option>
+    <MESSAGE value="PyCharm refactor" />
+    <option name="LAST_COMMIT_MESSAGE" value="PyCharm refactor" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
+    <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/scratchgpio_handler5.py">
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="53057">
+        <state vertical-scroll-proportion="0.5778098" vertical-offset="91501" max-vertical-offset="98804">
+          <caret line="5406" column="50" selection-start-line="5406" selection-start-column="50" selection-end-line="5406" selection-end-column="50" />
           <folding>
-            <element signature="e#984#1000#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scratchgpio_handler5.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="1536" column="79" selection-start="70932" selection-end="70932" vertical-scroll-proportion="0.0" vertical-offset="25978" max-vertical-offset="53176">
-          <folding>
-            <element signature="e#984#1000#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scratchgpio_handler5.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="2026" column="0" selection-start="98427" selection-end="98427" vertical-scroll-proportion="0.0" vertical-offset="34255" max-vertical-offset="56491">
-          <folding>
-            <element signature="e#984#1000#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://G:/Dropbox/Private/arduino/ScA/ScA2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="834" column="47" selection-start="33375" selection-end="33375" vertical-scroll-proportion="0.23098591" vertical-offset="14014" max-vertical-offset="39712">
-          <folding>
-            <element signature="e#959#975#0" expanded="true" />
+            <element signature="e#986#1002#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
   </component>
 </project>
-

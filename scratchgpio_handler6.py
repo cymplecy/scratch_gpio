@@ -5741,7 +5741,7 @@ while True:
 
     if (cycle_trace == 'disconnected'):
         print "Scratch disconnected"
-        cleanup_threads((listener, sender, sendMsgs))
+        cleanup_threads((sendMsgs, listener, sender))
         print "Thread cleanup done after disconnect"
         INVERT = False
         sghGC.resetPinMode()
@@ -5786,7 +5786,7 @@ while True:
         time.sleep(0.1)
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
-        cleanup_threads((listener, sender, sendMsgs))
+        cleanup_threads((sendMsgs, listener, sender))
         print "Thread cleanup done after disconnect"
         #time.sleep(5)
         #sghGC.INVERT = False
