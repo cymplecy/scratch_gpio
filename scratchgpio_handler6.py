@@ -2,9 +2,9 @@
 # ScratchGPIO - control Raspberry Pi GPIO ports using Scratch.
 # Copyright (C) 2013 by Simon Walters based on original code for PiFace by Thomas Preston
 
-#This program is free software; you can redistribute it and/or
-#modify it under the terms of the GNU General Public License
-#as published by the Free Software Foundation; either version 2
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
 #of the License, or (at your option) any later version.
 
 #This program is distributed in the hope that it will be useful,
@@ -37,12 +37,9 @@ import sgh_pnbLCD
 import logging
 import subprocess
 import sgh_RasPiCamera
-#import pygame removed becasue causing random failures
-import re
+#import pygame removed because causing random failures
 import random
 import numpy
-import urllib2
-import json
 from Queue import Queue
 from cheerlights import CheerLights
 #import uinput
@@ -176,8 +173,10 @@ class Compass:
 
     def __convert(self, data, offset):
         val = self.twos_complement(data[offset] << 8 | data[offset + 1], 16)
-        if val == -4096: return None
-        return round(val * self.__scale, 4)
+        if val == -4096:
+            return None
+        else:
+            return round(val * self.__scale, 4)
 
     def axes(self):
         data = self.bus.read_i2c_block_data(self.address, 0x00)
@@ -252,7 +251,8 @@ def rtnSign(s):
         return 0
 
 
-def removeNonAscii(s): return "".join(i for i in s if ord(i) < 128)
+def removeNonAscii(s):
+    return "".join(i for i in s if ord(i) < 128)
 
 
 def getValue(searchString, dataString):
@@ -284,7 +284,6 @@ class ultra(threading.Thread):
         self._stop = threading.Event()
         self.pinTrig = pinTrig
         self.pinEcho = pinEcho
-
 
     def stop(self):
         self._stop.set()
@@ -432,7 +431,8 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass
             sensorValue = ("on", "off")[value == 0]
-            if sensor_name == "mode": sensorValue = ("on", "off")[value == 1]
+            if sensor_name == "mode":
+                sensorValue = ("on", "off")[value == 1]
         elif "pizazz" in ADDON:
             #print pin
             try:
@@ -516,7 +516,7 @@ class ScratchSender(threading.Thread):
 
         joyx, joyy, accelx, accely, accelz, button = [0, 0, 0, 0, 0, 0]
         lastAngle = 0
-        if wii != None:
+        if wii is not None:
             sensor_name = 'angle'
             bcast_str = '"' + sensor_name + '" ' + str(int(0))
             msgQueue.put("sensor-update " + bcast_str)
@@ -559,7 +559,7 @@ class ScratchSender(threading.Thread):
                                 #print " "
                             time.sleep(0)
 
-            if pcfSensor != None:  #if PCF ADC found
+            if pcfSensor is not None:  #if PCF ADC found
                 for channel in range(0, 4):  #loop thru all 4 inputs
                     adc = pcfSensor.readADC(channel)  # get each value
                     adc = int((adc + lastADC[channel]) / 2.0)
@@ -753,7 +753,7 @@ class ScratchSender(threading.Thread):
                     msgQueue.put("sensor-update " + bcast_str)
 
                     if (button == 2 or button == 0):
-                        angle = 0 - (math.atan2(-y, -x) * 180.0 / math.pi) - 90
+                        angle = 0 - (math.atan2(-turny, -turnx) * 180.0 / math.pi) - 90
                         sensor_name = 'angle'
                         bcast_str = '"' + sensor_name + '" ' + str(angle)
                         msgQueue.put("sensor-update " + bcast_str)
@@ -813,7 +813,7 @@ class ScratchSender(threading.Thread):
                 msgQueue.put("sensor-update " + bcast_str)
 
             if (
-                time.time() - lastPinUpdateTime) > 3:  #This is to force the pin names to be read out even if they don't change
+                        time.time() - lastPinUpdateTime) > 3:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for listIndex in range(len(sghGC.validPins)):
@@ -865,11 +865,12 @@ class ScratchListener(threading.Thread):
         self.matrixMult = 1
         self.matrixLimit = 1
         self.matrixRangemax = 8
+        self.arm = None
 
 
     def meArmGotoPoint(self, meHorizontal, meDistance, meVertical):
-        arm.gotoPoint(int(max(-50, min(50, meHorizontal))), int(max(70, min(150, meDistance))),
-                      int(max(0, min(60, meVertical))))
+        self.arm.gotoPoint(int(max(-50, min(50, meHorizontal))), int(max(70, min(150, meDistance))),
+                           int(max(0, min(60, meVertical))))
         print "moved"
 
 
@@ -1369,6 +1370,7 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUltraRef[pinTrig].start()
                 print 'Ultra started pinging on', str(pinTrig)
 
+    # noinspection PyPep8Naming
     def run(self):
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
@@ -1390,7 +1392,7 @@ class ScratchListener(threading.Thread):
         steppersInUse = None
         beepDuration = 0.5
         beepNote = 60
-        arm = None
+        self.arm = None
         meHorizontal = 0
         meDistance = 100
         meVertical = 50
@@ -2153,8 +2155,8 @@ class ScratchListener(threading.Thread):
                                 #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 sghGC.setPinMode()
                                 if pcaPWM != None:
-                                    arm = meArm.meArm()
-                                    arm.begin()
+                                    self.arm = meArm.meArm()
+                                    self.arm.begin()
 
                                 print "MeArm setup"
                                 anyAddOns = True
@@ -3209,10 +3211,10 @@ class ScratchListener(threading.Thread):
 
                         if self.vFindValue('megripper'):
                             if self.value == "close":
-                                arm.closeGripper()
+                                self.arm.closeGripper()
                                 print "gripper closed"
                             else:
-                                arm.openGripper()
+                                self.arm.openGripper()
                                 print "Gripper opened"
 
                         if meArmAction:
@@ -4048,7 +4050,7 @@ class ScratchListener(threading.Thread):
                                     else:
                                         ledcolour = self.value
                                         self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(self.value, (
-                                        128, 128, 128))
+                                            128, 128, 128))
                                         if ledcolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                             ledcolours[random.randint(0, 6)], (128, 128, 128))
                                 tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
@@ -4063,7 +4065,7 @@ class ScratchListener(threading.Thread):
                                         for xm in range(0, self.matrixRangemax):
                                             for ledcolour in ledcolours:
                                                 if (self.bFindValue("pixel", ledcolour) and (
-                                                    self.value == (str(xm + 1) + "," + str(ym + 1)))):
+                                                            self.value == (str(xm + 1) + "," + str(ym + 1)))):
                                                     print "1st catch,xm,ym", xm, ym
                                                     self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                                         ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
@@ -4099,7 +4101,7 @@ class ScratchListener(threading.Thread):
                                             for ym in range(0, self.matrixRangemax):
                                                 for xm in range(0, self.matrixRangemax):
                                                     if (self.bFindValue("pixel", fullvalue[-7:]) and (
-                                                        self.value == (str(xm + 1) + "," + str(ym + 1)))):
+                                                                self.value == (str(xm + 1) + "," + str(ym + 1)))):
                                                         #print "led,self.value",led,self.value
                                                         try:
                                                             c = (fullvalue[-7:] + "00000000")[0:7]
@@ -4378,7 +4380,7 @@ class ScratchListener(threading.Thread):
 
                             if self.bFindValue('matrixpattern'):
                                 bit_pattern = (
-                                              self.value + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[
+                                                  self.value + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[
                                               0:64]
                                 #print 'bit_pattern %s' % bit_pattern
                                 for j in range(0, 64):
@@ -4996,7 +4998,7 @@ class ScratchListener(threading.Thread):
 
                             if self.bFindValue('matrixpattern'):
                                 bit_pattern = (
-                                              self.value + '00000000000000000000000000000000000000000000000000000000000000000')[
+                                                  self.value + '00000000000000000000000000000000000000000000000000000000000000000')[
                                               0:64]
                                 #print 'bit_pattern %s' % bit_pattern
                                 for j in range(0, 64):
@@ -5099,7 +5101,7 @@ class ScratchListener(threading.Thread):
 
                             if self.bFindValue('matrixpattern'):
                                 bit_pattern = (
-                                              self.value + '00000000000000000000000000000000000000000000000000000000000000000')[
+                                                  self.value + '00000000000000000000000000000000000000000000000000000000000000000')[
                                               0:64]
                                 #print 'bit_pattern %s' % bit_pattern
                                 for j in range(0, 64):
@@ -5380,7 +5382,7 @@ class ScratchListener(threading.Thread):
                                     #print "sneding:",cmd
                                     n = len(cmd)
                                     b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                                    chr(n & 0xFF))
+                                        chr(n & 0xFF))
                                     totalcmd = totalcmd + b + cmd
                             #print "Sending to Alt:",totalcmd									
                             self.scratch_socket2.send(totalcmd)
