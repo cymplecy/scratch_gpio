@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code now hosted on Github thanks to Ben Nuttall
-Version =  'v6.0.2' # 14Dec14 Cheerlights added
+Version =  'v6.0.2a' # 21Jan14 Hot fix for Ultrasonic
 import threading
 import socket
 import time
@@ -1296,11 +1296,11 @@ class ScratchListener(threading.Thread):
                 pass
         else:
             print "Attemping to start ultra on pin:",pinTrig
-            if sghGC.pinUltraRef[pinTrig] is None:
-                sghGC.pinUse[pinTrig] = sghGC.PSONAR                                 
-                sghGC.pinUltraRef[pinTrig] = ultra(pinTrig,pinEcho,self.scratch_socket) 
-                sghGC.pinUltraRef[pinTrig].start()
-                print 'Ultra started pinging on', str(pinTrig)            
+            #if sghGC.pinUltraRef[pinTrig] is None:
+            sghGC.pinUse[pinTrig] = sghGC.PSONAR                                 
+            sghGC.pinUltraRef[pinTrig] = ultra(pinTrig,pinEcho,self.scratch_socket) 
+            sghGC.pinUltraRef[pinTrig].start()
+            print 'Ultra started pinging on', str(pinTrig)            
 
     def run(self):
         global firstRun,cycle_trace,step_delay,stepType,INVERT, \
