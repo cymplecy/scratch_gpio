@@ -1350,7 +1350,8 @@ class ScratchListener(threading.Thread):
                 pass
         else:
             print "Attemping to start ultra on pin:",pinTrig
-            if sghGC.pinUltraRef[pinTrig] is None:
+            print sghGC.pinUltraRef[pinTrig]
+            if True: #if sghGC.pinUltraRef[pinTrig] is None:  NEEDS INVESTIGATING
                 sghGC.pinUse[pinTrig] = sghGC.PSONAR                                 
                 sghGC.pinUltraRef[pinTrig] = ultra(pinTrig,pinEcho,self.scratch_socket) 
                 sghGC.pinUltraRef[pinTrig].start()
@@ -3885,7 +3886,7 @@ class ScratchListener(threading.Thread):
                             
                         if ("neopixels" in ADDON):
                             self.matrixUse = int(rtnNumeric(ADDON[ADDON.index('neopixels'):],64))
-                            print "neopixels",self.matrixUse
+                            #print "neopixels",self.matrixUse
                         
                         #print
                         origdataraw = self.dataraw
@@ -5346,14 +5347,14 @@ class ScratchListener(threading.Thread):
                             msgQueue.put(bcast_str)     
                             
                     if self.bFindValue("getcheerlights"):
-                        print self.value
-                        lookupColour = min(10,max(0,int(self.valueNumeric))) if self.valueIsNumeric else 0
-                        print(lookupColour)
-                        if (cheerList == None) or (lookupColour == 0):
-                            print("Fetching colour from internet")
+                        #print self.value
+                        lookupColour = min(10,max(1,int(self.valueNumeric))) if self.valueIsNumeric else 1
+                        #print(lookupColour)
+                        if (cheerList == None) or (lookupColour == 1):
+                            #print("Fetching colour from internet")
                             cheerList = cheerlights.get_colours()
-                        cheerColour = cheerList[lookupColour]
-                        print "new colour", cheerColour   
+                        cheerColour = cheerList[lookupColour - 1]
+                        #print "new colour", cheerColour   
                         bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
                         #print 'sending: %s' % bcast_str
                         msgQueue.put(bcast_str)
