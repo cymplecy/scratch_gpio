@@ -168,7 +168,7 @@ class Compass:
     def twos_complement(self, val, len):
         # Convert twos compliment to integer
         if val & (1 << len - 1):
-            val = val - (1 << len)
+            val -= 1 << len
         return val
 
     def __convert(self, data, offset):
@@ -595,7 +595,7 @@ class ScratchSender(threading.Thread):
 
 
                     #print wii
-            if wii != None:  #if wii  found
+            if wii is not None:  #if wii  found
                 #time.sleep(1)
                 try:
                     joyx, joyy, accelx, accely, accelz, button = wii.raw()
@@ -615,7 +615,7 @@ class ScratchSender(threading.Thread):
                     continue
 
                     #Always send button info
-                button = button & 0x3
+                button &= 0x3
                 #print button, wii.button_c(),wii.button_z()
                 sensor_name = 'buttonc'
                 bcast_str = '"' + sensor_name + '" '
@@ -635,8 +635,8 @@ class ScratchSender(threading.Thread):
 
                 if sghGC.nunchuckLevel == 1:  #If simple mode just reading joystick digitally
 
-                    joyx = joyx - 0x7E
-                    joyy = joyy - 0x7B
+                    joyx -= 0x7E
+                    joyy -= 0x7B
 
                     joyx = math.copysign(100, joyx) if abs(joyx) > 50 else 0
 
@@ -668,8 +668,8 @@ class ScratchSender(threading.Thread):
                     if (abs(joyx) + abs(joyy)) != 0:
                         #print joyx,joyy 
                         angle = (math.atan2(-joyy, -joyx) * 180.0 / math.pi)
-                        angle = angle + 180  # "Normal" non-scratch angle
-                        angle = angle - 90
+                        angle += 180  # "Normal" non-scratch angle
+                        angle -= 90
                         #angle = angle - 90
                         angle = (angle + 720) % 360
                         angle = (-angle) if (angle) < 180 else (360 - angle)
@@ -708,8 +708,8 @@ class ScratchSender(threading.Thread):
 
                 if sghGC.nunchuckLevel == 2:
 
-                    joyx = joyx - 0x7E
-                    joyy = joyy - 0x7B
+                    joyx -= 0x7E
+                    joyy -= 0x7B
                     sensor_name = 'joystickx'
                     bcast_str = '"' + sensor_name + '" ' + str(joyx)
                     msgQueue.put("sensor-update " + bcast_str)
@@ -735,7 +735,7 @@ class ScratchSender(threading.Thread):
                     if abs(turny) > 80:
                         turnx = 0
 
-                    button = button & 0x3
+                    button &= 0x3
                     sensor_name = 'buttonc'
                     bcast_str = '"' + sensor_name + '" '
                     if (button == 1 or button == 0):
@@ -826,7 +826,7 @@ class ScratchSender(threading.Thread):
                 #print "time up"
                 #print compass
                 #If Compass board truely present
-                if (compass != None):
+                if (compass is not None):
                     #print "compass code"
                     heading = compass.heading()
                     sensor_name = 'heading'
@@ -919,7 +919,7 @@ class ScratchListener(threading.Thread):
 
     def bCheckAll(self, default=True, pinList=None):
         if self.bFindOnOff('all'):
-            if default == True:
+            if default:
                 pinList = sghGC.validPins
             for pin in pinList:
                 #print pin
@@ -1225,7 +1225,7 @@ class ScratchListener(threading.Thread):
         lastL = sghGC.pinRead(pin)
         print "start", pin, lastL
         lastValidL = lastL
-        while sghGC.encoderStopCounting[pin] == False:
+        while not sghGC.encoderStopCounting[pin]:
             time.sleep(0.002)
             val = sghGC.pinRead(pin)
             #print "val", countingPin, val
@@ -1400,7 +1400,7 @@ class ScratchListener(threading.Thread):
         pnblcd = None
         cheerList = None
 
-        if GPIOPlus == False:
+        if not GPIOPlus:
             with lock:
                 print "set pins standard"
                 for pin in sghGC.validPins:
@@ -1415,7 +1415,7 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUse[18] = sghGC.POUTPUT
                 sghGC.setPinMode()
 
-        if piglow != None:
+        if piglow is not None:
             PiGlow_Values = [0] * 18
             PiGlow_Lookup = [0, 1, 2, 3, 14, 12, 17, 16, 15, 13, 11, 10, 6, 7, 8, 5, 4, 9]
             PiGlow_Brightness = 255
@@ -1499,7 +1499,7 @@ class ScratchListener(threading.Thread):
                                         dataPrefix = "br"
                                 else:
                                     if dataPrefix == "se":
-                                        dataList[-1] = dataList[-1] + dataMsg[10:]
+                                        dataList[-1] += dataMsg[10:]
                                     else:
                                         dataList.append(dataMsg)
                                         dataPrefix = "se"
@@ -1650,7 +1650,7 @@ class ScratchListener(threading.Thread):
                         setupValue = self.value
                         pinsoraddon = "addon"
 
-                    if pinsoraddon != None:
+                    if pinsoraddon is not None:
                         ADDON = setupValue
                         print (ADDON, " declared")
 
@@ -2154,7 +2154,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.resetPinMode()
                                 #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 sghGC.setPinMode()
-                                if pcaPWM != None:
+                                if pcaPWM is not None:
                                     self.arm = meArm.meArm()
                                     self.arm.begin()
 
@@ -2274,9 +2274,9 @@ class ScratchListener(threading.Thread):
                                         sghGC.pinUpdate(pin, 1)  #output inverted as board is physically active low
                                     else:
                                         sghGC.pinUpdate(pin, 0)
-                                    j = j + 1
+                                    j += 1
 
-                    if piglow != None:
+                    if piglow is not None:
                         #do PiGlow stuff but make sure PiGlow physically detected             
 
                         #check LEDS
@@ -2335,7 +2335,7 @@ class ScratchListener(threading.Thread):
                                     PiGlow_Values[PiGlow_Lookup[i]] = 0
                                 else:
                                     PiGlow_Values[PiGlow_Lookup[i]] = 1
-                                j = j + 1
+                                j += 1
 
                             piglow.update_pwm_values(PiGlow_Values)
 
@@ -2430,7 +2430,7 @@ class ScratchListener(threading.Thread):
                                 elif self.value == "off":
                                     sghGC.pinServod(10, "off")
 
-                        if moveServos == True:
+                        if moveServos:
                             #print "move servos == True"
                             degrees = int(tilt + tiltoffset)
                             degrees = min(90, max(degrees, -90))
@@ -2463,7 +2463,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(motorList[listLoop][2], 0)
 
 
-                    elif ((piglow != None) and ("piglow" in ADDON)):
+                    elif ((piglow is not None) and ("piglow" in ADDON)):
                         #do PiGlow stuff but make sure PiGlow physically detected             
 
                         #check LEDS
@@ -2522,7 +2522,7 @@ class ScratchListener(threading.Thread):
                                     PiGlow_Values[PiGlow_Lookup[i]] = 0
                                 else:
                                     PiGlow_Values[PiGlow_Lookup[i]] = 1
-                                j = j + 1
+                                j += 1
 
                             piglow.update_pwm_values(PiGlow_Values)
 
@@ -2612,7 +2612,7 @@ class ScratchListener(threading.Thread):
                                 elif self.value == "off":
                                     os.system("echo " + "1" + "=0 > /dev/servoblaster")
 
-                        if moveServos == True:
+                        if moveServos:
                             degrees = int(tilt + tiltoffset)
                             degrees = min(80, max(degrees, -60))
                             servodvalue = 50 + ((90 - degrees) * 200 / 180)
@@ -2769,7 +2769,7 @@ class ScratchListener(threading.Thread):
                                 # sghGC.pinUpdate(motorList[listLoop][1],0)
                                 # sghGC.pinUpdate(motorList[listLoop][2],0)
 
-                        if (pcaPWM != None):
+                        if (pcaPWM is not None):
                             ledList = [0, 3, 6, 9, 12]
                             for i in range(0, 5):  # go thru PowerPWM on PCA Board
                                 if self.vFindValue('blue'):
@@ -2812,7 +2812,7 @@ class ScratchListener(threading.Thread):
                                 # sghGC.pinUpdate(motorList[listLoop][1],0)
                                 # sghGC.pinUpdate(motorList[listLoop][2],0)
 
-                        if (pcaPWM != None):
+                        if (pcaPWM is not None):
                             ledList = [0, 3, 6, 9, 12]
                             for i in range(0, 5):  # go thru PowerPWM on PCA Board
                                 if self.vFindValue('blue'):
@@ -2906,7 +2906,7 @@ class ScratchListener(threading.Thread):
                                 elif self.value == "off":
                                     os.system("echo " + "1" + "=0 > /dev/servoblaster")
 
-                        if moveServos == True:
+                        if moveServos:
                             degrees = int(tilt + tiltoffset)
                             degrees = min(80, max(degrees, -60))
                             servodvalue = 50 + ((90 - degrees) * 200 / 180)
@@ -3072,7 +3072,7 @@ class ScratchListener(threading.Thread):
 
                         self.vPinCheck()  # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
                         #logging.debug("Steppers in use")
-                        if steppersInUse == True:
+                        if steppersInUse:
                             logging.debug("Steppers in use")
                             stepperList = [['motora', [11, 12, 13, 15]], ['motorb', [16, 18, 22, 7]]]
                             for listLoop in range(0, 2):
@@ -3144,7 +3144,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(pin, 0)
                                 else:
                                     sghGC.pinUpdate(pin, 1)
-                                j = j + 1
+                                j += 1
                         else:
                             svalue = self.value
                             bit_pattern = ('0000000000000000000000000000000000000000' + svalue)[-sghGC.numOfPins:]
@@ -3158,7 +3158,7 @@ class ScratchListener(threading.Thread):
                                         sghGC.pinUpdate(pin, 0)
                                     else:
                                         sghGC.pinUpdate(pin, 1)
-                                    j = j + 1
+                                    j += 1
 
                     checkStr = 'stepdelay'
                     if (checkStr + ' ') in dataraw:
@@ -3223,9 +3223,9 @@ class ScratchListener(threading.Thread):
                             deltaD = (meDistance - oldmeD) / s
                             deltaV = (meVertical - oldmeV) / s
                             for loop in range(s):
-                                oldmeH = oldmeH + deltaH
-                                oldmeD = oldmeD + deltaD
-                                oldmeV = oldmeV + deltaV
+                                oldmeH += deltaH
+                                oldmeD += deltaD
+                                oldmeV += deltaV
                                 self.meArmGotoPoint(oldmeH, oldmeD, oldmeV)
                                 time.sleep(0.1)
 
@@ -3247,7 +3247,7 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue('ultradelay'):
                         sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
 
-                    if ((piglow != None) and ("piglow" not in ADDON)):
+                    if ((piglow is not None) and ("piglow" not in ADDON)):
                         #do PiGlow stuff but make sure PiGlow physically detected             
 
                         #check LEDS
@@ -3306,13 +3306,13 @@ class ScratchListener(threading.Thread):
                                     PiGlow_Values[PiGlow_Lookup[i]] = 0
                                 else:
                                     PiGlow_Values[PiGlow_Lookup[i]] = 1
-                                j = j + 1
+                                j += 1
 
                             piglow.update_pwm_values(PiGlow_Values)
 
                     if "mearm" in ADDON:
 
-                        if (pcaPWM != None):
+                        if (pcaPWM is not None):
 
                             for i in range(0, 16):  # go thru servos on PCA Board
                                 if self.vFindValue('servo' + str(i)):
@@ -3471,7 +3471,7 @@ class ScratchListener(threading.Thread):
                             print 'start pinging on', str(7)
                             self.startUltra(7, 0, self.OnOrOff)
 
-                    elif ((piglow != None) and ("piglow" in ADDON)):
+                    elif ((piglow is not None) and ("piglow" in ADDON)):
                         #print "processing piglow variables"
 
                         if self.bFindOnOff('all'):
@@ -3688,7 +3688,7 @@ class ScratchListener(threading.Thread):
                             sghGC.pinUpdate(24, self.OnOrOff)
 
                     elif "p2g3" in ADDON:
-                        if (pcaPWM != None):
+                        if (pcaPWM is not None):
                             for i in range(0, 5):  # go thru PowerPWM on PCA Board
                                 if self.bFindValue('blue'):
                                     svalue = int(
@@ -3723,7 +3723,7 @@ class ScratchListener(threading.Thread):
                             self.startUltra(8, 0, self.OnOrOff)
 
                     elif "p2g4" in ADDON:
-                        if (pcaPWM != None):
+                        if (pcaPWM is not None):
                             for i in range(0, 4):  # go thru PowerPWM on PCA Board
                                 if self.bFindValue('blue'):
                                     svalue = int(
@@ -3909,7 +3909,7 @@ class ScratchListener(threading.Thread):
                         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                                       'invert', 'random']
 
-                        if tcolours == None:  #only define dictionary on first pass
+                        if tcolours is None:  #only define dictionary on first pass
                             tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
                                         'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
                                         'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
@@ -4094,7 +4094,7 @@ class ScratchListener(threading.Thread):
                                                     UH.show()
                                                     pixelProcessed = True
 
-                                    if pixelProcessed == False:
+                                    if not pixelProcessed:
                                         #print "#", self.value[-7:]
                                         fullvalue = self.value
                                         if ("xxxxxxx" + fullvalue)[-7] == "#":
@@ -4119,7 +4119,7 @@ class ScratchListener(threading.Thread):
                                                         except:
                                                             pass
 
-                                    if pixelProcessed == False:
+                                    if not pixelProcessed:
                                         for ym in range(0, self.matrixRangemax):
                                             for xm in range(0, self.matrixRangemax):
                                                 if self.bFindValue("pixel" + str(xm + 1) + "," + str(ym + 1)):
@@ -4138,7 +4138,7 @@ class ScratchListener(threading.Thread):
                                                     UH.show()
                                                     pixelProcessed = True
 
-                                    if pixelProcessed == False:
+                                    if not pixelProcessed:
                                         for led in range(0, self.matrixUse):
                                             if (self.bFindValue("pixel") and self.value == str(led + 1)):
                                                 ym = int(int(led) / self.matrixRangemax)
@@ -4154,7 +4154,7 @@ class ScratchListener(threading.Thread):
                                                 UH.show()
                                                 pixelProcessed = True
 
-                                    if pixelProcessed == False:
+                                    if not pixelProcessed:
                                         for led in range(0, self.matrixUse):
                                             for ledcolour in ledcolours:
                                                 if (self.bFindValue("pixel", ledcolour) and self.value == str(led + 1)):
@@ -4188,7 +4188,7 @@ class ScratchListener(threading.Thread):
                                                     UH.show()
                                                     pixelProcessed = True
 
-                                    if pixelProcessed == False:
+                                    if not pixelProcessed:
                                         #print "#", self.value[-7:]
                                         fullvalue = self.value
                                         if ("xxxxxxx" + fullvalue)[-7] == "#":
@@ -4270,7 +4270,7 @@ class ScratchListener(threading.Thread):
                                             UH.show()
                                             pixelProcessed = True
 
-                                    if pixelProcessed == False:
+                                    if not pixelProcessed:
                                         for led in range(0, self.matrixUse):
                                             for ledcolour in ledcolours:
                                                 if (self.bFindValue("pixel", ledcolour) and self.value == str(led + 1)):
@@ -4295,7 +4295,7 @@ class ScratchListener(threading.Thread):
                                                         UH.show()
                                                         pixelProcessed = True
 
-                                    if pixelProcessed == False:
+                                    if not pixelProcessed:
                                         #print "#", self.value[-7:-7]
                                         fullvalue = self.value
                                         if ("xxxxxxx" + fullvalue)[-7] == "#":
@@ -4628,9 +4628,9 @@ class ScratchListener(threading.Thread):
                                         j = -18
                                         for i in range(0, 64):
                                             if i % 8 == 0:
-                                                j = j + 18
+                                                j += 18
                                             else:
-                                                j = j + 2
+                                                j += 2
                                             #print "i,j",i,j
                                             UH.set_pixel(i % 8, 7 - (i // 8), pixel[(j * 3) + 2], pixel[(j * 3) + 1],
                                                          pixel[(j * 3) + 0])
@@ -4798,7 +4798,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(pin, 1)  # output inverted as board is active low
                                 else:
                                     sghGC.pinUpdate(pin, 0)
-                                j = j + 1
+                                j += 1
                         else:
                             #print 'Found pinpattern broadcast'
                             #print dataraw
@@ -4818,9 +4818,9 @@ class ScratchListener(threading.Thread):
                                         sghGC.pinUpdate(pin, 0)
                                     else:
                                         sghGC.pinUpdate(pin, 1)
-                                    j = j + 1
+                                    j += 1
 
-                    if pcfSensor != None:  #if PCF ADC found
+                    if pcfSensor is not None:  #if PCF ADC found
                         for channel in range(1, 5):  #loop thru all 4 inputs
                             if self.bFind('adc' + str(channel)):
                                 adc = pcfSensor.readADC(channel - 1)  # get each value
@@ -4830,7 +4830,7 @@ class ScratchListener(threading.Thread):
                                 #print 'sending: %s' % bcast_str
                                 msgQueue.put(bcast_str)
 
-                    if ((piglow != None) and ("piglow" not in ADDON)):
+                    if ((piglow is not None) and ("piglow" not in ADDON)):
                         #print "processing piglow variables"
 
                         if self.bFindOnOff('all'):
@@ -4887,7 +4887,7 @@ class ScratchListener(threading.Thread):
 
                     origdataraw = self.dataraw
 
-                    if AdaMatrix != None:  #Matrix connected
+                    if AdaMatrix is not None:  #Matrix connected
                         #print self.dataraw
                         #print
                         self.dataraw = self.dataraw[self.dataraw.find("broadcast") + 10:]
@@ -5008,7 +5008,7 @@ class ScratchListener(threading.Thread):
                                         AdaMatrix.clearPixel((xm), ym)
                                     else:
                                         AdaMatrix.setPixel((xm), ym)
-                                    j = j + 1
+                                    j += 1
 
                             rowList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
                             for i in range(0, 8):
@@ -5063,7 +5063,7 @@ class ScratchListener(threading.Thread):
                                 msgQueue.put(bcast_str)
 
                     self.dataraw = origdataraw  #restore oringal sell.dataraw                      
-                    if PiMatrix != None:  #Matrix connected
+                    if PiMatrix is not None:  #Matrix connected
                         #print self.dataraw
                         #print
                         self.dataraw = self.dataraw[self.dataraw.find(
@@ -5108,7 +5108,7 @@ class ScratchListener(threading.Thread):
                                     ym = j // 8
                                     xm = j - (8 * ym)
                                     PiMatrix.setPixel(xm, ym, int(float(bit_pattern[j])))
-                                    j = j + 1
+                                    j += 1
 
                             rowList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
                             for i in range(0, 8):
@@ -5437,7 +5437,7 @@ class ScratchListener(threading.Thread):
                         #print self.value
                         lookupColour = min(10, max(1, int(self.valueNumeric))) if self.valueIsNumeric else 1
                         #print(lookupColour)
-                        if (cheerList == None) or (lookupColour == 1):
+                        if (cheerList is None) or (lookupColour == 1):
                             #print("Fetching colour from internet")
                             cheerList = cheerlights.get_colours()
                         cheerColour = cheerList[lookupColour - 1]
