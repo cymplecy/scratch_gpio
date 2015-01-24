@@ -5,12 +5,8 @@
     <option name="ANALYSIS_IN_BACKGROUND" value="true" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Pre change to priority queuing to handle wait/carryon">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload.tar.gz" afterPath="$PROJECT_DIR$/installer/payload.tar.gz" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/install_scratchgpio6dev.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" />
+    <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Add priority queuing/prototype pause and piandbash adc reporting improvements">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scratchgpio_handler6.py" afterPath="$PROJECT_DIR$/scratchgpio_handler6.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="scratch_gpio.iws" />
@@ -38,8 +34,8 @@
       <file leaf-file-name="scratchgpio_handler6.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.6830808" vertical-offset="93554" max-vertical-offset="99178">
-              <caret line="5535" column="0" selection-start-line="5535" selection-start-column="0" selection-end-line="5535" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.45676005" vertical-offset="78828" max-vertical-offset="99348">
+              <caret line="4659" column="32" selection-start-line="4659" selection-start-column="32" selection-end-line="4659" selection-end-column="32" />
               <folding>
                 <element signature="e#989#1005#0" expanded="true" />
               </folding>
@@ -336,7 +332,13 @@
       <option name="project" value="LOCAL" />
       <updated>1422122235985</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Add priority queuing/prototype pause and piandbash adc reporting improvements">
+      <created>1422141896740</created>
+      <option name="number" value="00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1422141896740</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -383,14 +385,15 @@
     <MESSAGE value="PyCharm refactor" />
     <MESSAGE value="PyCharm refactoring" />
     <MESSAGE value="Pre change to priority queuing to handle wait/carryon" />
-    <option name="LAST_COMMIT_MESSAGE" value="Pre change to priority queuing to handle wait/carryon" />
+    <MESSAGE value="Add priority queuing/prototype pause and piandbash adc reporting improvements" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add priority queuing/prototype pause and piandbash adc reporting improvements" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="python-line">
           <url>file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py</url>
-          <line>5456</line>
+          <line>5466</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
@@ -417,8 +420,8 @@
     </entry>
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6830808" vertical-offset="93554" max-vertical-offset="99178">
-          <caret line="5535" column="0" selection-start-line="5535" selection-start-column="0" selection-end-line="5535" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.45676005" vertical-offset="78828" max-vertical-offset="99348">
+          <caret line="4659" column="32" selection-start-line="4659" selection-start-column="32" selection-end-line="4659" selection-end-column="32" />
           <folding>
             <element signature="e#989#1005#0" expanded="true" />
           </folding>
