@@ -4644,11 +4644,21 @@ class ScratchListener(threading.Thread):
                             mcp.output(8, self.OnOrOff)
                             mcp.output(12, self.OnOrOff)
                             mcp.output(10, self.OnOrOff)
-                            if self.OnOrOff == 0:
+
+                        if self.bFindValue('clear'):
+                            if self.valueIsNumeric:
+                                if self.valueNumeric == 1:
+                                    pnblcd.lcd_byte(pnblcd.LCD_LINE_1, pnblcd.LCD_CMD)
+                                    pnblcd.lcd_string('')
+                                if self.valueNumeric == 2:
+                                    pnblcd.lcd_byte(pnblcd.LCD_LINE_2, pnblcd.LCD_CMD)
+                                    pnblcd.lcd_string('')
+                            else:
                                 pnblcd.lcd_byte(pnblcd.LCD_LINE_1, pnblcd.LCD_CMD)
                                 pnblcd.lcd_string('')
                                 pnblcd.lcd_byte(pnblcd.LCD_LINE_2, pnblcd.LCD_CMD)
                                 pnblcd.lcd_string('')
+
 
                         if self.bFindOnOff('green'):
                             mcp.output(8, self.OnOrOff)
