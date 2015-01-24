@@ -39,7 +39,7 @@ import subprocess
 import sgh_RasPiCamera
 #import pygame removed because causing random failures
 import random
-from Queue import Queue
+import Queue
 from cheerlights import CheerLights
 #import uinput
 
@@ -302,7 +302,7 @@ class ultra(threading.Thread):
                 sensor_name = 'ultra' + str(self.pinEcho)
             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
             #print 'sending: %s' % bcast_str
-            msgQueue.put(bcast_str)
+            msgQueue.put(((5,bcast_str)))
             timeTaken = time.time() - startTime
             #print "time taken:",timeTaken
             if timeTaken < sghGC.ultraFreq:
@@ -330,12 +330,12 @@ class ScratchSender(threading.Thread):
         return self._stop.isSet()
 
     def broadcast_pin_update(self, pin, value):
-        #print ADDON 
+        #print ADDON
         #print "sending",pin,value
         #sensor_name = "gpio" + str(GPIO_NUM[pin_index])
         #bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
         #print 'sending: %s' % bcast_str
-        #msgQueue.put(bcast_str)   
+        #msgQueue.put(((5,bcast_str)))
 
         #Normal action is to just send updates to pin values but this can be modified if known addon in use
         sensor_name = "pin" + str(pin)
@@ -455,17 +455,17 @@ class ScratchSender(threading.Thread):
             sensorValue = ("on", "off")[value == 1]
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
-        msgQueue.put("sensor-update " + bcast_str)
+        msgQueue.put(((5,"sensor-update " + bcast_str)))
         #print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
             #print dt.datetime.now()
             print "trigger being sent for:", sensor_name
-            msgQueue.put('broadcast "Trigger' + sensor_name + '"')
+            msgQueue.put((5,'broadcast "Trigger' + sensor_name + '"'))
             sghGC.pinTriggerName[pin] = sensor_name
             sghGC.pinTrigger[pin] = 2
             if sghGC.anyTrigger == 0:
                 #print "Any trigger broadcast"
-                msgQueue.put('broadcast "Trigger"')
+                msgQueue.put((5,'broadcast "Trigger"'))
                 sghGC.anyTrigger = 2
 
 
@@ -479,13 +479,13 @@ class ScratchSender(threading.Thread):
 
     def setsleepTime(self, sleepTime):
         self.sleepTime = sleepTime
-        #print("sleeptime:%s", self.sleepTime ) 
+        #print("sleeptime:%s", self.sleepTime )
 
     # Function to read SPI data from MCP3008 chip
     # Channel must be an integer 0-7
     def ReadChannel(self, channel):
         global spi
-        #print spi 
+        #print spi
         try:
             adc = spi.xfer2([1, (8 + channel) << 4, 0])
             data = ((adc[1] & 3) << 8) + adc[2]
@@ -518,7 +518,7 @@ class ScratchSender(threading.Thread):
         if wii is not None:
             sensor_name = 'angle'
             bcast_str = '"' + sensor_name + '" ' + str(int(0))
-            msgQueue.put("sensor-update " + bcast_str)
+            msgQueue.put((5,"sensor-update " + bcast_str))
         lastmcpInput = 0
 
         while not self.stopped():
@@ -527,7 +527,7 @@ class ScratchSender(threading.Thread):
             #print "how many millisecs since last loop", (loopTime * 1000)
             if loopTime < self.sleepTime:
                 sleepdelay = self.sleepTime - loopTime
-                #print "add in sleep of milliesec:",(sleepdelay) * 1000                
+                #print "add in sleep of milliesec:",(sleepdelay) * 1000
                 time.sleep(sleepdelay)  # be kind to cpu  :)
             lastTimeSinceLastSleep = time.time()
 
@@ -566,7 +566,7 @@ class ScratchSender(threading.Thread):
                         #print "channel,adc:",(channel+1),adc
                         sensor_name = 'adc' + str(channel + 1)
                         bcast_str = '"' + sensor_name + '" ' + str(adc)
-                        msgQueue.put("sensor-update " + bcast_str)
+                        msgQueue.put((5,"sensor-update " + bcast_str))
                         lastADC[channel] = adc
 
             if "piandbash" in ADDON:
@@ -576,20 +576,21 @@ class ScratchSender(threading.Thread):
                         sensor_name = dict2[i]
                         sensor_value = ("on", "off")[mcp.input(i) > 0]
                         bcast_str = '"' + sensor_name + '" ' + sensor_value
-                        msgQueue.put("sensor-update " + bcast_str)
+                        msgQueue.put((5,"sensor-update " + bcast_str))
                     lastmcpInput = (mcp.input(15) + mcp.input(14) + mcp.input(13) + mcp.input(11) + mcp.input(9))
-                if (time.time() - lastTimeSinceMCPAnalogRead) > 1:
+                if (time.time() - lastTimeSinceMCPAnalogRead) > 0.5:
+                    bcast_str = ""
                     for channel in range(0, 8):
                         adc = (self.ReadChannel(channel) + (2 * lastADC[channel])) / 3
-                        if (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
+                        if adc != lastADC[channel]: # (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
                             sensor_name = 'adc' + str(channel)
-                            bcast_str = '"' + sensor_name + '" ' + str(adc)
-                            msgQueue.put("sensor-update " + bcast_str)
+                            bcast_str += '"' + sensor_name + '" ' + str(adc) + " "
                             if channel == 0:
                                 sensor_name = 'temperature'
-                                bcast_str = '"' + sensor_name + '" ' + str(float("{0:.1f}".format(((adc * 500) / float(1023)) - 50)))
-                                msgQueue.put("sensor-update " + bcast_str)
+                                bcast_str += '"' + sensor_name + '" ' + str(float("{0:.1f}".format(((adc * 500) / float(1023)) - 50)))
                         lastADC[channel] = adc
+                    msgQueue.put((5,"sensor-update " + bcast_str))
+
                     lastTimeSinceMCPAnalogRead = time.time()
 
 
@@ -622,7 +623,7 @@ class ScratchSender(threading.Thread):
                     bcast_str += "on"
                 else:
                     bcast_str += "off"
-                msgQueue.put("sensor-update " + bcast_str)
+                msgQueue.put((5,"sensor-update " + bcast_str))
 
                 sensor_name = 'buttonz'
                 bcast_str = '"' + sensor_name + '" '
@@ -630,7 +631,7 @@ class ScratchSender(threading.Thread):
                     bcast_str += "on"
                 else:
                     bcast_str += "off"
-                msgQueue.put("sensor-update " + bcast_str)
+                msgQueue.put((5,"sensor-update " + bcast_str))
 
                 if sghGC.nunchuckLevel == 1:  #If simple mode just reading joystick digitally
 
@@ -659,13 +660,13 @@ class ScratchSender(threading.Thread):
 
                     sensor_name = 'joystickx'
                     bcast_str = '"' + sensor_name + '" ' + jx
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
                     sensor_name = 'joysticky'
                     bcast_str = '"' + sensor_name + '" ' + jy
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
                     if (abs(joyx) + abs(joyy)) != 0:
-                        #print joyx,joyy 
+                        #print joyx,joyy
                         angle = (math.atan2(-joyy, -joyx) * 180.0 / math.pi)
                         angle += 180  # "Normal" non-scratch angle
                         angle -= 90
@@ -674,7 +675,7 @@ class ScratchSender(threading.Thread):
                         angle = (-angle) if (angle) < 180 else (360 - angle)
                         sensor_name = 'angle'
                         bcast_str = '"' + sensor_name + '" ' + str(int(angle))
-                        msgQueue.put("sensor-update " + bcast_str)
+                        msgQueue.put((5,"sensor-update " + bcast_str))
 
                     accelx = int(min(max(1.8 * (accelx - 0x7F), -90), 90))
                     accely = - int(min(max(1.8 * (accely - 0x7F), -90), 90))
@@ -697,13 +698,13 @@ class ScratchSender(threading.Thread):
 
                     sensor_name = 'tiltx'
                     bcast_str = '"' + sensor_name + '" ' + str(leftright)
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
                     updown = turny
 
                     sensor_name = 'tilty'
                     bcast_str = '"' + sensor_name + '" ' + str(updown)
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
                 if sghGC.nunchuckLevel == 2:
 
@@ -711,10 +712,10 @@ class ScratchSender(threading.Thread):
                     joyy -= 0x7B
                     sensor_name = 'joystickx'
                     bcast_str = '"' + sensor_name + '" ' + str(joyx)
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
                     sensor_name = 'joysticky'
                     bcast_str = '"' + sensor_name + '" ' + str(joyy)
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
                     accelx = int(min(max(1.8 * (accelx - 0x7F), -90), 90))
                     accely = - int(min(max(1.8 * (accely - 0x7F), -90), 90))
@@ -741,7 +742,7 @@ class ScratchSender(threading.Thread):
                         bcast_str += "on"
                     else:
                         bcast_str += "off"
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
                     sensor_name = 'buttonz'
                     bcast_str = '"' + sensor_name + '" '
@@ -749,42 +750,42 @@ class ScratchSender(threading.Thread):
                         bcast_str += "on"
                     else:
                         bcast_str += "off"
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
                     if (button == 2 or button == 0):
                         angle = 0 - (math.atan2(-turny, -turnx) * 180.0 / math.pi) - 90
                         sensor_name = 'angle'
                         bcast_str = '"' + sensor_name + '" ' + str(angle)
-                        msgQueue.put("sensor-update " + bcast_str)
+                        msgQueue.put((5,"sensor-update " + bcast_str))
                     else:
                         angle = 0 - (math.atan2(-turny, -turnx) * 180.0 / math.pi) - 90
                         sensor_name = 'angle'
                         bcast_str = '"' + sensor_name + '" ' + str(angle)
-                        msgQueue.put("sensor-update " + bcast_str)
+                        msgQueue.put((5,"sensor-update " + bcast_str))
 
                         leftright = turnx * 100 / 90
 
                         sensor_name = 'leftright'
                         bcast_str = '"' + sensor_name + '" ' + str(leftright)
-                        msgQueue.put("sensor-update " + bcast_str)
+                        msgQueue.put((5,"sensor-update " + bcast_str))
 
                         updown = turny * 100 / 90
 
                         sensor_name = 'updown'
                         bcast_str = '"' + sensor_name + '" ' + str(updown)
-                        msgQueue.put("sensor-update " + bcast_str)
+                        msgQueue.put((5,"sensor-update " + bcast_str))
 
                     sensor_name = 'accelx'
                     bcast_str = '"' + sensor_name + '" ' + str(accelx)
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
                     sensor_name = 'accely'
                     bcast_str = '"' + sensor_name + '" ' + str(accely)
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
                     sensor_name = 'accelz'
                     bcast_str = '"' + sensor_name + '" ' + str(accelz)
-                    msgQueue.put("sensor-update " + bcast_str)
+                    msgQueue.put((5,"sensor-update " + bcast_str))
 
 
 
@@ -809,7 +810,7 @@ class ScratchSender(threading.Thread):
                 nibble = sghGC.pinRead(15) + 2 * sghGC.pinRead(19) + 4 * sghGC.pinRead(21) + 8 * sghGC.pinRead(23)
                 nibble = 15 - nibble
                 bcast_str = '"' + sensor_name + '" ' + str(nibble)
-                msgQueue.put("sensor-update " + bcast_str)
+                msgQueue.put((5,"sensor-update " + bcast_str))
 
             if (
                         time.time() - lastPinUpdateTime) > 3:  #This is to force the pin names to be read out even if they don't change
@@ -831,7 +832,7 @@ class ScratchSender(threading.Thread):
                     sensor_name = 'heading'
                     bcast_str = 'sensor-update "%s" %d' % (sensor_name, heading)
                     #print 'sending: %s' % bcast_str
-                    msgQueue.put(bcast_str)
+                    msgQueue.put((5,bcast_str))
                 self.time_last_compass = time.time()
 
 
@@ -903,7 +904,7 @@ class ScratchListener(threading.Thread):
         return (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(searchStr + '0 '))
 
     def bFindOnOff(self, searchStr):
-        #print "searching for" ,searchStr 
+        #print "searching for" ,searchStr
         self.OnOrOff = None
         if (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(
                     searchStr + '1 ') or self.bFind(searchStr + 'true ')):
@@ -1046,7 +1047,7 @@ class ScratchListener(threading.Thread):
             # else:
             # return False
             # else:
-            # return False                
+            # return False
 
     def bLEDPowerCheck(self, ledList):
         for led in range(1, (1 + len(ledList))):  # loop thru led numbers
@@ -1085,7 +1086,7 @@ class ScratchListener(threading.Thread):
             return False
 
     def vFindValue(self, searchStr):
-        #print "searching for ", searchStr 
+        #print "searching for ", searchStr
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
@@ -1213,11 +1214,11 @@ class ScratchListener(threading.Thread):
             sghGC.pinRef[pins[0]] = None
             #time.sleep(5)
             #print ("New Stepper instance started", pins)
-            sghGC.pinRef[pins[0]] = sgh_Stepper.sghStepper(sghGC, pins, stepDelay)  # create new Stepper instance 
+            sghGC.pinRef[pins[0]] = sgh_Stepper.sghStepper(sghGC, pins, stepDelay)  # create new Stepper instance
             sghGC.pinRef[pins[0]].changeSpeed(max(-100, min(100, value)), steps)  # update Stepper value
-            sghGC.pinRef[pins[0]].start()  # update Stepper value                
-            # print 'pin' , pins , ' changed to Stepper' 
-            #print ("pins",pins, "set to", value)  
+            sghGC.pinRef[pins[0]].start()  # update Stepper value
+            # print 'pin' , pins , ' changed to Stepper'
+            #print ("pins",pins, "set to", value)
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
 
 
@@ -1245,7 +1246,7 @@ class ScratchListener(threading.Thread):
         print "encoder count at thread start", sghGC.encoderInUse
         print "counting pin", pin
         print "motor pins", sghGC.pinValue[motorList[1]], sghGC.pinValue[motorList[2]]
-        #countingPin = motorList[1][3] # use 1st motor counting pin only  
+        #countingPin = motorList[1][3] # use 1st motor counting pin only
         print "Previous EncoderDiff:", sghGC.pinEncoderDiff[pin]
         #sghGC.pinEncoderDiff[countingPin] = 0
         sghGC.encoderStopCounting[pin] = False
@@ -1260,7 +1261,7 @@ class ScratchListener(threading.Thread):
         else:
             countattempted = startCount + count + int(1 * sghGC.pinEncoderDiff[pin])  # allow for modified behaviour
         print "extra count wanted/going to attempt", (countwanted - startCount), (countattempted - startCount)
-        turningStartTime = time.time()  # used to timeout if necessary 
+        turningStartTime = time.time()  # used to timeout if necessary
         thisTurnSpeed = self.turnSpeed
         if pin == 12:
             thisTurnSpeed = self.turnSpeed + self.turnSpeedAdj
@@ -1323,7 +1324,7 @@ class ScratchListener(threading.Thread):
         sghGC.encoderStopCounting[pin] = True
         print ("how many moved", (sghGC.pinCount[pin] - startCount))
         sghGC.pinEncoderDiff[pin] = (countwanted - (sghGC.pinCount[pin]))  #work out new error in position
-        msgQueue.put('sensor-update "encoderdiff' + str(pin) + '"' + str(
+        msgQueue.put((5,'sensor-update "encoderdiff' + str(pin)) + '"' + str(
             sghGC.pinEncoderDiff[pin]) + '"')  # inform Scratch that turning is finished
 
         print "count wantedDiff:", countwanted, " / ", sghGC.pinEncoderDiff[pin]
@@ -1458,7 +1459,7 @@ class ScratchListener(threading.Thread):
                     #dataOut = ""
                     dataList = []  # used to hold series of broadcasts or sensor updates
                     dataPrefix = ""  # data to be re-added onto front of incoming data
-                    while len(dataIn) > 0:  # loop thru data 
+                    while len(dataIn) > 0:  # loop thru data
                         if len(dataIn) < 4:  #If whole length not received then break out of loop
                             #print "<4 chrs received"
                             dataPrevious = dataIn  # store data and tag it onto next data read
@@ -1535,12 +1536,12 @@ class ScratchListener(threading.Thread):
             #print "data being processed:" , dataraw
             #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
             #if (firstRun == True) or (anyAddOns == False):
-            #print 
+            #print
             #logging.debug("dataList: %s",dataList)
             #print
             #print
             #print "old datalist" , dataList
-            if any("move" in s for s in dataList) or any("turn" in s for s in dataList):
+            if any("move" in s for s in dataList) or any("turn" in s for s in dataList):# or any("cheerlight" in s for s in dataList):
                 #print "move/turn found in dataList so going to expandList"
 
                 newList = []
@@ -1558,8 +1559,8 @@ class ScratchListener(threading.Thread):
             #print "GPIOPLus" , GPIOPlus
             #print "dataList to be processed", dataList
             for dataItem in dataList:
-                #print dataItem 
-                #dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)]) 
+                #print dataItem
+                #dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 dataraw = ' '
                 #print "CAPS", datawithCAPS
                 for item in shlex.split(dataItem):
@@ -1586,14 +1587,14 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue("autostart"):
                         if self.value == "true":
                             print "Autostart GreenFlag event"
-                            msgQueue.put("broadcast Scratch-StartClicked")
+                            msgQueue.put((5,"broadcast Scratch-StartClicked"))
                             time.sleep(1)
                             #fred = subprocess.Popen(['xdotool', 'getactivewindow', 'key', 'Return'])
                             #with open('info.txt', "w") as outfile:
                             output = subprocess.Popen(
                                 "xwininfo -tree -root | grep squeak | awk '{print $5}' | tr 'x' ',' | tr '+' ','",
                                 shell=True, stdout=subprocess.PIPE).communicate()
-                            #fred = subprocess.call(['xwininfo','-tree','-root','|','grep','squeak'], stdout = outfile)##'|', 'awk', "'{print $5}'", '|', 'tr', "'x'" ,"','", '|' ,'tr' ,"'+'", "','" 
+                            #fred = subprocess.call(['xwininfo','-tree','-root','|','grep','squeak'], stdout = outfile)##'|', 'awk', "'{print $5}'", '|', 'tr', "'x'" ,"','", '|' ,'tr' ,"'+'", "','"
                             # sizes = output[0][0:-1].split(',')
                             # print sizes
                             # xmid = (int(sizes[0]) + int(sizes[2]))/2
@@ -1617,7 +1618,7 @@ class ScratchListener(threading.Thread):
                         PiGlow_Brightness = sghGC.ledDim
                         bcast_str = 'sensor-update "%s" %d' % ('bright', sghGC.ledDim)
                         #print 'sending: %s' % bcast_str
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
                         try:
                             UH.brightness(max(0, min(1, float(float(sghGC.ledDim) / 100))))
                             UH.show()
@@ -1709,7 +1710,7 @@ class ScratchListener(threading.Thread):
                         if "motorpitx" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                sghGC.pinUse[11] = sghGC.POUTPUT  #Out2 
+                                sghGC.pinUse[11] = sghGC.POUTPUT  #Out2
                                 sghGC.pinUse[15] = sghGC.POUTPUT  #Out1
                                 sghGC.pinUse[16] = sghGC.POUTPUT  #Motor2 B
                                 sghGC.pinUse[18] = sghGC.POUTPUT  #Motor2 A
@@ -1766,7 +1767,7 @@ class ScratchListener(threading.Thread):
                         if "pirocon" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                sghGC.pinUse[19] = sghGC.POUTPUT  #MotorA 
+                                sghGC.pinUse[19] = sghGC.POUTPUT  #MotorA
                                 sghGC.pinUse[21] = sghGC.POUTPUT  #MotorB (MotorA in v1.2)
                                 sghGC.pinUse[26] = sghGC.POUTPUT  #MotorA (MotorB in V1.2)
                                 sghGC.pinUse[24] = sghGC.POUTPUT  #MotorB
@@ -1779,8 +1780,8 @@ class ScratchListener(threading.Thread):
                                     logging.debug("Encoders Found:%s", ADDON)
                                     sghGC.pinUse[7] = sghGC.PCOUNT
                                     sghGC.pinUse[11] = sghGC.PCOUNT
-                                    msgQueue.put('sensor-update "encoder" "stopped"')
-                                    msgQueue.put('sensor-update "count7" "0"')
+                                    msgQueue.put((5,'sensor-update "encoder" "stopped"'))
+                                    msgQueue.put((5,'sensor-update "count7" "0"'))
                                 sghGC.setPinMode()
                                 sghGC.startServod([18, 22])  # servos orig
                                 #sghGC.startServod([12,10]) # servos testing motorpitx
@@ -1830,9 +1831,9 @@ class ScratchListener(threading.Thread):
                         if "rtkrpimcb" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                sghGC.pinUse[11] = sghGC.POUTPUT  #Motor1 
+                                sghGC.pinUse[11] = sghGC.POUTPUT  #Motor1
                                 sghGC.pinUse[12] = sghGC.POUTPUT  #Motor1
-                                sghGC.pinUse[15] = sghGC.POUTPUT  #Motor2 
+                                sghGC.pinUse[15] = sghGC.POUTPUT  #Motor2
                                 sghGC.pinUse[16] = sghGC.POUTPUT  #Motor2
                                 sghGC.pinUse[18] = sghGC.POUTPUT
                                 sghGC.pinUse[22] = sghGC.POUTPUT
@@ -1873,15 +1874,15 @@ class ScratchListener(threading.Thread):
                         if "p2g3" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
                                 #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7] = sghGC.PINPUT  #ObjLeft
                                 sghGC.pinUse[11] = sghGC.PINPUT  #ObjRight
-                                sghGC.pinUse[15] = sghGC.PINPUT  #ObjMid                                
+                                sghGC.pinUse[15] = sghGC.PINPUT  #ObjMid
                                 sghGC.pinUse[12] = sghGC.PINPUT  #LFLeft
-                                sghGC.pinUse[13] = sghGC.PINPUT  #LFRight                                
+                                sghGC.pinUse[13] = sghGC.PINPUT  #LFRight
                                 sghGC.pinUse[16] = sghGC.PINPUT
                                 sghGC.pinUse[18] = sghGC.PINPUT
                                 sghGC.pinUse[22] = sghGC.PINPUT
@@ -1907,15 +1908,15 @@ class ScratchListener(threading.Thread):
                         if "p2g4" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
                                 #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7] = sghGC.PINPUT  #ObjLeft
                                 sghGC.pinUse[11] = sghGC.PINPUT  #ObjRight
-                                sghGC.pinUse[15] = sghGC.PINPUT  #ObjMid                                
+                                sghGC.pinUse[15] = sghGC.PINPUT  #ObjMid
                                 sghGC.pinUse[12] = sghGC.PINPUT  #LFLeft
-                                sghGC.pinUse[13] = sghGC.PINPUT  #LFRight                                
+                                sghGC.pinUse[13] = sghGC.PINPUT  #LFRight
                                 sghGC.pinUse[16] = sghGC.PINPUT
                                 sghGC.pinUse[18] = sghGC.PINPUT
                                 sghGC.pinUse[22] = sghGC.PINPUT
@@ -1942,14 +1943,14 @@ class ScratchListener(threading.Thread):
                             print "pi2golite found in", ADDON
                             with lock:
                                 sghGC.resetPinMode()
-                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
                                 #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7] = sghGC.PINPUT  #ObjLeft
                                 sghGC.pinUse[11] = sghGC.PINPUT  #ObjRight
                                 sghGC.pinUse[12] = sghGC.PINPUT  #LFLeft
-                                sghGC.pinUse[13] = sghGC.PINPUT  #LFRight                                
+                                sghGC.pinUse[13] = sghGC.PINPUT  #LFRight
                                 sghGC.pinUse[23] = sghGC.PINPUT
                                 sghGC.pinUse[18] = sghGC.POUTPUT
                                 sghGC.pinUse[22] = sghGC.POUTPUT
@@ -1961,7 +1962,7 @@ class ScratchListener(threading.Thread):
                                     logging.debug("Encoders Found:%s", ADDON)
                                     sghGC.pinUse[12] = sghGC.PCOUNT
                                     sghGC.pinUse[13] = sghGC.PCOUNT
-                                    msgQueue.put('sensor-update "motors" "stopped"')
+                                    msgQueue.put((5,'sensor-update "motors" "stopped"'))
 
                                 sghGC.setPinMode()
                                 sghGC.startServod([18, 22])  # servos
@@ -1995,17 +1996,17 @@ class ScratchListener(threading.Thread):
                             # sghGC.resetPinMode()
                             # sghGC.pinUse[7]  = sghGC.PINPUT #LFLeft
                             # sghGC.pinUse[11] = sghGC.PINPUT #LFRight
-                            # sghGC.pinUse[15]  = sghGC.POUTPUT 
-                            # sghGC.pinUse[13] = sghGC.POUTPUT 
+                            # sghGC.pinUse[15]  = sghGC.POUTPUT
+                            # sghGC.pinUse[13] = sghGC.POUTPUT
 
                             # sghGC.setPinMode()
                             # sghGC.motorUpdate(19,21,0)
-                            # sghGC.motorUpdate(26,24,0)      
+                            # sghGC.motorUpdate(26,24,0)
 
-                            # self.startUltra(23,0,self.OnOrOff)               
+                            # self.startUltra(23,0,self.OnOrOff)
 
                             # print "Agobo2 setup"
-                            # anyAddOns = True      
+                            # anyAddOns = True
 
                         if "agobo" in ADDON:
                             with lock:
@@ -2028,7 +2029,7 @@ class ScratchListener(threading.Thread):
                         if "happi" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                sghGC.pinUse[11] = sghGC.POUTPUT  #Motor1 
+                                sghGC.pinUse[11] = sghGC.POUTPUT  #Motor1
                                 sghGC.pinUse[12] = sghGC.POUTPUT  #Motor1
                                 sghGC.pinUse[15] = sghGC.POUTPUT  #Motor2
                                 sghGC.pinUse[16] = sghGC.POUTPUT  #Motor2
@@ -2062,12 +2063,12 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[19] = sghGC.POUTPUT  #right go
                                 sghGC.pinUse[22] = sghGC.POUTPUT  #right dir
                                 sghGC.pinUse[15] = sghGC.POUTPUT  #oc1
-                                sghGC.pinUse[13] = sghGC.POUTPUT  #oc2                                
+                                sghGC.pinUse[13] = sghGC.POUTPUT  #oc2
                                 sghGC.pinUse[23] = sghGC.PINPUT  #sw1 pin
                                 sghGC.pinUse[21] = sghGC.PINPUT  #sw2 pin
-                                sghGC.pinUse[26] = sghGC.POUTPUT  #LED1                                
-                                sghGC.pinUse[24] = sghGC.POUTPUT  #LED2 
-                                sghGC.pinUse[12] = sghGC.PSONAR  # trigger                
+                                sghGC.pinUse[26] = sghGC.POUTPUT  #LED1
+                                sghGC.pinUse[24] = sghGC.POUTPUT  #LED2
+                                sghGC.pinUse[12] = sghGC.PSONAR  # trigger
                                 sghGC.pinUse[16] = sghGC.PSONAR  #echo
 
                                 sghGC.setPinMode()
@@ -2080,7 +2081,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.resetPinMode()
                                 sghGC.setAllInvert(
                                     True)  # GPIO pull down each led so need to invert 0 to 1 and vice versa
-                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA 
+                                #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
                                 #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
@@ -2105,7 +2106,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.resetPinMode()
                                 sghGC.setAllInvert(
                                     True)  # GPIO pull down each led so need to invert 0 to 1 and vice versa
-                                sghGC.pinUse[11] = sghGC.PINPUT  #Red 
+                                sghGC.pinUse[11] = sghGC.PINPUT  #Red
                                 sghGC.pinUse[13] = sghGC.PINPUT  #Amber
                                 sghGC.pinUse[15] = sghGC.PINPUT  #Green
                                 sghGC.pinUse[12] = sghGC.POUTPUT  #Red
@@ -2123,10 +2124,10 @@ class ScratchListener(threading.Thread):
                             with lock:
                                 sghGC.resetPinMode()
                                 #sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
-                                sghGC.pinUse[15] = sghGC.PINPUT  #Red 
+                                sghGC.pinUse[15] = sghGC.PINPUT  #Red
                                 sghGC.pinUse[19] = sghGC.PINPUT  #Amber
                                 sghGC.pinUse[21] = sghGC.PINPUT  #Green
-                                sghGC.pinUse[23] = sghGC.PINPUT  #Green                                
+                                sghGC.pinUse[23] = sghGC.PINPUT  #Green
                                 sghGC.pinUse[8] = sghGC.POUTPUT  #Red
                                 sghGC.pinUse[10] = sghGC.POUTPUT  #Green
                                 sghGC.pinUse[12] = sghGC.POUTPUT  #Blue
@@ -2134,7 +2135,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[18] = sghGC.POUTPUT  #Red
                                 sghGC.pinUse[22] = sghGC.POUTPUT  #Green
                                 sghGC.pinUse[24] = sghGC.POUTPUT  #Blue
-                                sghGC.pinUse[24] = sghGC.POUTPUT  #Buzzer                                
+                                sghGC.pinUse[24] = sghGC.POUTPUT  #Buzzer
 
                                 sghGC.setPinMode()
 
@@ -2277,7 +2278,7 @@ class ScratchListener(threading.Thread):
                                     j += 1
 
                     if piglow is not None:
-                        #do PiGlow stuff but make sure PiGlow physically detected             
+                        #do PiGlow stuff but make sure PiGlow physically detected
 
                         #check LEDS
                         for i in range(1, 19):
@@ -2343,7 +2344,7 @@ class ScratchListener(threading.Thread):
                             #if self.vFindValue('bright'):
                             #    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             #    svalue= min(255,max(svalue,0))
-                            #    PiGlow_Brightness = svalue                
+                            #    PiGlow_Brightness = svalue
 
                     if self.vFindValue("x"):
                         self.matrixX = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -2362,7 +2363,7 @@ class ScratchListener(threading.Thread):
                         # if self.matrixUse == 0:
                         # self.matrixUse = 64
                         # else:
-                        # self.matrixUse = min(64,max(self.matrixUse,1))                               
+                        # self.matrixUse = min(64,max(self.matrixUse,1))
 
                     if self.vFindValue("matrixrotate"):
                         print "mr"
@@ -2464,7 +2465,7 @@ class ScratchListener(threading.Thread):
 
 
                     elif ((piglow is not None) and ("piglow" in ADDON)):
-                        #do PiGlow stuff but make sure PiGlow physically detected             
+                        #do PiGlow stuff but make sure PiGlow physically detected
 
                         #check LEDS
                         for i in range(1, 19):
@@ -2530,7 +2531,7 @@ class ScratchListener(threading.Thread):
                             #if self.vFindValue('bright'):
                             #    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             #    svalue= min(255,max(svalue,0))
-                            #    PiGlow_Brightness = svalue             
+                            #    PiGlow_Brightness = svalue
 
                     elif "gpio" in ADDON:
                         #do gPiO stuff
@@ -2687,7 +2688,7 @@ class ScratchListener(threading.Thread):
 
                     elif "rgbled" in ADDON:  # RGB-LED by Meltwater/rsstab/tim cox
 
-                        #print ("rgb-led variable processing")            
+                        #print ("rgb-led variable processing")
                         if self.vFindOnOff("all"):
                             for loop in range(0, 5):
                                 sghGC.pinUpdate(rgbOutputs[loop], 1 - self.valueNumeric)
@@ -2950,7 +2951,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
 
 
-                                ######### End of agobo variable handling                        
+                                ######### End of agobo variable handling
                     elif "piringo" in ADDON:
                         #do piringo stuff
 
@@ -3085,7 +3086,7 @@ class ScratchListener(threading.Thread):
 
                             stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]]]
                             for listLoop in range(0, 2):
-                                #print ("look for steppers") 
+                                #print ("look for steppers")
                                 if self.vFindValue(stepperList[listLoop][0]):
                                     print ("Found stepper", stepperList[listLoop][0])
                                     if self.valueIsNumeric:
@@ -3248,7 +3249,7 @@ class ScratchListener(threading.Thread):
                         sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
 
                     if ((piglow is not None) and ("piglow" not in ADDON)):
-                        #do PiGlow stuff but make sure PiGlow physically detected             
+                        #do PiGlow stuff but make sure PiGlow physically detected
 
                         #check LEDS
                         for i in range(1, 19):
@@ -3329,7 +3330,7 @@ class ScratchListener(threading.Thread):
                     #print 'broadcast:' , self.dataraw
 
                     if self.bFindValue("qmsg"):
-                        msgQueue.put(self.value)
+                        msgQueue.put((5,self.value))
                         #print "queue len", len(msgQueue)
 
                     #if self.bFindValue("hardrestart"):
@@ -3424,7 +3425,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinTrigger[pin] = 0
                                     sghGC.anyTrigger = 0
 
-                    #msgQueue.put("broadcast Begin")
+                    #msgQueue.put((5,"broadcast Begin"))
                     if self.bFind("stepper"):
                         print ("Stepper declared")
                         steppersInUse = True
@@ -3440,7 +3441,7 @@ class ScratchListener(threading.Thread):
 
                     if "ladder" in ADDON:  # Gordon's Ladder Board
                         #do ladderboard stuff
-                        #print ("Ladder broadcast processing")                    
+                        #print ("Ladder broadcast processing")
                         self.bCheckAll()  # Check for all off/on type broadcasrs
                         self.bLEDCheck(ladderOutputs)  # Check for LED off/on type broadcasts
 
@@ -3453,7 +3454,7 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'sonar' + str(13)
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
                         if ('sonar2') in dataraw:
                             distance = sghGC.pinSonar(7)
@@ -3461,7 +3462,7 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'sonar' + str(7)
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
                         if self.bFind('ultra1'):
                             print 'start pinging on', str(13)
@@ -3535,13 +3536,13 @@ class ScratchListener(threading.Thread):
 
                     elif "berry" in ADDON:  # BerryClip
 
-                        #print ("Berry broadcast processing")                    
+                        #print ("Berry broadcast processing")
                         self.bCheckAll()  # Check for all off/on type broadcasts
                         self.bLEDCheck(berryOutputs)  # Check for LED off/on type broadcasts
                         if self.bFindOnOff('buzzer'):
                             sghGC.pinUpdate(24, self.OnOrOff)
 
-                    elif "pirocon" in ADDON:  # pirocon         
+                    elif "pirocon" in ADDON:  # pirocon
 
                         self.bCheckAll()  # Check for all off/on type broadcasrs
                         self.bPinCheck(sghGC.validPins)  # Check for pin off/on type broadcasts
@@ -3557,9 +3558,9 @@ class ScratchListener(threading.Thread):
                                 sensor_name = 'sonar' + str(pin)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 #print 'sending: %s' % bcast_str
-                                msgQueue.put(bcast_str)
+                                msgQueue.put((5,bcast_str))
 
-                            #Start using ultrasonic sensor on a pin    
+                            #Start using ultrasonic sensor on a pin
                             if self.bFind('ultra' + str(pin)):
                                 self.startUltra(pin, 0, self.OnOrOff)
 
@@ -3608,8 +3609,8 @@ class ScratchListener(threading.Thread):
                         self.bLEDPowerCheck(piringoOutputs)  # Vary LED Brightness
 
                     elif "pibrella" in ADDON:  # PiBrella
-                        #print ("PiBrella broadcast processing")                    
-                        self.bCheckAll()  # Check for all off/on type broadcasts                    
+                        #print ("PiBrella broadcast processing")
+                        self.bCheckAll()  # Check for all off/on type broadcasts
 
                         self.bListCheck([13, 11, 7, 15, 16, 18, 22],
                                         ["led1", "led2", "led3", "led4", "led5", "led6", "led7"])
@@ -3639,11 +3640,11 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'sonara'
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
                     elif "rgbled" in ADDON:  # rgb-led
 
-                        #print ("rgb-led broadcast processing")            
+                        #print ("rgb-led broadcast processing")
                         if self.bFindOnOff("all"):
                             for loop in range(0, 5):
                                 sghGC.pinUpdate(rgbOutputs[loop], 1 - self.OnOrOff)
@@ -3665,7 +3666,7 @@ class ScratchListener(threading.Thread):
                         #do piringo stuff
                         self.bCheckAll()  # Check for all off/on type broadcasrs
 
-                        self.bLEDPowerCheck(pidieOutputs)  # Vary LED Brightness          
+                        self.bLEDPowerCheck(pidieOutputs)  # Vary LED Brightness
 
                         self.bListCheck([7, 11, 12, 13, 15, 16, 18, 22, 8],
                                         ["led1", "led2", "led3", "led4", "led5", "led6", "led7", "led8", "led9"])
@@ -3676,7 +3677,7 @@ class ScratchListener(threading.Thread):
                         #do piringo stuff
                         self.bCheckAll()  # Check for all off/on type broadcasrs
                         self.bLEDCheck(fishOutputs)  # Check for LED off/on type broadcasts
-                        self.bLEDPowerCheck(fishOutputs)  # Vary LED Brightness       
+                        self.bLEDPowerCheck(fishOutputs)  # Vary LED Brightness
 
                         fishList = ["green", "yellow", "red"]
                         for listLoop in fishList:
@@ -3718,7 +3719,7 @@ class ScratchListener(threading.Thread):
                                     pcaPWM.setPWM((i * 3) + 2, 0, svalue)
 
 
-                                    #Start using ultrasonic sensor on a pin    
+                                    #Start using ultrasonic sensor on a pin
                         if self.bFindOnOff('ultra'):
                             self.startUltra(8, 0, self.OnOrOff)
 
@@ -3753,11 +3754,11 @@ class ScratchListener(threading.Thread):
                                     pcaPWM.setPWM((i * 3) + 2, 0, svalue)
 
 
-                                    #Start using ultrasonic sensor on a pin    
+                                    #Start using ultrasonic sensor on a pin
                         if self.bFindOnOff('ultra'):
                             self.startUltra(8, 0, self.OnOrOff)
 
-                    elif "pi2golite" in ADDON:  # 
+                    elif "pi2golite" in ADDON:  #
                         #do pi2golite stuff
                         self.bCheckAll(False, [15, 16])
                         self.bListCheck([15, 16], ["frontleds", "backleds"])
@@ -3771,7 +3772,7 @@ class ScratchListener(threading.Thread):
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 1
 
-                            msgQueue.put('sensor-update "motors" "turning"')  #set turning sensor to turning
+                            msgQueue.put((5,'sensor-update "motors" "turning"'))  #set turning sensor to turning
                             time.sleep(0.2)
                             moveFound = True
                             print " "
@@ -3792,7 +3793,7 @@ class ScratchListener(threading.Thread):
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 1
 
-                            msgQueue.put('sensor-update "motors" "turning"')  #set turning sensor to turning
+                            msgQueue.put((5,'sensor-update "motors" "turning"'))  #set turning sensor to turning
                             time.sleep(0.2)
                             moveFound = True
                             print " "
@@ -3812,7 +3813,7 @@ class ScratchListener(threading.Thread):
                             while sghGC.encoderInUse > 0:
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 2
-                            msgQueue.put('sensor-update "motors" "turning"')  #set turning sensor to turning
+                            msgQueue.put((5,'sensor-update "motors" "turning"'))  #set turning sensor to turning
                             time.sleep(0.2)
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -3832,7 +3833,7 @@ class ScratchListener(threading.Thread):
                             while sghGC.encoderInUse > 0:
                                 time.sleep(0.1)
                             sghGC.encoderInUse = 2
-                            msgQueue.put('sensor-update "motors" "turning"')  #set turning sensor to turning
+                            msgQueue.put((5,'sensor-update "motors" "turning"'))  #set turning sensor to turning
                             time.sleep(0.2)
                             print " "
                             svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -3860,7 +3861,7 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'sonar'
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
                     elif "pizazz" in ADDON:
                         self.bCheckAll()  # Check for all off/on type broadcasrs
@@ -3872,9 +3873,9 @@ class ScratchListener(threading.Thread):
                             sensor_name = 'sonar'
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                             #print 'sending: %s' % bcast_str
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
-                        #Start using ultrasonic sensor on a pin    
+                        #Start using ultrasonic sensor on a pin
                         if self.bFindOnOff('ultra'):
                             self.startUltra(8, 0, self.OnOrOff)
 
@@ -3891,16 +3892,16 @@ class ScratchListener(threading.Thread):
 
                     elif "techtom" in ADDON:  # Gordon's Ladder Board
                         #do techtom stuff
-                        #print ("TechTom broadcast processing")                    
+                        #print ("TechTom broadcast processing")
                         self.bCheckAll()  # Check for all off/on type broadcasrs
-                        self.bPinCheck([8, 10, 12, 16, 18, 22, 24, 26])  # Check for pin on off              
+                        self.bPinCheck([8, 10, 12, 16, 18, 22, 24, 26])  # Check for pin on off
 
                     elif "ledborg" in ADDON:  # LedBorg
 
                         if self.bFindOnOff('all'):
                             for pin in [11, 13, 15]:
                                 sghGC.pinUpdate(pin, self.OnOrOff)
-                        self.bListCheck([11, 13, 15], ["red", "green", "blue"])  # Check for LEDs         
+                        self.bListCheck([11, 13, 15], ["red", "green", "blue"])  # Check for LEDs
 
 
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON):  #Matrix connected
@@ -3944,25 +3945,25 @@ class ScratchListener(threading.Thread):
                                     self.matrixMult = 4
                                     self.matrixLimit = 4
                                     self.matrixRangemax = 2
-                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax                                    
+                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax
                                 elif self.value == '9':
                                     self.matrixUse = 9
                                     self.matrixMult = 3
                                     self.matrixLimit = 2
                                     self.matrixRangemax = 3
-                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax   
+                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax
                                 elif self.value == '16':
                                     self.matrixUse = 16
                                     self.matrixMult = 2
                                     self.matrixLimit = 2
                                     self.matrixRangemax = 4
-                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax   
+                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax
                                 else:
                                     self.matrixUse = 64
                                     self.matrixMult = 1
                                     self.matrixLimit = 1
                                     self.matrixRangemax = 8
-                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax                                 
+                                    #print self.matrixMult,self.matrixLimit,self.matrixRangemax
 
                             #print "outside", self.matrixMult,self.matrixLimit,self.matrixRangemax
 
@@ -4235,7 +4236,7 @@ class ScratchListener(threading.Thread):
                                                 sensor_name = 'colour'
                                                 bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolourname)
                                                 #print 'sending: %s' % bcast_str
-                                                msgQueue.put(bcast_str)
+                                                msgQueue.put((5,bcast_str))
 
                                     for led in range(0, self.matrixUse):
                                         if (self.bFindValue("getpixel") and self.value == str(led + 1)):
@@ -4259,7 +4260,7 @@ class ScratchListener(threading.Thread):
                                             sensor_name = 'colour'
                                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolourname)
                                             #print 'sending: %s' % bcast_str
-                                            msgQueue.put(bcast_str)
+                                            msgQueue.put((5,bcast_str))
 
                             else:  # Neopixel processing
                                 if self.bFind("pixel"):
@@ -4342,14 +4343,14 @@ class ScratchListener(threading.Thread):
                                             # sensor_name = 'colour#'
                                             # bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolour)
                                             # #print 'sending: %s' % bcast_str
-                                            # msgQueue.put(bcast_str)                                  
+                                            # msgQueue.put((5,bcast_str))
 
                                             # bcolour = "["  + str(r).zfill(3) + ","+ str(g).zfill(3)+ "," + str(b).zfill(3) + "]"
                                             # print "rgb bcolour", bcolour
                                             # sensor_name = 'rgbcolour'
                                             # bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolour)
                                             # #print 'sending: %s' % bcast_str
-                                            # msgQueue.put(bcast_str)       
+                                            # msgQueue.put((5,bcast_str))
 
                                             bcolour = str(r).zfill(3) + str(g).zfill(3) + str(b).zfill(3)
                                             #ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','invert','random']
@@ -4364,7 +4365,7 @@ class ScratchListener(threading.Thread):
                                             sensor_name = 'colour'
                                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolourname)
                                             #print 'sending: %s' % bcast_str
-                                            msgQueue.put(bcast_str)
+                                            msgQueue.put((5,bcast_str))
 
                             if self.bFindValue("bright"):
                                 sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
@@ -4374,7 +4375,7 @@ class ScratchListener(threading.Thread):
                                     sensor_name = 'bright'
                                     bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.ledDim)
                                     #print 'sending: %s' % bcast_str
-                                    msgQueue.put(bcast_str)
+                                    msgQueue.put((5,bcast_str))
                                 except:
                                     pass
 
@@ -4691,14 +4692,14 @@ class ScratchListener(threading.Thread):
                             if self.bFindOnOff('gpio' + str(sghGC.gpioLookup[pin])):
                                 sghGC.pinUpdate(pin, self.OnOrOff)
                             if self.bFindValue('power' + str(pin) + ","):
-                                #logging.debug("bPowerPin:%s",pin )    
+                                #logging.debug("bPowerPin:%s",pin )
                                 if self.valueIsNumeric:
                                     sghGC.pinUpdate(pin, self.valueNumeric, type="pwm")
                                 else:
                                     sghGC.pinUpdate(pin, 0, type="pwm")
 
                             if self.bFindValue('motor' + str(pin) + ","):
-                                #logging.debug("bPowerPin:%s",pin )    
+                                #logging.debug("bPowerPin:%s",pin )
                                 if self.valueIsNumeric:
                                     sghGC.pinUpdate(pin, self.valueNumeric, type="pwmmotor")
                                 else:
@@ -4710,7 +4711,7 @@ class ScratchListener(threading.Thread):
                                 sensor_name = 'sonar' + str(pin)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 #print 'sending: %s' % bcast_str
-                                msgQueue.put(bcast_str)
+                                msgQueue.put((5,bcast_str))
 
                             if self.bFind('rctime' + str(pin)):
                                 RCtime = sghGC.pinRCTime(pin)
@@ -4718,9 +4719,9 @@ class ScratchListener(threading.Thread):
                                 sensor_name = 'RCtime' + str(pin)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, RCtime)
                                 #print 'sending: %s' % bcast_str
-                                msgQueue.put(bcast_str)
+                                msgQueue.put((5,bcast_str))
 
-                                #Start using ultrasonic sensor on a pin    
+                                #Start using ultrasonic sensor on a pin
                             if self.bFind('ultra' + str(pin)):
                                 print 'start pinging on', str(pin)
                                 self.startUltra(pin, 0, self.OnOrOff)
@@ -4750,7 +4751,7 @@ class ScratchListener(threading.Thread):
 
                                 # stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
                                 # for listLoop in range(0,2):
-                                # #print ("look for steppers") 
+                                # #print ("look for steppers")
                                 # if self.vFindValue(stepperList[listLoop][0]):
                                 # print ("Found stepper",stepperList[listLoop][0])
                                 # if self.valueIsNumeric:
@@ -4777,7 +4778,7 @@ class ScratchListener(threading.Thread):
                                 # turn = [None] * sghGC.numOfPins
                                 # turn[stepperList[listLoop][1][0]] = 0
                                 # pass
-                                # else:       
+                                # else:
                                 # motorList = [['motora',11],['motorb',12]]
                                 # for listLoop in range(0,2):
                                 # if self.vFindValue(motorList[listLoop][0]):
@@ -4806,7 +4807,7 @@ class ScratchListener(threading.Thread):
                             outputall_pos = self.dataraw.find('pinpattern')
                             sensor_value = self.dataraw[(outputall_pos + 10):].split()
                             #print sensor_value
-                            #sensor_value[0] = sensor_value[0][:-1]                    
+                            #sensor_value[0] = sensor_value[0][:-1]
                             #print sensor_value[0]
                             bit_pattern = ('00000000000000000000000000' + sensor_value[0])[-sghGC.numOfPins:]
                             #print 'bit_pattern %s' % bit_pattern
@@ -4828,7 +4829,7 @@ class ScratchListener(threading.Thread):
                                 sensor_name = 'adc' + str(channel)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, adc)
                                 #print 'sending: %s' % bcast_str
-                                msgQueue.put(bcast_str)
+                                msgQueue.put((5,bcast_str))
 
                     if ((piglow is not None) and ("piglow" not in ADDON)):
                         #print "processing piglow variables"
@@ -4935,7 +4936,7 @@ class ScratchListener(threading.Thread):
                                 # xm = led - int((math.sqrt(self.matrixUse) * ym))
                                 # for yy in range(0,self.matrixLimit):
                                 # for xx in range(0,self.matrixLimit):
-                                # AdaMatrix.setPixel((7 - (xm * self.matrixMult)-xx),(ym * self.matrixMult)+yy,1) 
+                                # AdaMatrix.setPixel((7 - (xm * self.matrixMult)-xx),(ym * self.matrixMult)+yy,1)
 
                                 if self.bFind("led" + str(led + 1)):
                                     for colour in colours:
@@ -5060,9 +5061,9 @@ class ScratchListener(threading.Thread):
                                 sensor_name = 'matrixvalue'
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, mValue)
                                 #print 'sending: %s' % bcast_str
-                                msgQueue.put(bcast_str)
+                                msgQueue.put((5,bcast_str))
 
-                    self.dataraw = origdataraw  #restore oringal sell.dataraw                      
+                    self.dataraw = origdataraw  #restore oringal sell.dataraw
                     if PiMatrix is not None:  #Matrix connected
                         #print self.dataraw
                         #print
@@ -5145,24 +5146,24 @@ class ScratchListener(threading.Thread):
                         sensor_name = 'timeanddate'
                         bcast_str = 'sensor-update "%s" "''%s''"' % (sensor_name, TimeAndDate)
                         #print 'sending: %s' % bcast_str
-                        #msgQueue.put(bcast_str)
-                        msgQueue.put(bcast_str)
+                        #msgQueue.put((5,bcast_str))
+                        msgQueue.put((5,bcast_str))
 
                         fulldatetime = now.strftime('%Y%m%d%H%M%S')
                         sensor_name = 'fulldatetime'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, fulldatetime)
                         #print 'sending: %s' % bcast_str
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
                         hrs = fulldatetime[-6:-4]
                         sensor_name = 'hours'
                         bcast_str = 'sensor-update "%s" "''%s''"' % (sensor_name, hrs)
                         #print 'sending: %s' % bcast_str
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
                         minutes = fulldatetime[-4:-2]
                         sensor_name = 'minutes'
                         bcast_str = 'sensor-update "%s" "''%s''"' % (sensor_name, minutes)
                         #print 'sending: %s' % bcast_str
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
 
                     if self.bFind("readcount"):  #update pin count values
                         for pin in sghGC.validPins:  #loop thru all pins
@@ -5174,7 +5175,7 @@ class ScratchListener(threading.Thread):
                                     sensor_name = 'count' + str(pin)
                                     bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.pinCount[pin])
                                     #print 'sending: %s' % bcast_str
-                                    msgQueue.put(bcast_str)
+                                    msgQueue.put((5,bcast_str))
 
                     if self.bFind("resetcount"):  #update pin count values
                         for pin in sghGC.validPins:  #loop thru all pins
@@ -5194,7 +5195,7 @@ class ScratchListener(threading.Thread):
                         logging.debug("IP:%s", ipaddr)
                         sensor_name = 'ipaddress'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, "ip" + ipaddr)
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
 
                     if self.bFind("gettemp"):  #find temp address
                         if sghGC.dsSensorId == "":
@@ -5207,7 +5208,7 @@ class ScratchListener(threading.Thread):
                             temperature = sghGC.getDS180Temp()  #sghGC.dsSensorId)
                             sensor_name = 'temperature'
                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
                     if self.bFind("getcputemp"):  #find cputemp
                         logging.debug("Finding CPUTemp")
@@ -5222,7 +5223,7 @@ class ScratchListener(threading.Thread):
                         #logging.debug("IP:%s", ipaddr)
                         sensor_name = 'cputemp'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, temp)
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
 
                     if self.bFindValue('savedata'):
                         with open('data.txt', 'w') as f:
@@ -5266,9 +5267,9 @@ class ScratchListener(threading.Thread):
                             #mc.setBlocks(-100, -63, -100, 100, -2, 100, 1, 0)
                             #mc.setBlocks(-100, -1, -100, 100, -1, 100, 2, 0)
                             #mc.player.setPos(0, 0, 0)
-                            #mc.camera.setFixed() 
+                            #mc.camera.setFixed()
                             #mc.camera.setFollow(1)
-                            #mc.camera.setPos(0,0,0)                            
+                            #mc.camera.setPos(0,0,0)
                             mc.postToChat("ScratchGPIO connected to Minecraft Pi.")
 
                         if self.value == "camnormal":
@@ -5312,19 +5313,19 @@ class ScratchListener(threading.Thread):
                             mc.postToChat(str(x) + " " + str(y) + " " + str(z))
                             sensor_name = 'playerx'
                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(x))
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
                             sensor_name = 'playery'
                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(y))
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
                             sensor_name = 'playerz'
                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(z))
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
                         if self.value == "getblock":
                             blockType = mc.getBlock(sghMC.getxPos(), sghMC.getyPos(), sghMC.getzPos())
                             sensor_name = 'blocktype'
                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(blockType))
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
                         if self.value == "movex-":
                             x, y, z = mc.player.getTilePos()
@@ -5384,7 +5385,7 @@ class ScratchListener(threading.Thread):
                                     b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
                                         chr(n & 0xFF))
                                     totalcmd = totalcmd + b + cmd
-                            #print "Sending to Alt:",totalcmd									
+                            #print "Sending to Alt:",totalcmd
                             self.scratch_socket2.send(totalcmd)
 
                     if self.bFindValue('connect'):
@@ -5414,7 +5415,7 @@ class ScratchListener(threading.Thread):
                     if "version" in dataraw:
                         bcast_str = 'sensor-update "%s" %s' % ("Version", Version)
                         #print 'sending: %s' % bcast_str
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
 
                     if self.bFindValue('ultradelay'):
                         sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
@@ -5426,17 +5427,17 @@ class ScratchListener(threading.Thread):
                         sensor_name = 'irsensor'
                         bcast_str = 'sensor-update "%s" %d' % (sensor_name, value)
                         #print 'sending: %s' % bcast_str
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
                         for led in range(0, 5):
                             sensor_name = 'irsensor' + str(led)
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, int(value & 2 ** led) >> led)
                             #print 'sending: %s' % bcast_str
-                            msgQueue.put(bcast_str)
+                            msgQueue.put((5,bcast_str))
 
                     if self.bFind("setwait"):
                         print "wait"
                         bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((1,bcast_str))
                         self.carryOn = False
 
                     if self.bFindValue("getcheerlights"):
@@ -5450,10 +5451,10 @@ class ScratchListener(threading.Thread):
                         cheerColour = cheerList[lookupColour - 1]
                         print "new colour", cheerColour
                         bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
-                        msgQueue.put(bcast_str)
+                        msgQueue.put((5,bcast_str))
                         bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
-                        msgQueue.put(bcast_str)
-                        print "data valid"
+                        msgQueue.put((1,bcast_str))
+                        #print "data valid", time.time()
 
 
 
@@ -5466,12 +5467,17 @@ class ScratchListener(threading.Thread):
 
                     #print "encoderinUse state" ,sghGC.encoderInUse
                     if sghGC.encoderInUse == 0:
-                        msgQueue.put('sensor-update "encoder" "stopped"')  # inform Scratch that turning is finished
+                        msgQueue.put((5,'sensor-update "encoder" "stopped"'))  # inform Scratch that turning is finished
 
                 if 'stop handler' in dataraw:
                     print "stop handler msg setn from Scratch"
                     cleanup_threads((listener, sender))
                     sys.exit()
+
+                bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                msgQueue.put((2,bcast_str))
+
+                self.carryOn = False
 
                     #else:
                     #print 'received something: %s' % dataraw
@@ -5501,7 +5507,10 @@ class SendMsgsToScratch(threading.Thread):
     def run(self):
         print "msgs runnning"
         while not self.stopped():
-            cmd = self.msgQueue.get()
+            #print self.msgQueue.get()
+            priority,cmd = self.msgQueue.get()
+            # if priority == 1:
+            #     print "deque P1 at", time.time()
             n = len(cmd)
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
             self.scratch_socket.send(b + cmd)
@@ -5531,6 +5540,7 @@ def create_socket(host, port):
 def cleanup_threads(threads):
     print ("cleanup threads started")
     msgQueue.put("STOPSENDING")
+    time.sleep(2)
 
     print "Threads told to stop"
     for thread in threads:
@@ -5744,7 +5754,7 @@ if __name__ == '__main__':
             GPIOPlus = False
 
 cycle_trace = 'start'
-msgQueue = Queue()
+msgQueue = Queue.PriorityQueue()
 
 
 #sghGC.setPinMode()

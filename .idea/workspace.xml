@@ -4,13 +4,13 @@
     <option name="SCOPE_TYPE" value="3" />
     <option name="ANALYSIS_IN_BACKGROUND" value="true" />
   </component>
-  <component name="BookmarkManager">
-    <bookmark url="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py" line="5454" />
-  </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
+    <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Pre change to priority queuing to handle wait/carryon">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload.tar.gz" afterPath="$PROJECT_DIR$/installer/payload.tar.gz" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/install_scratchgpio6dev.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scratchgpio_handler6.py" afterPath="$PROJECT_DIR$/scratchgpio_handler6.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="scratch_gpio.iws" />
@@ -38,8 +38,8 @@
       <file leaf-file-name="scratchgpio_handler6.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.20828258" vertical-offset="10080" max-vertical-offset="99008">
-              <caret line="603" column="52" selection-start-line="603" selection-start-column="52" selection-end-line="603" selection-end-column="52" />
+            <state vertical-scroll-proportion="0.6830808" vertical-offset="93554" max-vertical-offset="99178">
+              <caret line="5535" column="0" selection-start-line="5535" selection-start-column="0" selection-end-line="5535" selection-end-column="0" />
               <folding>
                 <element signature="e#989#1005#0" expanded="true" />
               </folding>
@@ -101,7 +101,7 @@
         </expanded-state>
         <selected-state>
           <State>
-            <id>SpellCheckingInspection</id>
+            <id>Annotator</id>
           </State>
         </selected-state>
       </profile-state>
@@ -330,7 +330,13 @@
       <option name="project" value="LOCAL" />
       <updated>1422000143759</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Pre change to priority queuing to handle wait/carryon">
+      <created>1422122235985</created>
+      <option name="number" value="00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1422122235985</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -338,19 +344,19 @@
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.1466763" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.1466763" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -376,14 +382,15 @@
     </option>
     <MESSAGE value="PyCharm refactor" />
     <MESSAGE value="PyCharm refactoring" />
-    <option name="LAST_COMMIT_MESSAGE" value="PyCharm refactoring" />
+    <MESSAGE value="Pre change to priority queuing to handle wait/carryon" />
+    <option name="LAST_COMMIT_MESSAGE" value="Pre change to priority queuing to handle wait/carryon" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="python-line">
           <url>file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py</url>
-          <line>5454</line>
+          <line>5456</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
@@ -410,8 +417,8 @@
     </entry>
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler6.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.20828258" vertical-offset="10080" max-vertical-offset="99008">
-          <caret line="603" column="52" selection-start-line="603" selection-start-column="52" selection-end-line="603" selection-end-column="52" />
+        <state vertical-scroll-proportion="0.6830808" vertical-offset="93554" max-vertical-offset="99178">
+          <caret line="5535" column="0" selection-start-line="5535" selection-start-column="0" selection-end-line="5535" selection-end-column="0" />
           <folding>
             <element signature="e#989#1005#0" expanded="true" />
           </folding>
