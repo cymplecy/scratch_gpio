@@ -39,7 +39,6 @@ import subprocess
 import sgh_RasPiCamera
 #import pygame removed because causing random failures
 import random
-import numpy
 from Queue import Queue
 from cheerlights import CheerLights
 #import uinput
@@ -163,7 +162,7 @@ class Compass:
         self.bus.write_byte_data(self.address, 0x02, 0x00)  # Continuous measurement
 
     def declination(self):
-        return (self.__declDegrees, self.__declMinutes)
+        return self.__declDegrees, self.__declMinutes
 
     def twos_complement(self, val, len):
         # Convert twos compliment to integer
@@ -579,16 +578,16 @@ class ScratchSender(threading.Thread):
                         bcast_str = '"' + sensor_name + '" ' + sensor_value
                         msgQueue.put("sensor-update " + bcast_str)
                     lastmcpInput = (mcp.input(15) + mcp.input(14) + mcp.input(13) + mcp.input(11) + mcp.input(9))
-                if (time.time() - lastTimeSinceMCPAnalogRead) > 0.5:
+                if (time.time() - lastTimeSinceMCPAnalogRead) > 1:
                     for channel in range(0, 8):
                         adc = (self.ReadChannel(channel) + (2 * lastADC[channel])) / 3
-                        if adc <> lastADC[channel]:
+                        if (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
                             sensor_name = 'adc' + str(channel)
                             bcast_str = '"' + sensor_name + '" ' + str(adc)
                             msgQueue.put("sensor-update " + bcast_str)
                             if channel == 0:
                                 sensor_name = 'temperature'
-                                bcast_str = '"' + sensor_name + '" ' + str(((adc * 500) / float(1023)) - 50)
+                                bcast_str = '"' + sensor_name + '" ' + str(float("{0:.1f}".format(((adc * 500) / float(1023)) - 50)))
                                 msgQueue.put("sensor-update " + bcast_str)
                         lastADC[channel] = adc
                     lastTimeSinceMCPAnalogRead = time.time()
@@ -866,6 +865,7 @@ class ScratchListener(threading.Thread):
         self.matrixLimit = 1
         self.matrixRangemax = 8
         self.arm = None
+        self.carryOn = True
 
 
     def meArmGotoPoint(self, meHorizontal, meDistance, meVertical):
@@ -5433,6 +5433,12 @@ class ScratchListener(threading.Thread):
                             #print 'sending: %s' % bcast_str
                             msgQueue.put(bcast_str)
 
+                    if self.bFind("setwait"):
+                        print "wait"
+                        bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                        msgQueue.put(bcast_str)
+                        self.carryOn = False
+
                     if self.bFindValue("getcheerlights"):
                         #print self.value
                         lookupColour = min(10, max(1, int(self.valueNumeric))) if self.valueIsNumeric else 1
@@ -5440,11 +5446,15 @@ class ScratchListener(threading.Thread):
                         if (cheerList is None) or (lookupColour == 1):
                             #print("Fetching colour from internet")
                             cheerList = cheerlights.get_colours()
+                        #print cheerList
                         cheerColour = cheerList[lookupColour - 1]
-                        #print "new colour", cheerColour   
+                        print "new colour", cheerColour
                         bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
-                        #print 'sending: %s' % bcast_str
                         msgQueue.put(bcast_str)
+                        bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
+                        msgQueue.put(bcast_str)
+                        print "data valid"
+
 
 
 
@@ -5472,9 +5482,9 @@ class ScratchListener(threading.Thread):
 
 ##Messages to Scratch using a Queue
 class SendMsgsToScratch(threading.Thread):
-    def __init__(self, socket, q):
+    def __init__(self, socket, msgQueue):
         threading.Thread.__init__(self)
-        self.q = q
+        self.msgQueue = msgQueue
         self.scratch_socket = socket
         self.scratch_socket2 = None
         self._stop = threading.Event()
@@ -5491,7 +5501,7 @@ class SendMsgsToScratch(threading.Thread):
     def run(self):
         print "msgs runnning"
         while not self.stopped():
-            cmd = self.q.get()
+            cmd = self.msgQueue.get()
             n = len(cmd)
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
             self.scratch_socket.send(b + cmd)
