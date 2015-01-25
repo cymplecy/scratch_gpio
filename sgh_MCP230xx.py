@@ -58,6 +58,7 @@ class Adafruit_MCP230XX(object):
             self.i2c.write8(MCP23017_IODIRB, 0xFF)  # all inputs on port B
             self.direction = self.i2c.readU8(MCP23017_IODIRA)
             self.direction |= self.i2c.readU8(MCP23017_IODIRB) << 8
+            print "init direction", bin(self.direction)
             self.i2c.write8(MCP23017_GPPUA, 0x00)
             self.i2c.write8(MCP23017_GPPUB, 0x00)
 
@@ -94,10 +95,10 @@ class Adafruit_MCP230XX(object):
             self.direction = self._readandchangepin(MCP23017_IODIRA, pin, mode)
         if self.num_gpios <= 16:
             if (pin < 8):
-                self.direction = self._readandchangepin(MCP23017_IODIRA, pin, mode)
+                self.direction = (self.direction & 0b1111111100000000) +  self._readandchangepin(MCP23017_IODIRA, pin, mode)
             else:
-                self.direction |= self._readandchangepin(MCP23017_IODIRB, pin-8, mode) << 8
-
+                self.direction = (self.direction & 0b0000000011111111) + (self._readandchangepin(MCP23017_IODIRB, pin-8, mode) << 8)
+        #print bin(self.direction)
         return self.direction
 
     def output(self, pin, value):
