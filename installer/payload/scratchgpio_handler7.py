@@ -16,7 +16,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
+# This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 Version = 'v7.0.0'  # Digital IO for PiAndBash
 import threading
 import socket
