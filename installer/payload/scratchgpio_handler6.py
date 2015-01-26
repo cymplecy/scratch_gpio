@@ -492,7 +492,7 @@ class ScratchSender(threading.Thread):
             #print "channel ok", channel
             return data
         except:
-            print "spi exception"
+            print "spi exception - one of these is normal"
             spi = spidev.SpiDev()
             spi.open(0, 0)
             return 0
@@ -512,6 +512,7 @@ class ScratchSender(threading.Thread):
         lastTimeSinceMCPAnalogRead = time.time()
         self.sleepTime = 0.1
         lastADC = [256, 256, 256, 256, 256, 256, 256, 256]
+        lastpiAndBash = [1,1,1,1,1,1,1,1]
 
         joyx, joyy, accelx, accely, accelz, button = [0, 0, 0, 0, 0, 0]
         lastAngle = 0
@@ -570,7 +571,21 @@ class ScratchSender(threading.Thread):
                         lastADC[channel] = adc
 
             if "piandbash" in ADDON:
-                if (mcp.input(15) + mcp.input(14) + mcp.input(13) + mcp.input(11) + mcp.input(9)) <> lastmcpInput:
+
+                with lock:
+                    bcast_str = ""
+                    for digitalIO in range(0, 8):
+                        if (sghGC.piAndBash[digitalIO] in  [sghGC.PINPUT, sghGC.PINPUTNONE, sghGC.PINPUTDOWN]):
+                            if mcp.input(digitalIO) != lastpiAndBash[digitalIO]:
+                                sensor_name = 'input' + str(digitalIO)
+                                bcast_str += '"' + sensor_name + '" ' + str(mcp.input(digitalIO)>>digitalIO) + " "
+                            lastpiAndBash[digitalIO] =  mcp.input(digitalIO)
+                    if bcast_str != "":
+                        msgQueue.put((5,"sensor-update " + bcast_str))
+
+
+                if (mcp.input(15) + mcp.input(14)
+                        + mcp.input(13) + mcp.input(11) + mcp.input(9)) <> lastmcpInput:
                     dict2 = {15: 'botsel', 14: 'topsel', 13: 'down', 11: 'enter', 9: 'up'}
                     for i in dict2.keys():
                         sensor_name = dict2[i]
@@ -2182,26 +2197,39 @@ class ScratchListener(threading.Thread):
 
                         if "piandbash" in ADDON:
                             mcp.config(0, mcp.OUTPUT)  # LCD Backlight
+
+                            # for loop in range(1,4):
+                            #     mcp.config(loop, mcp.OUTPUT)
+                            #     sghGC.piAndBash[loop] = sghGC.POUTPUT
+                            #     mcp.output(loop, 0)
+
+                            for loop in range(1,8):
+                                mcp.config(loop, mcp.INPUT)
+                                mcp.pullup(loop, 1)
+                                sghGC.piAndBash[loop] = sghGC.PINPUT
+
                             mcp.config(8, mcp.OUTPUT)  # Green LED
-                            mcp.config(10, mcp.OUTPUT)  # Amber LED
-                            mcp.config(12, mcp.OUTPUT)  # Red LED
 
 
                             # Inputs:
-                            mcp.config(15, mcp.INPUT)  # LCD Lower Line Select Button
-                            mcp.pullup(15, 1)
-                            mcp.config(14, mcp.INPUT)  # LCD Upper Line Select Button
-                            mcp.pullup(14, 1)
-                            mcp.config(13, mcp.INPUT)  # Down Button
-                            mcp.pullup(13, 1)
-                            mcp.config(11, mcp.INPUT)  # Enter Button
-                            mcp.pullup(11, 1)
                             mcp.config(9, mcp.INPUT)  # Up Button
                             mcp.pullup(9, 1)
+                            mcp.config(10, mcp.OUTPUT)  # Amber LED
+                            mcp.config(11, mcp.INPUT)  # Enter Button
+                            mcp.pullup(11, 1)
+                            mcp.config(12, mcp.OUTPUT)  # Red LED
+                            mcp.config(13, mcp.INPUT)  # Down Button
+                            mcp.pullup(13, 1)
+                            mcp.config(14, mcp.INPUT)  # LCD Upper Line Select Button
+                            mcp.pullup(14, 1)
+                            mcp.config(15, mcp.INPUT)  # LCD Lower Line Select Button
+                            mcp.pullup(15, 1)
 
                             mcp.output(8, 0)
                             mcp.output(10, 0)
                             mcp.output(12, 0)
+
+
                             pnblcd = sgh_pnbLCD.sgh_pnbLCD()
                             # Open SPI bus
                             spi = spidev.SpiDev()
@@ -4644,8 +4672,11 @@ class ScratchListener(threading.Thread):
                             mcp.output(8, self.OnOrOff)
                             mcp.output(12, self.OnOrOff)
                             mcp.output(10, self.OnOrOff)
+                            for loop in range(0,8):
+                                if sghGC.piAndBash[loop] == sghGC.POUTPUT:
+                                    mcp.output(loop, self.OnOrOff)
 
-                        if self.bFindValue('clear'):
+                        if self.bFindValue('clearlcd'):
                             if self.valueIsNumeric:
                                 if self.valueNumeric == 1:
                                     pnblcd.lcd_byte(pnblcd.LCD_LINE_1, pnblcd.LCD_CMD)
@@ -4668,6 +4699,13 @@ class ScratchListener(threading.Thread):
                             mcp.output(10, self.OnOrOff)
                         if self.bFindOnOff('amber'):
                             mcp.output(10, self.OnOrOff)
+
+                        for loop in range(0,8):
+                            if self.bFindOnOff("digital"+str(loop)):
+                                with lock:
+                                    sghGC.piAndBash[loop] = sghGC.POUTPUT
+                                    mcp.config(loop,mcp.OUTPUT)
+                                mcp.output(loop,self.OnOrOff)
 
                         if self.bFindValue('line1'):
                             if self.value == 'clear': self.value = ''

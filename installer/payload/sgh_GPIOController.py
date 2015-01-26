@@ -104,6 +104,7 @@ class GPIOController :
         self.gpioMyPinEventDetected = [False] * self.numOfPins
         self.pinTriggerLastState = [0] * self.numOfPins        
         self.encoderCallback = 0
+        self.piAndBash = [self.PUNUSED] * 8
         
         self.pinEventEnabled = True
         self.encoderInUse = 0
