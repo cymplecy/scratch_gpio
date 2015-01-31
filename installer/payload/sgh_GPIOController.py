@@ -104,7 +104,7 @@ class GPIOController :
         self.gpioMyPinEventDetected = [False] * self.numOfPins
         self.pinTriggerLastState = [0] * self.numOfPins        
         self.encoderCallback = 0
-        self.piAndBash = [self.PUNUSED] * 8
+        self.piAndBash = [self.PUNUSED] * 16
         
         self.pinEventEnabled = True
         self.encoderInUse = 0
@@ -702,7 +702,7 @@ class GPIOController :
         print pins
         
         os.system(SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
-        print (SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        #print (SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
         
         self.servodPins = pins
 

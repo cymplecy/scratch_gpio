@@ -4,9 +4,6 @@
     <option name="SCOPE_TYPE" value="3" />
     <option name="ANALYSIS_IN_BACKGROUND" value="true" />
   </component>
-  <component name="BookmarkManager">
-    <bookmark url="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py" line="22" />
-  </component>
   <component name="ChangeListManager">
     <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Pi">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" afterPath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" />
@@ -169,30 +166,7 @@
     <favorites_list name="scratch_gpio" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
-        <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.8915956" vertical-offset="10029" max-vertical-offset="100725">
-              <caret line="633" column="20" selection-start-line="633" selection-start-column="20" selection-end-line="633" selection-end-column="20" />
-              <folding>
-                <element signature="e#1006#1022#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sgh_GPIOController.py" pinned="false" current-in-tab="false">
-        <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_GPIOController.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-33.58621" vertical-offset="10688" max-vertical-offset="13090">
-              <caret line="690" column="8" selection-start-line="690" selection-start-column="8" selection-end-line="690" selection-end-column="8" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf />
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -279,16 +253,6 @@
             <PATH_ELEMENT>
               <option name="myItemId" value="scratch_gpio" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="scratch_gpio" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="scratch_gpio" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
@@ -522,10 +486,10 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="272" y="11" width="1380" height="1000" extended-state="0" />
-    <editor active="true" />
+    <editor active="false" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21774194" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21774194" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
@@ -596,12 +560,12 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="python-line">
-          <url>file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py</url>
+          <url>file:$PROJECT_DIR$/../../../..////192.168.0.86/pi/sghdev/scratch_gpio/scratchgpio_handler7.py</url>
           <line>20</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
-          <url>file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py</url>
+          <url>file:$PROJECT_DIR$/../../../..////192.168.0.86/pi/sghdev/scratch_gpio/scratchgpio_handler7.py</url>
           <line>26</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
@@ -609,25 +573,5 @@
       <option name="time" value="6" />
     </breakpoint-manager>
     <watches-manager />
-  </component>
-  <component name="editorHistoryManager">
-    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_GPIOController.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="-33.58621" vertical-offset="10688" max-vertical-offset="13090">
-          <caret line="690" column="8" selection-start-line="690" selection-start-column="8" selection-end-line="690" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.8915956" vertical-offset="10029" max-vertical-offset="100725">
-          <caret line="633" column="20" selection-start-line="633" selection-start-column="20" selection-end-line="633" selection-end-column="20" />
-          <folding>
-            <element signature="e#1006#1022#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
   </component>
 </project>
