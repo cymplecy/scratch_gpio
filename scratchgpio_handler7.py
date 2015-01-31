@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.0'  # Digital IO for PiAndBash
+Version = 'v7.0.001'  # Add in PiPiano
 import threading
 import socket
 import time
@@ -110,13 +110,7 @@ try:
 except:
     print "nunchuck not imported - check I2c is setup"
 
-try:
-    import sgh_unicornhat as UH
 
-    print "UnicornHat imported OK"
-except:
-    print "UnicornHat NOT imported OK"
-    pass
 
 try:
     import mcpi.minecraft as minecraft
@@ -512,7 +506,7 @@ class ScratchSender(threading.Thread):
         lastTimeSinceMCPAnalogRead = time.time()
         self.sleepTime = 0.1
         lastADC = [256, 256, 256, 256, 256, 256, 256, 256]
-        lastpiAndBash = [1,1,1,1,1,1,1,1]
+        lastpiAndBash = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 
         joyx, joyy, accelx, accely, accelz, button = [0, 0, 0, 0, 0, 0]
         lastAngle = 0
@@ -521,6 +515,15 @@ class ScratchSender(threading.Thread):
             bcast_str = '"' + sensor_name + '" ' + str(int(0))
             msgQueue.put((5,"sensor-update " + bcast_str))
         lastmcpInput = 0
+
+        if "pipiano" in ADDON:
+            with lock:
+                for digitalIO in range(0, 13):
+                    if (sghGC.piAndBash[digitalIO] in  [sghGC.PINPUT, sghGC.PINPUTNONE, sghGC.PINPUTDOWN]):
+                        try:
+                            lastpiAndBash[digitalIO] = mcp.input(digitalIO)
+                        except:
+                            pass
 
         while not self.stopped():
 
@@ -608,6 +611,27 @@ class ScratchSender(threading.Thread):
 
                     lastTimeSinceMCPAnalogRead = time.time()
 
+            if "pipiano" in ADDON:
+
+                with lock:
+                    bcast_str = ""
+                    for digitalIO in range(0, 13):
+                        if (sghGC.piAndBash[digitalIO] in  [sghGC.PINPUT, sghGC.PINPUTNONE, sghGC.PINPUTDOWN]):
+                            try:
+                                if mcp.input(digitalIO) != lastpiAndBash[digitalIO]:
+                                    sensor_name = 'note'# + str([60,62,64,65,67,69,71,72,61,63,66,68,70][digitalIO])
+                                    if (mcp.input(digitalIO)>>digitalIO) == 1:
+                                        bcast_str += ' "' + sensor_name + '" 0'#str(mcp.input(digitalIO)>>digitalIO) + " "
+                                    else:
+                                        bcast_str += ' "' + sensor_name + '" ' + str([60,62,64,65,67,69,71,72,61,63,66,68,70][digitalIO]) +" "#str(mcp.input(digitalIO)>>digitalIO) + " "
+                                    msgQueue.put((5,"sensor-update" + bcast_str))
+                                    msgQueue.put((5,'broadcast "Trigger' + sensor_name + '"'))
+                                lastpiAndBash[digitalIO] =  mcp.input(digitalIO)
+                            except:
+                                pass
+                    #if bcast_str != "":
+                    #    msgQueue.put((5,"sensor-update" + bcast_str))
+                    time.sleep(0.1)
 
                     #print wii
             if wii is not None:  #if wii  found
@@ -1415,6 +1439,7 @@ class ScratchListener(threading.Thread):
         tcolours = None  # set tcolours to None so it can be detected later
         pnblcd = None
         cheerList = None
+        UH = None
 
         if not GPIOPlus:
             with lock:
@@ -2234,6 +2259,17 @@ class ScratchListener(threading.Thread):
                             # Open SPI bus
                             spi = spidev.SpiDev()
                             spi.open(0, 0)
+
+                        if "pipiano" in ADDON:
+                            for loop in range(0,13):
+                                mcp.config(loop, mcp.INPUT)
+                                mcp.pullup(loop, 1)
+                                sghGC.piAndBash[loop] = sghGC.PINPUT
+
+                            #mcp.config(8, mcp.OUTPUT)  # Green LED
+
+
+
 
                         for pin in sghGC.validPins:
                             if (sghGC.pinUse[pin] in [sghGC.PINPUT, sghGC.PINPUTNONE, sghGC.PINPUTDOWN]):
@@ -3933,6 +3969,13 @@ class ScratchListener(threading.Thread):
 
 
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON):  #Matrix connected
+                        if UH is None:
+                            try:
+                                import sgh_unicornhat as UH
+                                print "UnicornHat imported OK"
+                            except:
+                                print "UnicornHat software not installed"
+                                break
                         #print "addon", ADDON
                         lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
                         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
