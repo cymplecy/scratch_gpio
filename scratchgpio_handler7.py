@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.001'  # Add in PiPiano
+Version = 'v7.0.002'  # Bugfix piroconb
 import threading
 import socket
 import time
@@ -2694,7 +2694,7 @@ class ScratchListener(threading.Thread):
 
                         #check for motor variable commands
                         motorList = [['motora', 21, 26, 0], ['motorb', 19, 24]]
-                        if "rb" in ADDON:
+                        if "piroconb" in ADDON:
                             logging.debug("PiRoConB Found:%s", ADDON)
                             motorList = [['motora', 21, 19, 0, False], ['motorb', 26, 24, 0, False]]
 

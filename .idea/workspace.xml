@@ -6,13 +6,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Pi">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" afterPath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" afterPath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NeoPixel.so" afterPath="$PROJECT_DIR$/NeoPixel.so" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/NeoPixel.so" afterPath="$PROJECT_DIR$/.idea/shelf/NeoPixel.so" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/blink11.sb" afterPath="$PROJECT_DIR$/.idea/shelf/blink11.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/blink11.sb" afterPath="$PROJECT_DIR$/installer/payload/blink11.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/guru.png" afterPath="$PROJECT_DIR$/guru.png" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/guru.png" afterPath="$PROJECT_DIR$/.idea/shelf/guru.png" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/.idea/shelf/install_scratchgpio5dev.sh.orig" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/rsc.sb" afterPath="$PROJECT_DIR$/.idea/shelf/rsc.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/rsc.sb" afterPath="$PROJECT_DIR$/installer/payload/rsc.sb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/sgh_servod1" afterPath="$PROJECT_DIR$/.idea/shelf/sgh_servod1" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_servod" afterPath="$PROJECT_DIR$/sgh_servod" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/sgh_servod" afterPath="$PROJECT_DIR$/.idea/shelf/sgh_servod" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_servod" afterPath="$PROJECT_DIR$/installer/payload/sgh_servod" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/.name" afterPath="$PROJECT_DIR$/.idea/.name" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/27.py" afterPath="$PROJECT_DIR$/27.py" />
@@ -20,6 +28,7 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/Pi.patch" afterPath="$PROJECT_DIR$/.idea/shelf/Pi.patch" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/RPiGPIOTest.py" afterPath="$PROJECT_DIR$/RPiGPIOTest.py" />
@@ -67,6 +76,8 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio7.sh" afterPath="$PROJECT_DIR$/install_scratchgpio7.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio7.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio7.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio7dev.sh" afterPath="$PROJECT_DIR$/install_scratchgpio7dev.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio7dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio7dev.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/installer.sh" afterPath="$PROJECT_DIR$/installer/payload/installer.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ipd03.py" afterPath="$PROJECT_DIR$/ipd03.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/jazzy.py" afterPath="$PROJECT_DIR$/jazzy.py" />
@@ -166,7 +177,18 @@
     <favorites_list name="scratch_gpio" />
   </component>
   <component name="FileEditorManager">
-    <leaf />
+    <leaf>
+      <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
+        <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.58064514" vertical-offset="0" max-vertical-offset="100419">
+              <caret line="18" column="44" selection-start-line="18" selection-start-column="44" selection-end-line="18" selection-end-column="44" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -247,6 +269,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -255,9 +278,18 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scratch_gpio" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scratch_gpio" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -486,12 +518,12 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="272" y="11" width="1380" height="1000" extended-state="0" />
-    <editor active="false" />
+    <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21774194" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21774194" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32996634" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -573,5 +605,15 @@
       <option name="time" value="6" />
     </breakpoint-manager>
     <watches-manager />
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.58064514" vertical-offset="0" max-vertical-offset="100419">
+          <caret line="18" column="44" selection-start-line="18" selection-start-column="44" selection-end-line="18" selection-end-column="44" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
   </component>
 </project>
