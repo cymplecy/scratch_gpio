@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.002'  # Bugfix piroconb
+Version = 'v7.0.003'  #Data in handling changed for AllOff
 import threading
 import socket
 import time
@@ -875,7 +875,7 @@ class ScratchSender(threading.Thread):
                 self.time_last_compass = time.time()
 
 
-                #time.sleep(2)
+            time.sleep(2)
 
 
 class ScratchListener(threading.Thread):
@@ -1516,17 +1516,11 @@ class ScratchListener(threading.Thread):
                                 #print size, len(dataMsg)
                                 dataPrevious = dataIn  # store data and tag it onto next data read
                                 break
+                                
                             if len(dataMsg) == size:  # if msg recieved is correct
                                 if "alloff" in dataMsg:
                                     allSplit = dataMsg.find("alloff")
-
-                                    logging.debug("Whole message:%s", dataIn)
-                                    #dataPrevious = dataIn # store data and tag it onto next data read
-                                    #break
-                                #print "half msg found"
-                                #print size, len(dataMsg)
-                                dataPrevious = dataIn  # store data and tag it onto next data read
-                                #break
+                                    logging.debug("not sure why this code is here Whole message:%s", dataIn)
 
                             dataPrevious = ""  # no data needs tagging to next read
                             if ("alloff" in dataMsg) or ("allon" in dataMsg):
