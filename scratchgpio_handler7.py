@@ -574,13 +574,17 @@ class ScratchSender(threading.Thread):
 
             if pcfSensor is not None:  #if PCF ADC found
                 for channel in range(0, 4):  #loop thru all 4 inputs
-                    adc = pcfSensor.readADC(channel)  # get each value
+                    adc = -1
+                    try:
+                        adc = pcfSensor.readADC(channel)  # get each value
+                    except:
+                        pass
                     adc = int((adc + lastADC[channel]) / 2.0)
                     if adc <> lastADC[channel]:
                         #print "channel,adc:",(channel+1),adc
                         sensor_name = 'adc' + str(channel + 1)
                         bcast_str = '"' + sensor_name + '" ' + str(adc)
-                        msgQueue.put((5,"sensor-update " + bcast_str))
+                        msgQueue.put((0,"sensor-update " + bcast_str))
                         lastADC[channel] = adc
 
             if "piandbash" in ADDON:
@@ -4731,7 +4735,7 @@ class ScratchListener(threading.Thread):
 
                         self.dataraw = origdataraw
 
-                    ADDON = oldADDON #restore after possible parthat use
+                        ADDON = oldADDON #restore after possible parthat use
 
                     if "piandbash" in ADDON:
                         if self.bFindOnOff('all'):
