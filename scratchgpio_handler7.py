@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.003'  #Data in handling changed for AllOff
+Version = 'v7.0.005'  #PartyHAT added
 import threading
 import socket
 import time
@@ -374,6 +374,16 @@ class ScratchSender(threading.Thread):
                 sensor_name = ["green", "red", "blue", "yellow"][([19, 21, 26, 24].index(pin))]
             except:
                 print "pidie input out of range"
+                sensor_name = "pin" + str(pin)
+                pass
+            sensorValue = ("on", "off")[value == 1]
+        elif "partyhat" in ADDON:
+            #print pin
+            #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
+            try:
+                sensor_name = ["red", "green", "yellow", "blue"][([7,11,13,15].index(pin))]
+            except:
+                print "parthat out of range"
                 sensor_name = "pin" + str(pin)
                 pass
             sensorValue = ("on", "off")[value == 1]
@@ -875,7 +885,7 @@ class ScratchSender(threading.Thread):
                 self.time_last_compass = time.time()
 
 
-            time.sleep(2)
+            #time.sleep(2)
 
 
 class ScratchListener(threading.Thread):
@@ -1534,7 +1544,7 @@ class ScratchListener(threading.Thread):
                                         dataPrefix = "br"
                                 else:
                                     if dataPrefix == "se":
-                                        dataList[-1] += dataMsg[10:]
+                                        dataList[-1] += dataMsg[13:] #changr from 10 to 13
                                     else:
                                         dataList.append(dataMsg)
                                         dataPrefix = "se"
@@ -1879,7 +1889,7 @@ class ScratchListener(threading.Thread):
                                 anyAddOns = True
 
                         if "pidie" in ADDON:
-                            print "pidie detected"
+                            print "pidie enabled"
 
                             with lock:
                                 sghGC.resetPinMode()
@@ -1890,6 +1900,18 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUse[pin] = sghGC.POUTPUT
                                 pidieInputs = [21, 19, 24, 26]
                                 for pin in pidieInputs:
+                                    sghGC.pinUse[pin] = sghGC.PINPUT
+                                sghGC.setPinMode()
+                                anyAddOns = True
+
+                        if "partyhat" in ADDON:
+                            print "partyhat enabled"
+
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.pinUse[16] = sghGC.POUTPUT
+                                inputs = [7,11,13,15]
+                                for pin in inputs:
                                     sghGC.pinUse[pin] = sghGC.PINPUT
                                 sghGC.setPinMode()
                                 anyAddOns = True
@@ -2791,6 +2813,7 @@ class ScratchListener(threading.Thread):
                                         ["led1", "led2", "led3", "led4", "led5", "led6", "led7", "led8", "led9"])
                         self.vListCheckPowerOnly([7, 11, 12, 13, 15, 16, 18, 22, 8],
                                                  ["1", "2", "3", "4", "5", "6", "7", "8", "9"])
+
 
                     elif "fishdish" in ADDON:
                         #do fishdish stuff
@@ -3962,7 +3985,10 @@ class ScratchListener(threading.Thread):
                         self.bListCheck([11, 13, 15], ["red", "green", "blue"])  # Check for LEDs
 
 
-                    elif ("unicorn") in ADDON or ("neopixels" in ADDON):  #Matrix connected
+                    elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("partyhat" in ADDON):  #Matrix connected
+                        oldADDON = ADDON
+                        if "partyhat" in ADDON:
+                            ADDON = ADDON + " neopixels9"
                         if UH is None:
                             try:
                                 import sgh_unicornhat as UH
@@ -3997,7 +4023,7 @@ class ScratchListener(threading.Thread):
 
                         for broadcastListLoop in broadcastList:
                             self.dataraw = " " + str(broadcastListLoop) + " "
-                            #print "inside loop", self.dataraw
+                            #print "inside inner loop", self.dataraw
 
                             #print "self.matrixuse", self.matrixUse
 
@@ -4498,13 +4524,14 @@ class ScratchListener(threading.Thread):
                                         UH.set_pixel(x, 0, 0, 0, 0)
                                     UH.show()
                             else:
-                                if self.bFind("shift"):
-                                    for index in range(0, self.matrixUse - 1):
-                                        oldr, oldg, oldb = UH.get_neopixel(index + 1)
-                                        #print "oldpixel" , oldpixel
-                                        UH.set_neopixel(index, oldr, oldg, oldb)
-                                    UH.set_neopixel(self.matrixUse - 1, 0, 0, 0)
-                                    UH.show()
+                                if self.bFindValue("shift"):
+                                    if self.value != "down":
+                                        for index in range(self.matrixUse,0, - 1):
+                                            oldr, oldg, oldb = UH.get_neopixel(index - 1)
+                                            print "oldpixel" , index, oldr, oldg, oldb
+                                            UH.set_neopixel(index, oldr, oldg, oldb)
+                                        #UH.set_neopixel(1, 0, 0, 0)
+                                        UH.show()
                                 if self.bFind("rotate"):
                                     lr, lg, lb = UH.get_neopixel(0)
                                     for index in range(0, self.matrixUse - 1):
@@ -4703,6 +4730,8 @@ class ScratchListener(threading.Thread):
                                         UH.show()
 
                         self.dataraw = origdataraw
+
+                    ADDON = oldADDON #restore after possible parthat use
 
                     if "piandbash" in ADDON:
                         if self.bFindOnOff('all'):
@@ -5540,6 +5569,11 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
                         msgQueue.put((1,bcast_str))
                         #print "data valid", time.time()
+
+                    if "partyhat" in ADDON:  # PartyHAT
+
+                        if self.bFindOnOff('buzzer'):
+                            sghGC.pinUpdate(16, self.OnOrOff)
 
 
 
