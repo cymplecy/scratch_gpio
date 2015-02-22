@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.005'  #PartyHAT added
+Version = 'v7.0.006'  #Explorer HAT added
 import threading
 import socket
 import time
@@ -581,7 +581,7 @@ class ScratchSender(threading.Thread):
                                 #print " "
                             time.sleep(0)
 
-            if pcfSensor is not None:  #if PCF ADC found
+            if (pcfSensor is not None) and ("explorer" not in ADDON):  #if PCF ADC found
                 for channel in range(0, 4):  #loop thru all 4 inputs
                     adc = -1
                     try:
@@ -909,6 +909,9 @@ class ScratchSender(threading.Thread):
                     sghCT = sgh_captouch_helper.sgh_captouch_helper()
                     sghGC.capTouchHelper = sghCT
                     print "sghCT", sghCT
+                    import sgh_explorer_analog
+                    sghGC.ADS1015 = sgh_explorer_analog.ADS1015()
+                    print "ADS1015", sghGC.ADS1015
                     for loop in range(0,8):
                         sghGC.capTouch.on(loop,"press",sghCT.ctHandler)
                 else:
@@ -923,8 +926,13 @@ class ScratchSender(threading.Thread):
                     if sghCT.ctTrigStatus[8][1] == 1:
                         msgQueue.put((0,'broadcast "Touch"'))
                         sghCT.ctTrigStatus[8][1] = 2
-
-
+                    for loop in range(0,4):
+                            sensor_name = "analog" + str(4 - loop)
+                            sensor_value =  str(sghGC.ADS1015.read_se_adc(loop))
+                            #print sensor_name,sensor_value
+                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, sensor_value)
+                            msgQueue.put((0,bcast_str))
+                    time.sleep(0.5)
 
             #time.sleep(2)
 
