@@ -1,0 +1,20 @@
+led1 7
+led2 11
+led3 13
+led4 29
+
+Ouput1 31
+Ouput2 32
+Ouput3 33
+Ouput4 36
+
+Motor2 40,37 -/+
+
+Motor1 38,35 -/+	 
+
+
+inputs
+16
+15
+18
+22

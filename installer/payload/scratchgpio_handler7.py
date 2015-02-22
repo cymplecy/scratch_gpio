@@ -120,6 +120,9 @@ except:
     print "Minecraft NOT imported OK"
     pass
 
+sghCT = None #reserve for captouch
+
+
 #try and inport smbus but don't worry if not installed
 #try:
 #    from smbus import SMBus
@@ -453,10 +456,15 @@ class ScratchSender(threading.Thread):
             sensorValue = ("on", "off")[value == 1]
         elif "pitt" in ADDON:
             sensorValue = ("1", "0")[value == 1]
+        elif "explorer" in ADDON:
+            sensor_name = ["input1", "input2", "input3", "input4"][([16,15,18,22].index(pin))]
+            sensorValue = ("0", "1")[value == 1]
 
         if ("fishdish" in ADDON):
             sensor_name = "switch"
             sensorValue = ("on", "off")[value == 1]
+
+
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
         msgQueue.put(((5,"sensor-update " + bcast_str)))
@@ -500,6 +508,7 @@ class ScratchSender(threading.Thread):
             spi = spidev.SpiDev()
             spi.open(0, 0)
             return 0
+
 
     def run(self):
         global firstRun, ADDON, compass, wii
@@ -577,6 +586,7 @@ class ScratchSender(threading.Thread):
                     adc = -1
                     try:
                         adc = pcfSensor.readADC(channel)  # get each value
+                        #print "adc",channel,adc
                     except:
                         pass
                     adc = int((adc + lastADC[channel]) / 2.0)
@@ -888,6 +898,33 @@ class ScratchSender(threading.Thread):
                     msgQueue.put((5,bcast_str))
                 self.time_last_compass = time.time()
 
+            if "explorer" in ADDON:
+                #print "explorer addon found"
+                if sghGC.capTouch is None:
+                    import sgh_captouch
+                    print "SGH_captouch imported OK"
+                    import sgh_captouch_helper
+                    print "SGH_captouch_helper imported OK"
+                    sghGC.capTouch = sgh_captouch.Cap1208()
+                    sghCT = sgh_captouch_helper.sgh_captouch_helper()
+                    sghGC.capTouchHelper = sghCT
+                    print "sghCT", sghCT
+                    for loop in range(0,8):
+                        sghGC.capTouch.on(loop,"press",sghCT.ctHandler)
+                else:
+                    for loop in range(0,8):
+                        #print sghCT.ctTrigStatus[loop]
+                        if sghCT.ctTrigStatus[loop][1] == 1:
+                            #print dt.datetime.now()
+                            sensor_name = sghCT.ctTrigStatus[loop][0]
+                            print "trigger being sent for:", sensor_name
+                            msgQueue.put((0,'broadcast "Touch' + str(sensor_name) + '"'))
+                            sghCT.ctTrigStatus[loop][1] = 2
+                    if sghCT.ctTrigStatus[8][1] == 1:
+                        msgQueue.put((0,'broadcast "Touch"'))
+                        sghCT.ctTrigStatus[8][1] = 2
+
+
 
             #time.sleep(2)
 
@@ -962,10 +999,14 @@ class ScratchListener(threading.Thread):
         if (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(
                     searchStr + '1 ') or self.bFind(searchStr + 'true ')):
             self.OnOrOff = 1
+            self.valueNumeric = 1
+            self.value = "on"
             return True
         elif (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(
                     searchStr + '0 ') or self.bFind(searchStr + 'false ')):
             self.OnOrOff = 0
+            self.valueNumeric = 01
+            self.value = "off"
             return True
         else:
             return False
@@ -1065,42 +1106,6 @@ class ScratchListener(threading.Thread):
                     return False
         else:
             return False
-
-            # if self.bFind(searchStr):
-            # if searchSuffix == '':
-            # sensor_value = self.dataraw[(self.searchPos + len(searchStr)):].split()
-            # #print "1 s value",sensor_value
-            # try:
-            # self.value = sensor_value[0]
-            # except IndexError:
-            # self.value = ""
-            # pass
-            # #print self.value
-            # if isNumeric(self.value):
-            # self.valueNumeric = float(self.value)
-            # self.valueIsNumeric = True
-            # #print "numeric" , self.valueNumeric
-            # return True
-            # else:
-            # sensor_value = self.dataraw[(self.searchPos + len(searchStr)):].split()[0]
-            # if sensor_value.endswith(searchSuffix):
-            # sensor_value=sensor_value[:-len(searchSuffix)]
-            # print "2 s value",sensor_value
-            # try:
-            # self.value = sensor_value[0]
-            # except IndexError:
-            # self.value = ""
-            # pass
-            # #print self.value
-            # if isNumeric(self.value):
-            # self.valueNumeric = float(self.value)
-            # self.valueIsNumeric = True
-            # #print "numeric" , self.valueNumeric
-            # return True
-            # else:
-            # return False
-            # else:
-            # return False
 
     def bLEDPowerCheck(self, ledList):
         for led in range(1, (1 + len(ledList))):  # loop thru led numbers
@@ -2288,7 +2293,17 @@ class ScratchListener(threading.Thread):
 
                             #mcp.config(8, mcp.OUTPUT)  # Green LED
 
-
+                        if "explorer" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                for pin in [7,11,13,29,31,32,33,36,40,37,38,35]:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                for pin in [16,15,18,22]:
+                                    sghGC.pinUse[pin] = sghGC.PINPUT
+                                sghGC.setPinMode()
+                                for pin in [7,11,13,29,31,32,33,36,40,37,38,35]:
+                                    sghGC.pinUpdate(pin, 0)  # turn all the pins physically off
+                                anyAddOns = True
 
 
                         for pin in sghGC.validPins:
@@ -3150,6 +3165,16 @@ class ScratchListener(threading.Thread):
                         self.vListCheck([11, 13, 15], ["red", "green", "blue"])  # Check for LEDs
 
                         ######### End of BerryClip Variable handling
+                    elif "explorer" in ADDON:
+
+                        motorList = [['motor1', 38, 35, 0, False], ['motor2', 40, 37, 0, False]]
+                        #logging.debug("ADDON:%s", ADDON)
+
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
 
 
                     else:  #normal variable processing with no add on board
@@ -3509,6 +3534,21 @@ class ScratchListener(threading.Thread):
                                     print "trigger reset found", self.value
                                     sghGC.pinTrigger[pin] = 0
                                     sghGC.anyTrigger = 0
+
+                    if self.bFindValue("touchreset"):
+                        sghCT = sghGC.capTouchHelper
+                        print "touchreset detected", sghCT
+                        #print len(self.value) , ("["+self.value+"]")
+                        if self.value == "":
+                            for loop in range(0,8):
+                                print "loop",sghCT.ctTrigStatus[loop]
+                                sghCT.ctTrigStatus[loop][1] = 0
+                            sghCT.ctTrigStatus[8][1] = 0
+                        else:
+                            for loop in range(0,8):
+                                if sghCT.ctTrigStatus[loop][0] == self.valueNumeric:
+                                    sghCT.ctTrigStatus[loop][1] = 0
+
 
                     #msgQueue.put((5,"broadcast Begin"))
                     if self.bFind("stepper"):
@@ -5578,6 +5618,34 @@ class ScratchListener(threading.Thread):
 
                         if self.bFindOnOff('buzzer'):
                             sghGC.pinUpdate(16, self.OnOrOff)
+
+                    if "explorerhat" in ADDON:
+                        if self.bFindOnOff("green"):
+                            print "red:",self.OnOrOff
+                            sghGC.pinUpdate(7,self.OnOrOff)
+                        if self.bFindOnOff("red"):
+                            print "red:",self.OnOrOff
+                            sghGC.pinUpdate(11,self.OnOrOff)
+                        if self.bFindOnOff("yellow"):
+                            print "red:",self.OnOrOff
+                            sghGC.pinUpdate(13,self.OnOrOff)
+                        if self.bFindOnOff("blue"):
+                            print "red:",self.OnOrOff
+                            sghGC.pinUpdate(29,self.OnOrOff)
+
+                        if self.bFindOnOff("ouput1"):
+                            print "red:",self.OnOrOff
+                            sghGC.pinUpdate(31,self.OnOrOff)
+                        if self.bFindOnOff("ouput2"):
+                            print "red:",self.OnOrOff
+                            sghGC.pinUpdate(32,self.OnOrOff)
+                        if self.bFindOnOff("ouput3"):
+                            print "red:",self.OnOrOff
+                            sghGC.pinUpdate(33,self.OnOrOff)
+                        if self.bFindOnOff("ouput4"):
+                            print "red:",self.OnOrOff
+                            sghGC.pinUpdate(36,self.OnOrOff)
+
 
 
 

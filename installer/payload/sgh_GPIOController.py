@@ -110,6 +110,9 @@ class GPIOController :
         self.encoderInUse = 0
         
         self.nunchuckLevel = 1
+
+        self.capTouch = None
+        self.capTouchHelper = None
         
         self.validPins =      [ 3,         5,       7, 8,   10,11,12,13,   15,16,   18,19,   21,22,23,24,   26]
         
