@@ -524,6 +524,7 @@ class ScratchSender(threading.Thread):
         lastTimeSinceLastSleep = time.time()
         lastTimeSinceMCPAnalogRead = time.time()
         self.sleepTime = 0.1
+        tick = 0
         lastADC = [256, 256, 256, 256, 256, 256, 256, 256]
         lastpiAndBash = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 
@@ -552,6 +553,9 @@ class ScratchSender(threading.Thread):
                 sleepdelay = self.sleepTime - loopTime
                 #print "add in sleep of milliesec:",(sleepdelay) * 1000
                 time.sleep(sleepdelay)  # be kind to cpu  :)
+                tick += 1
+                if tick == sys.maxint:
+                    tick = 0
             lastTimeSinceLastSleep = time.time()
 
             #print "before lock"
@@ -912,27 +916,48 @@ class ScratchSender(threading.Thread):
                     import sgh_explorer_analog
                     sghGC.ADS1015 = sgh_explorer_analog.ADS1015()
                     print "ADS1015", sghGC.ADS1015
+                    sensor_str = ""
                     for loop in range(0,8):
                         sghGC.capTouch.on(loop,"press",sghCT.ctHandler)
+                        #print "loop:",loop,sghCT.ctTrigStatus[loop]
+                        sensor_value = "0"
+                        sensor_name = "touch" + str(sghCT.ctTrigStatus[loop][0])
+                        sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
+                    msgQueue.put((0,"sensor-update " + sensor_str))
+
                 else:
+                    sensor_str = ""
                     for loop in range(0,8):
-                        #print sghCT.ctTrigStatus[loop]
+
                         if sghCT.ctTrigStatus[loop][1] == 1:
+                            #print "loop:",loop,sghCT.ctTrigStatus[loop]
                             #print dt.datetime.now()
-                            sensor_name = sghCT.ctTrigStatus[loop][0]
-                            print "trigger being sent for:", sensor_name
-                            msgQueue.put((0,'broadcast "Touch' + str(sensor_name) + '"'))
+                            sensor_name = "touch" + str(sghCT.ctTrigStatus[loop][0])
+                            sensor_value = "1"
+                            #print "trigger being sent for:", sensor_name
+                            sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
+                            #print sensor_name,sensor_value
+                            bcast_str = 'broadcast "%s"' % (sensor_name)
+                            msgQueue.put((0, bcast_str))
                             sghCT.ctTrigStatus[loop][1] = 2
+                    if sensor_str != "":
+                        msgQueue.put((0,"sensor-update " + sensor_str))
+
                     if sghCT.ctTrigStatus[8][1] == 1:
                         msgQueue.put((0,'broadcast "Touch"'))
                         sghCT.ctTrigStatus[8][1] = 2
-                    for loop in range(0,4):
-                            sensor_name = "analog" + str(4 - loop)
-                            sensor_value =  str(sghGC.ADS1015.read_se_adc(loop))
-                            #print sensor_name,sensor_value
-                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, sensor_value)
-                            msgQueue.put((0,bcast_str))
-                    time.sleep(0.5)
+
+                    sensor_str = ""
+                    if tick % 5 == 0:
+                        for loop in range(0,4):
+                                sensor_name = "analog" + str(4 - loop)
+                                sensor_value =  str(sghGC.ADS1015.read_se_adc(loop))
+                                #print sensor_name,sensor_value
+                                sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
+                        if sensor_str != "":
+                            msgQueue.put((0,"sensor-update " + sensor_str))
+
+
 
             #time.sleep(2)
 
@@ -3545,17 +3570,27 @@ class ScratchListener(threading.Thread):
 
                     if self.bFindValue("touchreset"):
                         sghCT = sghGC.capTouchHelper
-                        print "touchreset detected", sghCT
+                        #print "touchreset detected", sghCT
                         #print len(self.value) , ("["+self.value+"]")
                         if self.value == "":
                             for loop in range(0,8):
-                                print "loop",sghCT.ctTrigStatus[loop]
+                                #print "loop",sghCT.ctTrigStatus[loop]
                                 sghCT.ctTrigStatus[loop][1] = 0
+                                sensor_name = "touch" + str(sghCT.ctTrigStatus[loop][0])
+                                sensor_value = "0"
+                                #print sensor_name,sensor_value
+                                bcast_str = 'sensor-update "%s" %s' % (sensor_name, sensor_value)
+                                msgQueue.put((5,bcast_str))
                             sghCT.ctTrigStatus[8][1] = 0
                         else:
                             for loop in range(0,8):
-                                if sghCT.ctTrigStatus[loop][0] == self.valueNumeric:
+                                if sghCT.ctTrigStatus[loop][0] == int(self.valueNumeric):
                                     sghCT.ctTrigStatus[loop][1] = 0
+                                    sensor_name = "touch" + str(sghCT.ctTrigStatus[loop][0])
+                                    sensor_value = "0"
+                                    #print sensor_name,sensor_value
+                                    bcast_str = 'sensor-update "%s" %s' % (sensor_name, sensor_value)
+                                    msgQueue.put((5,bcast_str))
 
 
                     #msgQueue.put((5,"broadcast Begin"))
@@ -5629,29 +5664,29 @@ class ScratchListener(threading.Thread):
 
                     if "explorerhat" in ADDON:
                         if self.bFindOnOff("green"):
-                            print "red:",self.OnOrOff
+                            #print "red:",self.OnOrOff
                             sghGC.pinUpdate(7,self.OnOrOff)
                         if self.bFindOnOff("red"):
-                            print "red:",self.OnOrOff
+                            #print "red:",self.OnOrOff
                             sghGC.pinUpdate(11,self.OnOrOff)
                         if self.bFindOnOff("yellow"):
-                            print "red:",self.OnOrOff
+                            #print "red:",self.OnOrOff
                             sghGC.pinUpdate(13,self.OnOrOff)
                         if self.bFindOnOff("blue"):
-                            print "red:",self.OnOrOff
+                            #print "red:",self.OnOrOff
                             sghGC.pinUpdate(29,self.OnOrOff)
 
-                        if self.bFindOnOff("ouput1"):
-                            print "red:",self.OnOrOff
+                        if self.bFindOnOff("output1"):
+                            #print "red:",self.OnOrOff
                             sghGC.pinUpdate(31,self.OnOrOff)
-                        if self.bFindOnOff("ouput2"):
-                            print "red:",self.OnOrOff
+                        if self.bFindOnOff("output2"):
+                            #print "red:",self.OnOrOff
                             sghGC.pinUpdate(32,self.OnOrOff)
-                        if self.bFindOnOff("ouput3"):
-                            print "red:",self.OnOrOff
+                        if self.bFindOnOff("output3"):
+                            #print "red:",self.OnOrOff
                             sghGC.pinUpdate(33,self.OnOrOff)
-                        if self.bFindOnOff("ouput4"):
-                            print "red:",self.OnOrOff
+                        if self.bFindOnOff("output4"):
+                            #print "red:",self.OnOrOff
                             sghGC.pinUpdate(36,self.OnOrOff)
 
 
