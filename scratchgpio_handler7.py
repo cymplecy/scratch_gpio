@@ -380,7 +380,7 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass
             sensorValue = ("on", "off")[value == 1]
-        elif "partyhat" in ADDON:
+        elif "playhat" in ADDON:
             #print pin
             #sensor_name = "in" + str([0,19,21,24,26,23].index(pin))
             try:
@@ -1946,8 +1946,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
-                        if "partyhat" in ADDON:
-                            print "partyhat enabled"
+                        if "playhat" in ADDON:
+                            print "playhat enabled"
 
                             with lock:
                                 sghGC.resetPinMode()
@@ -4072,9 +4072,9 @@ class ScratchListener(threading.Thread):
                         self.bListCheck([11, 13, 15], ["red", "green", "blue"])  # Check for LEDs
 
 
-                    elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("partyhat" in ADDON):  #Matrix connected
+                    elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON):  #Matrix connected
                         oldADDON = ADDON
-                        if "partyhat" in ADDON:
+                        if "playhat" in ADDON:
                             ADDON = ADDON + " neopixels9"
                         if UH is None:
                             #try:
@@ -5662,7 +5662,7 @@ class ScratchListener(threading.Thread):
                         msgQueue.put((1,bcast_str))
                         #print "data valid", time.time()
 
-                    if "partyhat" in ADDON:  # PartyHAT
+                    if "playhat" in ADDON: 
 
                         if self.bFindOnOff('buzzer'):
                             sghGC.pinUpdate(16, self.OnOrOff)
