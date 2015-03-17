@@ -1,5 +1,17 @@
 ''' cymplecy version '''
-import ws2812, atexit
+from neopixel import *
+import atexit
+
+# LED strip configuration:
+LED_COUNT      = 64      # Number of LED pixels.
+LED_PIN        = 18      # GPIO pin connected to the pixels (must support PWM!).
+LED_FREQ_HZ    = 800000  # LED signal frequency in hertz (usually 800khz)
+LED_DMA        = 5       # DMA channel to use for generating signal (try 5)
+LED_BRIGHTNESS = 51      # Set to 0 for darkest and 255 for brightest
+LED_INVERT     = False   # True to invert the signal (when using NPN transistor level shift)
+
+ws2812 = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS)
+ws2812.begin()
 
 def clean_shutdown():
   '''
@@ -7,14 +19,8 @@ def clean_shutdown():
   and all pixels are turned off.
   '''
   off()
-  ws2812.terminate(0)
 
 atexit.register(clean_shutdown)
-
-'''
-Initialize ws2812 with a buffer of 64 pixels ( 8x8 )
-'''
-ws2812.init(64)
 
 '''
 Store the rotation of UnicornHat, defaults to
@@ -63,14 +69,21 @@ def brightness(b = 0.2):
   if b > 1 or b < 0:
     raise ValueError('Brightness must be between 0.0 and 1.0')
     return
-  ws2812.setBrightness(b)
+  ws2812.setBrightness(int(b*255.0))
+
+def get_brightness():
+  '''
+  Get the display brightness value
+  Returns a float between 0.0 and 1.0
+  '''
+  return 0#ws2812.getBrightness()
 
 def clear():
   '''
   Clear the buffer
   '''
   for x in range(64):
-    ws2812.setPixelColor(x,0,0,0)
+    ws2812.setPixelColorRGB(x,0,0,0)
 
 def off():
   '''
@@ -79,7 +92,7 @@ def off():
   '''
   clear()
   show()
- 
+
 def get_index_from_xy(x, y):
   '''
   Convert an x, y value to an index on the display
@@ -108,13 +121,7 @@ def set_pixel(x, y, r, g, b):
   '''
   index = get_index_from_xy(x, y)
   if index != None:
-    ws2812.setPixelColor(index, r, g, b)
-    
-def set_neopixel(index, r, g, b):
-  '''
-  Set a single pixel to RGB colour
-  '''
-  ws2812.setPixelColor(index, r, g, b)
+    ws2812.setPixelColorRGB(index, r, g, b)
 
 def get_pixel(x, y):
   '''
@@ -122,15 +129,20 @@ def get_pixel(x, y):
   '''
   index = get_index_from_xy(x, y)
   if index != None:
-    pixel = ws2812.getPixelColor(index)
+    pixel = ws2812.getPixelColorRGB(index)
     return (int(pixel.r), int(pixel.g), int(pixel.b))
-    
-def get_neopixel(index):
+
+def set_pixels(pixels):
+  for x in range(8):
+    for y in range(8):
+      r, g, b = pixels[y][x]
+      set_pixel(x,y,r,g,b)
+
+def get_pixels():
   '''
-  Get the RGB value of a single pixel
+  Get the RGB value of all pixels in a 7x7x3 2d array of tuples
   '''
-  pixel = ws2812.getPixelColor(index)
-  return (int(pixel.r), int(pixel.g), int(pixel.b))    
+  return [[get_pixel(x,y) for x in range(8)] for y in range(8)]
 
 def show():
   '''
@@ -138,3 +150,19 @@ def show():
   of the display buffer
   '''
   ws2812.show()
+
+#Extra functions so that this becomes general NeoPixel interface
+#added by Simon Walters
+def set_neopixel(index, r, g, b):
+  '''
+  Set a single pixel to RGB colour
+  '''
+  ws2812.setPixelColorRGB(index, r, g, b)
+
+
+def get_neopixel(index):
+  '''
+  Get the RGB value of a single pixel
+  '''
+  pixel = ws2812.getPixelColorRGB(index)
+  return (int(pixel.r), int(pixel.g), int(pixel.b))

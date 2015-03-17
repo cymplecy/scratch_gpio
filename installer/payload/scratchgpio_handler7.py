@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.006'  #Explorer HAT added
+Version = 'v7.0.008'  #Bug fix for cheerlights
 import threading
 import socket
 import time
@@ -40,7 +40,7 @@ import sgh_RasPiCamera
 #import pygame removed because causing random failures
 import random
 import Queue
-from cheerlights import CheerLights
+from sgh_cheerlights import CheerLights
 #import uinput
 
 #ui = UInput()
@@ -2086,7 +2086,7 @@ class ScratchListener(threading.Thread):
 
                                 self.startUltra(23, 0, self.OnOrOff)
 
-                            print "pi2golite setup"
+                            print "apb01 setup"
                             anyAddOns = True
 
                             # if "agobop2" in ADDON:
@@ -3071,7 +3071,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
 
                     elif "agobo" in ADDON:
-                        #logging.debug("Processing variables for pi2golite")
+                        #logging.debug("Processing variables for apb01")
 
                         #check for motor variable commands
                         motorList = [['motorb', 19, 21, 0, False], ['motora', 26, 24, 0, False]]
@@ -4077,12 +4077,12 @@ class ScratchListener(threading.Thread):
                         if "partyhat" in ADDON:
                             ADDON = ADDON + " neopixels9"
                         if UH is None:
-                            try:
+                            #try:
                                 import sgh_unicornhat as UH
                                 print "UnicornHat imported OK"
-                            except:
-                                print "UnicornHat software not installed"
-                                break
+                            #except:
+                                #print "UnicornHat software not installed"
+                                #break
                         #print "addon", ADDON
                         lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
                         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
@@ -5647,7 +5647,12 @@ class ScratchListener(threading.Thread):
                         #print(lookupColour)
                         if (cheerList is None) or (lookupColour == 1):
                             #print("Fetching colour from internet")
-                            cheerList = cheerlights.get_colours()
+                            try:
+                                cheerList = cheerlights.get_colours()
+                            except:
+                                print "cheerlight error"
+                                cheerList = ['white']
+                                pass
                         #print cheerList
                         cheerColour = cheerList[lookupColour - 1]
                         print "new colour", cheerColour

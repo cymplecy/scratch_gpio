@@ -78,7 +78,6 @@ cp killsgh.sh $RDIR/scratchgpio${SGHVER}
 cp nunchuck.py $RDIR/scratchgpio${SGHVER}
 cp meArm.py $RDIR/scratchgpio${SGHVER}
 cp kinematics.py $RDIR/scratchgpio${SGHVER}
-cp cheerlights.py $RDIR/scratchgpio${SGHVER}
 cp sgh_*.py $RDIR/scratchgpio${SGHVER}
 
 cp ./mcpi/* $RDIR/scratchgpio${SGHVER}/mcpi
