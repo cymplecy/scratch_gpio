@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.008'  #Bug fix for cheerlights
+Version = 'v7.0.011'  #Add in H-bridge Motor Control
 import threading
 import socket
 import time
@@ -3265,6 +3265,28 @@ class ScratchListener(threading.Thread):
                                         sghGC.pinUpdate(motorList[listLoop][1], self.valueNumeric, type="pwmmotor")
                                     else:
                                         sghGC.pinUpdate(motorList[listLoop][1], 0, type="pwmmotor")
+
+                           # motorList = [['motor21,19', 21, 19, 0], ['motor26,24', 26, 24, 0]]
+                            print self.dataraw
+                            motorhList = [m.start() for m in re.finditer('motorh', self.dataraw)]
+                            print motorhList
+                            motorList = []
+                            for loop in motorhList:
+                                name = self.dataraw[loop:]
+                                name = name[0:name.find(' ')]
+                                print "name", name
+                                pin1 = name[6:name.find(',')]
+                                print "pin1",pin1
+                                pin2 = name[1 + name.find(','):]
+                                print "pin2",pin2
+                                motorList.append([name, int(pin1),int(pin2), 0])
+                            print motorList
+                            for listLoop in motorList:
+                                print "listloop:",listLoop
+                                if self.vFindValue(listLoop[0]):
+                                    svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                    logging.debug("motor:%s valuee:%s", listLoop[0], svalue)
+                                    sghGC.motorUpdate(listLoop[1], listLoop[2], svalue)
                         # end of motor checking
 
                         if self.bFindValue('servo'):

@@ -96,6 +96,8 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio7.sh" afterPath="$PROJECT_DIR$/install_scratchgpio7.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio7.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio7.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio7deb.sh" afterPath="$PROJECT_DIR$/install_scratchgpio7deb.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio7deb.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio7deb.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio7dev.sh" afterPath="$PROJECT_DIR$/install_scratchgpio7dev.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio7dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio7dev.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/installer.sh" afterPath="$PROJECT_DIR$/installer/payload/installer.sh" />
@@ -167,6 +169,8 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_captouch.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_captouch.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_captouch_helper.py" afterPath="$PROJECT_DIR$/sgh_captouch_helper.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_captouch_helper.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_captouch_helper.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_cheerlights.py" afterPath="$PROJECT_DIR$/sgh_cheerlights.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_cheerlights.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_cheerlights.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_explorer_analog.py" afterPath="$PROJECT_DIR$/sgh_explorer_analog.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_explorer_analog.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_explorer_analog.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_pnbLCD.py" afterPath="$PROJECT_DIR$/sgh_pnbLCD.py" />
@@ -190,7 +194,6 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/vec3.py" afterPath="$PROJECT_DIR$/mcpi/vec3.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/tutorial/welcome.py" afterPath="$PROJECT_DIR$/explorer-hat-master/tutorial/welcome.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MOVED" beforePath="\\192.168.0.86\pi\sghdev\scratch_gpio\cheerlights.py" afterPath="$PROJECT_DIR$/sgh_cheerlights.py" />
     </list>
     <ignored path="scratch_gpio.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -206,7 +209,9 @@
     <option name="PATCH_PATH" value="" />
   </component>
   <component name="DaemonCodeAnalyzer">
-    <disable_hints />
+    <disable_hints>
+      <file url="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py" />
+    </disable_hints>
   </component>
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FavoritesManager">
@@ -217,18 +222,8 @@
       <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.4479889" vertical-offset="0" max-vertical-offset="102935">
-              <caret line="19" column="19" selection-start-line="19" selection-start-column="19" selection-end-line="19" selection-end-column="19" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="sgh_cheerlights.py" pinned="false" current-in-tab="false">
-        <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_cheerlights.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="663">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.40816328" vertical-offset="55152" max-vertical-offset="103309">
+              <caret line="3274" column="54" selection-start-line="3274" selection-start-column="54" selection-end-line="3274" selection-end-column="54" />
               <folding />
             </state>
           </provider>
@@ -249,6 +244,9 @@
       <MyDateState />
     </option>
   </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py" root0="SKIP_HIGHLIGHTING" />
+  </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
@@ -268,8 +266,8 @@
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="472" />
-    <option name="y" value="61" />
+    <option name="x" value="292" />
+    <option name="y" value="57" />
     <option name="width" value="1372" />
     <option name="height" value="900" />
   </component>
@@ -321,7 +319,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -342,10 +339,11 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="options.lastSelected" value="Errors" />
+    <property name="options.lastSelected" value="preferences.fileTypes" />
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
@@ -571,29 +569,29 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="472" y="61" width="1372" height="900" extended-state="0" />
+    <frame x="292" y="57" width="1372" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21681416" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.18963337" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32869786" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.21681416" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32869786" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3292517" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -655,24 +653,21 @@
           <line>26</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="python-line">
+          <url>file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py</url>
+          <line>3269</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
       </breakpoints>
-      <option name="time" value="7" />
+      <option name="time" value="8" />
     </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_cheerlights.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="763">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.4479889" vertical-offset="0" max-vertical-offset="102935">
-          <caret line="19" column="19" selection-start-line="19" selection-start-column="19" selection-end-line="19" selection-end-column="19" />
+        <state vertical-scroll-proportion="0.40816328" vertical-offset="55152" max-vertical-offset="103309">
+          <caret line="3274" column="54" selection-start-line="3274" selection-start-column="54" selection-end-line="3274" selection-end-column="54" />
           <folding />
         </state>
       </provider>
