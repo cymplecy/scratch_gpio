@@ -24,7 +24,7 @@ class Adafruit_I2C :
   @staticmethod
   def getPiI2CBusNumber():
     # Gets the I2C bus number /dev/i2c#
-    #print "ADAfruit Board Revision Detects:" , Adafruit_I2C.getPiRevision()
+    print "ADAfruit Board Revision Detects:" , Adafruit_I2C.getPiRevision()
     return 1 if Adafruit_I2C.getPiRevision() > 1 else 0
  
   def __init__(self, address, busnum=-1, debug=False):

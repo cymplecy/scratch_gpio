@@ -33,7 +33,7 @@ class GPIOController :
     @staticmethod
     def getPiRevision():
         "Gets the version number of the Raspberry Pi board"
-        return GPIO.RPI_REVISION
+        return GPIO.RPI_INFO['P1_REVISION']
     
     def cleanup(self):
         GPIO.cleanup()

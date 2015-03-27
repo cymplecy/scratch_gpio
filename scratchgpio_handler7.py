@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.011'  #Add in H-bridge Motor Control
+Version = 'v7.0.014'  #Stop sending bug fixed hopefully
 import threading
 import socket
 import time
@@ -283,7 +283,7 @@ class ultra(threading.Thread):
 
     def stop(self):
         self._stop.set()
-        print "Sender Stop Set"
+        print "Ultra Stop Set"
 
     def stopped(self):
         return self._stop.isSet()
@@ -408,6 +408,7 @@ class ScratchSender(threading.Thread):
             except:
                 print "p2g4 input out of range"
                 sensor_name = "pin" + str(pin)
+                print sensor_name
                 pass
             sensorValue = ("on", "off")[value == 1]
         elif "pi2golite" in ADDON:
@@ -957,7 +958,7 @@ class ScratchSender(threading.Thread):
                         if sensor_str != "":
                             msgQueue.put((0,"sensor-update " + sensor_str))
 
-
+        print "Sender Stopped"
 
             #time.sleep(2)
 
@@ -1284,6 +1285,7 @@ class ScratchListener(threading.Thread):
 
     def stop(self):
         self._stop.set()
+        print "Listener Stop Set"
 
     def stopped(self):
         return self._stop.isSet()
@@ -2016,17 +2018,18 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[12] = sghGC.PINPUT  #LFLeft
                                 sghGC.pinUse[13] = sghGC.PINPUT  #LFRight
                                 sghGC.pinUse[16] = sghGC.PINPUT
-                                sghGC.pinUse[18] = sghGC.PINPUT
-                                sghGC.pinUse[22] = sghGC.PINPUT
+                                #sghGC.pinUse[18] = sghGC.PINPUT
+                                #sghGC.pinUse[22] = sghGC.PINPUT
 
                                 sghGC.setPinMode()
                                 sghGC.motorUpdate(19, 21, 0)
                                 sghGC.motorUpdate(26, 24, 0)
 
                                 try:
-                                    for i in range(0, 16):  # go thru PowerPWM on PCA Board
-                                        pcaPWM.setPWM(i, 0, 4095)
+                                    for i in range(0, 12):  # go thru PowerPWM on PCA Board
+                                        pcaPWM.setPWM(i, 0, 0)
                                 except:
+                                    print "SOFT ERROR - PWM not set for pi2go"
                                     pass
 
                                 self.startUltra(8, 0, self.OnOrOff)
@@ -2951,15 +2954,15 @@ class ScratchListener(threading.Thread):
                             for i in range(0, 5):  # go thru PowerPWM on PCA Board
                                 if self.vFindValue('blue'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                    svalue = min(4095, max((((100 - svalue) * 4096) / 100), 0))
+                                    svalue = min(4095, max((((svalue) * 4096) / 100), 0))
                                     pcaPWM.setPWM((i * 3), 0, svalue)
                                 if self.vFindValue('green'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                    svalue = min(4095, max((((100 - svalue) * 4096) / 100), 0))
+                                    svalue = min(4095, max(((( svalue) * 4096) / 100), 0))
                                     pcaPWM.setPWM((i * 3) + 1, 0, svalue)
                                 if self.vFindValue('red'):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
-                                    svalue = min(4095, max((((100 - svalue) * 4096) / 100), 0))
+                                    svalue = min(4095, max((((svalue) * 4096) / 100), 0))
 
                                     pcaPWM.setPWM((i * 3) + 2, 0, svalue)
 
@@ -5740,6 +5743,7 @@ class ScratchListener(threading.Thread):
 
                 self.carryOn = False
 
+        print "Listener Stopped"
                     #else:
                     #print 'received something: %s' % dataraw
 
@@ -5760,7 +5764,7 @@ class SendMsgsToScratch(threading.Thread):
 
     def stop(self):
         self._stop.set()
-        print "Sender Stop Set"
+        print "SendMsgsToScratch Stop Set"
 
     def stopped(self):
         return self._stop.isSet()
@@ -5770,16 +5774,24 @@ class SendMsgsToScratch(threading.Thread):
         while not self.stopped():
             #print self.msgQueue.get()
             priority,cmd = self.msgQueue.get()
+            if cmd == "STOPSENDING":
+                self.stop()
+                while not self.msgQueue.empty():
+                    dummy = self.msgQueue.get()
+                time.sleep(1)
+                break
             # if priority == 1:
             #     print "deque P1 at", time.time()
             n = len(cmd)
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
+            #try:
             self.scratch_socket.send(b + cmd)
+            #except:
+            #    print "failed to send this message to Scratch", cmd
+            #    pass
             #print "message sent:" ,cmd
-            if cmd == "STOPSENDING":
-                self.stop()
-                time.sleep(1)
-        print "msgs stopped"
+
+        print "SendMsgsToScratch stopped"
 
 
 def create_socket(host, port):
@@ -5799,17 +5811,17 @@ def create_socket(host, port):
 
 
 def cleanup_threads(threads):
-    print ("cleanup threads started")
-    msgQueue.put("STOPSENDING")
-    time.sleep(2)
-
+    print "CLEANUP IN PROGRESS"
     print "Threads told to stop"
     for thread in threads:
         thread.stop()
 
+    msgQueue.put((10,"STOPSENDING"))
+
     print "Waiting for join on main threads to complete"
     for thread in threads:
         thread.join()
+
 
     print "All main threads stopped"
 
@@ -5855,7 +5867,7 @@ def cleanup_threads(threads):
 
 sghGC = sgh_GPIOController.GPIOController(True)
 
-print sghGC.getPiRevision()
+print "pi Revision", sghGC.getPiRevision()
 
 ADDON = ""
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)  # default DEBUG - quiwr = INFO
@@ -6024,11 +6036,16 @@ while True:
 
     if (cycle_trace == 'disconnected'):
         print "Scratch disconnected"
-        cleanup_threads((sendMsgs, listener, sender))
+        cleanup_threads(( listener, sender))
         print "Thread cleanup done after disconnect"
         INVERT = False
         sghGC.resetPinMode()
         print ("Pin Reset Done")
+        print
+        print "-------------------------------------------------------------------------------"
+        print
+        print
+        print
         time.sleep(1)
         cycle_trace = 'start'
 
@@ -6069,7 +6086,7 @@ while True:
         time.sleep(0.1)
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
-        cleanup_threads((sendMsgs, listener, sender))
+        cleanup_threads((listener, sender ))
         print "Thread cleanup done after disconnect"
         #time.sleep(5)
         #sghGC.INVERT = False
