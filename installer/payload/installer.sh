@@ -72,7 +72,6 @@ mkdir -p $RDIR/scratchgpio${SGHVER}/mcpi
 
 cp scratchgpio_handler7.py $RDIR/scratchgpio${SGHVER}
 cp Adafruit_I2C.py $RDIR/scratchgpio${SGHVER}
-cp Adafruit_PWM_Servo_Driver.py $RDIR/scratchgpio${SGHVER}
 cp sgh_servod $RDIR/scratchgpio${SGHVER}
 cp killsgh.sh $RDIR/scratchgpio${SGHVER}
 cp nunchuck.py $RDIR/scratchgpio${SGHVER}

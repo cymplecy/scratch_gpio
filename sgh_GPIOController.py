@@ -43,6 +43,9 @@ class GPIOController :
         GPIO.setwarnings(False)
         GPIO.cleanup()
         self.piRevision = self.getPiRevision()
+        self.i2cbus = 1
+        if self.piRevision == 1:
+            self.i2cbus = 0
         print "RPi.GPIO Version" , GPIO.VERSION
         print "Board Revision" , self.piRevision
         

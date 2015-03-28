@@ -6,6 +6,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Pi">
+      <change type="DELETED" beforePath="\\192.168.0.86\pi\sghdev\scratch_gpio\installer\payload\Adafruit_PWM_Servo_Driver.py" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" afterPath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" afterPath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NeoPixel.so" afterPath="$PROJECT_DIR$/NeoPixel.so" />
@@ -28,8 +29,6 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/27.py" afterPath="$PROJECT_DIR$/27.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/Adafruit_I2C.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/CHANGELOG.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/CHANGELOG.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/LICENSE.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/LICENSE.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/MANIFEST.in" afterPath="$PROJECT_DIR$/explorer-hat-master/library/MANIFEST.in" />
@@ -194,6 +193,7 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/vec3.py" afterPath="$PROJECT_DIR$/mcpi/vec3.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/tutorial/welcome.py" afterPath="$PROJECT_DIR$/explorer-hat-master/tutorial/welcome.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MOVED" beforePath="\\192.168.0.86\pi\sghdev\scratch_gpio\Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/sgh_Adafruit_PWM_Servo_Driver.py" />
     </list>
     <ignored path="scratch_gpio.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -220,9 +220,11 @@
       <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.84815615" vertical-offset="170" max-vertical-offset="103921">
-              <caret line="33" column="18" selection-start-line="0" selection-start-column="0" selection-end-line="6107" selection-end-column="0" />
-              <folding />
+            <state vertical-scroll-proportion="0.4815618" vertical-offset="1223" max-vertical-offset="103428">
+              <caret line="85" column="37" selection-start-line="85" selection-start-column="37" selection-end-line="85" selection-end-column="37" />
+              <folding>
+                <element signature="e#1047#1063#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -247,17 +249,18 @@
       <list>
         <option value="$PROJECT_DIR$/sgh_MCP230xx.py" />
         <option value="$PROJECT_DIR$/scratchgpio_handler6.py" />
-        <option value="$PROJECT_DIR$/installer/build.sh" />
-        <option value="$PROJECT_DIR$/installer/payload/installer.sh" />
         <option value="$PROJECT_DIR$/captouch.py" />
         <option value="$PROJECT_DIR$/sghcthelper.py" />
         <option value="$PROJECT_DIR$/ctttest.py" />
         <option value="$PROJECT_DIR$/sgh_explorer_analog.py" />
         <option value="$PROJECT_DIR$/sgh_captouch_helper.py" />
         <option value="$PROJECT_DIR$/sgh_unicornhat.py" />
-        <option value="$PROJECT_DIR$/Adafruit_I2C.py" />
         <option value="$PROJECT_DIR$/sgh_GPIOController.py" />
         <option value="$PROJECT_DIR$/scratchgpio_handler7.py" />
+        <option value="$PROJECT_DIR$/sgh_Adafruit_PWM_Servo_Driver.py" />
+        <option value="$PROJECT_DIR$/Adafruit_I2C.py" />
+        <option value="$PROJECT_DIR$/installer/build.sh" />
+        <option value="$PROJECT_DIR$/installer/payload/installer.sh" />
       </list>
     </option>
   </component>
@@ -331,6 +334,38 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="scratch_gpio" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scratch_gpio" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scratch_gpio" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="installer" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scratch_gpio" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="scratch_gpio" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="installer" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="payload" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -660,11 +695,53 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_GPIOController.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.27755103" vertical-offset="578" max-vertical-offset="13209">
+          <caret line="46" column="28" selection-start-line="46" selection-start-column="28" selection-end-line="46" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/Adafruit_I2C.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.777336" vertical-offset="204" max-vertical-offset="2533">
+          <caret line="35" column="86" selection-start-line="35" selection-start-column="33" selection-end-line="35" selection-end-column="86" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_Adafruit_PWM_Servo_Driver.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.4055666" vertical-offset="204" max-vertical-offset="1224">
+          <caret line="26" column="29" selection-start-line="26" selection-start-column="29" selection-end-line="26" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/installer/build.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.17782427" vertical-offset="0" max-vertical-offset="867">
+          <caret line="5" column="69" selection-start-line="5" selection-start-column="69" selection-end-line="5" selection-end-column="69" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/installer/payload/installer.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.3655914" vertical-offset="0" max-vertical-offset="2924">
+          <caret line="10" column="42" selection-start-line="10" selection-start-column="42" selection-end-line="10" selection-end-column="42" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.84815615" vertical-offset="170" max-vertical-offset="103921">
-          <caret line="33" column="18" selection-start-line="0" selection-start-column="0" selection-end-line="6107" selection-end-column="0" />
-          <folding />
+        <state vertical-scroll-proportion="0.4815618" vertical-offset="1223" max-vertical-offset="103428">
+          <caret line="85" column="37" selection-start-line="85" selection-start-column="37" selection-end-line="85" selection-end-column="37" />
+          <folding>
+            <element signature="e#1047#1063#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

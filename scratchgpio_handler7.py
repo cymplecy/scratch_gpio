@@ -79,7 +79,7 @@ except:
     pass
 
 try:
-    from Adafruit_PWM_Servo_Driver import PWM
+    from sgh_Adafruit_PWM_Servo_Driver import PWM
 
     print "PWM/Servo imported OK"
 except:
@@ -5885,42 +5885,25 @@ cheerlights = CheerLights()
 
 piglow = None
 try:
-    if sghGC.getPiRevision() == 1:
-        print "Rev1 Board"
-        piglow = sgh_PiGlow.PiGlow(0)
-    else:
-        piglow = sgh_PiGlow.PiGlow(1)
-        print ("PiGlow:", piglow)
-        print ("Update PWM value on PiGLow attempted")
-        piglow.update_pwm_values()  #PiGlow_Values)
+    piglow = sgh_PiGlow.PiGlow(sghGC.i2cbus)
+    print ("PiGlow:", piglow)
+    print ("Update PWM value on PiGLow attempted")
+    piglow.update_pwm_values()  #PiGlow_Values)
 except:
     print "No PiGlow Detected"
-
-
-##if sghGC.getPiRevision() == 1:
-##    print "Rev1 Board" 
-##    piglow = sgh_PiGlow.PiGlow(0)
-##else:
-##    piglow = sgh_PiGlow.PiGlow(1)
-##print ("PiGlow:",piglow)
-##print ("Update PWM value on PiGLow attempted")
-##piglow.update_pwm_values()#PiGlow_Values)
 
 
 #See if Compass connected
 compass = None
 try:
-    if sghGC.getPiRevision == 1:
-        compass = Compass(gauss=4.7, declination=(-0, 0))
-    else:
-        compass = Compass(gauss=4.7, declination=(-0, 0))
+    compass = Compass(gauss=4.7, declination=(-0, 0))
     print "compass detected"
 except:
     print "No Compass Detected"
 
 pcaPWM = None
 try:
-    pcaPWM = PWM(0x40, debug=False)
+    pcaPWM = PWM(0x40, sghGC.i2cbus, debug=False)
     print pcaPWM
     print pcaPWM.setPWMFreq(60)  # Set frequency to 60 Hz
     print "AdaFruit PWM/Servo Board PCA9685 detected"
@@ -5929,10 +5912,7 @@ except:
 
 pcfSensor = None
 try:
-    if sghGC.getPiRevision() == 1:
-        pcfSensor = sgh_PCF8591P(0)  #i2c, 0x48)
-    else:
-        pcfSensor = sgh_PCF8591P(1)  #i2c, 0x48)
+    pcfSensor = sgh_PCF8591P(sghGC.i2cbus)  #i2c, 0x48)
     print pcfSensor
     print "ADC/DAC PCF8591P Detected"
 except:
@@ -5950,11 +5930,7 @@ except:
 PiMatrix = None
 #PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
 try:
-    if sghGC.getPiRevision() == 1:
-        print "Rev1 Board"
-        PiMatrix = sgh_PiMatrix(0x20, 0)
-    else:
-        PiMatrix = sgh_PiMatrix(0x20, 1)
+    PiMatrix = sgh_PiMatrix(0x20, sghGC.i2cbus)
     print PiMatrix
     print "PiMatrix Detected"
     PiMatrix.start()
@@ -5981,13 +5957,8 @@ mcp = None
 #mcp = Adafruit_MCP230XX(address = 0x20, num_gpios = 16,busnum = 1)
 #print mcp
 try:
-    if sghGC.getPiRevision() == 1:
-        print "Rev1 Board"
-        mcp = Adafruit_MCP230XX(address=0x20, num_gpios=16, busnum=0)  # MCP23017
-    else:
-        mcp = Adafruit_MCP230XX(address=0x20, num_gpios=16, busnum=1)  # MCP23017
+    mcp = Adafruit_MCP230XX(address=0x20, num_gpios=16, busnum=sghGC.i2cbus)  # MCP23017
     print mcp
-
     print "MCP23017 Detected"
 except:
     print "No MCP23017 Detected"
