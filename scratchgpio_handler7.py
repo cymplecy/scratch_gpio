@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.014'  #Stop sending bug fixed hopefully
+Version = 'v7.0.015'  #Perf improvements with ADC
 import threading
 import socket
 import time
@@ -991,6 +991,7 @@ class ScratchListener(threading.Thread):
         self.matrixRangemax = 8
         self.arm = None
         self.carryOn = True
+        self.carryOnInUse = False
 
 
     def meArmGotoPoint(self, meHorizontal, meDistance, meVertical):
@@ -5665,6 +5666,7 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
                         msgQueue.put((1,bcast_str))
                         self.carryOn = False
+                        self.carryOnInUse = True
 
                     if self.bFindValue("getcheerlights"):
                         #print self.value
@@ -5683,8 +5685,9 @@ class ScratchListener(threading.Thread):
                         print "new colour", cheerColour
                         bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
                         msgQueue.put((5,bcast_str))
-                        bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
-                        msgQueue.put((1,bcast_str))
+                        if self.carryOnInUse == True:
+                            bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
+                            msgQueue.put((1,bcast_str))
                         #print "data valid", time.time()
 
                     if "playhat" in ADDON: 
@@ -5737,9 +5740,9 @@ class ScratchListener(threading.Thread):
                     print "stop handler msg setn from Scratch"
                     cleanup_threads((listener, sender))
                     sys.exit()
-
-                bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
-                msgQueue.put((2,bcast_str))
+                if self.carryOnInUse == True:
+                    bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                    msgQueue.put((2,bcast_str))
 
                 self.carryOn = False
 
@@ -5775,20 +5778,20 @@ class SendMsgsToScratch(threading.Thread):
             #print self.msgQueue.get()
             priority,cmd = self.msgQueue.get()
             if cmd == "STOPSENDING":
+                print "STOPSENDING msg retreived from queue"
                 self.stop()
                 while not self.msgQueue.empty():
                     dummy = self.msgQueue.get()
-                time.sleep(1)
                 break
             # if priority == 1:
             #     print "deque P1 at", time.time()
             n = len(cmd)
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
-            #try:
-            self.scratch_socket.send(b + cmd)
-            #except:
-            #    print "failed to send this message to Scratch", cmd
-            #    pass
+            try:
+             self.scratch_socket.send(b + cmd)
+            except:
+                print "failed to send this message to Scratch", cmd
+                pass
             #print "message sent:" ,cmd
 
         print "SendMsgsToScratch stopped"
@@ -5815,7 +5818,7 @@ def cleanup_threads(threads):
     print "Threads told to stop"
     for thread in threads:
         thread.stop()
-
+    print "STOPSENDING msg put in queue"
     msgQueue.put((10,"STOPSENDING"))
 
     print "Waiting for join on main threads to complete"

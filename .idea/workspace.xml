@@ -220,9 +220,11 @@
       <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.77440345" vertical-offset="0" max-vertical-offset="103598">
-              <caret line="39" column="50" selection-start-line="0" selection-start-column="0" selection-end-line="6106" selection-end-column="0" />
-              <folding />
+            <state vertical-scroll-proportion="0.77440345" vertical-offset="98124" max-vertical-offset="103955">
+              <caret line="5793" column="12" selection-start-line="5793" selection-start-column="12" selection-end-line="5793" selection-end-column="12" />
+              <folding>
+                <element signature="e#1017#1033#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -662,9 +664,11 @@
   <component name="editorHistoryManager">
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.77440345" vertical-offset="0" max-vertical-offset="103598">
-          <caret line="39" column="50" selection-start-line="0" selection-start-column="0" selection-end-line="6106" selection-end-column="0" />
-          <folding />
+        <state vertical-scroll-proportion="0.77440345" vertical-offset="98124" max-vertical-offset="103955">
+          <caret line="5793" column="12" selection-start-line="5793" selection-start-column="12" selection-end-line="5793" selection-end-column="12" />
+          <folding>
+            <element signature="e#1017#1033#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
