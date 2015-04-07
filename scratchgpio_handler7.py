@@ -466,6 +466,10 @@ class ScratchSender(threading.Thread):
         if ("fishdish" in ADDON):
             sensor_name = "switch"
             sensorValue = ("on", "off")[value == 1]
+       
+        if ("traffichat" in ADDON):
+            sensor_name = "switch"
+            sensorValue = ("on", "off")[value == 1]
 
 
 
@@ -1939,6 +1943,17 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(22, 1)
                                 print "rtkmotorcon setup"
                                 anyAddOns = True
+                                
+                        if "traffichat" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                traffichatOutputs = [15, 16, 18, 29]
+                                for pin in traffichatOutputs:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                sghGC.pinUse[22] = sghGC.PINPUT
+
+                                sghGC.setPinMode()
+                                anyAddOns = True
 
                         if "pidie" in ADDON:
                             print "pidie enabled"
@@ -1968,6 +1983,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
+                       
                         if "fishdish" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -2872,6 +2888,8 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1], 0)
                                     sghGC.pinUpdate(motorList[listLoop][2], 0)
+                                    
+                                    
 
                     elif "pidie" in ADDON:
                         self.vAllCheck("leds")  # check All LEDS On/Off/High/Low/1/0
@@ -2889,6 +2907,27 @@ class ScratchListener(threading.Thread):
 
                         if self.vFindOnOff('buzzer'):
                             self.index_pin_update(24, self.valueNumeric)
+                            
+                    elif "traffichat" in ADDON:
+                        #do traffichat stuff
+                        self.vAllCheck("leds")  # check All LEDS On/Off/High/Low/1/0
+
+                        self.vLEDCheck(traffichatOutputs)  # check All LEDS On/Off/High/Low/1/0
+                        #traffichatOutputs = [15, 16, 18, 29]
+
+                        if self.vFindOnOff('buzzer'):
+                            print("buzz")
+                            sghGC.pinUpdate(29, self.valueNumeric)
+                            
+                        if self.vFindOnOff('green'):
+                            print (self.valueNumeric)
+                            sghGC.pinUpdate(15, self.valueNumeric)
+                            
+                        if self.vFindOnOff('yellow'):
+                            sghGC.pinUpdate(16, self.valueNumeric)
+                            
+                        if self.vFindOnOff('red'):
+                            sghGC.pinUpdate(18, self.valueNumeric)
 
                     elif "p2g3" in ADDON:
                         #do PiRoCon stuff
@@ -3865,6 +3904,22 @@ class ScratchListener(threading.Thread):
                         self.bListCheckPowerOnly([7, 11, 12, 13, 15, 16, 18, 22, 8],
                                                  ["1", "2", "3", "4", "5", "6", "7", "8", "9"])
 
+                    elif "traffichat" in ADDON:  # traffichat
+						#based off fish dish and piringo
+                        #do traffichat stuff
+                        self.bCheckAll()  # Check for all off/on type broadcasrs
+                        self.bLEDCheck(traffichatOutputs)  # Check for LED off/on type broadcasts
+                        self.bLEDPowerCheck(traffichatOutputs)  # Vary LED Brightness
+
+                        traffichatList = ["green", "yellow", "red"]
+                        for listLoop in traffichatList:
+                            if self.bFindOnOff(listLoop):
+                                print listLoop, "found",
+                                sghGC.pinUpdate(traffichatOutputs[traffichatList.index(listLoop)], self.OnOrOff)
+
+                        if self.bFindOnOff('buzzer'):
+                            sghGC.pinUpdate(29, self.OnOrOff)
+                            
                     elif "fishdish" in ADDON:  # fishdish
                         #do piringo stuff
                         self.bCheckAll()  # Check for all off/on type broadcasrs
