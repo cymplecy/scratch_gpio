@@ -414,7 +414,7 @@ class ScratchSender(threading.Thread):
         elif "pi2go" in ADDON:
             #print pin
             try:
-                sensor_name = ["left", "front", "right", "lineleft", "lineright", "switch1"][
+                sensor_name = ["irleft", "irfront", "irright", "lineleft", "lineright", "switch"][
                     ([11, 13, 7, 12, 15, 16].index(pin))]
             except:
                 print "pi2go input out of range"
@@ -464,6 +464,10 @@ class ScratchSender(threading.Thread):
             sensorValue = ("0", "1")[value == 1]
 
         if ("fishdish" in ADDON):
+            sensor_name = "switch"
+            sensorValue = ("on", "off")[value == 1]
+       
+        if ("traffichat" in ADDON):
             sensor_name = "switch"
             sensorValue = ("on", "off")[value == 1]
 
@@ -594,20 +598,26 @@ class ScratchSender(threading.Thread):
                     for channel in range(0, 4):  #loop thru all 4 inputs
                         adc = -1
                         try:
-                            adc = pcfSensor.readADC(channel)  # get each value
+                            adc = pcfSensor.readADC(channel) / 2.56  # get each value
                             #print "adc",channel,adc
                         except:
                             pass
                         adc = int((adc + lastADC[channel]) / 2.0)
                         if adc <> lastADC[channel]:
                             #print "channel,adc:",(channel+1),adc
-                            sensor_name = 'analog' + str(channel + 1)
+                            sensor_name = ['lightfrontright','lightfrontleft','lightbackleft','lightbackright'][channel]
                             sensor_value = str(adc)
                             sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
                         lastADC[channel] = adc
                     if sensor_str != "":
                         msgQueue.put((0,"sensor-update " + sensor_str))
 
+                    if sghGC.lightInfo:
+                        sghGC.lightDirection = math.degrees(math.atan2(lastADC[0] + lastADC[3] - lastADC[1] - lastADC[2], lastADC[0] + lastADC[1] - lastADC[2] - lastADC[3]))
+                        sghGC.lightValue = max(lastADC[0],lastADC[1],lastADC[2],lastADC[3])
+                        sensor_str = 'sensor-update "%s" %s "%s" %s' % ("lightdirection", str(int(sghGC.lightDirection)),"lightvalue", str(int(sghGC.lightValue)))
+                        #print 'sending: %s' % bcast_str
+                        msgQueue.put((0,sensor_str))
 
             if "piandbash" in ADDON:
 
@@ -1939,6 +1949,17 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(22, 1)
                                 print "rtkmotorcon setup"
                                 anyAddOns = True
+                                
+                        if "traffichat" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                traffichatOutputs = [15, 16, 18, 29]
+                                for pin in traffichatOutputs:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                sghGC.pinUse[22] = sghGC.PINPUT
+
+                                sghGC.setPinMode()
+                                anyAddOns = True
 
                         if "pidie" in ADDON:
                             print "pidie enabled"
@@ -1968,6 +1989,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
+                       
                         if "fishdish" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -2872,6 +2894,8 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(motorList[listLoop][1], 0)
                                     sghGC.pinUpdate(motorList[listLoop][2], 0)
+                                    
+                                    
 
                     elif "pidie" in ADDON:
                         self.vAllCheck("leds")  # check All LEDS On/Off/High/Low/1/0
@@ -2889,6 +2913,27 @@ class ScratchListener(threading.Thread):
 
                         if self.vFindOnOff('buzzer'):
                             self.index_pin_update(24, self.valueNumeric)
+                            
+                    elif "traffichat" in ADDON:
+                        #do traffichat stuff
+                        self.vAllCheck("leds")  # check All LEDS On/Off/High/Low/1/0
+
+                        self.vLEDCheck(traffichatOutputs)  # check All LEDS On/Off/High/Low/1/0
+                        #traffichatOutputs = [15, 16, 18, 29]
+
+                        if self.vFindOnOff('buzzer'):
+                            print("buzz")
+                            sghGC.pinUpdate(29, self.valueNumeric)
+                            
+                        if self.vFindOnOff('green'):
+                            print (self.valueNumeric)
+                            sghGC.pinUpdate(15, self.valueNumeric)
+                            
+                        if self.vFindOnOff('yellow'):
+                            sghGC.pinUpdate(16, self.valueNumeric)
+                            
+                        if self.vFindOnOff('red'):
+                            sghGC.pinUpdate(18, self.valueNumeric)
 
                     elif "p2g3" in ADDON:
                         #do PiRoCon stuff
@@ -3865,6 +3910,22 @@ class ScratchListener(threading.Thread):
                         self.bListCheckPowerOnly([7, 11, 12, 13, 15, 16, 18, 22, 8],
                                                  ["1", "2", "3", "4", "5", "6", "7", "8", "9"])
 
+                    elif "traffichat" in ADDON:  # traffichat
+						#based off fish dish and piringo
+                        #do traffichat stuff
+                        self.bCheckAll()  # Check for all off/on type broadcasrs
+                        self.bLEDCheck(traffichatOutputs)  # Check for LED off/on type broadcasts
+                        self.bLEDPowerCheck(traffichatOutputs)  # Vary LED Brightness
+
+                        traffichatList = ["green", "yellow", "red"]
+                        for listLoop in traffichatList:
+                            if self.bFindOnOff(listLoop):
+                                print listLoop, "found",
+                                sghGC.pinUpdate(traffichatOutputs[traffichatList.index(listLoop)], self.OnOrOff)
+
+                        if self.bFindOnOff('buzzer'):
+                            sghGC.pinUpdate(29, self.OnOrOff)
+                            
                     elif "fishdish" in ADDON:  # fishdish
                         #do piringo stuff
                         self.bCheckAll()  # Check for all off/on type broadcasrs
@@ -4042,6 +4103,157 @@ class ScratchListener(threading.Thread):
                                     #Start using ultrasonic sensor on a pin
                         if self.bFindOnOff('ultra'):
                             self.startUltra(8, 0, self.OnOrOff)
+                        if "startlightinfo" in dataraw:
+                            sghGC.lightInfo = True
+
+                        def set_neopixel(led,red,green,blue):
+                            pcaPWM.setPWM((led * 3) + 2, 0, min(4095, max((((red) * 4096) / 255), 0)))
+                            pcaPWM.setPWM((led * 3) + 1, 0, min(4095, max((((green) * 4096) / 255), 0)))
+                            pcaPWM.setPWM((led * 3), 0, min(4095, max((((blue) * 4096) / 255), 0)))
+
+                        def pi2go_mapName(name):
+                            print name
+                            try:
+                                return ['left','back','right','front'].index(name)+1
+                            except:
+                                return 0
+
+                        lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
+                        ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
+                                      'invert', 'random']
+
+                        if tcolours is None:  #only define dictionary on first pass
+                            tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+                                        'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
+                                        'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
+                                        'invert': (0, 0, 0)}
+
+                        self.matrixUse = 4
+
+                        if self.bFind("allon"):
+                            for index in range(0, self.matrixUse):
+                                set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
+
+                        if self.bFind("alloff"):
+                            for index in range(0, self.matrixUse):
+                                set_neopixel(index, 0, 0, 0)
+
+                        if self.bFind("sweep"):
+                            print "sweep"
+                            for index in range(0, self.matrixUse):
+                                self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
+                                    ledcolours[random.randint(0, 6)], (0, 0, 0))
+                                set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                time.sleep(0.05)
+
+                        if self.bFindValue("red"):
+                            self.matrixRed = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            if self.value == "on": self.matrixRed = 255
+                            if self.value == "off": self.matrixRed = 0
+
+                        if self.bFindValue("green"):
+                            self.matrixGreen = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            if self.value == "on": self.matrixGreen = 255
+                            if self.value == "off": self.matrixGreen = 0
+
+                        if self.bFindValue("blue"):
+                            self.matrixBlue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            if self.value == "on": self.matrixBlue = 255
+                            if self.value == "off": self.matrixBlue = 0
+
+                        if self.bFindValue("colour"):
+                            #print "colour" ,self.value
+                            if self.value == "invert":
+                                tcolours[
+                                    "invert"] = 255 - self.matrixRed, 255 - self.matrixGreen, 255 - self.matrixBlue
+                            if self.valueIsNumeric:
+                                colourIndex = max(1, min(8, int(self.value))) - 1
+                                self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
+                                    ledcolours[colourIndex], (128, 128, 128))
+                            else:
+                                if self.value[0] == "#":
+                                    try:
+                                        self.value = (self.value + "00000000")[0:7]
+                                        self.matrixRed = int(self.value[1:3], 16)
+                                        self.matrixGreen = int(self.value[3:5], 16)
+                                        self.matrixBlue = int(self.value[5:], 16)
+                                        #print "matrxired", self.matrixRed
+                                    except:
+                                        pass
+                                else:
+                                    ledcolour = self.value
+                                    self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(self.value, (
+                                        128, 128, 128))
+                                    if ledcolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
+                                        ledcolours[random.randint(0, 6)], (128, 128, 128))
+
+                            tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
+
+                        if self.bFind("pixel"):
+                            print "pixel detected"
+                            pixelProcessed = False
+                            for led in range(0, self.matrixUse):
+                                if (self.bFindValue("pixel") and pi2go_mapName(self.value) == str(led + 1)):
+                                    set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                    pixelProcessed = True
+
+                            if not pixelProcessed:
+                                for led in range(0, self.matrixUse):
+                                    for ledcolour in ledcolours:
+                                        if (self.bFindValue("pixel", ledcolour)) and pi2go_mapName(self.value) == str(led + 1):
+                                            self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
+                                                ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                                            if ledcolour == 'random':
+                                                self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
+                                                    ledcolours[random.randint(0, 6)], (64, 64, 64))
+                                            #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
+                                            if self.valueIsNumeric:
+                                                if (ledcolour != "invert"):
+                                                    set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                                pixelProcessed = True
+
+                            if not pixelProcessed:
+                                #print "#", self.value[-7:-7]
+                                fullvalue = self.value
+                                if ("xxxxxxx" + fullvalue)[-7] == "#":
+                                    for led in range(0, self.matrixUse):
+                                        if (self.bFindValue("pixel", fullvalue[-7:]) and self.value == str(
+                                                    led + 1)):
+                                            try:
+                                                c = (fullvalue[-7:] + "00000000")[0:7]
+                                                #print "full", c
+                                                r = int(c[1:3], 16)
+                                                g = int(c[3:5], 16)
+                                                b = int(c[5:], 16)
+                                                set_neopixel(led, r, g, b)
+                                                pixelProcessed = True
+                                            except:
+                                                pass
+                                #print "0x" , fullvalue, ("........" + fullvalue)[-8:-6]
+                                if ("........" + fullvalue)[-8:-6] == "0x":
+                                    for led in range(0, self.matrixUse):
+                                        if (self.bFindValue("pixel", fullvalue[-8:]) and self.value == str(
+                                                    led + 1)):
+                                            try:
+                                                c = (fullvalue[-7:] + "00000000")[0:7]
+                                                #print "full", c
+                                                r = int(c[1:3], 16)
+                                                g = int(c[3:5], 16)
+                                                b = int(c[5:], 16)
+                                                set_neopixel(led, r, g, b)
+                                                pixelProcessed = True
+                                            except:
+                                                pass
+
+
+                            if self.bFindValue("bright"):
+                                sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
+                                sensor_name = 'bright'
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.ledDim)
+                                #print 'sending: %s' % bcast_str
+                                msgQueue.put((5,bcast_str))
+
+
 
                     elif "raspibot2" in ADDON:
                         self.bCheckAll()  # Check for all off/on type broadcasrs
