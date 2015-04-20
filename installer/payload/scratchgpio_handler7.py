@@ -4114,8 +4114,10 @@ class ScratchListener(threading.Thread):
                         def pi2go_mapName(name):
                             print name
                             try:
+                                #print "rtn", ['left','back','right','front'].index(name)+1
                                 return ['left','back','right','front'].index(name)+1
                             except:
+                                #print "rtn",0
                                 return 0
 
                         lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
@@ -4196,11 +4198,13 @@ class ScratchListener(threading.Thread):
                                 if (self.bFindValue("pixel") and pi2go_mapName(self.value) == str(led + 1)):
                                     set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
                                     pixelProcessed = True
+                                    print "1st stage match"
 
                             if not pixelProcessed:
                                 for led in range(0, self.matrixUse):
                                     for ledcolour in ledcolours:
                                         if (self.bFindValue("pixel", ledcolour)) and pi2go_mapName(self.value) == str(led + 1):
+                                            print "pixel with colour found"
                                             self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                                 ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
                                             if ledcolour == 'random':
@@ -4211,6 +4215,7 @@ class ScratchListener(threading.Thread):
                                                 if (ledcolour != "invert"):
                                                     set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
                                                 pixelProcessed = True
+                                                print "2nd stage match"
 
                             if not pixelProcessed:
                                 #print "#", self.value[-7:-7]

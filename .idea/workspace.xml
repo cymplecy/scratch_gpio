@@ -6,9 +6,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Pi">
-      <change type="DELETED" beforePath="\\PI\pi\sghdev\scratch_gpio\installer\payload\scratchgpio_handler5.py" afterPath="" />
-      <change type="DELETED" beforePath="\\PI\pi\sghdev\scratch_gpio\installer\payload\scratchgpio_handler5xxx.py" afterPath="" />
-      <change type="DELETED" beforePath="\\PI\pi\sghdev\scratch_gpio\installer\payload\scratchgpio_handler6.py" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" afterPath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" afterPath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NeoPixel.so" afterPath="$PROJECT_DIR$/NeoPixel.so" />
@@ -220,8 +217,8 @@
       <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.33333334" vertical-offset="47810" max-vertical-offset="106726">
-              <caret line="2842" column="34" selection-start-line="2842" selection-start-column="34" selection-end-line="2842" selection-end-column="34" />
+            <state vertical-scroll-proportion="0.22125813" vertical-offset="51561" max-vertical-offset="106811">
+              <caret line="3057" column="70" selection-start-line="3057" selection-start-column="65" selection-end-line="3057" selection-end-column="70" />
               <folding />
             </state>
           </provider>
@@ -258,6 +255,7 @@
         <option value="$PROJECT_DIR$/installer/build.sh" />
         <option value="$PROJECT_DIR$/installer/payload/installer.sh" />
         <option value="$PROJECT_DIR$/sgh_GPIOController.py" />
+        <option value="$PROJECT_DIR$/new2.py" />
         <option value="$PROJECT_DIR$/scratchgpio_handler7.py" />
       </list>
     </option>
@@ -316,7 +314,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -337,10 +334,11 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="options.lastSelected" value="preferences.fileTypes" />
+    <property name="options.lastSelected" value="Errors" />
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
@@ -566,13 +564,13 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="292" y="57" width="1372" height="900" extended-state="1" />
+    <frame x="292" y="57" width="1372" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2160767" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.16055626" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32869786" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -663,8 +661,8 @@
   <component name="editorHistoryManager">
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.33333334" vertical-offset="47810" max-vertical-offset="106726">
-          <caret line="2842" column="34" selection-start-line="2842" selection-start-column="34" selection-end-line="2842" selection-end-column="34" />
+        <state vertical-scroll-proportion="0.22125813" vertical-offset="51561" max-vertical-offset="106811">
+          <caret line="3057" column="70" selection-start-line="3057" selection-start-column="65" selection-end-line="3057" selection-end-column="70" />
           <folding />
         </state>
       </provider>
