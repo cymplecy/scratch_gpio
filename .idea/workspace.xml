@@ -4,8 +4,19 @@
     <option name="SCOPE_TYPE" value="3" />
     <option name="ANALYSIS_IN_BACKGROUND" value="true" />
   </component>
+  <component name="BookmarkManager">
+    <bookmark url="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py" line="1568" />
+    <bookmark url="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py" line="1571" />
+    <bookmark url="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py" line="5835" />
+    <bookmark url="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py" line="1659" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Pi">
+    <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Changes to networking">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeMono.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeMono.ttf" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeMonoBold.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeMonoBold.ttf" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeSans.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeSans.ttf" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeSerif.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeSerif.ttf" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeSerifItalic.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeSerifItalic.ttf" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" afterPath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" afterPath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NeoPixel.so" afterPath="$PROJECT_DIR$/NeoPixel.so" />
@@ -17,6 +28,7 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/guru.png" afterPath="$PROJECT_DIR$/.idea/shelf/guru.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/.idea/shelf/install_scratchgpio5dev.sh.orig" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/pi_logo.png" afterPath="$PROJECT_DIR$/lib_oled96-master/pi_logo.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/rsc.sb" afterPath="$PROJECT_DIR$/.idea/shelf/rsc.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/rsc.sb" afterPath="$PROJECT_DIR$/installer/payload/rsc.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/sgh_servod1" afterPath="$PROJECT_DIR$/.idea/shelf/sgh_servod1" />
@@ -40,6 +52,7 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/README.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/README.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/REFERENCE.md" afterPath="$PROJECT_DIR$/explorer-hat-master/REFERENCE.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/RPiGPIOTest.py" afterPath="$PROJECT_DIR$/RPiGPIOTest.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/ReadMe.md" afterPath="$PROJECT_DIR$/lib_oled96-master/ReadMe.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/SGHVER.txt" afterPath="$PROJECT_DIR$/installer/payload/SGHVER.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/dictionaries/Simon.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/Simon.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/TODO.md" afterPath="$PROJECT_DIR$/explorer-hat-master/TODO.md" />
@@ -72,6 +85,9 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/eventbinding.py" afterPath="$PROJECT_DIR$/explorer-hat-master/eventbinding.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/examples/eventbinding.py" afterPath="$PROJECT_DIR$/explorer-hat-master/examples/eventbinding.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ex_8x8_pixels.py" afterPath="$PROJECT_DIR$/ex_8x8_pixels.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/example1-oled96-rpi.py" afterPath="$PROJECT_DIR$/lib_oled96-master/example1-oled96-rpi.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/example2-oled96-rpi.py" afterPath="$PROJECT_DIR$/lib_oled96-master/example2-oled96-rpi.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/example2-oled96-vgpio.py" afterPath="$PROJECT_DIR$/lib_oled96-master/example2-oled96-vgpio.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/explorerhat.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/explorerhat.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorerhatpins.txt" afterPath="$PROJECT_DIR$/explorerhatpins.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fgtest.py" afterPath="$PROJECT_DIR$/fgtest.py" />
@@ -105,6 +121,7 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/killsgh.sh" afterPath="$PROJECT_DIR$/installer/payload/killsgh.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kinematics.py" afterPath="$PROJECT_DIR$/kinematics.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/kinematics.py" afterPath="$PROJECT_DIR$/installer/payload/kinematics.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/lib_oled96.py" afterPath="$PROJECT_DIR$/lib_oled96-master/lib_oled96.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/meArm.py" afterPath="$PROJECT_DIR$/meArm.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/meArm.py" afterPath="$PROJECT_DIR$/installer/payload/meArm.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/minecraft.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/minecraft.py" />
@@ -112,6 +129,8 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nck.py" afterPath="$PROJECT_DIR$/nck.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/new.py" afterPath="$PROJECT_DIR$/new.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/new2.py" afterPath="$PROJECT_DIR$/new2.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ntest2.py" afterPath="$PROJECT_DIR$/ntest2.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nunchuck.py" afterPath="$PROJECT_DIR$/nunchuck.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/nunchuck.py" afterPath="$PROJECT_DIR$/installer/payload/nunchuck.py" />
@@ -217,8 +236,18 @@
       <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.22125813" vertical-offset="51561" max-vertical-offset="106811">
-              <caret line="3057" column="70" selection-start-line="3057" selection-start-column="65" selection-end-line="3057" selection-end-column="70" />
+            <state vertical-scroll-proportion="0.3011811" vertical-offset="0" max-vertical-offset="107627">
+              <caret line="9" column="46" selection-start-line="9" selection-start-column="45" selection-end-line="9" selection-end-column="46" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sgh_GPIOController.py" pinned="false" current-in-tab="false">
+        <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_GPIOController.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0" vertical-offset="1632" max-vertical-offset="13362">
+              <caret line="123" column="30" selection-start-line="123" selection-start-column="30" selection-end-line="123" selection-end-column="30" />
               <folding />
             </state>
           </provider>
@@ -254,15 +283,15 @@
         <option value="$PROJECT_DIR$/Adafruit_I2C.py" />
         <option value="$PROJECT_DIR$/installer/build.sh" />
         <option value="$PROJECT_DIR$/installer/payload/installer.sh" />
-        <option value="$PROJECT_DIR$/sgh_GPIOController.py" />
         <option value="$PROJECT_DIR$/new2.py" />
+        <option value="$PROJECT_DIR$/sgh_GPIOController.py" />
         <option value="$PROJECT_DIR$/scratchgpio_handler7.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="292" />
-    <option name="y" value="57" />
+    <option name="x" value="186" />
+    <option name="y" value="54" />
     <option name="width" value="1372" />
     <option name="height" value="900" />
   </component>
@@ -564,29 +593,29 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="292" y="57" width="1372" height="900" extended-state="0" />
+    <frame x="186" y="54" width="1372" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2160767" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32869786" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2692794" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2160767" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32869786" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32869786" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -633,7 +662,8 @@
     <MESSAGE value="Piandbash improvements - clearlcd" />
     <MESSAGE value="Piandbash digital input and output" />
     <MESSAGE value="Version 7 released" />
-    <option name="LAST_COMMIT_MESSAGE" value="Version 7 released" />
+    <MESSAGE value="Changes to networking" />
+    <option name="LAST_COMMIT_MESSAGE" value="Changes to networking" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -659,10 +689,18 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_GPIOController.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0" vertical-offset="1632" max-vertical-offset="13362">
+          <caret line="123" column="30" selection-start-line="123" selection-start-column="30" selection-end-line="123" selection-end-column="30" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.22125813" vertical-offset="51561" max-vertical-offset="106811">
-          <caret line="3057" column="70" selection-start-line="3057" selection-start-column="65" selection-end-line="3057" selection-end-column="70" />
+        <state vertical-scroll-proportion="0.3011811" vertical-offset="0" max-vertical-offset="107627">
+          <caret line="9" column="46" selection-start-line="9" selection-start-column="45" selection-end-line="9" selection-end-column="46" />
           <folding />
         </state>
       </provider>
