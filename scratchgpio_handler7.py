@@ -3555,12 +3555,12 @@ class ScratchListener(threading.Thread):
                     #print 'broadcast:' , self.dataraw
                     print "split",  self.dataraw.split(" ")
                     for item in self.dataraw.split(" "):
-                        if (item != "") and (item != "broadcast") and (item[0:3] != "#"):
+                        if (item != "") and (item != "broadcast") and (item[0] != "#"):
                             print item
                             if sghGC.linkPrefix is not None:
                                 dataOut = 'broadcast "' + '#' + sghGC.linkPrefix + '#' + item  + '"'
                             else:
-                                dataOut = item
+                                dataOut = 'broadcast "' + '#' + 'other' + '#' + item  + '"'
                             print dataOut
                             n = len(dataOut)
                             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
@@ -6055,6 +6055,22 @@ class SendMsgsToScratch(threading.Thread):
             except:
                 print "failed to send this message to Scratch", cmd
                 pass
+            if self.scratch_socket2 is not None:
+                if sghGC.linkPrefix is not None:
+                    dataOut = cmd.replace(' "',' "#' + sghGC.linkPrefix + '#')
+                else:
+                    dataOut = cmd.replace(' "',' "#' + 'other' + '#')
+                n = len(dataOut)
+                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                    chr(n & 0xFF))
+                if sghGC.autoLink:
+                    try:
+                        self.scratch_socket2.send(b + dataOut)
+                        print "auto sensor update Sent", dataOut
+                    except:
+                        print "failed to send this message to other computer", dataOut
+                        pass
+
             #print "message sent:" ,cmd
 
         print "SendMsgsToScratch stopped"

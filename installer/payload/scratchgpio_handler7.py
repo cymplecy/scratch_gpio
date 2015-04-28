@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.016'  #Perf improvements with ADC and change to Pi2Go from p2g4
+Version = 'v7.0.030'  #Changes to networking between 2 Pi
 import threading
 import socket
 import time
@@ -1567,6 +1567,17 @@ class ScratchListener(threading.Thread):
                 if len(data) > 0:  # Connection still valid so process the data received
 
                     dataIn = data
+                    # print "datain", dataIn
+
+                    # if sghGC.autoLink:
+                    #     print "autolink"
+                    #     print self.scratch_socket2
+                    #     if self.scratch_socket2 is not None:
+                    #         print "dataIn",dataIn
+                    #         dataOut = dataIn.replace(' "',' "#' + sghGC.linkPrefix + '#')
+                    #         print "sent", dataOut
+                    #         self.scratch_socket2.send(dataOut)
+
                     datawithCAPS = data
                     #dataOut = ""
                     dataList = []  # used to hold series of broadcasts or sensor updates
@@ -1647,6 +1658,7 @@ class ScratchListener(threading.Thread):
             #print
             #print
             #print "old datalist" , dataList
+
             if any("move" in s for s in dataList) or any("turn" in s for s in dataList):# or any("cheerlight" in s for s in dataList):
                 #print "move/turn found in dataList so going to expandList"
 
@@ -3539,7 +3551,24 @@ class ScratchListener(threading.Thread):
                     logging.getLogger().setLevel(logging.INFO)
 
                 if 'broadcast' in self.dataraw:
+
                     #print 'broadcast:' , self.dataraw
+                    print "split",  self.dataraw.split(" ")
+                    for item in self.dataraw.split(" "):
+                        if (item != "") and (item != "broadcast") and (item[0] != "#"):
+                            print item
+                            if sghGC.linkPrefix is not None:
+                                dataOut = 'broadcast "' + '#' + sghGC.linkPrefix + '#' + item  + '"'
+                            else:
+                                dataOut = 'broadcast "' + '#' + 'other' + '#' + item  + '"'
+                            print dataOut
+                            n = len(dataOut)
+                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                chr(n & 0xFF))
+                            if sghGC.autoLink:
+                                if self.scratch_socket2 is not None:
+                                    self.scratch_socket2.send(b + dataOut)
+                                    print "auto dataOut Sent", dataOut
 
                     if self.bFindValue("qmsg"):
                         msgQueue.put((5,self.value))
@@ -5800,6 +5829,23 @@ class ScratchListener(threading.Thread):
                             mc.player.setTilePos(x, y - 1, z)
                             mc.postToChat("moved")
 
+                    if self.bFindValue("prefix"):
+                        sghGC.linkPrefix = self.value
+                        print "prefix set to", sghGC.linkPrefix
+
+                    if self.bFindValue('autolink'):
+                        try:
+                            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            self.scratch_socket2.connect((self.value, 42001))
+                            print self.scratch_socket2
+                            print "Connected to ", self.value
+                            sghGC.autoLink = True
+                            if sghGC.linkPrefix is None:
+                                sghGC.linkPrefix = "other"
+                        except:
+                            print "Failed to connect to ", self.value
+                            pass
+
                     if self.bFindValue('link'):
                         try:
                             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -5809,6 +5855,8 @@ class ScratchListener(threading.Thread):
                         except:
                             print "Failed to connect to ", self.value
                             pass
+
+
 
                     if self.bFindValue('send'):
                         if self.scratch_socket2 is not None:
@@ -6007,6 +6055,22 @@ class SendMsgsToScratch(threading.Thread):
             except:
                 print "failed to send this message to Scratch", cmd
                 pass
+            if self.scratch_socket2 is not None:
+                if sghGC.linkPrefix is not None:
+                    dataOut = cmd.replace(' "',' "#' + sghGC.linkPrefix + '#')
+                else:
+                    dataOut = cmd.replace(' "',' "#' + 'other' + '#')
+                n = len(dataOut)
+                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                    chr(n & 0xFF))
+                if sghGC.autoLink:
+                    try:
+                        self.scratch_socket2.send(b + dataOut)
+                        print "auto sensor update Sent", dataOut
+                    except:
+                        print "failed to send this message to other computer", dataOut
+                        pass
+
             #print "message sent:" ,cmd
 
         print "SendMsgsToScratch stopped"
