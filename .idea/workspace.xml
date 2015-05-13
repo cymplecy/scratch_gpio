@@ -22,7 +22,6 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/guru.png" afterPath="$PROJECT_DIR$/.idea/shelf/guru.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/.idea/shelf/install_scratchgpio5dev.sh.orig" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload.tar.gz" afterPath="$PROJECT_DIR$/installer/payload.tar.gz" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/pi_logo.png" afterPath="$PROJECT_DIR$/lib_oled96-master/pi_logo.png" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/rsc.sb" afterPath="$PROJECT_DIR$/.idea/shelf/rsc.sb" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/rsc.sb" afterPath="$PROJECT_DIR$/installer/payload/rsc.sb" />
@@ -35,6 +34,8 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/27.py" afterPath="$PROJECT_DIR$/27.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/Adafruit_I2C.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/CHANGELOG.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/CHANGELOG.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/LICENSE.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/LICENSE.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/MANIFEST.in" afterPath="$PROJECT_DIR$/explorer-hat-master/library/MANIFEST.in" />
@@ -137,6 +138,9 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pwmtest.py" afterPath="$PROJECT_DIR$/pwmtest.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" afterPath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/scratch_gpio.iml" afterPath="$PROJECT_DIR$/.idea/scratch_gpio.iml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5xxx.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5xxx.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scratchgpio_handler7.py" afterPath="$PROJECT_DIR$/scratchgpio_handler7.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler7.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler7.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/setup.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/setup.py" />
@@ -231,8 +235,18 @@
       <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="107916">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state vertical-scroll-proportion="0.63582677" vertical-offset="0" max-vertical-offset="108120">
+              <caret line="19" column="44" selection-start-line="19" selection-start-column="44" selection-end-line="19" selection-end-column="44" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="sgh_GPIOController.py" pinned="false" current-in-tab="false">
+        <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_GPIOController.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-8.137931" vertical-offset="12854" max-vertical-offset="13362">
+              <caret line="774" column="20" selection-start-line="774" selection-start-column="14" selection-end-line="774" selection-end-column="20" />
               <folding />
             </state>
           </provider>
@@ -268,17 +282,17 @@
         <option value="$PROJECT_DIR$/Adafruit_I2C.py" />
         <option value="$PROJECT_DIR$/installer/build.sh" />
         <option value="$PROJECT_DIR$/new2.py" />
-        <option value="$PROJECT_DIR$/sgh_GPIOController.py" />
         <option value="$PROJECT_DIR$/installer/payload/installer.sh" />
-        <option value="$PROJECT_DIR$/scratchgpio_handler7.py" />
         <option value="$PROJECT_DIR$/installer/payload/scratchgpio_handler7.py" />
+        <option value="$PROJECT_DIR$/sgh_GPIOController.py" />
+        <option value="$PROJECT_DIR$/scratchgpio_handler7.py" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
     <option name="x" value="186" />
     <option name="y" value="54" />
-    <option name="width" value="1372" />
+    <option name="width" value="1463" />
     <option name="height" value="900" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
@@ -329,7 +343,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -350,6 +363,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -579,11 +593,11 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="186" y="54" width="1372" height="900" extended-state="0" />
+    <frame x="186" y="54" width="1463" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2160767" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2024879" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2692794" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
@@ -675,10 +689,18 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/sgh_GPIOController.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-8.137931" vertical-offset="12854" max-vertical-offset="13362">
+          <caret line="774" column="20" selection-start-line="774" selection-start-column="14" selection-end-line="774" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="107916">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state vertical-scroll-proportion="0.63582677" vertical-offset="0" max-vertical-offset="108120">
+          <caret line="19" column="44" selection-start-line="19" selection-start-column="44" selection-end-line="19" selection-end-column="44" />
           <folding />
         </state>
       </provider>

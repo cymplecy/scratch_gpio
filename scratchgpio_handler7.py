@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.031'  #Changes to networking between 2 Pi
+Version = 'v7.0.040'  #Proper fix for Pizazz
 import threading
 import socket
 import time
@@ -2225,16 +2225,19 @@ class ScratchListener(threading.Thread):
                         if "pizazz" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                sghGC.setAllInvert(
-                                    True)  # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                #sghGC.setAllInvert(True)  # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 #sghGC.pinUse[19] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
                                 #sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
                                 #sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
                                 sghGC.pinUse[7] = sghGC.POUTPUT  #LED
+                                sghGC.setPinInvert(7,True)
                                 sghGC.pinUse[11] = sghGC.POUTPUT  #LED
+                                sghGC.setPinInvert(11,True)
                                 sghGC.pinUse[18] = sghGC.POUTPUT  #LED
+                                sghGC.setPinInvert(18,True)
                                 sghGC.pinUse[22] = sghGC.POUTPUT  #LED
+                                sghGC.setPinInvert(22,True)
                                 sghGC.pinUse[12] = sghGC.PINPUT  #LFLeft
                                 sghGC.pinUse[13] = sghGC.PINPUT  #LFRight
 
@@ -2250,8 +2253,7 @@ class ScratchListener(threading.Thread):
                         if "simpie" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
-                                sghGC.setAllInvert(
-                                    True)  # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.setAllInvert(True)  # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 sghGC.pinUse[11] = sghGC.PINPUT  #Red
                                 sghGC.pinUse[13] = sghGC.PINPUT  #Amber
                                 sghGC.pinUse[15] = sghGC.PINPUT  #Green
@@ -3228,7 +3230,17 @@ class ScratchListener(threading.Thread):
                         self.vListCheck([22, 18, 11, 7], ["led1", "led2", "led3", "led4"])  # Check for LEDs
 
                         #check for motor variable commands
+                        # motorList = [['motorr', 19, 21, 0], ['motorl', 24, 26, 0]]
+                        # #logging.debug("ADDON:%s", ADDON)
+                        #
+                        # for listLoop in range(0, 2):
+                        #     if self.vFindValue(motorList[listLoop][0]):
+                        #         svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                        #         logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                        #         sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+                        #
                         motorList = [['motorr', 19, 21, 0], ['motorl', 24, 26, 0]]
+                        #motorList = [['motora', 21, 19, 0, False], ['motorb', 26, 24, 0, False]]
                         #logging.debug("ADDON:%s", ADDON)
 
                         for listLoop in range(0, 2):
