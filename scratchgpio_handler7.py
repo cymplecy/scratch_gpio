@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.030'  #Changes to networking between 2 Pi
+Version = 'v7.0.031'  #Changes to networking between 2 Pi
 import threading
 import socket
 import time
@@ -3553,19 +3553,20 @@ class ScratchListener(threading.Thread):
                 if 'broadcast' in self.dataraw:
 
                     #print 'broadcast:' , self.dataraw
-                    print "split",  self.dataraw.split(" ")
-                    for item in self.dataraw.split(" "):
-                        if (item != "") and (item != "broadcast") and (item[0] != "#"):
-                            print item
-                            if sghGC.linkPrefix is not None:
-                                dataOut = 'broadcast "' + '#' + sghGC.linkPrefix + '#' + item  + '"'
-                            else:
-                                dataOut = 'broadcast "' + '#' + 'other' + '#' + item  + '"'
-                            print dataOut
-                            n = len(dataOut)
-                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                                chr(n & 0xFF))
-                            if sghGC.autoLink:
+                    #print "split",  self.dataraw.split(" ")
+                    if sghGC.autoLink:
+                        for item in self.dataraw.split(" "):
+                            if (item != "") and (item != "broadcast") and (item[0] != "#"):
+                                #print item
+                                if sghGC.linkPrefix is not None:
+                                    dataOut = 'broadcast "' + '#' + sghGC.linkPrefix + '#' + item  + '"'
+                                else:
+                                    dataOut = 'broadcast "' + '#' + 'other' + '#' + item  + '"'
+                                #print dataOut
+                                n = len(dataOut)
+                                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                    chr(n & 0xFF))
+
                                 if self.scratch_socket2 is not None:
                                     self.scratch_socket2.send(b + dataOut)
                                     print "auto dataOut Sent", dataOut
