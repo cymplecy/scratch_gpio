@@ -6,9 +6,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Changes to networking">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/edugeek.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/pibrella.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/pins.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeMono.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeMono.ttf" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeMonoBold.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeMonoBold.ttf" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeSans.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeSans.ttf" />
@@ -57,7 +54,6 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/TODO.md" afterPath="$PROJECT_DIR$/explorer-hat-master/TODO.md" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/TODO.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/TODO.txt" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/__init__.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/__init__.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/__init__.py" afterPath="$PROJECT_DIR$/mcpi/__init__.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/analog.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/analog.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/babbage-lights-n-sounds.py" afterPath="$PROJECT_DIR$/explorer-hat-master/babbage-lights-n-sounds.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/examples/babbage-lights-n-sounds.py" afterPath="$PROJECT_DIR$/explorer-hat-master/examples/babbage-lights-n-sounds.py" />
@@ -78,6 +74,7 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctttest.py" afterPath="$PROJECT_DIR$/ctttest.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/decompress.sh" afterPath="$PROJECT_DIR$/installer/decompress.sh" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ds.sh" afterPath="$PROJECT_DIR$/ds.sh" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/edugeek.py" afterPath="$PROJECT_DIR$/edugeek.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/encodings.xml" afterPath="$PROJECT_DIR$/.idea/encodings.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/event.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/event.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/event.py" afterPath="$PROJECT_DIR$/mcpi/event.py" />
@@ -136,6 +133,8 @@
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nuntest.py" afterPath="$PROJECT_DIR$/nuntest.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/pdtone.py" afterPath="$PROJECT_DIR$/explorer-hat-master/pdtone.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/examples/pdtone.py" afterPath="$PROJECT_DIR$/explorer-hat-master/examples/pdtone.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pibrella.py" afterPath="$PROJECT_DIR$/pibrella.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pins.py" afterPath="$PROJECT_DIR$/pins.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/pins.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/pins.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pwmtest.py" afterPath="$PROJECT_DIR$/pwmtest.py" />
@@ -238,9 +237,11 @@
       <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
         <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="108120">
-              <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-              <folding />
+            <state vertical-scroll-proportion="0.3326087" vertical-offset="96866" max-vertical-offset="108290">
+              <caret line="5707" column="40" selection-start-line="5707" selection-start-column="35" selection-end-line="5707" selection-end-column="40" />
+              <folding>
+                <element signature="e#1021#1037#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -339,7 +340,6 @@
       <sortByType />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -360,6 +360,7 @@
           </PATH>
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -611,7 +612,13 @@
       <option name="project" value="LOCAL" />
       <updated>1422260178385</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Commiting from PyCharn">
+      <created>1434441096726</created>
+      <option name="number" value="00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1434441096726</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -625,19 +632,19 @@
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32996207" sideWeight="0.49965447" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32996207" sideWeight="0.49965447" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32869786" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
     <layout-to-restore>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32996634" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
@@ -685,7 +692,8 @@
     <MESSAGE value="Piandbash digital input and output" />
     <MESSAGE value="Version 7 released" />
     <MESSAGE value="Changes to networking" />
-    <option name="LAST_COMMIT_MESSAGE" value="Changes to networking" />
+    <MESSAGE value="Commiting from PyCharn" />
+    <option name="LAST_COMMIT_MESSAGE" value="Commiting from PyCharn" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -713,9 +721,11 @@
   <component name="editorHistoryManager">
     <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="108120">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
+        <state vertical-scroll-proportion="0.3326087" vertical-offset="96866" max-vertical-offset="108290">
+          <caret line="5707" column="40" selection-start-line="5707" selection-start-column="35" selection-end-line="5707" selection-end-column="40" />
+          <folding>
+            <element signature="e#1021#1037#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
