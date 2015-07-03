@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.040'  #Proper fix for Pizazz
+Version = 'v7.0.060'  #Bug fix adc regression for PCF
 import threading
 import socket
 import time
@@ -48,65 +48,57 @@ from sgh_cheerlights import CheerLights
 
 try:
     import meArm
-
-    print "meArm imported OK"
+    #print "meArm imported OK"
 except:
-    print "meArm  NOT imported OK"
+    print "meArm  NOT imported "
     pass
 
 try:
     from sgh_MCP23008 import sgh_MCP23008
-
-    print "MCP23008 imported OK"
+    #print "MCP23008 imported OK"
 except:
-    print "MCP23008  NOT imported OK"
+    print "MCP23008  NOT imported"
     pass
 
 try:
     from sgh_MCP230xx import Adafruit_MCP230XX
-
-    print "sgh_MCP230xx imported OK"
+    #print "sgh_MCP230xx imported OK"
 except:
-    print "sgh_MCP230xx  NOT imported OK"
+    print "sgh_MCP230xx  NOT imported "
     pass
 
 try:
     import spidev
-
-    print "spidev imported OK"
+    #print "spidev imported OK"
 except:
-    print "Not imported OK"
+    print "Not imported "
     pass
 
 try:
     from sgh_Adafruit_PWM_Servo_Driver import PWM
-
-    print "PWM/Servo imported OK"
+    #print "PWM/Servo imported OK"
 except:
-    print "PWM/Servo NOT imported OK"
+    print "PWM/Servo NOT imported "
     pass
 
 try:
     from sgh_PCF8591P import sgh_PCF8591P
-
-    print "ADC/DAC imported OK"
+    #print "ADC/DAC imported OK"
 except:
-    print "ADC/DAC NOT imported OK"
+    print "ADC/DAC NOT imported "
     pass
 
 try:
     from sgh_Adafruit_8x8 import sgh_EightByEight
     from sgh_Adafruit_8x8 import ColorEightByEight
-
-    print "8x8 imported OK"
+    #print "8x8 imported OK"
 except:
-    print "8x8 NOT imported OK"
+    print "8x8 NOT imported"
     pass
 
 try:
     from nunchuck import nunchuck
-
-    print "nunchuck imported"
+    #print "nunchuck imported"
 except:
     print "nunchuck not imported - check I2c is setup"
 
@@ -114,23 +106,12 @@ except:
 
 try:
     import mcpi.minecraft as minecraft
-
-    print "Minecraft imported OK"
+    #print "Minecraft imported OK"
 except:
     print "Minecraft NOT imported OK"
     pass
 
 sghCT = None #reserve for captouch
-
-
-#try and inport smbus but don't worry if not installed
-#try:
-#    from smbus import SMBus
-#except:
-#    pass
-
-#import RPi.GPIO as GPIO
-
 
 class Compass:
     __scales = {
@@ -592,7 +573,7 @@ class ScratchSender(threading.Thread):
                                 #print " "
                             time.sleep(0)
 
-            if (pcfSensor is not None) and ("explorer" not in ADDON):  #if PCF ADC found
+            if (pcfSensor is not None):
                 sensor_str = ""
                 if tick % 5 == 0:
                     for channel in range(0, 4):  #loop thru all 4 inputs
@@ -605,7 +586,9 @@ class ScratchSender(threading.Thread):
                         adc = int((adc + lastADC[channel]) / 2.0)
                         if adc <> lastADC[channel]:
                             #print "channel,adc:",(channel+1),adc
-                            sensor_name = ['lightfrontright','lightfrontleft','lightbackleft','lightbackright'][channel]
+                            sensor_name = "adc" +str(channel + 1)
+                            if "pi2go" in ADDON:
+                                sensor_name = ['lightfrontright','lightfrontleft','lightbackleft','lightbackright'][channel]
                             sensor_value = str(adc)
                             sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
                         lastADC[channel] = adc
@@ -924,9 +907,9 @@ class ScratchSender(threading.Thread):
                 #print "explorer addon found"
                 if sghGC.capTouch is None:
                     import sgh_captouch
-                    print "SGH_captouch imported OK"
+                    #print "SGH_captouch imported OK"
                     import sgh_captouch_helper
-                    print "SGH_captouch_helper imported OK"
+                    #print "SGH_captouch_helper imported OK"
                     sghGC.capTouch = sgh_captouch.Cap1208()
                     sghCT = sgh_captouch_helper.sgh_captouch_helper()
                     sghGC.capTouchHelper = sghCT
@@ -4362,7 +4345,7 @@ class ScratchListener(threading.Thread):
                         if UH is None:
                             #try:
                                 import sgh_unicornhat as UH
-                                print "UnicornHat imported OK"
+                                #print "UnicornHat imported OK"
                             #except:
                                 #print "UnicornHat software not installed"
                                 #break
@@ -6184,7 +6167,8 @@ try:
     print ("Update PWM value on PiGLow attempted")
     piglow.update_pwm_values()  #PiGlow_Values)
 except:
-    print "No PiGlow Detected"
+    pass
+    #print "No PiGlow Detected"
 
 
 #See if Compass connected
@@ -6193,43 +6177,48 @@ try:
     compass = Compass(gauss=4.7, declination=(-0, 0))
     print "compass detected"
 except:
-    print "No Compass Detected"
+    pass
+    #print "No Compass Detected"
 
 pcaPWM = None
 try:
     pcaPWM = PWM(0x40, sghGC.i2cbus, debug=False)
-    print pcaPWM
-    print pcaPWM.setPWMFreq(60)  # Set frequency to 60 Hz
+    #print pcaPWM
+    pcaPWM.setPWMFreq(60)  # Set frequency to 60 Hz
     print "AdaFruit PWM/Servo Board PCA9685 detected"
 except:
-    print "No PWM/Servo Board PCA9685 detected"
+    pass
+    #print "No PWM/Servo Board PCA9685 detected"
 
 pcfSensor = None
 try:
     pcfSensor = sgh_PCF8591P(sghGC.i2cbus)  #i2c, 0x48)
-    print pcfSensor
+    #print pcfSensor
     print "ADC/DAC PCF8591P Detected"
 except:
-    print "No ADC/DAC PCF8591 Detected"
+    pass
+    #print "No ADC/DAC PCF8591 Detected"
 
 AdaMatrix = None
 try:
     AdaMatrix = sgh_EightByEight(address=0x70)
     AdaMatrix = ColorEightByEight(address=0x70)
-    print AdaMatrix
+    #print AdaMatrix
     print "AdaMatrix Detected"
 except:
-    print "No AdaMatrix Detected"
+    pass
+    #print "No AdaMatrix Detected"
 
 PiMatrix = None
 #PiMatrix = sgh_PiMatrix.sgh_PiMatrix(0x20,0)
 try:
     PiMatrix = sgh_PiMatrix(0x20, sghGC.i2cbus)
-    print PiMatrix
+    #print PiMatrix
     print "PiMatrix Detected"
     PiMatrix.start()
 except:
-    print "No PiMatrix Detected"
+    pass
+    #print "No PiMatrix Detected"
 #PiMatrix.start()
 #time.sleep(5)
 
@@ -6252,29 +6241,32 @@ mcp = None
 #print mcp
 try:
     mcp = Adafruit_MCP230XX(address=0x20, num_gpios=16, busnum=sghGC.i2cbus)  # MCP23017
-    print mcp
+    #print mcp
     print "MCP23017 Detected"
 except:
-    print "No MCP23017 Detected"
+    pass
+    #print "No MCP23017 Detected"
 
     # Open SPI bus
 spi = None
 
 wii = None
 try:
-    print "looking for nunchuck"
+    #print "looking for nunchuck"
     wii = nunchuck()
     print nunchuck()
     print "NunChuck Detected"
 except:
-    print "No NunChuck Detected"
+    pass
+    #print "No NunChuck Detected"
 
 RasPiCamera = None
 try:
     RasPiCamera = sgh_RasPiCamera.RasPiCamera()
-    print RasPiCamera
+    print "RasPiCamera Detected"
 except:
-    print "No Camera Detected"
+    pass
+    #print "No Camera Detected"
 
 sghMC = sgh_Minecraft.Minecraft()
 
