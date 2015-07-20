@@ -2,18 +2,19 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/.idea/scratch_gpio.iml" filepath="$PROJECT_DIR$/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
-      <module fileurl="file:$PROJECT_DIR$/../../../..////PI/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="pi/..////PI/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://Y:/.idea/Y.iml" filepath="Y:/.idea/Y.iml" />
+      <module fileurl="file://file:Y:/../../../..//Y:/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..//Y:/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////pi/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
+      <module fileurl="file://file:Y:/../../../..////PI/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" filepath="file:Y:/../../../..////PI/pi/sghdev/scratch_gpio/.idea/scratch_gpio.iml" />
     </modules>
   </component>
 </project>

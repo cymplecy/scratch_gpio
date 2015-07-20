@@ -6,211 +6,215 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="cf2b3b71-9916-430a-a112-027146725b13" name="Default" comment="Changes to networking">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeMono.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeMono.ttf" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeMonoBold.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeMonoBold.ttf" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeSans.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeSans.ttf" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeSerif.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeSerif.ttf" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/FreeSerifItalic.ttf" afterPath="$PROJECT_DIR$/lib_oled96-master/FreeSerifItalic.ttf" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" afterPath="$PROJECT_DIR$/.idea/shelf/GPIOexample.sb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" afterPath="$PROJECT_DIR$/installer/payload/GPIOexample.sb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NeoPixel.so" afterPath="$PROJECT_DIR$/NeoPixel.so" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/NeoPixel.so" afterPath="$PROJECT_DIR$/.idea/shelf/NeoPixel.so" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/README.md" afterPath="$PROJECT_DIR$/explorer-hat-master/library/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/blink11.sb" afterPath="$PROJECT_DIR$/.idea/shelf/blink11.sb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/blink11.sb" afterPath="$PROJECT_DIR$/installer/payload/blink11.sb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/guru.png" afterPath="$PROJECT_DIR$/guru.png" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/guru.png" afterPath="$PROJECT_DIR$/.idea/shelf/guru.png" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/.idea/shelf/install_scratchgpio5dev.sh.orig" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh.orig" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/pi_logo.png" afterPath="$PROJECT_DIR$/lib_oled96-master/pi_logo.png" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/rsc.sb" afterPath="$PROJECT_DIR$/.idea/shelf/rsc.sb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/rsc.sb" afterPath="$PROJECT_DIR$/installer/payload/rsc.sb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/sgh_servod1" afterPath="$PROJECT_DIR$/.idea/shelf/sgh_servod1" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_servod" afterPath="$PROJECT_DIR$/sgh_servod" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/sgh_servod" afterPath="$PROJECT_DIR$/.idea/shelf/sgh_servod" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_servod" afterPath="$PROJECT_DIR$/installer/payload/sgh_servod" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/.gitignore" afterPath="$PROJECT_DIR$/explorer-hat-master/.gitignore" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/.name" afterPath="$PROJECT_DIR$/.idea/.name" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/27.py" afterPath="$PROJECT_DIR$/27.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/Adafruit_I2C.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_I2C.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/Adafruit_PWM_Servo_Driver.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/installer/payload/Adafruit_PWM_Servo_Driver.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/CHANGELOG.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/CHANGELOG.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/LICENSE.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/LICENSE.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/MANIFEST.in" afterPath="$PROJECT_DIR$/explorer-hat-master/library/MANIFEST.in" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/PINS.md" afterPath="$PROJECT_DIR$/explorer-hat-master/PINS.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/shelf/Pi.patch" afterPath="$PROJECT_DIR$/.idea/shelf/Pi.patch" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/README.md" afterPath="$PROJECT_DIR$/explorer-hat-master/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/tutorial/README.md" afterPath="$PROJECT_DIR$/explorer-hat-master/tutorial/README.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/README.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/README.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/REFERENCE.md" afterPath="$PROJECT_DIR$/explorer-hat-master/REFERENCE.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/RPiGPIOTest.py" afterPath="$PROJECT_DIR$/RPiGPIOTest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/ReadMe.md" afterPath="$PROJECT_DIR$/lib_oled96-master/ReadMe.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/SGHVER.txt" afterPath="$PROJECT_DIR$/installer/payload/SGHVER.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/dictionaries/Simon.xml" afterPath="$PROJECT_DIR$/.idea/dictionaries/Simon.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/TODO.md" afterPath="$PROJECT_DIR$/explorer-hat-master/TODO.md" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/TODO.txt" afterPath="$PROJECT_DIR$/explorer-hat-master/library/TODO.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/__init__.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/__init__.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/analog.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/analog.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/babbage-lights-n-sounds.py" afterPath="$PROJECT_DIR$/explorer-hat-master/babbage-lights-n-sounds.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/examples/babbage-lights-n-sounds.py" afterPath="$PROJECT_DIR$/explorer-hat-master/examples/babbage-lights-n-sounds.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/beebottest.py" afterPath="$PROJECT_DIR$/beebottest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/blink11.py" afterPath="$PROJECT_DIR$/installer/payload/blink11.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/block.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/block.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/block.py" afterPath="$PROJECT_DIR$/mcpi/block.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.BACKUP.5802.sh" afterPath="$PROJECT_DIR$/installer/build.sh.BACKUP.5802.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.BASE.5802.sh" afterPath="$PROJECT_DIR$/installer/build.sh.BASE.5802.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.LOCAL.5802.sh" afterPath="$PROJECT_DIR$/installer/build.sh.LOCAL.5802.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.REMOTE.5802.sh" afterPath="$PROJECT_DIR$/installer/build.sh.REMOTE.5802.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh.orig" afterPath="$PROJECT_DIR$/installer/build.sh.orig" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/build.sh" afterPath="$PROJECT_DIR$/installer/build.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/captouch.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/captouch.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/cheerlights.py" afterPath="$PROJECT_DIR$/installer/payload/cheerlights.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/connection.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/connection.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/connection.py" afterPath="$PROJECT_DIR$/mcpi/connection.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ctttest.py" afterPath="$PROJECT_DIR$/ctttest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/decompress.sh" afterPath="$PROJECT_DIR$/installer/decompress.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ds.sh" afterPath="$PROJECT_DIR$/ds.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/edugeek.py" afterPath="$PROJECT_DIR$/edugeek.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/encodings.xml" afterPath="$PROJECT_DIR$/.idea/encodings.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/event.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/event.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/event.py" afterPath="$PROJECT_DIR$/mcpi/event.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/eventbinding.py" afterPath="$PROJECT_DIR$/explorer-hat-master/eventbinding.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/examples/eventbinding.py" afterPath="$PROJECT_DIR$/explorer-hat-master/examples/eventbinding.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ex_8x8_pixels.py" afterPath="$PROJECT_DIR$/ex_8x8_pixels.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/example1-oled96-rpi.py" afterPath="$PROJECT_DIR$/lib_oled96-master/example1-oled96-rpi.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/example2-oled96-rpi.py" afterPath="$PROJECT_DIR$/lib_oled96-master/example2-oled96-rpi.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/example2-oled96-vgpio.py" afterPath="$PROJECT_DIR$/lib_oled96-master/example2-oled96-vgpio.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/explorerhat.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/explorerhat.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorerhatpins.txt" afterPath="$PROJECT_DIR$/explorerhatpins.txt" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/fgtest.py" afterPath="$PROJECT_DIR$/fgtest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/gtest.py" afterPath="$PROJECT_DIR$/gtest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/i2c_outputs.py" afterPath="$PROJECT_DIR$/i2c_outputs.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio3.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio3.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio4.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio4.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.BACKUP.5861.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.BACKUP.5861.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.BASE.5861.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.BASE.5861.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.LOCAL.5861.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.LOCAL.5861.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.REMOTE.5861.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh.REMOTE.5861.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5dev.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5rspbt2.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5rspbt2.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio5x.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio5x.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6alpha.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6alpha.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6beta.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6beta.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio6dev.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio7.sh" afterPath="$PROJECT_DIR$/install_scratchgpio7.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio7.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio7.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio7deb.sh" afterPath="$PROJECT_DIR$/install_scratchgpio7deb.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio7deb.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio7deb.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/install_scratchgpio7dev.sh" afterPath="$PROJECT_DIR$/install_scratchgpio7dev.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/install_scratchgpio7dev.sh" afterPath="$PROJECT_DIR$/installer/install_scratchgpio7dev.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/installer.sh" afterPath="$PROJECT_DIR$/installer/payload/installer.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ipd03.py" afterPath="$PROJECT_DIR$/ipd03.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/jazzy.py" afterPath="$PROJECT_DIR$/jazzy.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/killsgh.sh" afterPath="$PROJECT_DIR$/killsgh.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/killsgh.sh" afterPath="$PROJECT_DIR$/installer/payload/killsgh.sh" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/kinematics.py" afterPath="$PROJECT_DIR$/kinematics.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/kinematics.py" afterPath="$PROJECT_DIR$/installer/payload/kinematics.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lib_oled96-master/lib_oled96.py" afterPath="$PROJECT_DIR$/lib_oled96-master/lib_oled96.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/meArm.py" afterPath="$PROJECT_DIR$/meArm.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/meArm.py" afterPath="$PROJECT_DIR$/installer/payload/meArm.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/minecraft.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/minecraft.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/minecraft.py" afterPath="$PROJECT_DIR$/mcpi/minecraft.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/modules.xml" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nck.py" afterPath="$PROJECT_DIR$/nck.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/new.py" afterPath="$PROJECT_DIR$/new.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/new2.py" afterPath="$PROJECT_DIR$/new2.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ntest2.py" afterPath="$PROJECT_DIR$/ntest2.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nunchuck.py" afterPath="$PROJECT_DIR$/nunchuck.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/nunchuck.py" afterPath="$PROJECT_DIR$/installer/payload/nunchuck.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/nuntest.py" afterPath="$PROJECT_DIR$/nuntest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/pdtone.py" afterPath="$PROJECT_DIR$/explorer-hat-master/pdtone.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/examples/pdtone.py" afterPath="$PROJECT_DIR$/explorer-hat-master/examples/pdtone.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pibrella.py" afterPath="$PROJECT_DIR$/pibrella.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pins.py" afterPath="$PROJECT_DIR$/pins.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/pins.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/pins.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pwmtest.py" afterPath="$PROJECT_DIR$/pwmtest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" afterPath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/scratch_gpio.iml" afterPath="$PROJECT_DIR$/.idea/scratch_gpio.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5xxx.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler5xxx.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler6.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/scratchgpio_handler7.py" afterPath="$PROJECT_DIR$/scratchgpio_handler7.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/scratchgpio_handler7.py" afterPath="$PROJECT_DIR$/installer/payload/scratchgpio_handler7.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/setup.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/setup.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Adafruit_8x8.py" afterPath="$PROJECT_DIR$/sgh_Adafruit_8x8.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_8x8.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_8x8.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Adafruit_LEDBackpack.py" afterPath="$PROJECT_DIR$/sgh_Adafruit_LEDBackpack.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_LEDBackpack.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_LEDBackpack.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/sgh_Adafruit_PWM_Servo_Driver.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_PWM_Servo_Driver.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Adafruit_PWM_Servo_Driver.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Cheer.py" afterPath="$PROJECT_DIR$/sgh_Cheer.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Cheer.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Cheer.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_GPIOController.py" afterPath="$PROJECT_DIR$/sgh_GPIOController.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_GPIOController.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_GPIOController.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_InputTest.py" afterPath="$PROJECT_DIR$/sgh_InputTest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_InputTest.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_InputTest.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_MCP23008.py" afterPath="$PROJECT_DIR$/sgh_MCP23008.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_MCP23008.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_MCP23008.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_MCP230xx.py" afterPath="$PROJECT_DIR$/sgh_MCP230xx.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_MCP230xx.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_MCP230xx.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Minecraft.py" afterPath="$PROJECT_DIR$/sgh_Minecraft.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Minecraft.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Minecraft.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_PCF8591P.py" afterPath="$PROJECT_DIR$/sgh_PCF8591P.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_PCF8591P.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_PCF8591P.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_PiGlow.py" afterPath="$PROJECT_DIR$/sgh_PiGlow.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_PiGlow.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_PiGlow.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_PiMatrix-old.py" afterPath="$PROJECT_DIR$/sgh_PiMatrix-old.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_PiMatrix-old.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_PiMatrix-old.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_PiMatrix.py" afterPath="$PROJECT_DIR$/sgh_PiMatrix.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_PiMatrix.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_PiMatrix.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_PiMatrxi.py" afterPath="$PROJECT_DIR$/sgh_PiMatrxi.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_PiMatrxi.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_PiMatrxi.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_PiMatrxiTh.py" afterPath="$PROJECT_DIR$/sgh_PiMatrxiTh.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_PiMatrxiTh.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_PiMatrxiTh.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_RasPiCamera.py" afterPath="$PROJECT_DIR$/sgh_RasPiCamera.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_RasPiCamera.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_RasPiCamera.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Stepper.py" afterPath="$PROJECT_DIR$/sgh_Stepper.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Stepper.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Stepper.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_Turn.py" afterPath="$PROJECT_DIR$/sgh_Turn.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_Turn.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_Turn.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_captouch.py" afterPath="$PROJECT_DIR$/sgh_captouch.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_captouch.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_captouch.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_captouch_helper.py" afterPath="$PROJECT_DIR$/sgh_captouch_helper.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_captouch_helper.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_captouch_helper.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_cheerlights.py" afterPath="$PROJECT_DIR$/sgh_cheerlights.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_cheerlights.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_cheerlights.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_explorer_analog.py" afterPath="$PROJECT_DIR$/sgh_explorer_analog.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_explorer_analog.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_explorer_analog.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_pnbLCD.py" afterPath="$PROJECT_DIR$/sgh_pnbLCD.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_pnbLCD.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_pnbLCD.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sgh_unicornhat.py" afterPath="$PROJECT_DIR$/sgh_unicornhat.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/sgh_unicornhat.py" afterPath="$PROJECT_DIR$/installer/payload/sgh_unicornhat.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sghcthelper.py" afterPath="$PROJECT_DIR$/sghcthelper.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/sghsess.py" afterPath="$PROJECT_DIR$/sghsess.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/t2.py" afterPath="$PROJECT_DIR$/t2.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/temptest2.py" afterPath="$PROJECT_DIR$/temptest2.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test.py" afterPath="$PROJECT_DIR$/test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/test.py" afterPath="$PROJECT_DIR$/explorer-hat-master/test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/examples/test.py" afterPath="$PROJECT_DIR$/explorer-hat-master/examples/test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/library/test.py" afterPath="$PROJECT_DIR$/explorer-hat-master/library/test.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test8591.py" afterPath="$PROJECT_DIR$/test8591.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/testimu.py" afterPath="$PROJECT_DIR$/testimu.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/util.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/util.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/util.py" afterPath="$PROJECT_DIR$/mcpi/util.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/installer/payload/mcpi/vec3.py" afterPath="$PROJECT_DIR$/installer/payload/mcpi/vec3.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/mcpi/vec3.py" afterPath="$PROJECT_DIR$/mcpi/vec3.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/explorer-hat-master/tutorial/welcome.py" afterPath="$PROJECT_DIR$/explorer-hat-master/tutorial/welcome.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="NEW" beforePath="" afterPath="Y:/.idea/Y.iml" />
+      <change type="NEW" beforePath="" afterPath="Y:/scratchgpio7dev.sh" />
+      <change type="NEW" beforePath="" afterPath="Y:/scratchgpio7devplus.sh" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/FreeMono.ttf" afterPath="Y:/lib_oled96-master/FreeMono.ttf" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/FreeMonoBold.ttf" afterPath="Y:/lib_oled96-master/FreeMonoBold.ttf" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/FreeSans.ttf" afterPath="Y:/lib_oled96-master/FreeSans.ttf" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/FreeSerif.ttf" afterPath="Y:/lib_oled96-master/FreeSerif.ttf" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/FreeSerifItalic.ttf" afterPath="Y:/lib_oled96-master/FreeSerifItalic.ttf" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/GPIOexample.sb" afterPath="Y:/.idea/shelf/GPIOexample.sb" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/GPIOexample.sb" afterPath="Y:/installer/payload/GPIOexample.sb" />
+      <change type="MODIFICATION" beforePath="Y:/NeoPixel.so" afterPath="Y:/NeoPixel.so" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/NeoPixel.so" afterPath="Y:/.idea/shelf/NeoPixel.so" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/README.md" afterPath="Y:/explorer-hat-master/library/README.md" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/blink11.sb" afterPath="Y:/.idea/shelf/blink11.sb" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/blink11.sb" afterPath="Y:/installer/payload/blink11.sb" />
+      <change type="MODIFICATION" beforePath="Y:/guru.png" afterPath="Y:/guru.png" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/guru.png" afterPath="Y:/.idea/shelf/guru.png" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/install_scratchgpio5dev.sh.orig" afterPath="Y:/.idea/shelf/install_scratchgpio5dev.sh.orig" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5dev.sh.orig" afterPath="Y:/installer/install_scratchgpio5dev.sh.orig" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/pi_logo.png" afterPath="Y:/lib_oled96-master/pi_logo.png" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/rsc.sb" afterPath="Y:/.idea/shelf/rsc.sb" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/rsc.sb" afterPath="Y:/installer/payload/rsc.sb" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/sgh_servod1" afterPath="Y:/.idea/shelf/sgh_servod1" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_servod" afterPath="Y:/sgh_servod" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/sgh_servod" afterPath="Y:/.idea/shelf/sgh_servod" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_servod" afterPath="Y:/installer/payload/sgh_servod" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/.gitignore" afterPath="Y:/explorer-hat-master/.gitignore" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/.name" afterPath="Y:/.idea/.name" />
+      <change type="MODIFICATION" beforePath="Y:/27.py" afterPath="Y:/27.py" />
+      <change type="MODIFICATION" beforePath="Y:/Adafruit_I2C.py" afterPath="Y:/Adafruit_I2C.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/Adafruit_I2C.py" afterPath="Y:/installer/payload/Adafruit_I2C.py" />
+      <change type="MODIFICATION" beforePath="Y:/Adafruit_PWM_Servo_Driver.py" afterPath="Y:/Adafruit_PWM_Servo_Driver.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/Adafruit_PWM_Servo_Driver.py" afterPath="Y:/installer/payload/Adafruit_PWM_Servo_Driver.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/CHANGELOG.txt" afterPath="Y:/explorer-hat-master/library/CHANGELOG.txt" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/LICENSE.txt" afterPath="Y:/explorer-hat-master/library/LICENSE.txt" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/MANIFEST.in" afterPath="Y:/explorer-hat-master/library/MANIFEST.in" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/PINS.md" afterPath="Y:/explorer-hat-master/PINS.md" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/shelf/Pi.patch" afterPath="Y:/.idea/shelf/Pi.patch" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/inspectionProfiles/Project_Default.xml" afterPath="Y:/.idea/inspectionProfiles/Project_Default.xml" />
+      <change type="MODIFICATION" beforePath="Y:/README.md" afterPath="Y:/README.md" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/README.md" afterPath="Y:/explorer-hat-master/README.md" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/tutorial/README.md" afterPath="Y:/explorer-hat-master/tutorial/README.md" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/README.txt" afterPath="Y:/explorer-hat-master/library/README.txt" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/REFERENCE.md" afterPath="Y:/explorer-hat-master/REFERENCE.md" />
+      <change type="MODIFICATION" beforePath="Y:/RPiGPIOTest.py" afterPath="Y:/RPiGPIOTest.py" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/ReadMe.md" afterPath="Y:/lib_oled96-master/ReadMe.md" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/SGHVER.txt" afterPath="Y:/installer/payload/SGHVER.txt" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/dictionaries/Simon.xml" afterPath="Y:/.idea/dictionaries/Simon.xml" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/TODO.md" afterPath="Y:/explorer-hat-master/TODO.md" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/TODO.txt" afterPath="Y:/explorer-hat-master/library/TODO.txt" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/mcpi/__init__.py" afterPath="Y:/installer/payload/mcpi/__init__.py" />
+      <change type="MODIFICATION" beforePath="Y:/mcpi/__init__.py" afterPath="Y:/mcpi/__init__.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/analog.py" afterPath="Y:/explorer-hat-master/library/analog.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/babbage-lights-n-sounds.py" afterPath="Y:/explorer-hat-master/babbage-lights-n-sounds.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/examples/babbage-lights-n-sounds.py" afterPath="Y:/explorer-hat-master/examples/babbage-lights-n-sounds.py" />
+      <change type="MODIFICATION" beforePath="Y:/beebottest.py" afterPath="Y:/beebottest.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/blink11.py" afterPath="Y:/installer/payload/blink11.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/mcpi/block.py" afterPath="Y:/installer/payload/mcpi/block.py" />
+      <change type="MODIFICATION" beforePath="Y:/mcpi/block.py" afterPath="Y:/mcpi/block.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/build.sh.BACKUP.5802.sh" afterPath="Y:/installer/build.sh.BACKUP.5802.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/build.sh.BASE.5802.sh" afterPath="Y:/installer/build.sh.BASE.5802.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/build.sh.LOCAL.5802.sh" afterPath="Y:/installer/build.sh.LOCAL.5802.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/build.sh.REMOTE.5802.sh" afterPath="Y:/installer/build.sh.REMOTE.5802.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/build.sh.orig" afterPath="Y:/installer/build.sh.orig" />
+      <change type="MODIFICATION" beforePath="Y:/installer/build.sh" afterPath="Y:/installer/build.sh" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/captouch.py" afterPath="Y:/explorer-hat-master/library/captouch.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/cheerlights.py" afterPath="Y:/installer/payload/cheerlights.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/mcpi/connection.py" afterPath="Y:/installer/payload/mcpi/connection.py" />
+      <change type="MODIFICATION" beforePath="Y:/mcpi/connection.py" afterPath="Y:/mcpi/connection.py" />
+      <change type="MODIFICATION" beforePath="Y:/ctttest.py" afterPath="Y:/ctttest.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/decompress.sh" afterPath="Y:/installer/decompress.sh" />
+      <change type="MODIFICATION" beforePath="Y:/ds.sh" afterPath="Y:/ds.sh" />
+      <change type="MODIFICATION" beforePath="Y:/edugeek.py" afterPath="Y:/edugeek.py" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/encodings.xml" afterPath="Y:/.idea/encodings.xml" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/mcpi/event.py" afterPath="Y:/installer/payload/mcpi/event.py" />
+      <change type="MODIFICATION" beforePath="Y:/mcpi/event.py" afterPath="Y:/mcpi/event.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/eventbinding.py" afterPath="Y:/explorer-hat-master/eventbinding.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/examples/eventbinding.py" afterPath="Y:/explorer-hat-master/examples/eventbinding.py" />
+      <change type="MODIFICATION" beforePath="Y:/ex_8x8_pixels.py" afterPath="Y:/ex_8x8_pixels.py" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/example1-oled96-rpi.py" afterPath="Y:/lib_oled96-master/example1-oled96-rpi.py" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/example2-oled96-rpi.py" afterPath="Y:/lib_oled96-master/example2-oled96-rpi.py" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/example2-oled96-vgpio.py" afterPath="Y:/lib_oled96-master/example2-oled96-vgpio.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/explorerhat.py" afterPath="Y:/explorer-hat-master/library/explorerhat.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorerhatpins.txt" afterPath="Y:/explorerhatpins.txt" />
+      <change type="MODIFICATION" beforePath="Y:/fgtest.py" afterPath="Y:/fgtest.py" />
+      <change type="MODIFICATION" beforePath="Y:/gtest.py" afterPath="Y:/gtest.py" />
+      <change type="MODIFICATION" beforePath="Y:/i2c_outputs.py" afterPath="Y:/i2c_outputs.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio.sh" afterPath="Y:/installer/install_scratchgpio.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio3.sh" afterPath="Y:/installer/install_scratchgpio3.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio4.sh" afterPath="Y:/installer/install_scratchgpio4.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5.sh.BACKUP.5861.sh" afterPath="Y:/installer/install_scratchgpio5.sh.BACKUP.5861.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5.sh.BASE.5861.sh" afterPath="Y:/installer/install_scratchgpio5.sh.BASE.5861.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5.sh.LOCAL.5861.sh" afterPath="Y:/installer/install_scratchgpio5.sh.LOCAL.5861.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5.sh.REMOTE.5861.sh" afterPath="Y:/installer/install_scratchgpio5.sh.REMOTE.5861.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5.sh" afterPath="Y:/installer/install_scratchgpio5.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5dev.sh" afterPath="Y:/installer/install_scratchgpio5dev.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5rspbt2.sh" afterPath="Y:/installer/install_scratchgpio5rspbt2.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio5x.sh" afterPath="Y:/installer/install_scratchgpio5x.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio6.sh" afterPath="Y:/installer/install_scratchgpio6.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio6alpha.sh" afterPath="Y:/installer/install_scratchgpio6alpha.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio6beta.sh" afterPath="Y:/installer/install_scratchgpio6beta.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio6dev.sh" afterPath="Y:/installer/install_scratchgpio6dev.sh" />
+      <change type="MODIFICATION" beforePath="Y:/install_scratchgpio7.sh" afterPath="Y:/install_scratchgpio7.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio7.sh" afterPath="Y:/installer/install_scratchgpio7.sh" />
+      <change type="MODIFICATION" beforePath="Y:/install_scratchgpio7deb.sh" afterPath="Y:/install_scratchgpio7deb.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio7deb.sh" afterPath="Y:/installer/install_scratchgpio7deb.sh" />
+      <change type="MODIFICATION" beforePath="Y:/install_scratchgpio7dev.sh" afterPath="Y:/install_scratchgpio7dev.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/install_scratchgpio7dev.sh" afterPath="Y:/installer/install_scratchgpio7dev.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/installer.sh" afterPath="Y:/installer/payload/installer.sh" />
+      <change type="MODIFICATION" beforePath="Y:/ipd03.py" afterPath="Y:/ipd03.py" />
+      <change type="MODIFICATION" beforePath="Y:/jazzy.py" afterPath="Y:/jazzy.py" />
+      <change type="MODIFICATION" beforePath="Y:/killsgh.sh" afterPath="Y:/killsgh.sh" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/killsgh.sh" afterPath="Y:/installer/payload/killsgh.sh" />
+      <change type="MODIFICATION" beforePath="Y:/kinematics.py" afterPath="Y:/kinematics.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/kinematics.py" afterPath="Y:/installer/payload/kinematics.py" />
+      <change type="MODIFICATION" beforePath="Y:/lib_oled96-master/lib_oled96.py" afterPath="Y:/lib_oled96-master/lib_oled96.py" />
+      <change type="MODIFICATION" beforePath="Y:/meArm.py" afterPath="Y:/meArm.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/meArm.py" afterPath="Y:/installer/payload/meArm.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/mcpi/minecraft.py" afterPath="Y:/installer/payload/mcpi/minecraft.py" />
+      <change type="MODIFICATION" beforePath="Y:/mcpi/minecraft.py" afterPath="Y:/mcpi/minecraft.py" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/misc.xml" afterPath="Y:/.idea/misc.xml" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/modules.xml" afterPath="Y:/.idea/modules.xml" />
+      <change type="MODIFICATION" beforePath="Y:/nck.py" afterPath="Y:/nck.py" />
+      <change type="MODIFICATION" beforePath="Y:/new.py" afterPath="Y:/new.py" />
+      <change type="MODIFICATION" beforePath="Y:/new2.py" afterPath="Y:/new2.py" />
+      <change type="MODIFICATION" beforePath="Y:/ntest2.py" afterPath="Y:/ntest2.py" />
+      <change type="MODIFICATION" beforePath="Y:/nunchuck.py" afterPath="Y:/nunchuck.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/nunchuck.py" afterPath="Y:/installer/payload/nunchuck.py" />
+      <change type="MODIFICATION" beforePath="Y:/nuntest.py" afterPath="Y:/nuntest.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/pdtone.py" afterPath="Y:/explorer-hat-master/pdtone.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/examples/pdtone.py" afterPath="Y:/explorer-hat-master/examples/pdtone.py" />
+      <change type="MODIFICATION" beforePath="Y:/pibrella.py" afterPath="Y:/pibrella.py" />
+      <change type="MODIFICATION" beforePath="Y:/pins.py" afterPath="Y:/pins.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/pins.py" afterPath="Y:/explorer-hat-master/library/pins.py" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/inspectionProfiles/profiles_settings.xml" afterPath="Y:/.idea/inspectionProfiles/profiles_settings.xml" />
+      <change type="MODIFICATION" beforePath="Y:/pwmtest.py" afterPath="Y:/pwmtest.py" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/scopes/scope_settings.xml" afterPath="Y:/.idea/scopes/scope_settings.xml" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/scratch_gpio.iml" afterPath="Y:/.idea/scratch_gpio.iml" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/scratchgpio_handler5.py" afterPath="Y:/installer/payload/scratchgpio_handler5.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/scratchgpio_handler5xxx.py" afterPath="Y:/installer/payload/scratchgpio_handler5xxx.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/scratchgpio_handler6.py" afterPath="Y:/installer/payload/scratchgpio_handler6.py" />
+      <change type="MODIFICATION" beforePath="Y:/scratchgpio_handler7.py" afterPath="Y:/scratchgpio_handler7.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/scratchgpio_handler7.py" afterPath="Y:/installer/payload/scratchgpio_handler7.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/setup.py" afterPath="Y:/explorer-hat-master/library/setup.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_Adafruit_8x8.py" afterPath="Y:/sgh_Adafruit_8x8.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_Adafruit_8x8.py" afterPath="Y:/installer/payload/sgh_Adafruit_8x8.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_Adafruit_LEDBackpack.py" afterPath="Y:/sgh_Adafruit_LEDBackpack.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_Adafruit_LEDBackpack.py" afterPath="Y:/installer/payload/sgh_Adafruit_LEDBackpack.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_Adafruit_PWM_Servo_Driver.py" afterPath="Y:/sgh_Adafruit_PWM_Servo_Driver.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_Adafruit_PWM_Servo_Driver.py" afterPath="Y:/installer/payload/sgh_Adafruit_PWM_Servo_Driver.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_Cheer.py" afterPath="Y:/sgh_Cheer.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_Cheer.py" afterPath="Y:/installer/payload/sgh_Cheer.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_GPIOController.py" afterPath="Y:/sgh_GPIOController.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_GPIOController.py" afterPath="Y:/installer/payload/sgh_GPIOController.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_InputTest.py" afterPath="Y:/sgh_InputTest.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_InputTest.py" afterPath="Y:/installer/payload/sgh_InputTest.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_MCP23008.py" afterPath="Y:/sgh_MCP23008.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_MCP23008.py" afterPath="Y:/installer/payload/sgh_MCP23008.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_MCP230xx.py" afterPath="Y:/sgh_MCP230xx.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_MCP230xx.py" afterPath="Y:/installer/payload/sgh_MCP230xx.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_Minecraft.py" afterPath="Y:/sgh_Minecraft.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_Minecraft.py" afterPath="Y:/installer/payload/sgh_Minecraft.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_PCF8591P.py" afterPath="Y:/sgh_PCF8591P.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_PCF8591P.py" afterPath="Y:/installer/payload/sgh_PCF8591P.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_PiGlow.py" afterPath="Y:/sgh_PiGlow.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_PiGlow.py" afterPath="Y:/installer/payload/sgh_PiGlow.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_PiMatrix-old.py" afterPath="Y:/sgh_PiMatrix-old.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_PiMatrix-old.py" afterPath="Y:/installer/payload/sgh_PiMatrix-old.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_PiMatrix.py" afterPath="Y:/sgh_PiMatrix.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_PiMatrix.py" afterPath="Y:/installer/payload/sgh_PiMatrix.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_PiMatrxi.py" afterPath="Y:/sgh_PiMatrxi.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_PiMatrxi.py" afterPath="Y:/installer/payload/sgh_PiMatrxi.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_PiMatrxiTh.py" afterPath="Y:/sgh_PiMatrxiTh.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_PiMatrxiTh.py" afterPath="Y:/installer/payload/sgh_PiMatrxiTh.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_RasPiCamera.py" afterPath="Y:/sgh_RasPiCamera.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_RasPiCamera.py" afterPath="Y:/installer/payload/sgh_RasPiCamera.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_Stepper.py" afterPath="Y:/sgh_Stepper.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_Stepper.py" afterPath="Y:/installer/payload/sgh_Stepper.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_Turn.py" afterPath="Y:/sgh_Turn.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_Turn.py" afterPath="Y:/installer/payload/sgh_Turn.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_captouch.py" afterPath="Y:/sgh_captouch.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_captouch.py" afterPath="Y:/installer/payload/sgh_captouch.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_captouch_helper.py" afterPath="Y:/sgh_captouch_helper.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_captouch_helper.py" afterPath="Y:/installer/payload/sgh_captouch_helper.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_cheerlights.py" afterPath="Y:/sgh_cheerlights.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_cheerlights.py" afterPath="Y:/installer/payload/sgh_cheerlights.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_explorer_analog.py" afterPath="Y:/sgh_explorer_analog.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_explorer_analog.py" afterPath="Y:/installer/payload/sgh_explorer_analog.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_pnbLCD.py" afterPath="Y:/sgh_pnbLCD.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_pnbLCD.py" afterPath="Y:/installer/payload/sgh_pnbLCD.py" />
+      <change type="MODIFICATION" beforePath="Y:/sgh_unicornhat.py" afterPath="Y:/sgh_unicornhat.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/sgh_unicornhat.py" afterPath="Y:/installer/payload/sgh_unicornhat.py" />
+      <change type="MODIFICATION" beforePath="Y:/sghcthelper.py" afterPath="Y:/sghcthelper.py" />
+      <change type="MODIFICATION" beforePath="Y:/sghsess.py" afterPath="Y:/sghsess.py" />
+      <change type="MODIFICATION" beforePath="Y:/t2.py" afterPath="Y:/t2.py" />
+      <change type="MODIFICATION" beforePath="Y:/temptest2.py" afterPath="Y:/temptest2.py" />
+      <change type="MODIFICATION" beforePath="Y:/test.py" afterPath="Y:/test.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/test.py" afterPath="Y:/explorer-hat-master/test.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/examples/test.py" afterPath="Y:/explorer-hat-master/examples/test.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/library/test.py" afterPath="Y:/explorer-hat-master/library/test.py" />
+      <change type="MODIFICATION" beforePath="Y:/test8591.py" afterPath="Y:/test8591.py" />
+      <change type="MODIFICATION" beforePath="Y:/testimu.py" afterPath="Y:/testimu.py" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/mcpi/util.py" afterPath="Y:/installer/payload/mcpi/util.py" />
+      <change type="MODIFICATION" beforePath="Y:/mcpi/util.py" afterPath="Y:/mcpi/util.py" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/vcs.xml" afterPath="Y:/.idea/vcs.xml" />
+      <change type="MODIFICATION" beforePath="Y:/installer/payload/mcpi/vec3.py" afterPath="Y:/installer/payload/mcpi/vec3.py" />
+      <change type="MODIFICATION" beforePath="Y:/mcpi/vec3.py" afterPath="Y:/mcpi/vec3.py" />
+      <change type="MODIFICATION" beforePath="Y:/explorer-hat-master/tutorial/welcome.py" afterPath="Y:/explorer-hat-master/tutorial/welcome.py" />
+      <change type="MODIFICATION" beforePath="Y:/.idea/workspace.xml" afterPath="Y:/.idea/workspace.xml" />
     </list>
     <ignored path="scratch_gpio.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -235,10 +239,10 @@
   <component name="FileEditorManager">
     <leaf>
       <file leaf-file-name="scratchgpio_handler7.py" pinned="false" current-in-tab="true">
-        <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
+        <entry file="file://Y:/scratchgpio_handler7.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.40652174" vertical-offset="306" max-vertical-offset="108290">
-              <caret line="29" column="9" selection-start-line="29" selection-start-column="9" selection-end-line="29" selection-end-column="9" />
+            <state vertical-scroll-proportion="0.31288344" vertical-offset="105978" max-vertical-offset="109718">
+              <caret line="6261" column="21" selection-start-line="6261" selection-start-column="17" selection-end-line="6261" selection-end-column="21" />
               <folding />
             </state>
           </provider>
@@ -252,7 +256,7 @@
     </FindUsagesManager>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="Y:/" />
   </component>
   <component name="GitLogSettings">
     <option name="myDateState">
@@ -262,25 +266,25 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/sgh_MCP230xx.py" />
-        <option value="$PROJECT_DIR$/scratchgpio_handler6.py" />
-        <option value="$PROJECT_DIR$/captouch.py" />
-        <option value="$PROJECT_DIR$/sghcthelper.py" />
-        <option value="$PROJECT_DIR$/ctttest.py" />
-        <option value="$PROJECT_DIR$/sgh_explorer_analog.py" />
-        <option value="$PROJECT_DIR$/sgh_captouch_helper.py" />
-        <option value="$PROJECT_DIR$/sgh_unicornhat.py" />
-        <option value="$PROJECT_DIR$/sgh_Adafruit_PWM_Servo_Driver.py" />
-        <option value="$PROJECT_DIR$/Adafruit_I2C.py" />
-        <option value="$PROJECT_DIR$/installer/build.sh" />
-        <option value="$PROJECT_DIR$/new2.py" />
-        <option value="$PROJECT_DIR$/installer/payload/installer.sh" />
-        <option value="$PROJECT_DIR$/installer/payload/scratchgpio_handler7.py" />
-        <option value="$PROJECT_DIR$/sgh_GPIOController.py" />
-        <option value="$PROJECT_DIR$/pibrella.py" />
-        <option value="$PROJECT_DIR$/pins.py" />
-        <option value="$PROJECT_DIR$/edugeek.py" />
-        <option value="$PROJECT_DIR$/scratchgpio_handler7.py" />
+        <option value="Y:/sgh_MCP230xx.py" />
+        <option value="Y:/scratchgpio_handler6.py" />
+        <option value="Y:/captouch.py" />
+        <option value="Y:/sghcthelper.py" />
+        <option value="Y:/ctttest.py" />
+        <option value="Y:/sgh_explorer_analog.py" />
+        <option value="Y:/sgh_captouch_helper.py" />
+        <option value="Y:/sgh_unicornhat.py" />
+        <option value="Y:/sgh_Adafruit_PWM_Servo_Driver.py" />
+        <option value="Y:/Adafruit_I2C.py" />
+        <option value="Y:/installer/build.sh" />
+        <option value="Y:/new2.py" />
+        <option value="Y:/installer/payload/installer.sh" />
+        <option value="Y:/installer/payload/scratchgpio_handler7.py" />
+        <option value="Y:/sgh_GPIOController.py" />
+        <option value="Y:/pibrella.py" />
+        <option value="Y:/pins.py" />
+        <option value="Y:/edugeek.py" />
+        <option value="Y:/scratchgpio_handler7.py" />
       </list>
     </option>
   </component>
@@ -312,7 +316,7 @@
       </profile-state>
     </entry>
   </component>
-  <component name="ProjectLevelVcsManager" settingsEditedManually="false">
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
     <OptionsSetting value="true" id="Add" />
     <OptionsSetting value="true" id="Remove" />
     <OptionsSetting value="true" id="Checkout" />
@@ -326,7 +330,7 @@
     <option name="STATE" value="0" />
   </component>
   <component name="ProjectView">
-    <navigator currentView="ProjectPane" proportions="" version="1">
+    <navigator currentView="Scope" currentSubView="Project Files" proportions="" version="1">
       <flattenPackages />
       <showMembers />
       <showModules />
@@ -346,19 +350,22 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
           </PATH>
+        </subPane>
+      </pane>
+      <pane id="Scope">
+        <subPane subId="Project Files">
           <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="scratch_gpio" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            <PATH_ELEMENT USER_OBJECT="Root">
+              <option name="myItemId" value="" />
+              <option name="myItemType" value="" />
             </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="scratch_gpio" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            <PATH_ELEMENT USER_OBJECT="Y:">
+              <option name="myItemId" value="" />
+              <option name="myItemType" value="" />
             </PATH_ELEMENT>
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -367,7 +374,7 @@
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
     <property name="FullScreen" value="false" />
-    <property name="last_opened_file_path" value="C:/Dropbox/Private/Scratch2Crumble" />
+    <property name="last_opened_file_path" value="Z:/Private/ScratchCrumble" />
     <property name="LayoutCode.rearrangeEntriesPython" value="false" />
     <property name="recentsLimit" value="5" />
   </component>
@@ -390,12 +397,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="Y:" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <module name="scratch_gpio" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/edugeek.py" />
+      <option name="SCRIPT_NAME" value="Y:/edugeek.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <RunnerSettings RunnerId="PythonRunner" />
@@ -620,7 +627,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="186" y="54" width="1463" height="900" extended-state="0" />
+    <frame x="186" y="54" width="1463" height="900" extended-state="1" />
     <editor active="true" />
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.32996207" sideWeight="0.49965447" order="7" side_tool="false" content_ui="tabs" />
@@ -697,17 +704,17 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="python-line">
-          <url>file:$PROJECT_DIR$/../../../..////192.168.0.86/pi/sghdev/scratch_gpio/scratchgpio_handler7.py</url>
+          <url>file:Y:/../../../..////192.168.0.86/pi/sghdev/scratch_gpio/scratchgpio_handler7.py</url>
           <line>20</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
-          <url>file:$PROJECT_DIR$/../../../..////192.168.0.86/pi/sghdev/scratch_gpio/scratchgpio_handler7.py</url>
+          <url>file:Y:/../../../..////192.168.0.86/pi/sghdev/scratch_gpio/scratchgpio_handler7.py</url>
           <line>26</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="python-line">
-          <url>file:$PROJECT_DIR$/../../../..////192.168.0.86/pi/sghdev/scratch_gpio/scratchgpio_handler7.py</url>
+          <url>file:Y:/../../../..////192.168.0.86/pi/sghdev/scratch_gpio/scratchgpio_handler7.py</url>
           <line>3269</line>
           <option name="timeStamp" value="7" />
         </line-breakpoint>
@@ -717,22 +724,18 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file:$PROJECT_DIR$/../../../..//C:/Python27/Lib/re.py">
+    <entry file="file://Y:/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.6434263" vertical-offset="0" max-vertical-offset="5627">
-          <caret line="15" column="0" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
-          <caret line="16" column="41" selection-start-line="16" selection-start-column="41" selection-end-line="16" selection-end-column="41" />
-          <caret line="17" column="0" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-          <caret line="18" column="70" selection-start-line="18" selection-start-column="70" selection-end-line="18" selection-end-column="70" />
-          <caret line="19" column="70" selection-start-line="19" selection-start-column="70" selection-end-line="19" selection-end-column="70" />
+        <state vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="109718">
+          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file:$PROJECT_DIR$/../../../..//$PROJECT_DIR$/scratchgpio_handler7.py">
+    <entry file="file://Y:/scratchgpio_handler7.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.40652174" vertical-offset="306" max-vertical-offset="108290">
-          <caret line="29" column="9" selection-start-line="29" selection-start-column="9" selection-end-line="29" selection-end-column="9" />
+        <state vertical-scroll-proportion="0.31288344" vertical-offset="105978" max-vertical-offset="109718">
+          <caret line="6261" column="21" selection-start-line="6261" selection-start-column="17" selection-end-line="6261" selection-end-column="21" />
           <folding />
         </state>
       </provider>
