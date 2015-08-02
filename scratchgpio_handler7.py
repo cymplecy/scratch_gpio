@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.060'  #Bug fix adc regression for PCF
+Version = 'v7.0.080'  #Add in Agobo2 neopixel support
 import threading
 import socket
 import time
@@ -2105,38 +2105,6 @@ class ScratchListener(threading.Thread):
                                 anyAddOns = True
 
 
-                        if "apb01" in ADDON:
-                            with lock:
-                                sghGC.resetPinMode()
-                                sghGC.pinUse[7] = sghGC.PINPUT  #LFLeft
-                                sghGC.pinUse[11] = sghGC.PINPUT  #LFRight
-
-                                sghGC.setPinMode()
-                                sghGC.motorUpdate(21, 19, 0)
-                                sghGC.motorUpdate(24, 26, 0)
-
-                                self.startUltra(23, 0, self.OnOrOff)
-
-                            print "apb01 setup"
-                            anyAddOns = True
-
-                            # if "agobop2" in ADDON:
-                            # with lock:
-                            # sghGC.resetPinMode()
-                            # sghGC.pinUse[7]  = sghGC.PINPUT #LFLeft
-                            # sghGC.pinUse[11] = sghGC.PINPUT #LFRight
-                            # sghGC.pinUse[15]  = sghGC.POUTPUT
-                            # sghGC.pinUse[13] = sghGC.POUTPUT
-
-                            # sghGC.setPinMode()
-                            # sghGC.motorUpdate(19,21,0)
-                            # sghGC.motorUpdate(26,24,0)
-
-                            # self.startUltra(23,0,self.OnOrOff)
-
-                            # print "Agobo2 setup"
-                            # anyAddOns = True
-
                         if "agobo" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -2151,8 +2119,11 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(26, 24, 0)
 
                                 self.startUltra(23, 0, self.OnOrOff)
-
-                            print "Agobo setup"
+                            if "agobo2" in ADDON:
+                                ADDON= "agobo neopixels"
+                                print "agobo2 setup"
+                            else:
+                                print "Agobo setup"
                             anyAddOns = True
 
                         if "happi" in ADDON:
@@ -4376,6 +4347,7 @@ class ScratchListener(threading.Thread):
 
                         for broadcastListLoop in broadcastList:
                             self.dataraw = " " + str(broadcastListLoop) + " "
+                            self.dataraw = self.dataraw.replace("led","pixel")
                             #print "inside inner loop", self.dataraw
 
                             #print "self.matrixuse", self.matrixUse
