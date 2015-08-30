@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.080'  #Add in Agobo2 neopixel support
+Version = 'v7.0.080'  #Add in object tracking using webcam
 import threading
 import socket
 import time
@@ -42,7 +42,7 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 #import uinput
-
+from webcamcolour import ColourTracker
 #ui = UInput()
 
 
@@ -499,6 +499,7 @@ class ScratchSender(threading.Thread):
 
 
     def run(self):
+        print "ScratchSender run started"
         global firstRun, ADDON, compass, wii
         print lock
         # while firstRun:
@@ -880,8 +881,7 @@ class ScratchSender(threading.Thread):
                 bcast_str = '"' + sensor_name + '" ' + str(nibble)
                 msgQueue.put((5,"sensor-update " + bcast_str))
 
-            if (
-                        time.time() - lastPinUpdateTime) > 3:  #This is to force the pin names to be read out even if they don't change
+            if (time.time() - lastPinUpdateTime) > 3:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for listIndex in range(len(sghGC.validPins)):
@@ -889,6 +889,17 @@ class ScratchSender(threading.Thread):
                     if (sghGC.pinUse[pin] in [sghGC.PINPUT, sghGC.PINPUTNONE, sghGC.PINPUTDOWN]):
                         pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
                         self.broadcast_pin_update(pin, pin_bit_pattern[listIndex])
+                #if ColourTracker.green[2] == True:
+                with lock:
+                    print "green", ColourTracker.green
+                bcast_str = 'sensor-update "greenx" %s' % ( ColourTracker.green[0] )
+                msgQueue.put((5,bcast_str))
+                bcast_str = 'sensor-update "greeny" %s' % ( ColourTracker.green[1] )
+                msgQueue.put((5,bcast_str))
+                bcast_str = 'sensor-update "greenfound" %s' % ( ColourTracker.green[2] )
+                msgQueue.put((5,bcast_str))
+                ColourTracker.green[2] = False
+
 
             if (time.time() - self.time_last_compass) > 0.25:
                 #print "time up"
@@ -1467,6 +1478,7 @@ class ScratchListener(threading.Thread):
 
     # noinspection PyPep8Naming
     def run(self):
+        print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
             meVertical, meHorizontal, meDistance, host
@@ -3433,7 +3445,26 @@ class ScratchListener(threading.Thread):
 
                     if self.vFindValue("minez"):
                         print "minez"
-                        sghMC.setzPos(int(self.value))
+
+                    if self.bFindValue("orlimithl"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[0] = int(self.valueNumeric)
+                    if self.bFindValue("orlimithu"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[3] = int(self.valueNumeric)
+                    if self.bFindValue("orlimits"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[1] = int(self.valueNumeric)
+                    if self.bFindValue("orlimitsu"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[4] = int(self.valueNumeric)
+                    if self.bFindValue("orlimitvl"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[2] = int(self.valueNumeric)
+                    if self.bFindValue("orlimitvu"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[5] = int(self.valueNumeric)
+
 
                     if self.vFindValue('ultradelay'):
                         sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
@@ -5801,6 +5832,7 @@ class ScratchListener(threading.Thread):
                         sghGC.linkPrefix = self.value
                         print "prefix set to", sghGC.linkPrefix
 
+
                     if self.bFindValue('autolink'):
                         try:
                             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -5954,7 +5986,16 @@ class ScratchListener(threading.Thread):
                             sghGC.pinUpdate(36,self.OnOrOff)
 
 
-
+                    if self.bFindValue("orlimits"):
+                        index= 0
+                        value = 0
+                        try:
+                            index, value = self.value.split(",")
+                        except:
+                            pass
+                        if isNumeric(index) and isNumeric(value):
+                            ColourTracker.limits[int(index)] = int(value)
+                            print "limits:", ColourTracker.limits
 
 
                     #end of broadcast check
@@ -6103,9 +6144,16 @@ def cleanup_threads(threads):
     try:
         print "Stopping Matrix"
         PiMatrix.stop()
-        print "Stopped "
     except:
         pass
+
+    try:
+        print "Stopping ColorTracker"
+        ColourTracker.stop()
+        ColourTracker.join()
+    except:
+        pass
+
 
     print ("cleanup threads finished")
 
@@ -6242,6 +6290,8 @@ except:
 
 sghMC = sgh_Minecraft.Minecraft()
 
+ColourTracker = ColourTracker()
+
 if __name__ == '__main__':
     SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]
     print "PATH:", SCRIPTPATH
@@ -6302,6 +6352,7 @@ while True:
         listener.start()
         sender.start()
         sendMsgs.start()
+        ColourTracker.start()
 
     ##        stepperb.start()
 
