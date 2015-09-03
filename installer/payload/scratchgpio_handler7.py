@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.060'  #Bug fix adc regression for PCF
+Version = 'v7.0.090'  #Start Sense Hat
 import threading
 import socket
 import time
@@ -42,8 +42,10 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 #import uinput
-
+from webcamcolour import ColourTracker
 #ui = UInput()
+sense = None
+SH = None
 
 
 try:
@@ -499,6 +501,7 @@ class ScratchSender(threading.Thread):
 
 
     def run(self):
+        print "ScratchSender run started"
         global firstRun, ADDON, compass, wii
         print lock
         # while firstRun:
@@ -880,8 +883,7 @@ class ScratchSender(threading.Thread):
                 bcast_str = '"' + sensor_name + '" ' + str(nibble)
                 msgQueue.put((5,"sensor-update " + bcast_str))
 
-            if (
-                        time.time() - lastPinUpdateTime) > 3:  #This is to force the pin names to be read out even if they don't change
+            if (time.time() - lastPinUpdateTime) > 3:  #This is to force the pin names to be read out even if they don't change
                 #print int(time.time())
                 lastPinUpdateTime = time.time()
                 for listIndex in range(len(sghGC.validPins)):
@@ -889,6 +891,17 @@ class ScratchSender(threading.Thread):
                     if (sghGC.pinUse[pin] in [sghGC.PINPUT, sghGC.PINPUTNONE, sghGC.PINPUTDOWN]):
                         pin_bit_pattern[listIndex] = sghGC.pinRead(pin)
                         self.broadcast_pin_update(pin, pin_bit_pattern[listIndex])
+                #if ColourTracker.green[2] == True:
+                # with lock:
+                    # print "green", ColourTracker.green
+                # bcast_str = 'sensor-update "greenx" %s' % ( ColourTracker.green[0] )
+                # msgQueue.put((5,bcast_str))
+                # bcast_str = 'sensor-update "greeny" %s' % ( ColourTracker.green[1] )
+                # msgQueue.put((5,bcast_str))
+                # bcast_str = 'sensor-update "greenfound" %s' % ( ColourTracker.green[2] )
+                # msgQueue.put((5,bcast_str))
+                # ColourTracker.green[2] = False
+
 
             if (time.time() - self.time_last_compass) > 0.25:
                 #print "time up"
@@ -1464,9 +1477,12 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUltraRef[pinTrig] = ultra(pinTrig, pinEcho, self.scratch_socket)
                 sghGC.pinUltraRef[pinTrig].start()
                 print 'Ultra started pinging on', str(pinTrig)
+                
+
 
     # noinspection PyPep8Naming
     def run(self):
+        print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
             meVertical, meHorizontal, meDistance, host
@@ -1722,7 +1738,7 @@ class ScratchListener(threading.Thread):
                         msgQueue.put((5,bcast_str))
                         try:
                             UH.brightness(max(0, min(1, float(float(sghGC.ledDim) / 100))))
-                            UH.show()
+                            matrixShow()
                         except:
                             pass
                             #print sghGC.ledDim
@@ -2105,38 +2121,6 @@ class ScratchListener(threading.Thread):
                                 anyAddOns = True
 
 
-                        if "apb01" in ADDON:
-                            with lock:
-                                sghGC.resetPinMode()
-                                sghGC.pinUse[7] = sghGC.PINPUT  #LFLeft
-                                sghGC.pinUse[11] = sghGC.PINPUT  #LFRight
-
-                                sghGC.setPinMode()
-                                sghGC.motorUpdate(21, 19, 0)
-                                sghGC.motorUpdate(24, 26, 0)
-
-                                self.startUltra(23, 0, self.OnOrOff)
-
-                            print "apb01 setup"
-                            anyAddOns = True
-
-                            # if "agobop2" in ADDON:
-                            # with lock:
-                            # sghGC.resetPinMode()
-                            # sghGC.pinUse[7]  = sghGC.PINPUT #LFLeft
-                            # sghGC.pinUse[11] = sghGC.PINPUT #LFRight
-                            # sghGC.pinUse[15]  = sghGC.POUTPUT
-                            # sghGC.pinUse[13] = sghGC.POUTPUT
-
-                            # sghGC.setPinMode()
-                            # sghGC.motorUpdate(19,21,0)
-                            # sghGC.motorUpdate(26,24,0)
-
-                            # self.startUltra(23,0,self.OnOrOff)
-
-                            # print "Agobo2 setup"
-                            # anyAddOns = True
-
                         if "agobo" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -2151,8 +2135,11 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(26, 24, 0)
 
                                 self.startUltra(23, 0, self.OnOrOff)
-
-                            print "Agobo setup"
+                            if "agobo2" in ADDON:
+                                ADDON= "agobo neopixels"
+                                print "agobo2 setup"
+                            else:
+                                print "Agobo setup"
                             anyAddOns = True
 
                         if "happi" in ADDON:
@@ -3462,7 +3449,26 @@ class ScratchListener(threading.Thread):
 
                     if self.vFindValue("minez"):
                         print "minez"
-                        sghMC.setzPos(int(self.value))
+
+                    if self.bFindValue("orlimithl"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[0] = int(self.valueNumeric)
+                    if self.bFindValue("orlimithu"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[3] = int(self.valueNumeric)
+                    if self.bFindValue("orlimits"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[1] = int(self.valueNumeric)
+                    if self.bFindValue("orlimitsu"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[4] = int(self.valueNumeric)
+                    if self.bFindValue("orlimitvl"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[2] = int(self.valueNumeric)
+                    if self.bFindValue("orlimitvu"):
+                        if self.valueIsNumeric:
+                            ColourTracker.limits[5] = int(self.valueNumeric)
+
 
                     if self.vFindValue('ultradelay'):
                         sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
@@ -3539,6 +3545,7 @@ class ScratchListener(threading.Thread):
                                     svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                     #print i, svalue
                                     pcaPWM.setPWM(i, 0, int(min(780, max(120, 450 - (svalue * 3.33333)))))
+
 
                                     ### Check for Broadcast type messages being received
                 #print "loggin level",debugLogging
@@ -4338,11 +4345,16 @@ class ScratchListener(threading.Thread):
                         self.bListCheck([11, 13, 15], ["red", "green", "blue"])  # Check for LEDs
 
 
-                    elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON):  #Matrix connected
+                    elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or ("sensehat in ADDON"):  #Matrix connected
+                    
                         oldADDON = ADDON
                         if "playhat" in ADDON:
                             ADDON = ADDON + " neopixels9"
-                        if UH is None:
+                        
+                        if "sensehat" in ADDON:
+                            from sense_hat import SenseHat
+                            SH = SenseHat()
+                        elif UH is None:
                             #try:
                                 import sgh_unicornhat as UH
                                 #print "UnicornHat imported OK"
@@ -4363,6 +4375,38 @@ class ScratchListener(threading.Thread):
                         if ("neopixels" in ADDON):
                             self.matrixUse = int(rtnNumeric(ADDON[ADDON.index('neopixels'):], 64))
                             #print "neopixels",self.matrixUse
+                            
+                        def matrixSetPixel(x, y, R, G, B):
+                            if "sensehat" in ADDON:
+                                SH.set_pixel(x, y, R, G, B)
+                            else:
+                                UH.set_pixel(x, y, R, G, B)
+                                
+                        def matrixGetPixel(x, y):
+                            if "sensehat" in ADDON:
+                                R,G,B = SH.get_pixel(x, y)
+                                return [R,G,B]
+                            else:
+                                UH.set_pixel(x, y, R, G, B)              
+                                
+
+                        def matrixShow():
+                            if "sensehat" not in ADDON:
+                                matrixShow()
+                                
+                        def matrixWrite(text, R,G,B):
+                            if "sensehat" in ADDON:
+                                SH.show_message(self.value,text_colour=(R, G, B))
+
+                        def matrixBright(level):
+                            print "level", level 
+                            if "sensehat" in ADDON:
+                                if level < 1:
+                                    SH.low_light = True
+                                else:
+                                    SH.low_light = False                                 
+                                   
+                                
 
                         #print
                         origdataraw = self.dataraw
@@ -4376,6 +4420,7 @@ class ScratchListener(threading.Thread):
 
                         for broadcastListLoop in broadcastList:
                             self.dataraw = " " + str(broadcastListLoop) + " "
+                            self.dataraw = self.dataraw.replace("led","pixel")
                             #print "inside inner loop", self.dataraw
 
                             #print "self.matrixuse", self.matrixUse
@@ -4411,43 +4456,49 @@ class ScratchListener(threading.Thread):
 
                             #print "outside", self.matrixMult,self.matrixLimit,self.matrixRangemax
 
-                            if "unicorn" in ADDON:
+                            if ("unicorn" in ADDON or "sensehat" in ADDON):
                                 if self.bFind("allon"):
                                     for y in range(0, 8):
                                         for x in range(0, 8):
-                                            UH.set_pixel(x, y, self.matrixRed, self.matrixGreen, self.matrixBlue)
-                                    UH.show()
+                                           matrixSetPixel(x, y, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                    matrixShow()
 
                                 if self.bFind("alloff"):
                                     for y in range(0, 8):
                                         for x in range(0, 8):
-                                            UH.set_pixel(x, y, 0, 0, 0)
-                                    UH.show()
+                                           matrixSetPixel(x, y, 0, 0, 0)
+                                    matrixShow()
 
-                                if self.bFind("sweep"):
+                                if self.bFindValue("sweep"):
                                     print "sweep"
 
                                     for ym in range(0, self.matrixRangemax):
                                         for xm in range(0, self.matrixRangemax):
                                             self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                                 ledcolours[random.randint(0, 6)], (0, 0, 0))
+                                            if self.value in ledcolours:
+                                                self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(self.value, (0, 0, 0))
                                             for yy in range(0, self.matrixLimit):
                                                 for xx in range(0, self.matrixLimit):
-                                                    UH.set_pixel((xm * self.matrixMult) + xx,
+                                                    matrixSetPixel((xm * self.matrixMult) + xx,
                                                                  7 - ((ym * self.matrixMult) + yy), self.matrixRed,
                                                                  self.matrixGreen, self.matrixBlue)
-                                            UH.show()
+                                            matrixShow()
                                             time.sleep(0.05)
+                                
+                                if self.bFindValue("write"):
+                                    matrixWrite(self.value,self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                    
                             else:
                                 if self.bFind("allon"):
                                     for index in range(0, self.matrixUse):
                                         UH.set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
-                                    UH.show()
+                                    matrixShow()
 
                                 if self.bFind("alloff"):
                                     for index in range(0, self.matrixUse):
                                         UH.set_neopixel(index, 0, 0, 0)
-                                    UH.show()
+                                    matrixShow()
 
                                 if self.bFind("sweep"):
                                     print "sweep"
@@ -4455,7 +4506,7 @@ class ScratchListener(threading.Thread):
                                         self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                             ledcolours[random.randint(0, 6)], (0, 0, 0))
                                         UH.set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
-                                        UH.show()
+                                        matrixShow()
                                         time.sleep(0.05)
 
                             if self.bFindValue("red"):
@@ -4503,15 +4554,18 @@ class ScratchListener(threading.Thread):
                                 #print "rgb", self.matrixRed,self.matrixGreen,self.matrixBlue
                                 #print tcolours
 
-                            if "unicorn" in ADDON:
+                            if ("unicorn" in ADDON) or ("sensehat" in ADDON):
+                                #print "checking"
                                 if self.bFind("pixel"):
+                                    #print "pixel"
                                     pixelProcessed = False
+                                    #Check for pixel x,y,colour
                                     for ym in range(0, self.matrixRangemax):
                                         for xm in range(0, self.matrixRangemax):
                                             for ledcolour in ledcolours:
                                                 if (self.bFindValue("pixel", ledcolour) and (
-                                                            self.value == (str(xm + 1) + "," + str(ym + 1)))):
-                                                    print "1st catch,xm,ym", xm, ym
+                                                            self.value == (str(xm) + "," + str(ym)))):
+                                                    #print "1st catch,xm,ym", xm, ym
                                                     self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                                         ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
                                                     if ledcolour == 'random':
@@ -4522,31 +4576,32 @@ class ScratchListener(threading.Thread):
                                                         for xx in range(0, self.matrixLimit):
                                                             #print "led no" ,led
                                                             if (ledcolour != "invert"):
-                                                                UH.set_pixel((xm * self.matrixMult) + xx,
+                                                                matrixSetPixel((xm * self.matrixMult) + xx,
                                                                              7 - ((ym * self.matrixMult) + yy),
                                                                              self.matrixRed, self.matrixGreen,
                                                                              self.matrixBlue)
                                                             else:
-                                                                gnp = UH.get_pixel((xm * self.matrixMult) + xx,
+                                                                gnp = matrixGetPixel((xm * self.matrixMult) + xx,
                                                                                    7 - ((ym * self.matrixMult) + yy))
                                                                 #print "before" ,gnp
                                                                 gnpi = map(lambda a: (255 - a), gnp)
                                                                 #print "after", gnpi
                                                                 r, g, b = gnpi
                                                                 #print "rgb", r,g,b
-                                                                UH.set_pixel((xm * self.matrixMult) + xx,
+                                                                matrixSetPixel((xm * self.matrixMult) + xx,
                                                                              7 - ((ym * self.matrixMult) + yy), r, g, b)
-                                                    UH.show()
+                                                    matrixShow()
                                                     pixelProcessed = True
 
                                     if not pixelProcessed:
+                                        #Check for pixel x,y,#aabbcc
                                         #print "#", self.value[-7:]
                                         fullvalue = self.value
                                         if ("xxxxxxx" + fullvalue)[-7] == "#":
                                             for ym in range(0, self.matrixRangemax):
                                                 for xm in range(0, self.matrixRangemax):
                                                     if (self.bFindValue("pixel", fullvalue[-7:]) and (
-                                                                self.value == (str(xm + 1) + "," + str(ym + 1)))):
+                                                                self.value == (str(xm) + "," + str(ym)))):
                                                         #print "led,self.value",led,self.value
                                                         try:
                                                             c = (fullvalue[-7:] + "00000000")[0:7]
@@ -4556,18 +4611,19 @@ class ScratchListener(threading.Thread):
                                                             b = int(c[5:], 16)
                                                             for yy in range(0, self.matrixLimit):
                                                                 for xx in range(0, self.matrixLimit):
-                                                                    UH.set_pixel((xm * self.matrixMult) + xx,
+                                                                    matrixSetPixel((xm * self.matrixMult) + xx,
                                                                                  7 - ((ym * self.matrixMult) + yy), r,
                                                                                  g, b)
-                                                            UH.show()
+                                                            matrixShow()
                                                             pixelProcessed = True
                                                         except:
                                                             pass
 
                                     if not pixelProcessed:
+                                        #Check for pixel x,y,colour
                                         for ym in range(0, self.matrixRangemax):
                                             for xm in range(0, self.matrixRangemax):
-                                                if self.bFindValue("pixel" + str(xm + 1) + "," + str(ym + 1)):
+                                                if self.bFindValue("pixel" + str(xm) + "," + str(ym)):
                                                     ledcolour = self.value
                                                     self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                                         ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
@@ -4576,16 +4632,17 @@ class ScratchListener(threading.Thread):
                                                     print "3rd catch xm,ym ", xm, ym
                                                     for yy in range(0, self.matrixLimit):
                                                         for xx in range(0, self.matrixLimit):
-                                                            UH.set_pixel((xm * self.matrixMult) + xx,
+                                                            matrixSetPixel((xm * self.matrixMult) + xx,
                                                                          7 - ((ym * self.matrixMult) + yy),
                                                                          self.matrixRed, self.matrixGreen,
                                                                          self.matrixBlue)
-                                                    UH.show()
+                                                    matrixShow()
                                                     pixelProcessed = True
 
                                     if not pixelProcessed:
+                                        #Check for pixel number (assume colour = on)
                                         for led in range(0, self.matrixUse):
-                                            if (self.bFindValue("pixel") and self.value == str(led + 1)):
+                                            if (self.bFindValue("pixel") and self.value == str(led)):
                                                 ym = int(int(led) / self.matrixRangemax)
                                                 xm = led % self.matrixRangemax
                                                 #print "xm,ym" ,xm,ym
@@ -4593,16 +4650,17 @@ class ScratchListener(threading.Thread):
                                                 #print self.matrixMult,self.matrixLimit,self.matrixRangemax,led, ym, ym
                                                 for yy in range(0, self.matrixLimit):
                                                     for xx in range(0, self.matrixLimit):
-                                                        UH.set_pixel((xm * self.matrixMult) + xx,
+                                                        matrixSetPixel((xm * self.matrixMult) + xx,
                                                                      7 - ((ym * self.matrixMult) + yy), self.matrixRed,
                                                                      self.matrixGreen, self.matrixBlue)
-                                                UH.show()
+                                                matrixShow()
                                                 pixelProcessed = True
 
                                     if not pixelProcessed:
+                                        #Check for pixel number,colour
                                         for led in range(0, self.matrixUse):
                                             for ledcolour in ledcolours:
-                                                if (self.bFindValue("pixel", ledcolour) and self.value == str(led + 1)):
+                                                if (self.bFindValue("pixel", ledcolour) and self.value == str(led)):
                                                     ym = int(int(led) / self.matrixRangemax)
                                                     xm = led % self.matrixRangemax
                                                     #print "xm,ym" ,xm,ym
@@ -4616,30 +4674,30 @@ class ScratchListener(threading.Thread):
                                                         for xx in range(0, self.matrixLimit):
                                                             #print "led no" ,led
                                                             if (ledcolour != "invert"):
-                                                                UH.set_pixel((xm * self.matrixMult) + xx,
+                                                                matrixSetPixel((xm * self.matrixMult) + xx,
                                                                              7 - ((ym * self.matrixMult) + yy),
                                                                              self.matrixRed, self.matrixGreen,
                                                                              self.matrixBlue)
                                                             else:
-                                                                gnp = UH.get_pixel((xm * self.matrixMult) + xx,
+                                                                gnp = matrixGetPixel((xm * self.matrixMult) + xx,
                                                                                    7 - ((ym * self.matrixMult) + yy))
                                                                 #print "before" ,gnp
                                                                 gnpi = map(lambda a: (255 - a), gnp)
                                                                 #print "after", gnpi
                                                                 r, g, b = gnpi
                                                                 #print "rgb", r,g,b
-                                                                UH.set_pixel((xm * self.matrixMult) + xx,
+                                                                matrixSetPixel((xm * self.matrixMult) + xx,
                                                                              7 - ((ym * self.matrixMult) + yy), r, g, b)
-                                                    UH.show()
+                                                    matrixShow()
                                                     pixelProcessed = True
 
                                     if not pixelProcessed:
+                                        #Check for pixel number,#aabbcc
                                         #print "#", self.value[-7:]
                                         fullvalue = self.value
                                         if ("xxxxxxx" + fullvalue)[-7] == "#":
                                             for led in range(0, self.matrixUse):
-                                                if (self.bFindValue("pixel", fullvalue[-7:]) and self.value == str(
-                                                            led + 1)):
+                                                if (self.bFindValue("pixel", fullvalue[-7:]) and self.value == str(led)):
                                                     ym = int(int(led) / self.matrixRangemax)
                                                     xm = led % self.matrixRangemax
                                                     #print "led,self.value",led,self.value
@@ -4651,9 +4709,9 @@ class ScratchListener(threading.Thread):
                                                         b = int(c[5:], 16)
                                                         for yy in range(0, self.matrixLimit):
                                                             for xx in range(0, self.matrixLimit):
-                                                                UH.set_pixel((xm * self.matrixMult) + xx,
+                                                                matrixSetPixel((xm * self.matrixMult) + xx,
                                                                              7 - ((ym * self.matrixMult) + yy), r, g, b)
-                                                        UH.show()
+                                                        matrixShow()
                                                         pixelProcessed = True
                                                     except:
                                                         pass
@@ -4661,8 +4719,8 @@ class ScratchListener(threading.Thread):
                                 if self.bFind("getpixel"):
                                     for ym in range(0, self.matrixRangemax):
                                         for xm in range(0, self.matrixRangemax):
-                                            if self.bFindValue("getpixel" + str(xm + 1) + "," + str(ym + 1)):
-                                                gnp = UH.get_pixel(xm * self.matrixMult, 7 - (ym * self.matrixMult))
+                                            if self.bFindValue("getpixel" + str(xm) + "," + str(ym)):
+                                                gnp = matrixGetPixel(xm * self.matrixMult, 7 - (ym * self.matrixMult))
                                                 #print "getpixel led,xm,ymgnp",led,xm,ym,gnp
                                                 r, g, b = gnp
                                                 bcolourname = "#" + ("000000" + (str(
@@ -4683,10 +4741,10 @@ class ScratchListener(threading.Thread):
                                                 msgQueue.put((5,bcast_str))
 
                                     for led in range(0, self.matrixUse):
-                                        if (self.bFindValue("getpixel") and self.value == str(led + 1)):
+                                        if (self.bFindValue("getpixel") and self.value == str(led)):
                                             ym = int(int(led) / self.matrixRangemax)
                                             xm = led % self.matrixRangemax
-                                            gnp = UH.get_pixel(xm * self.matrixMult, 7 - (ym * self.matrixMult))
+                                            gnp = matrixGetPixel(xm * self.matrixMult, 7 - (ym * self.matrixMult))
                                             #print "getpixel led,xm,ymgnp",led,xm,ym,gnp
                                             r, g, b = gnp
                                             bcolourname = "#" + ("000000" + (str(hex(b + (g * 256) + (r * 256 * 256))))[
@@ -4705,6 +4763,14 @@ class ScratchListener(threading.Thread):
                                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolourname)
                                             #print 'sending: %s' % bcast_str
                                             msgQueue.put((5,bcast_str))
+                                            
+                                if self.bFind("invert"):
+                                    for ym in range(0, self.matrixRangemax):
+                                        for xm in range(0, self.matrixRangemax):
+                                            oldr, oldg, oldb = matrixGetPixel(xm,ym)
+                                            #print "oldpixel" , oldpixel
+                                            matrixSetPixel(xm,ym, 255 - oldr, 255 - oldg, 255 - oldb)
+                                    matrixShow()
 
                             else:  # Neopixel processing
                                 if self.bFind("pixel"):
@@ -4712,7 +4778,7 @@ class ScratchListener(threading.Thread):
                                     for led in range(0, self.matrixUse):
                                         if (self.bFindValue("pixel") and self.value == str(led + 1)):
                                             UH.set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
-                                            UH.show()
+                                            matrixShow()
                                             pixelProcessed = True
 
                                     if not pixelProcessed:
@@ -4737,7 +4803,7 @@ class ScratchListener(threading.Thread):
                                                             r, g, b = gnpi
                                                             #print "rgb", r,g,b
                                                             UH.set_neopixel(led, r, g, b)
-                                                        UH.show()
+                                                        matrixShow()
                                                         pixelProcessed = True
 
                                     if not pixelProcessed:
@@ -4754,7 +4820,7 @@ class ScratchListener(threading.Thread):
                                                         g = int(c[3:5], 16)
                                                         b = int(c[5:], 16)
                                                         UH.set_neopixel(led, r, g, b)
-                                                        UH.show()
+                                                        matrixShow()
                                                         pixelProcessed = True
                                                     except:
                                                         pass
@@ -4770,7 +4836,7 @@ class ScratchListener(threading.Thread):
                                                         g = int(c[3:5], 16)
                                                         b = int(c[5:], 16)
                                                         UH.set_neopixel(led, r, g, b)
-                                                        UH.show()
+                                                        matrixShow()
                                                         pixelProcessed = True
                                                     except:
                                                         pass
@@ -4814,8 +4880,8 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue("bright"):
                                 sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
                                 try:
-                                    UH.brightness(max(0, min(1, float(float(sghGC.ledDim) / 100))))
-                                    UH.show()
+                                    matrixBright(max(0, min(1, float(float(sghGC.ledDim) / 100))))
+                                    matrixShow()
                                     sensor_name = 'bright'
                                     bcast_str = 'sensor-update "%s" %d' % (sensor_name, sghGC.ledDim)
                                     #print 'sending: %s' % bcast_str
@@ -4836,46 +4902,46 @@ class ScratchListener(threading.Thread):
                                         self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                             ledcolours[lettercolours.index(bp)],
                                             (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                                        UH.set_pixel(xm, 7 - ym, self.matrixRed, self.matrixGreen, self.matrixBlue)
-                                UH.show()
-                            if "unicorn" in ADDON:
+                                        matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                matrixShow()
+                            if ("unicorn" in ADDON or "sensehat" in ADDON):
                                 if self.bFind("moveleft"):
                                     for y in range(0, self.matrixRangemax):
                                         for x in range(0, self.matrixRangemax - 1):
-                                            oldr, oldg, oldb = UH.get_pixel(x + 1, y)
+                                            oldr, oldg, oldb = matrixGetPixel(x + 1, y)
                                             #print "oldpixel" , oldpixel
-                                            UH.set_pixel(x, y, oldr, oldg, oldb)
-                                        UH.set_pixel(7, y, 0, 0, 0)
-                                    UH.show()
+                                            matrixSetPixel(x, y, oldr, oldg, oldb)
+                                        matrixSetPixel(7, y, 0, 0, 0)
+                                    matrixShow()
 
                                 if self.bFind("moveright"):
                                     for y in range(0, self.matrixRangemax):
                                         for x in range(self.matrixRangemax - 1, 0, -1):
                                             #print "y,x",y,x
-                                            oldr, oldg, oldb = UH.get_pixel(x - 1, y)
+                                            oldr, oldg, oldb = matrixGetPixel(x - 1, y)
                                             #print "oldpixel" , oldpixel
-                                            UH.set_pixel(x, y, oldr, oldg, oldb)
-                                        UH.set_pixel(0, y, 0, 0, 0)
-                                    UH.show()
+                                            matrixSetPixel(x, y, oldr, oldg, oldb)
+                                        matrixSetPixel(0, y, 0, 0, 0)
+                                    matrixShow()
 
                                 if self.bFind("moveup"):
                                     for x in range(0, self.matrixRangemax):
                                         for y in range(0, self.matrixRangemax - 1):
-                                            oldr, oldg, oldb = UH.get_pixel(x, y + 1)
+                                            oldr, oldg, oldb = matrixGetPixel(x, y + 1)
                                             #print "oldpixel" , oldpixel
-                                            UH.set_pixel(x, y, oldr, oldg, oldb)
-                                        UH.set_pixel(x, 7, 0, 0, 0)
-                                    UH.show()
+                                            matrixSetPixel(x, y, oldr, oldg, oldb)
+                                        matrixSetPixel(x, 7, 0, 0, 0)
+                                    matrixShow()
 
                                 if self.bFind("movedown"):
                                     for x in range(0, self.matrixRangemax):
                                         for y in range(self.matrixRangemax - 1, 0, -1):
                                             #print "y,x",y,x
-                                            oldr, oldg, oldb = UH.get_pixel(x, y - 1)
+                                            oldr, oldg, oldb = matrixGetPixel(x, y - 1)
                                             #print "oldpixel" , oldpixel
-                                            UH.set_pixel(x, y, oldr, oldg, oldb)
-                                        UH.set_pixel(x, 0, 0, 0, 0)
-                                    UH.show()
+                                            matrixSetPixel(x, y, oldr, oldg, oldb)
+                                        matrixSetPixel(x, 0, 0, 0, 0)
+                                    matrixShow()
                             else:
                                 if self.bFindValue("shift"):
                                     if self.value != "down":
@@ -4884,7 +4950,7 @@ class ScratchListener(threading.Thread):
                                             print "oldpixel" , index, oldr, oldg, oldb
                                             UH.set_neopixel(index, oldr, oldg, oldb)
                                         #UH.set_neopixel(1, 0, 0, 0)
-                                        UH.show()
+                                        matrixShow()
                                 if self.bFind("rotate"):
                                     lr, lg, lb = UH.get_neopixel(0)
                                     for index in range(0, self.matrixUse - 1):
@@ -4892,27 +4958,22 @@ class ScratchListener(threading.Thread):
                                         #print "oldpixel" , oldpixel
                                         UH.set_neopixel(index, oldr, oldg, oldb)
                                     UH.set_neopixel(self.matrixUse - 1, lr, lg, lb)
-                                    UH.show()
+                                    matrixShow()
 
-                            if self.bFind("invert"):
-                                for index in range(0, self.matrixUse):
-                                    oldr, oldg, oldb = UH.get_neopixel(index)
-                                    #print "oldpixel" , oldpixel
-                                    UH.set_neopixel(index, 255 - oldr, 255 - oldg, 255 - oldb)
-                                UH.show()
+
 
                             if self.bFindValue("level"):
                                 if self.valueIsNumeric:
                                     for index in range(0, self.matrixUse):
                                         oldr, oldg, oldb = tuple(
                                             [max(0, min(255, int(elim * (self.valueNumeric / 100.0)))) for elim in
-                                             UH.get_neopixel(index)])
+                                             matrixGetPixel(index)])
                                         #print "old" , oldr,oldg,oldb
                                         #print "oldpixel" , oldpixel
-                                        UH.set_neopixel(index, oldr, oldg, oldb)
-                                    UH.show()
+                                        matrixSetPixel(index, oldr, oldg, oldb)
+                                    matrixShow()
 
-                            if "unicorn" in ADDON:
+                            if ("unicorn" in ADDON or "sensehat" in ADDON):
                                 rowList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
                                 for i in range(0, 8):
                                     if self.bFindValue('row' + rowList[i]):
@@ -4926,9 +4987,9 @@ class ScratchListener(threading.Thread):
                                                 self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                                     ledcolours[lettercolours.index(bp)],
                                                     (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                                                UH.set_pixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                                                matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                                              self.matrixBlue)
-                                        UH.show()
+                                        matrixShow()
 
                                 for i in range(0, 8):
                                     if self.bFindValue('row' + str(i + 1)):
@@ -4942,9 +5003,9 @@ class ScratchListener(threading.Thread):
                                                 self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                                     ledcolours[lettercolours.index(bp)],
                                                     (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                                                UH.set_pixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                                                matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                                              self.matrixBlue)
-                                        UH.show()
+                                        matrixShow()
 
                                 colList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
                                 for i in range(0, 8):
@@ -4959,9 +5020,9 @@ class ScratchListener(threading.Thread):
                                                 self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
                                                     ledcolours[lettercolours.index(bp)],
                                                     (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                                                UH.set_pixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                                                matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                                              self.matrixBlue)
-                                        UH.show()
+                                        matrixShow()
 
                                 for i in range(0, 8):
                                     if self.bFindValue('col' + str(i + 1)):
@@ -4978,9 +5039,9 @@ class ScratchListener(threading.Thread):
                                                     ledcolours[lettercolours.index(bp)],
                                                     (self.matrixRed, self.matrixGreen, self.matrixBlue))
 
-                                                UH.set_pixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                                                matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                                              self.matrixBlue)
-                                        UH.show()
+                                        matrixShow()
 
                                 if self.bFindValue('loadimage'):
                                     try:
@@ -5013,10 +5074,10 @@ class ScratchListener(threading.Thread):
                                         pixel = struct.unpack('192B', bytes)  #get 64 pixels * 3 for BGR
                                         #print "pixel",pixel
                                         for i in range(0, 64):
-                                            UH.set_pixel(i % 8, 7 - (i // 8), pixel[(i * 3) + 2], pixel[(i * 3) + 1],
+                                            matrixSetPixel(i % 8, 7 - (i // 8), pixel[(i * 3) + 2], pixel[(i * 3) + 1],
                                                          pixel[(i * 3) + 0])
 
-                                        UH.show()
+                                        matrixShow()
 
                                 if self.bFindValue('saveimage'):
                                     # try:
@@ -5078,9 +5139,9 @@ class ScratchListener(threading.Thread):
                                             else:
                                                 j += 2
                                             #print "i,j",i,j
-                                            UH.set_pixel(i % 8, 7 - (i // 8), pixel[(j * 3) + 2], pixel[(j * 3) + 1],
+                                            matrixSetPixel(i % 8, 7 - (i // 8), pixel[(j * 3) + 2], pixel[(j * 3) + 1],
                                                          pixel[(j * 3) + 0])
-                                        UH.show()
+                                        matrixShow()
 
                         self.dataraw = origdataraw
 
@@ -5665,17 +5726,144 @@ class ScratchListener(threading.Thread):
                         msgQueue.put((5,bcast_str))
 
                     if self.bFind("gettemp"):  #find temp address
-                        if sghGC.dsSensorId == "":
-                            print "checking for DS18B"
-                            sghGC.findDS180()
-                            time.sleep(1)
-                        if sghGC.dsSensorId != "":
-                            print "ds:", sghGC.dsSensorId
-                            print "getting temp"
-                            temperature = sghGC.getDS180Temp()  #sghGC.dsSensorId)
-                            sensor_name = 'temperature'
-                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
-                            msgQueue.put((5,bcast_str))
+                        temperature = ""
+                        if "sensehat" in ADDON:
+                            temperature = SH.get_temperature()
+                        else:
+                            if sghGC.dsSensorId == "":
+                                print "checking for DS18B"
+                                sghGC.findDS180()
+                                time.sleep(1)
+                            if sghGC.dsSensorId != "":
+                                print "ds:", sghGC.dsSensorId
+                                print "getting temp"
+                                temperature = sghGC.getDS180Temp()  #sghGC.dsSensorId)
+                        sensor_name = 'temperature'
+                        #print "temperature",temperature
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
+                        msgQueue.put((5,bcast_str))
+                        
+                    if self.bFind("gethumidity"):  #find temp address
+                        humidty = ""
+                        if "sensehat" in ADDON:
+                            humidty = SH.get_humidity()
+                        sensor_name = 'humidty'
+                        #print "humidty",humidty
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(humidty))
+                        msgQueue.put((5,bcast_str))     
+                    
+                    if self.bFind("getpressure"):  #find temp address
+                        pressure = ""
+                        if "sensehat" in ADDON:
+                            pressure = SH.get_pressure()
+                        sensor_name = 'pressure'
+                        #print "pressure",pressure
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(pressure))
+                        msgQueue.put((5,bcast_str))    
+                    
+                    if self.bFind("getcompass"):  #find temp address
+                        shcompass = ""
+                        if "sensehat" in ADDON:
+                            shcompass = int(SH.get_compass())
+                            if shcompass > 180:
+                                shcompass = shcompass - 360
+                        sensor_name = 'compass'
+                        #print "compass",shcompass
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(shcompass))
+                        msgQueue.put((5,bcast_str))        
+                        
+                    if self.bFind("getaccelerometer"):  
+                        accelerometer = ""
+                        pitch = ""
+                        roll = ""
+                        yaw = ""
+                        if "sensehat" in ADDON:
+                            accelerometer = SH.get_accelerometer()
+                            pitch = accelerometer["pitch"]
+                            roll = accelerometer["roll"]
+                            yaw = accelerometer["yaw"]
+                        sensor_name = 'pitch'
+                        #print "pitch",pitch
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(pitch))
+                        msgQueue.put((5,bcast_str))
+                        
+                        sensor_name = 'roll'
+                        #print "roll",roll
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(roll))
+                        msgQueue.put((5,bcast_str))        
+                        
+                        sensor_name = 'yaw'
+                        #print "yaw",yaw
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(yaw))
+                        msgQueue.put((5,bcast_str))         
+                        
+                    if self.bFind("getgyroscope"):
+                        #gyroscope =  None#{'pitch': 0.0, 'yaw': 0.0, 'roll': 0.0}
+                        gyroscope = SH.get_gyroscope()
+                        #print "gyroscope", gyroscope
+                        #print
+                        #gyroscope = ""
+                        pitch = ""
+                        roll = ""
+                        yaw = ""
+                        if "sensehat" in ADDON:
+                            #print "trying gyro"
+                            gyroscope = SH.get_gyroscope()
+                            #print gyroscope
+                            pitch = int(gyroscope["pitch"] * 100) / 100.0
+                            if pitch > 180:
+                                pitch = pitch - 360
+                            roll = int(gyroscope["roll"]* 100) / 100.0
+                            if roll > 180:
+                                roll = roll - 360
+                            yaw = int(gyroscope["yaw"]* 100) / 100.0
+                            if yaw > 180:
+                                yaw = yaw - 360
+
+                        #print "gyroscope" ,gyroscope
+                        sensor_name = 'pitch'
+                        #print "pitch",pitch
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(pitch))
+                        msgQueue.put((5,bcast_str))
+                        
+                        sensor_name = 'roll'
+                        #print "roll",roll
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(roll))
+                        msgQueue.put((5,bcast_str))        
+                        
+                        sensor_name = 'yaw'
+                        #print "yaw",yaw
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(yaw))
+                        msgQueue.put((5,bcast_str))                  
+
+
+                    if self.bFind("getorientation"):  #find temp address
+                        SH.set_imu_config(True, True, True)
+                        orientation = ""
+                        pitch = ""
+                        roll = ""
+                        yaw = ""
+                        if "sensehat" in ADDON:
+                            orientation = SH.get_orientation()
+                            pitch = int(orientation["pitch"])
+                            roll = int(orientation["roll"])
+                            yaw = int(orientation["yaw"])
+                        sensor_name = 'pitch'
+                        #print "pitch",pitch
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(pitch))
+                        msgQueue.put((5,bcast_str))
+                        
+                        sensor_name = 'roll'
+                        #print "roll",roll
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(roll))
+                        msgQueue.put((5,bcast_str))        
+                        
+                        sensor_name = 'yaw'
+                        #print "yaw",yaw
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(yaw))
+                        msgQueue.put((5,bcast_str))      
+
+                        
 
                     if self.bFind("getcputemp"):  #find cputemp
                         logging.debug("Finding CPUTemp")
@@ -5829,6 +6017,7 @@ class ScratchListener(threading.Thread):
                         sghGC.linkPrefix = self.value
                         print "prefix set to", sghGC.linkPrefix
 
+
                     if self.bFindValue('autolink'):
                         try:
                             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -5981,8 +6170,18 @@ class ScratchListener(threading.Thread):
                             #print "red:",self.OnOrOff
                             sghGC.pinUpdate(36,self.OnOrOff)
 
+                        
 
-
+                    if self.bFindValue("orlimits"):
+                        index= 0
+                        value = 0
+                        try:
+                            index, value = self.value.split(",")
+                        except:
+                            pass
+                        if isNumeric(index) and isNumeric(value):
+                            ColourTracker.limits[int(index)] = int(value)
+                            print "limits:", ColourTracker.limits
 
 
                     #end of broadcast check
@@ -6131,9 +6330,16 @@ def cleanup_threads(threads):
     try:
         print "Stopping Matrix"
         PiMatrix.stop()
-        print "Stopped "
     except:
         pass
+
+    try:
+        print "Stopping ColorTracker"
+        ColourTracker.stop()
+        ColourTracker.join()
+    except:
+        pass
+
 
     print ("cleanup threads finished")
 
@@ -6270,6 +6476,8 @@ except:
 
 sghMC = sgh_Minecraft.Minecraft()
 
+ColourTracker = ColourTracker()
+
 if __name__ == '__main__':
     SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]
     print "PATH:", SCRIPTPATH
@@ -6330,6 +6538,7 @@ while True:
         listener.start()
         sender.start()
         sendMsgs.start()
+        ColourTracker.start()
 
     ##        stepperb.start()
 
