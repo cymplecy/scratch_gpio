@@ -16,7 +16,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version = '0.0.1sw5'  # 22May14 Add Try except arroudn take pic code
+Version = '0.0.2'  # 15 Sep 15 Fixed ownership of directory
 
 import os
 import glob
