@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.091'  #5Sep15 Introudce origint
+Version = 'v7.0.092'  #15Sep15 Bug Fix Pi2Go
 import threading
 import socket
 import time
@@ -4146,10 +4146,10 @@ class ScratchListener(threading.Thread):
                             pcaPWM.setPWM((led * 3), 0, min(4095, max((((blue) * 4096) / 255), 0)))
 
                         def pi2go_mapName(name):
-                            print name
+                            #print name
                             try:
                                 #print "rtn", ['left','back','right','front'].index(name)+1
-                                return ['left','back','right','front'].index(name)+1
+                                return ['left','back','right','front'].index(name) + 1
                             except:
                                 #print "rtn",0
                                 return 0
@@ -4225,9 +4225,10 @@ class ScratchListener(threading.Thread):
 
                             tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
 
-                        if self.bFind("pixel"):
-                            print "pixel detected"
+                        if self.bFind("led"):
+                            #print "pixel detected"
                             pixelProcessed = False
+                            #print "trying 1st stage"
                             for led in range(0, self.matrixUse):
                                 if (self.bFindValue("pixel") and pi2go_mapName(self.value) == str(led + 1)):
                                     set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
@@ -4235,17 +4236,25 @@ class ScratchListener(threading.Thread):
                                     print "1st stage match"
 
                             if not pixelProcessed:
+                                #print "trying 2nd stage"
                                 for led in range(0, self.matrixUse):
+                                    #print "led",led
                                     for ledcolour in ledcolours:
-                                        if (self.bFindValue("pixel", ledcolour)) and pi2go_mapName(self.value) == str(led + 1):
-                                            print "pixel with colour found"
-                                            self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                                ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                                            if ledcolour == 'random':
+                                        #print "ledcolor",ledcolour
+                                        if (self.bFindValue("led", ledcolour)):
+                                            #print "found pixel,ledcolour", ledcolour
+                                            #print "value", self.value
+                                            #print "map,str led+1", pi2go_mapName(self.value), str(led + 1)
+                                            if (str(pi2go_mapName(self.value)) == str(led + 1)):
+                                                #print "mcheck atching", self.value ,pi2go_mapName(self.value)
+                                                #print "pixel with colour found"
                                                 self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                                    ledcolours[random.randint(0, 6)], (64, 64, 64))
-                                            #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
-                                            if self.valueIsNumeric:
+                                                    ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                                                if ledcolour == 'random':
+                                                    self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
+                                                        ledcolours[random.randint(0, 6)], (64, 64, 64))
+                                                #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
+                                                #if self.valueIsNumeric:
                                                 if (ledcolour != "invert"):
                                                     set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
                                                 pixelProcessed = True
