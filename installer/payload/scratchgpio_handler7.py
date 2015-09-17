@@ -4153,7 +4153,8 @@ class ScratchListener(threading.Thread):
                             #print name
                             try:
                                 #print "rtn", ['left','back','right','front'].index(name)+1
-                                return ['left','back','right','front'].index(name) + 1
+                                lightnames = {'left' : 1,'back' : 2, 'right' :3 ,'front' : 4, 'rear': 2}
+                                return lightnames.get(name, 4)
                             except:
                                 #print "rtn",0
                                 return 0
