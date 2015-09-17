@@ -12,6 +12,7 @@
 #Version 26Dec13 Change for ScratchGPIO4plus
 #Version 18Dec13 Change for ScratchGPIO5
 #Version 4Aug14 - change for ScratchGPIO5
+#Version 17Sep15 debug creating old scratchgpio icons
 
 SGHVER=$(<SGHVER.txt)
 f_exit(){
@@ -189,7 +190,7 @@ echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $RDIR/scratchgpio${SGHVER}/oldscratchgpio${SGHVER}plus.sh
 echo "sudo pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/oldscratchgpio${SGHVER}plus.sh
 echo "cd $RDIR/scratchgpio"$SGHVER >> $RDIR/scratchgpio${SGHVER}/oldscratchgpio${SGHVER}plus.sh
-echo "sudo python scratchgpio_handler7.py &" >> $RDIR/scratchgpio${SGHVER}old/scratchgpio${SGHVER}plus.sh
+echo "sudo python scratchgpio_handler7.py &" >> $RDIR/scratchgpio${SGHVER}/oldscratchgpio${SGHVER}plus.sh
 echo "scratch.old --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $RDIR/scratchgpio${SGHVER}/oldscratchgpio${SGHVER}plus.sh
 
 chmod +x $RDIR/scratchgpio${SGHVER}/oldscratchgpio${SGHVER}plus.sh

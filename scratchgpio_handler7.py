@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.092'  #15Sep15 Bug Fix Pi2Go
+Version = 'v7.0.093'  #17Sep15 prefix webcamcolour module to sgh_ so it gets inc in installer
 import threading
 import socket
 import time
@@ -42,7 +42,7 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 #import uinput
-from webcamcolour import ColourTracker
+from sgh_webcamcolour import ColourTracker
 #ui = UInput()
 sense = None
 SH = None
