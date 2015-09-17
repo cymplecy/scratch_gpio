@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.094'  #17Sep15 prefix webcamcolour module to sgh_ so it gets inc in installer and add try except
+Version = 'v7.1.000'  #17Sep15 preparing for 7.1 release
 import threading
 import socket
 import time
@@ -4153,7 +4153,8 @@ class ScratchListener(threading.Thread):
                             #print name
                             try:
                                 #print "rtn", ['left','back','right','front'].index(name)+1
-                                return ['left','back','right','front'].index(name) + 1
+                                lightnames = {'left' : 1,'back' : 2, 'right' :3 ,'front' : 4, 'rear': 2}
+                                return lightnames.get(name, 4)
                             except:
                                 #print "rtn",0
                                 return 0
@@ -6496,7 +6497,13 @@ except:
 
 sghMC = sgh_Minecraft.Minecraft()
 
-ColourTracker = ColourTracker()
+ColourTracker = None
+try:
+    ColourTracker = ColourTracker()
+    print "ColourTracker Enabled"
+except:
+    pass
+    #print "Colour Tracking Not Enabled"
 
 if __name__ == '__main__':
     SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]
@@ -6558,7 +6565,10 @@ while True:
         listener.start()
         sender.start()
         sendMsgs.start()
-        ColourTracker.start()
+        try:
+            ColourTracker.start()
+        except:
+            pass
 
     ##        stepperb.start()
 
