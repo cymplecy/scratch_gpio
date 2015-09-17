@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.0.093'  #17Sep15 prefix webcamcolour module to sgh_ so it gets inc in installer
+Version = 'v7.0.094'  #17Sep15 prefix webcamcolour module to sgh_ so it gets inc in installer and add try except
 import threading
 import socket
 import time
@@ -42,7 +42,11 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 #import uinput
-from sgh_webcamcolour import ColourTracker
+try:
+    from sgh_webcamcolour import ColourTracker
+except:
+    print "webcam not imported"
+    pass
 #ui = UInput()
 sense = None
 SH = None
