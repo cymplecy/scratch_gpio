@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.000'  #17Sep15 preparing for 7.1 release
+Version = 'v7.1.001'  #17Sep15 7.1 release
 import threading
 import socket
 import time
@@ -1084,7 +1084,7 @@ class ScratchListener(threading.Thread):
             if self.bFindOnOff('gpio' + str(sghGC.gpioLookup[pin])):
                 sghGC.pinUpdate(pin, self.OnOrOff)
             if self.bFindValue('power' + str(pin)):
-                print pin, self.value
+                #print pin, self.value
                 if self.valueIsNumeric:
                     sghGC.pinUpdate(pin, self.valueNumeric, type="pwm")
                 else:
@@ -3314,7 +3314,7 @@ class ScratchListener(threading.Thread):
                                         sghGC.pinUpdate(motorList[listLoop][1], 0, type="pwmmotor")
 
                            # motorList = [['motor21,19', 21, 19, 0], ['motor26,24', 26, 24, 0]]
-                            print self.dataraw
+                            #print self.dataraw
                             motorhList = [m.start() for m in re.finditer('motorh', self.dataraw)]
                             print motorhList
                             motorList = []
@@ -3329,7 +3329,7 @@ class ScratchListener(threading.Thread):
                                 motorList.append([name, int(pin1),int(pin2), 0])
                             print motorList
                             for listLoop in motorList:
-                                print "listloop:",listLoop
+                                #print "listloop:",listLoop
                                 if self.vFindValue(listLoop[0]):
                                     svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
                                     logging.debug("motor:%s valuee:%s", listLoop[0], svalue)
@@ -4389,9 +4389,11 @@ class ScratchListener(threading.Thread):
                                         'invert': (0, 0, 0)}
 
                         if ("neopixels" in ADDON):
-                            self.matrixUse = int(rtnNumeric(ADDON[ADDON.index('neopixels'):], 64))
+                            self.matrixUse = int(rtnNumeric(ADDON[9 + ADDON.index('neopixels'):], 64))
                             #print "neopixels",self.matrixUse
                             
+                           
+                                    
                         def matrixSetPixel(x, y, R, G, B):
                             if "sensehat" in ADDON:
                                 SH.set_pixel(x, y, R, G, B)
@@ -4408,14 +4410,14 @@ class ScratchListener(threading.Thread):
 
                         def matrixShow():
                             if "sensehat" not in ADDON:
-                                matrixShow()
+                                UH.show()
                                 
                         def matrixWrite(text, R,G,B):
                             if "sensehat" in ADDON:
                                 SH.show_message(self.value,text_colour=(R, G, B))
 
                         def matrixBright(level):
-                            print "level", level 
+                            #print "level", level 
                             if "sensehat" in ADDON:
                                 if level < 1:
                                     SH.low_light = True
@@ -4469,6 +4471,8 @@ class ScratchListener(threading.Thread):
                                     self.matrixLimit = 1
                                     self.matrixRangemax = 8
                                     #print self.matrixMult,self.matrixLimit,self.matrixRangemax
+                                    
+                                   
 
                             #print "outside", self.matrixMult,self.matrixLimit,self.matrixRangemax
 
