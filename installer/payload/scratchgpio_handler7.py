@@ -17,7 +17,8 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.001'  #17Sep15 7.1 release
+Version = 'v7.1.003'  #20Sep15 Bugfix so neopixels not imported if not needed
+print "Version:",Version
 import threading
 import socket
 import time
@@ -4361,8 +4362,8 @@ class ScratchListener(threading.Thread):
                         self.bListCheck([11, 13, 15], ["red", "green", "blue"])  # Check for LEDs
 
 
-                    elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or ("sensehat in ADDON"):  #Matrix connected
-                    
+                    elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or ("sensehat" in ADDON):  #Matrix connected
+                        
                         oldADDON = ADDON
                         if "playhat" in ADDON:
                             ADDON = ADDON + " neopixels9"
@@ -4423,7 +4424,8 @@ class ScratchListener(threading.Thread):
                                     SH.low_light = True
                                 else:
                                     SH.low_light = False                                 
-                                   
+                            else:
+                                UH.brightness(level)
                                 
 
                         #print
