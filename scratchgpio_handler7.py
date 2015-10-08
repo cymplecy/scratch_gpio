@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.003'  #20Sep15 Bugfix so neopixels not imported if not needed
+Version = 'v7.1.005'  #8Oct15 Replace sgh_servod with one from @4Tronix_uk
 print "Version:",Version
 import threading
 import socket
@@ -3317,7 +3317,7 @@ class ScratchListener(threading.Thread):
                            # motorList = [['motor21,19', 21, 19, 0], ['motor26,24', 26, 24, 0]]
                             #print self.dataraw
                             motorhList = [m.start() for m in re.finditer('motorh', self.dataraw)]
-                            print motorhList
+                            #print motorhList
                             motorList = []
                             for loop in motorhList:
                                 name = self.dataraw[loop:]
@@ -3328,7 +3328,7 @@ class ScratchListener(threading.Thread):
                                 pin2 = name[1 + name.find(','):]
                                 print "pin2",pin2
                                 motorList.append([name, int(pin1),int(pin2), 0])
-                            print motorList
+                            #print motorList
                             for listLoop in motorList:
                                 #print "listloop:",listLoop
                                 if self.vFindValue(listLoop[0]):
@@ -3405,7 +3405,7 @@ class ScratchListener(threading.Thread):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 svalue = min(4095, max(((svalue * 4096) / 100), 0))
                                 pcaPWM.setPWM(i, 0, svalue)
-                                print svalue
+                                #print svalue
 
                         meArmAction = False
                         oldmeH = meHorizontal
@@ -3657,7 +3657,7 @@ class ScratchListener(threading.Thread):
                     if self.bFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 100
                         PiGlow_Brightness = sghGC.ledDim
-                        print sghGC.ledDim
+                        #print sghGC.ledDim
 
                     if self.bFindValue("triggerreset"):
                         print "triggerreset detected"
@@ -4363,7 +4363,7 @@ class ScratchListener(threading.Thread):
 
 
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or ("sensehat" in ADDON):  #Matrix connected
-                        
+                        #print "inside unicorn"
                         oldADDON = ADDON
                         if "playhat" in ADDON:
                             ADDON = ADDON + " neopixels9"
@@ -5499,8 +5499,8 @@ class ScratchListener(threading.Thread):
                                             ym = int(led / math.sqrt(self.matrixUse))
                                             xm = led - int((math.sqrt(self.matrixUse) * ym))
 
-                                            print colour
-                                            print "led found", xm, ym
+                                            #print colour
+                                            #print "led found", xm, ym
                                             for yy in range(0, self.matrixLimit):
                                                 for xx in range(0, self.matrixLimit):
                                                     AdaMatrix.setPixel(( (xm * self.matrixMult) + xx),
