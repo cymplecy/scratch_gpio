@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.005'  #8Oct15 Replace sgh_servod with one from @4Tronix_uk
+Version = 'v7.1.007'  #20Oct15 Modify neopixel colour handling
 print "Version:",Version
 import threading
 import socket
@@ -4379,21 +4379,29 @@ class ScratchListener(threading.Thread):
                                 #print "UnicornHat software not installed"
                                 #break
                         #print "addon", ADDON
-                        lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
-                        ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
-                                      'invert', 'random']
+                        tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+                                    'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
+                                    'orange': (255, 128, 0),'purple': (128,0,128),'pink': (254,0,255),
+                                    'brown': (255,128,128),  'grey': (128,128,128),
+                                    'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (254, 254, 254),
+                                    'indigo': (0,0,128), 'violet': (128,0,255), 'amber': (255,127,0)}
+                        invtcolours = {v: k for k, v in tcolours.items()}                        
+                        #lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
+                        #ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
+                        #              'invert', 'random']
 
-                        if tcolours is None:  #only define dictionary on first pass
-                            tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
-                                        'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
-                                        'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
-                                        'invert': (0, 0, 0)}
+                        #if tcolours is None:  #only define dictionary on first pass
+                        #    tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+                        #                'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
+                        #                'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
+                        #                'invert': (0, 0, 0)}
 
                         if ("neopixels" in ADDON):
                             self.matrixUse = int(rtnNumeric(ADDON[9 + ADDON.index('neopixels'):], 64))
                             #print "neopixels",self.matrixUse
                             
-                           
+                        def findRGB(textColour):
+                            return int(float(tcolours[scolour][0])),int(float(tcolours[scolour][1])),int(float(tcolours[scolour][2]))   
                                     
                         def matrixSetPixel(x, y, R, G, B):
                             if "sensehat" in ADDON:
@@ -4571,12 +4579,11 @@ class ScratchListener(threading.Thread):
                                         except:
                                             pass
                                     else:
-                                        ledcolour = self.value
-                                        self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(self.value, (
-                                            128, 128, 128))
-                                        if ledcolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                            ledcolours[random.randint(0, 6)], (128, 128, 128))
-                                tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
+                                        scolour = self.value
+                                        self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB(self.value)
+                                        #if scolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
+                                        #    ledcolours[random.randint(0, 6)], (128, 128, 128))
+                                #tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
 
                                 #print "rgb", self.matrixRed,self.matrixGreen,self.matrixBlue
                                 #print tcolours
@@ -6209,8 +6216,15 @@ class ScratchListener(threading.Thread):
                         if isNumeric(index) and isNumeric(value):
                             ColourTracker.limits[int(index)] = int(value)
                             print "limits:", ColourTracker.limits
-
-
+                            
+                    if self.bFindValue("run"):
+                        print "caps",datawithCAPS
+                        textpos = datawithCAPS.find('"run')
+                        text = datawithCAPS[textpos + 4:]
+                        print text
+                        self.value = text[0:text.find('"')]
+                        print self.value
+                        os.system(self.value)
                     #end of broadcast check
 
                     if self.bFind('shutdownpi'):
