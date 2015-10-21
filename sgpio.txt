@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.007'  #20Oct15 socket2 sneding add try except
+Version = 'v7.1.007'  #20Oct15 Modify neopixel colour handling
 print "Version:",Version
 import threading
 import socket
@@ -3577,12 +3577,9 @@ class ScratchListener(threading.Thread):
                                     chr(n & 0xFF))
 
                                 if self.scratch_socket2 is not None:
-                                    try:
-                                        self.scratch_socket2.send(b + dataOut)
-                                        print "auto dataOut Sent", dataOut
-                                    except:
-                                        pass
-                                    
+                                    self.scratch_socket2.send(b + dataOut)
+                                    print "auto dataOut Sent", dataOut
+
                     if self.bFindValue("qmsg"):
                         msgQueue.put((5,self.value))
                         #print "queue len", len(msgQueue)
@@ -4404,10 +4401,7 @@ class ScratchListener(threading.Thread):
                             #print "neopixels",self.matrixUse
                             
                         def findRGB(textColour):
-                            if textColour in tcolours:
-                                return int(float(tcolours[textColour][0])),int(float(tcolours[textColour][1])),int(float(tcolours[textColour][2]))
-                            else:
-                                return self.matrixRed,self.matrixGreen,self.matrixBlue
+                            return int(float(tcolours[scolour][0])),int(float(tcolours[scolour][1])),int(float(tcolours[scolour][2]))   
                                     
                         def matrixSetPixel(x, y, R, G, B):
                             if "sensehat" in ADDON:
