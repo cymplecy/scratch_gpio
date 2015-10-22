@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.010'  #22Oct15  fix sensor update regression
+Version = 'v7.1.010'  #22Oct15  roll back 2nd sensor update
 print "Version:",Version
 import threading
 import socket
@@ -3580,15 +3580,15 @@ class ScratchListener(threading.Thread):
                                     try:
                                         self.scratch_socket2.send(b + dataOut)
                                         print "auto dataOut Sent", dataOut
-                                        sensor_value = item
-                                        sensor_name = "LAN"
-                                        sensor_str = '"%s" %s ' % (sensor_name, sensor_value)
-                                        dataOut = "sensor-update " + sensor_str
-                                        n = len(dataOut)
-                                        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                                            chr(n & 0xFF))
-                                        self.scratch_socket2.send(b + dataOut)
-                                        print "sensor sent as well", dataOut
+                                        #sensor_value = item
+                                        #sensor_name = "LAN"
+                                        #sensor_str = '"%s" %s ' % (sensor_name, sensor_value)
+                                        #dataOut = "sensor-update " + sensor_str
+                                        #n = len(dataOut)
+                                        #b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                        #    chr(n & 0xFF))
+                                        #self.scratch_socket2.send(b + dataOut)
+                                        #print "sensor sent as well", dataOut
                                     except:
                                         pass
                                     
