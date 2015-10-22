@@ -6321,7 +6321,7 @@ class SendMsgsToScratch(threading.Thread):
                         sensor_value = dataOut
                         sensor_name = "LAN"
                         sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
-                        dataOut = "sensor-update " + sensor_str)
+                        dataOut = "sensor-update " + sensor_str
                         n = len(dataOut)
                         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
                             chr(n & 0xFF))
