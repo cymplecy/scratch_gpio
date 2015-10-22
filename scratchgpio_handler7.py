@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.009'  #22Oct15  more neopixel colour stuff
+Version = 'v7.1.010'  #22Oct15  fix sensor update regression
 print "Version:",Version
 import threading
 import socket
@@ -462,7 +462,7 @@ class ScratchSender(threading.Thread):
 
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
-        msgQueue.put(((5,)))
+        msgQueue.put(((5,"sensor-update " + bcast_str)))
         #print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
             #print dt.datetime.now()
