@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.007'  #20Oct15 socket2 sneding add try except
+Version = 'v7.1.009'  #22Oct15  more neopixel colour stuff
 print "Version:",Version
 import threading
 import socket
@@ -462,7 +462,7 @@ class ScratchSender(threading.Thread):
 
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
-        msgQueue.put(((5,"sensor-update " + bcast_str)))
+        msgQueue.put(((5,)))
         #print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
             #print dt.datetime.now()
@@ -4384,12 +4384,12 @@ class ScratchListener(threading.Thread):
                         #print "addon", ADDON
                         tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
                                     'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
-                                    'orange': (255, 128, 0),'purple': (128,0,128),'pink': (254,0,255),
-                                    'brown': (255,128,128),  'grey': (128,128,128),
-                                    'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (254, 254, 254),
-                                    'indigo': (0,0,128), 'violet': (128,0,255), 'amber': (255,127,0)}
+                                    'orange': (255, 128, 0), 'skyblue': (0, 127, 255), 'purple': (128,0,128), 'yellowgreen': (127,255,127), 'pink': (254,0,255), 'brightgreen': (1,255,0),
+                                    'brown': (165,42,42), 'aqua': (90,213,213), 'grey': (128,128,128),  'grey2': (127,127,127), 'black': (0,0,0),
+                                    'white': (255, 255, 255), 
+                                    'indigo': (0,0,128), 'cream': (255,255,127), 'violet': (128,0,255), 'lightgreen': (127,255,0),'amber': (255,127,0), 'lightblue': (0,128,255)}
                         invtcolours = {v: k for k, v in tcolours.items()}                        
-                        #lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
+                        #lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', 'o', 'p','0', '1', 'z']
                         #ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                         #              'invert', 'random']
 
@@ -4406,8 +4406,16 @@ class ScratchListener(threading.Thread):
                         def findRGB(textColour):
                             if textColour in tcolours:
                                 return int(float(tcolours[textColour][0])),int(float(tcolours[textColour][1])),int(float(tcolours[textColour][2]))
-                            else:
-                                return self.matrixRed,self.matrixGreen,self.matrixBlue
+                            elif textColour == "random":
+                                self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours[random.choice(tcolours.keys())]
+                            elif textColour == "invert":
+                                self.matrixRed, self.matrixGreen, self.matrixBlue = (255 - self.matrixRed), (255 - self.matrixGreen), (255 - self.matrixBlue)
+                            elif textColour == "off":
+                                self.matrixRed, self.matrixGreen, self.matrixBlue = 0,0,0                                   
+                            elif textColour == "on":
+                                if (self.matrixRed + self.matrixGreen + self.matrixBlue) == 0:
+                                    self.matrixRed, self.matrixGreen, self.matrixBlue = 255,255,255 
+                            return self.matrixRed,self.matrixGreen,self.matrixBlue
                                     
                         def matrixSetPixel(x, y, R, G, B):
                             if "sensehat" in ADDON:
@@ -4530,7 +4538,7 @@ class ScratchListener(threading.Thread):
                                 if self.bFindValue("originy"):
                                     self.originY = min(max(int(self.valueNumeric),0),7) if self.valueIsNumeric else 0                                    
                                     
-                            else:
+                            elif "neopixels" in ADDON:
                                 if self.bFind("allon"):
                                     for index in range(0, self.matrixUse):
                                         UH.set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
@@ -4544,8 +4552,7 @@ class ScratchListener(threading.Thread):
                                 if self.bFind("sweep"):
                                     print "sweep"
                                     for index in range(0, self.matrixUse):
-                                        self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                            ledcolours[random.randint(0, 6)], (0, 0, 0))
+                                        self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB("random")
                                         UH.set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
                                         matrixShow()
                                         time.sleep(0.05)
@@ -4567,31 +4574,22 @@ class ScratchListener(threading.Thread):
 
                             if self.bFindValue("colour"):
                                 #print "colour" ,self.value
-                                if self.value == "invert":
-                                    tcolours[
-                                        "invert"] = 255 - self.matrixRed, 255 - self.matrixGreen, 255 - self.matrixBlue
-                                if self.valueIsNumeric:
-                                    colourIndex = max(1, min(8, int(self.value))) - 1
-                                    self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                        ledcolours[colourIndex], (128, 128, 128))
+                                if self.value[0] == "#":
+                                    try:
+                                        self.value = (self.value + "00000000")[0:7]
+                                        self.matrixRed = int(self.value[1:3], 16)
+                                        self.matrixGreen = int(self.value[3:5], 16)
+                                        self.matrixBlue = int(self.value[5:], 16)
+                                        #print "matrxired", self.matrixRed
+                                    except:
+                                        pass
                                 else:
-                                    if self.value[0] == "#":
-                                        try:
-                                            self.value = (self.value + "00000000")[0:7]
-                                            self.matrixRed = int(self.value[1:3], 16)
-                                            self.matrixGreen = int(self.value[3:5], 16)
-                                            self.matrixBlue = int(self.value[5:], 16)
-                                            #print "matrxired", self.matrixRed
-                                        except:
-                                            pass
-                                    else:
-                                        scolour = self.value
-                                        self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB(self.value)
-                                        #if scolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                        #    ledcolours[random.randint(0, 6)], (128, 128, 128))
+                                    self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB(self.value)
+                                    #if scolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
+                                    #    ledcolours[random.randint(0, 6)], (128, 128, 128))
                                 #tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
 
-                                #print "rgb", self.matrixRed,self.matrixGreen,self.matrixBlue
+                                print "rgb", self.matrixRed,self.matrixGreen,self.matrixBlue
                                 #print tcolours
 
                             if ("unicorn" in ADDON) or ("sensehat" in ADDON):
@@ -4823,28 +4821,40 @@ class ScratchListener(threading.Thread):
 
                                     if not pixelProcessed:
                                         for led in range(0, self.matrixUse):
-                                            for ledcolour in ledcolours:
+                                            for ledcolour in tcolours:
                                                 if (self.bFindValue("pixel", ledcolour) and self.value == str(led + 1)):
-                                                    self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                                        ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                                                    if ledcolour == 'random':
-                                                        self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                                            ledcolours[random.randint(0, 6)], (64, 64, 64))
+                                                    self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB(ledcolour)
+                                                    UH.set_neopixel(led, self.matrixRed, self.matrixGreen,
+                                                                        self.matrixBlue)
                                                     #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
-                                                    if self.valueIsNumeric:
-                                                        if (ledcolour != "invert"):
-                                                            UH.set_neopixel(led, self.matrixRed, self.matrixGreen,
-                                                                            self.matrixBlue)
-                                                        else:
-                                                            gnp = UH.get_neopixel(led)
-                                                            #print "before" ,gnp
-                                                            gnpi = map(lambda a: (255 - a), gnp)
-                                                            #print "after", gnpi
-                                                            r, g, b = gnpi
-                                                            #print "rgb", r,g,b
-                                                            UH.set_neopixel(led, r, g, b)
-                                                        matrixShow()
-                                                        pixelProcessed = True
+                                                    matrixShow()
+                                                    pixelProcessed = True
+                                            if (self.bFindValue("pixel", "invert") and self.value == str(led + 1)):
+                                                gnp = UH.get_neopixel(led)
+                                                print "before" ,gnp
+                                                gnpi = map(lambda a: (255 - a), gnp)
+                                                print "after", gnpi
+                                                r, g, b = gnpi
+                                                #print "rgb", r,g,b
+                                                UH.set_neopixel(led, r, g, b)
+                                                self.matrixRed, self.matrixGreen, self.matrixBlue = r,g,b
+                                                matrixShow()
+                                                pixelProcessed = True
+                                                
+                                            if (self.bFindValue("pixel", "on") and self.value == str(led + 1)):
+                                                UH.set_neopixel(led, self.matrixRed, self.matrixGreen,
+                                                                    self.matrixBlue)
+                                                #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
+                                                matrixShow()
+                                                pixelProcessed = True          
+                                                                                            
+                                            if (self.bFindValue("pixel", "off") and self.value == str(led + 1)):
+                                                self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB("black")
+                                                UH.set_neopixel(led, self.matrixRed, self.matrixGreen,
+                                                                    self.matrixBlue)
+                                                #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
+                                                matrixShow()
+                                                pixelProcessed = True      
 
                                     if not pixelProcessed:
                                         #print "#", self.value[-7:-7]
@@ -4860,6 +4870,7 @@ class ScratchListener(threading.Thread):
                                                         g = int(c[3:5], 16)
                                                         b = int(c[5:], 16)
                                                         UH.set_neopixel(led, r, g, b)
+                                                        self.matrixRed, self.matrixGreen, self.matrixBlue = r,g,b
                                                         matrixShow()
                                                         pixelProcessed = True
                                                     except:
@@ -4876,6 +4887,7 @@ class ScratchListener(threading.Thread):
                                                         g = int(c[3:5], 16)
                                                         b = int(c[5:], 16)
                                                         UH.set_neopixel(led, r, g, b)
+                                                        self.matrixRed, self.matrixGreen, self.matrixBlue = r,g,b
                                                         matrixShow()
                                                         pixelProcessed = True
                                                     except:
@@ -4905,12 +4917,10 @@ class ScratchListener(threading.Thread):
                                             bcolour = str(r).zfill(3) + str(g).zfill(3) + str(b).zfill(3)
                                             #ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','invert','random']
                                             #bcolourname = "black"
-                                            try:
-                                                bcolourname = ledcolours[
-                                                    ["255000000", "000255000", "000000255", "000255255", "255000255",
-                                                     "255255000", "255255255"].index(bcolour)]
-                                            except ValueError:
-                                                pass
+                                            if (r,g,b) in invtcolours:
+                                                bcolourname = invtcolours[(r,g,b)]
+                                            #except ValueError:
+                                            #    pass
                                             #print "col lookup", bcolourname
                                             sensor_name = 'colour'
                                             bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolourname)
@@ -6307,6 +6317,14 @@ class SendMsgsToScratch(threading.Thread):
                     chr(n & 0xFF))
                 if sghGC.autoLink:
                     try:
+                        self.scratch_socket2.send(b + dataOut)
+                        sensor_value = dataOut
+                        sensor_name = "LAN"
+                        sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
+                        dataOut = "sensor-update " + sensor_str)
+                        n = len(dataOut)
+                        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                            chr(n & 0xFF))
                         self.scratch_socket2.send(b + dataOut)
                         print "auto sensor update Sent", dataOut
                     except:
