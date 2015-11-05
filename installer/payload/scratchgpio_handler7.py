@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.009'  #22Oct15  more neopixel colour stuff
+Version = 'v7.1.011'  #22Oct15  Fade added
 print "Version:",Version
 import threading
 import socket
@@ -462,7 +462,7 @@ class ScratchSender(threading.Thread):
 
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
-        msgQueue.put(((5,)))
+        msgQueue.put(((5,"sensor-update " + bcast_str)))
         #print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
             #print dt.datetime.now()
@@ -1736,7 +1736,7 @@ class ScratchListener(threading.Thread):
                         if (self.value == "0") and (debugLogging == True):
                             logging.getLogger().setLevel(logging.INFO)
                             debugLogging = False
-
+                            
                     if self.vFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
                         PiGlow_Brightness = sghGC.ledDim
@@ -3580,6 +3580,15 @@ class ScratchListener(threading.Thread):
                                     try:
                                         self.scratch_socket2.send(b + dataOut)
                                         print "auto dataOut Sent", dataOut
+                                        #sensor_value = item
+                                        #sensor_name = "LAN"
+                                        #sensor_str = '"%s" %s ' % (sensor_name, sensor_value)
+                                        #dataOut = "sensor-update " + sensor_str
+                                        #n = len(dataOut)
+                                        #b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                        #    chr(n & 0xFF))
+                                        #self.scratch_socket2.send(b + dataOut)
+                                        #print "sensor sent as well", dataOut
                                     except:
                                         pass
                                     
@@ -4556,6 +4565,41 @@ class ScratchListener(threading.Thread):
                                         UH.set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
                                         matrixShow()
                                         time.sleep(0.05)
+                                        
+                                if self.bFindValue("pixelfade"):
+                                    values = self.value.split(",")
+                                    #print "v,bright",values[0],sghGC.ledDim
+                                    newbright = sghGC.ledDim
+                                    newr,newg,newb = findRGB(values[0])
+                                    if len(values) > 1:
+                                        newbright = int(float(values[1]))
+                                    #print "new",newbright
+                                    rdelta = (newr - self.matrixRed) / 20.0
+                                    gdelta = (newg - self.matrixGreen) / 20.0
+                                    bdelta = (newb - self.matrixBlue) / 20.0   
+                                    brightdelta = (newbright - sghGC.ledDim) / 20.0   
+                                    #print "brdelta",brightdelta
+                                    for loop in range(20):
+                                        self.matrixRed = max(0,min(255,int(self.matrixRed + rdelta)))
+                                        self.matrixGreen =  max(0,min(255,int(self.matrixGreen + gdelta)))
+                                        self.matrixBlue =  max(0,min(255,int(self.matrixBlue + bdelta)))
+                                        #print "change", self.matrixRed, self.matrixGreen, self.matrixBlue ,sghGC.ledDim
+                                        for index in range(0, self.matrixUse):
+                                            UH.set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                        #print sghGC.ledDim
+                                        sghGC.ledDim = max(0,min(255,(sghGC.ledDim + brightdelta)))
+                                        #print sghGC.ledDim
+                                        matrixShow()
+                                        matrixBright(sghGC.ledDim / 100.0 )
+                                        time.sleep(0.05)
+                                    self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB(self.value)
+                                    UH.set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                    sghGC.ledDim == int(newbright)
+                                    matrixShow()                                    
+                                    matrixBright(sghGC.ledDim / 100.0 )
+
+                                    
+                                      
 
                             if self.bFindValue("red"):
                                 self.matrixRed = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -4813,11 +4857,6 @@ class ScratchListener(threading.Thread):
                             else:  # Neopixel processing
                                 if self.bFind("pixel"):
                                     pixelProcessed = False
-                                    for led in range(0, self.matrixUse):
-                                        if (self.bFindValue("pixel") and self.value == str(led + 1)):
-                                            UH.set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
-                                            matrixShow()
-                                            pixelProcessed = True
 
                                     if not pixelProcessed:
                                         for led in range(0, self.matrixUse):
@@ -4856,6 +4895,12 @@ class ScratchListener(threading.Thread):
                                                 matrixShow()
                                                 pixelProcessed = True      
 
+                                    for led in range(0, self.matrixUse):
+                                        if (self.bFindValue("pixel") and self.value == str(led + 1)):
+                                            UH.set_neopixel(led, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                                            matrixShow()
+                                            pixelProcessed = True
+                                            
                                     if not pixelProcessed:
                                         #print "#", self.value[-7:-7]
                                         fullvalue = self.value
@@ -4893,6 +4938,75 @@ class ScratchListener(threading.Thread):
                                                     except:
                                                         pass
 
+                                    if not pixelProcessed:
+                                        for ledcolour in tcolours:
+                                            if self.bFindValue("pixels", ledcolour):
+                                                try:
+                                                    start, end = self.value.split(",")
+                                                    start = int(start)
+                                                    if end[0] == "+":
+                                                        end = start + int(end[1:])
+                                                    end = int(end)
+                                                    self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB(ledcolour)
+                                                    for loop in range(start,end + 1):
+                                                        UH.set_neopixel(loop, self.matrixRed, self.matrixGreen,
+                                                                        self.matrixBlue)
+                                                    matrixShow()
+                                                    pixelProcessed = True
+                                                except:
+                                                    pass
+
+                                        if self.bFindValue("pixels", "invert"):
+                                            #try:
+                                                start, end = self.value.split(",")
+                                                start = int(start)
+                                                if end[0] == "+":
+                                                    end = start + int(end[1:])
+                                                end = int(end)
+                                                for loop in range(start,end + 1):
+                                                    gnp = UH.get_neopixel(loop)
+                                                    print "before" ,gnp
+                                                    gnpi = map(lambda a: (255 - a), gnp)
+                                                    print "after", gnpi
+                                                    r, g, b = gnpi
+                                                    #print "rgb", r,g,b
+                                                    UH.set_neopixel(loop, r, g, b)
+                                                matrixShow()
+                                                pixelProcessed = True
+                                            #except:
+                                            #    pass
+                                            
+                                        if self.bFindValue("pixels", "on"):
+                                            try:
+                                                start, end = self.value.split(",")
+                                                start = int(start)
+                                                if end[0] == "+":
+                                                    end = start + int(end[1:])
+                                                end = int(end)
+                                                for loop in range(start,end + 1):
+                                                    UH.set_neopixel(loop, self.matrixRed, self.matrixGreen,
+                                                                    self.matrixBlue)
+                                                matrixShow()
+                                                pixelProcessed = True         
+                                            except:
+                                                pass
+                                                
+                                        if self.bFindValue("pixels", "off"):
+                                            self.matrixRed, self.matrixGreen, self.matrixBlue = findRGB("black")
+                                            try:
+                                                start, end = self.value.split(",")
+                                                start = int(start)
+                                                if end[0] == "+":
+                                                    end = start + int(end[1:])
+                                                end = int(end)
+                                                for loop in range(start,end + 1):
+                                                    UH.set_neopixel(loop, self.matrixRed, self.matrixGreen,
+                                                                    self.matrixBlue)
+                                                matrixShow()
+                                                pixelProcessed = True         
+                                            except:
+                                                pass
+                                                        
                                 if self.bFind("getpixel"):
                                     for led in range(0, self.matrixUse):
                                         if (self.bFindValue("getpixel") and self.value == str(led + 1)):
@@ -6093,7 +6207,22 @@ class ScratchListener(threading.Thread):
 
 
 
-                    if self.bFindValue('send'):
+                    if self.bFindValue('sendvalue'):
+                        if self.scratch_socket2 is not None:
+                            sensor_name = 'LAN'
+                            cmd = 'sensor-update "%s" %s' % (sensor_name, self.value)
+                            n = len(cmd)
+                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                chr(n & 0xFF))
+                            totalcmd = b + cmd
+                            print "Sending to 2nd sockett",cmd
+                            try:
+                                self.scratch_socket2.send(totalcmd)
+                                print "sent value to 2nd socket", cmd
+                            except:
+                                print "failed to send to 2nd socket"
+                            
+                    elif self.bFindValue('send'):
                         if self.scratch_socket2 is not None:
                             print self.dataraw
                             print self.dataraw.count('send')
@@ -6317,14 +6446,6 @@ class SendMsgsToScratch(threading.Thread):
                     chr(n & 0xFF))
                 if sghGC.autoLink:
                     try:
-                        self.scratch_socket2.send(b + dataOut)
-                        sensor_value = dataOut
-                        sensor_name = "LAN"
-                        sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
-                        dataOut = "sensor-update " + sensor_str
-                        n = len(dataOut)
-                        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                            chr(n & 0xFF))
                         self.scratch_socket2.send(b + dataOut)
                         print "auto sensor update Sent", dataOut
                     except:
