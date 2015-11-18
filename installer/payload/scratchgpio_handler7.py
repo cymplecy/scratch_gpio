@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.009'  #22Oct15  more neopixel colour stuff
+Version = 'v7.1.010'  #22Oct15  fix sensor update regression
 print "Version:",Version
 import threading
 import socket
@@ -462,7 +462,7 @@ class ScratchSender(threading.Thread):
 
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
-        msgQueue.put(((5,)))
+        msgQueue.put(((5,"sensor-update " + bcast_str)))
         #print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
             #print dt.datetime.now()
@@ -1455,7 +1455,7 @@ class ScratchListener(threading.Thread):
             sghGC.pinUpdate(pin, 0, "pwm")  #Set pin to PWM mode
         startCount = time.time()  #Get current time
         sghGC.pinFreq(pin, freq)  # Set freq used for PWM cycle
-        sghGC.pinUpdate(pin, 50, "pwm")  # Set duty cycle to 50% to produce square wave
+        sghGC.pinUpdate(pin, 50, "pwmbeep")  # Set duty cycle to 50% to produce square wave
         while (time.time() - startCount) < (duration * 1.0):  # Wait until duration has passed
             time.sleep(0.01)
         sghGC.pinUpdate(pin, 0, "pwm")  #Turn pin off
@@ -3580,6 +3580,15 @@ class ScratchListener(threading.Thread):
                                     try:
                                         self.scratch_socket2.send(b + dataOut)
                                         print "auto dataOut Sent", dataOut
+                                        sensor_value = item
+                                        sensor_name = "LAN"
+                                        sensor_str = '"%s" %s ' % (sensor_name, sensor_value)
+                                        dataOut = "sensor-update " + sensor_str
+                                        n = len(dataOut)
+                                        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                            chr(n & 0xFF))
+                                        self.scratch_socket2.send(b + dataOut)
+                                        print "sensor sent as well", dataOut
                                     except:
                                         pass
                                     
@@ -6317,14 +6326,6 @@ class SendMsgsToScratch(threading.Thread):
                     chr(n & 0xFF))
                 if sghGC.autoLink:
                     try:
-                        self.scratch_socket2.send(b + dataOut)
-                        sensor_value = dataOut
-                        sensor_name = "LAN"
-                        sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
-                        dataOut = "sensor-update " + sensor_str
-                        n = len(dataOut)
-                        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                            chr(n & 0xFF))
                         self.scratch_socket2.send(b + dataOut)
                         print "auto sensor update Sent", dataOut
                     except:
