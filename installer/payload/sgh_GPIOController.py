@@ -428,8 +428,10 @@ class GPIOController :
                     if type == "pwmmotor":
                         #print "motor freq used a", self.mFreq
                         self.pinRef[pin].ChangeFrequency(self.mFreq) # change freq to motor freq
-                    else:
-                        self.pinRef[pin].ChangeFrequency(self.pFreq) # change freq to power/led freq                 
+                    elif type != "pwmbeep":
+                        #print "motor freq used a", self.mFreq
+                        self.pinRef[pin].ChangeFrequency(self.pFreq) # change freq to motor freq                        
+             
                     #print "updating pwm suceceed"
                 except:
                     #print "pwm not set so now setting up"
@@ -443,7 +445,8 @@ class GPIOController :
                     if type == "pwmmotor":
                         #print "motor freq used b", self.mFreq
                         self.pinRef[pin] = GPIO.PWM(pin,self.mFreq) # create new PWM instance
-                    else:
+                    elif type != "pwmbeep":
+                        #print "motor freq used a", self.mFreq
                         self.pinRef[pin] = GPIO.PWM(pin,self.pFreq) # create new PWM instance
                     self.pinRef[pin].start(max(0,min(100,abs(value)))) # update PWM value
                     #print "pwm setup on pin",pin, "now has ref",self.pinRef[pin]
@@ -781,4 +784,3 @@ class GPIOController :
 
 
 #### End of main program
-
