@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.011'  #22Oct15  Fade added
+Version = 'v7.2.000'  #28Nov15  Native Dweet AddedFade
 print "Version:",Version
 import threading
 import socket
@@ -42,6 +42,7 @@ import sgh_RasPiCamera
 import random
 import Queue
 from sgh_cheerlights import CheerLights
+import urllib2
 #import uinput
 try:
     from sgh_webcamcolour import ColourTracker
@@ -6241,6 +6242,35 @@ class ScratchListener(threading.Thread):
                                     totalcmd = totalcmd + b + cmd
                             #print "Sending to Alt:",totalcmd
                             self.scratch_socket2.send(totalcmd)
+                    
+                    if self.bFindValue('readdweet'):
+                        try:
+                            readdweet = urllib2.urlopen("https://dweet.io/get/latest/dweet/for/" + self.value).read()
+                            readdweetsplit = readdweet.split(":")
+                            for loop in readdweetsplit:
+                                print loop
+                            bcast_str = 'sensor-update "%s" %s' % (re.sub(r'\W+', '', readdweetsplit[9]),re.sub(r'\W+', '', readdweetsplit[10]))
+                            #print 'sending: %s' % bcast_str
+                            msgQueue.put((5,bcast_str))                            
+
+                        except:
+                            print "readdweet failed"
+                            pass                            
+
+                            
+                    elif self.bFindValue('dweet'):
+                        try:
+                            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            #now connect to the web server on port 80
+                            # - the normal http port
+                            s.connect(("dweet.io", 80))
+                            dweetdata = self.value.split(",")
+                            sent = s.send("POST /dweet/for/" + dweetdata[0] + "?" + dweetdata[1] + "=" + dweetdata[2] + " HTTP/1.1\r\nHost: dweet.io\r\nConnection: close\r\nAccept: */*\r\n\r\n".encode('utf-8'))
+                        except:
+                            print "dweet failed"
+                            pass
+
+
 
                     if self.bFindValue('connect'):
                         cycle_trace = 'disconnected'
@@ -6377,8 +6407,8 @@ class ScratchListener(threading.Thread):
 
 
                     #print "encoderinUse state" ,sghGC.encoderInUse
-                    if sghGC.encoderInUse == 0:
-                        msgQueue.put((5,'sensor-update "encoder" "stopped"'))  # inform Scratch that turning is finished
+                    #if sghGC.encoderInUse == 0:
+                    #    msgQueue.put((5,'sensor-update "encoder" "stopped"'))  # inform Scratch that turning is finished
 
                 if 'stop handler' in dataraw:
                     print "stop handler msg setn from Scratch"
