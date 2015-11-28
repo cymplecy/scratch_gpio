@@ -6377,8 +6377,8 @@ class ScratchListener(threading.Thread):
 
 
                     #print "encoderinUse state" ,sghGC.encoderInUse
-                    if sghGC.encoderInUse == 0:
-                        msgQueue.put((5,'sensor-update "encoder" "stopped"'))  # inform Scratch that turning is finished
+                    #if sghGC.encoderInUse == 0:
+                    #    msgQueue.put((5,'sensor-update "encoder" "stopped"'))  # inform Scratch that turning is finished
 
                 if 'stop handler' in dataraw:
                     print "stop handler msg setn from Scratch"
