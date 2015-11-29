@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.2.001'  #29Nov15  Add try except around send
+Version = 'v7.2.002'  #29Nov15  dweet read converted to lower
 print "Version:",Version
 import threading
 import socket
@@ -6253,7 +6253,8 @@ class ScratchListener(threading.Thread):
                             readdweetsplit = readdweet.split(":")
                             for loop in readdweetsplit:
                                 print loop
-                            bcast_str = 'sensor-update "%s" %s' % (re.sub(r'\W+', '', readdweetsplit[9]),re.sub(r'\W+', '', readdweetsplit[10]))
+                               
+                            bcast_str = 'sensor-update "%s" %s' % (re.sub(r'\W+', '', readdweetsplit[9]).lower(),re.sub(r'\W+', '', readdweetsplit[10]).lower())
                             #print 'sending: %s' % bcast_str
                             msgQueue.put((5,bcast_str))                            
 
