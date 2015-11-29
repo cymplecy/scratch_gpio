@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.2.000'  #28Nov15  Native Dweet AddedFade
+Version = 'v7.2.001'  #29Nov15  Add try except around send
 print "Version:",Version
 import threading
 import socket
@@ -6241,7 +6241,11 @@ class ScratchListener(threading.Thread):
                                         chr(n & 0xFF))
                                     totalcmd = totalcmd + b + cmd
                             #print "Sending to Alt:",totalcmd
-                            self.scratch_socket2.send(totalcmd)
+                            try:
+                                self.scratch_socket2.send(totalcmd)
+                            except:
+                                print "send failed"
+                                pass
                     
                     if self.bFindValue('readdweet'):
                         try:
