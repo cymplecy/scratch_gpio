@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.2.002'  #29Nov15  dweet read converted to lower
+Version = 'v8.0.0001'  #22Jan16  Improvesments to H-Bridge syntax
 print "Version:",Version
 import threading
 import socket
@@ -1173,6 +1173,7 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(ledList[led - 1], 0, type="pwm")
 
     def vFind(self, searchStr):
+        #print "vserarch",searchStr
         return ((' ' + searchStr + ' ') in self.dataraw)
 
     def vFindOn(self, searchStr):
@@ -1237,12 +1238,32 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pin, self.valueNumeric, type="pwm")
                 else:
                     sghGC.pinUpdate(pin, 0, type="pwm")
-
-            if self.vFindValue('motor' + str(pin)):
-                if self.valueIsNumeric:
-                    sghGC.pinUpdate(pin, self.valueNumeric, type="pwmmotor")
-                else:
-                    sghGC.pinUpdate(pin, 0, type="pwmmotor")
+            
+            if self.bFindValue('motor'+str(pin)+','):
+                pin2 = None
+                #try:
+                #print "sv",self.value
+                pin2 = self.value
+                #print "pin2",pin2
+                #print type(pin2)
+                if isNumeric(pin2):
+                    pin2 = int(float(pin2))
+                #except:
+                #    print ("ERROR Decoding motor()")
+                #    pass
+                if pin2 is not None:
+                    if pin2 in sghGC.validPins:
+                        if self.vFindValue('motor'+str(pin)+','+str(pin2)):
+                            svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                            #print "log"
+                            logging.debug("motor pins :%s and %s value:%s", pin,pin2, svalue)
+                            sghGC.motorUpdate(pin, pin2, svalue)                
+            else:
+                if self.vFindValue('motor' + str(pin)):
+                    if self.valueIsNumeric:
+                        sghGC.pinUpdate(pin, self.valueNumeric, type="pwmmotor")
+                    else:
+                        sghGC.pinUpdate(pin, 0, type="pwmmotor")
 
             if self.vFindValue('gpio' + str(sghGC.gpioLookup[pin])):
                 logging.debug("gpio lookup %s", str(sghGC.gpioLookup[pin]))
@@ -3317,25 +3338,7 @@ class ScratchListener(threading.Thread):
 
                            # motorList = [['motor21,19', 21, 19, 0], ['motor26,24', 26, 24, 0]]
                             #print self.dataraw
-                            motorhList = [m.start() for m in re.finditer('motorh', self.dataraw)]
-                            #print motorhList
-                            motorList = []
-                            for loop in motorhList:
-                                name = self.dataraw[loop:]
-                                name = name[0:name.find(' ')]
-                                print "name", name
-                                pin1 = name[6:name.find(',')]
-                                print "pin1",pin1
-                                pin2 = name[1 + name.find(','):]
-                                print "pin2",pin2
-                                motorList.append([name, int(pin1),int(pin2), 0])
-                            #print motorList
-                            for listLoop in motorList:
-                                #print "listloop:",listLoop
-                                if self.vFindValue(listLoop[0]):
-                                    svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
-                                    logging.debug("motor:%s valuee:%s", listLoop[0], svalue)
-                                    sghGC.motorUpdate(listLoop[1], listLoop[2], svalue)
+                            
                         # end of motor checking
 
                         if self.bFindValue('servo'):

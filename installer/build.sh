@@ -5,7 +5,7 @@ echo $SGHVER
 echo $HOME
 echo $SGHVER > $HOME/sghdev/scratch_gpio/installer/payload/SGHVER.txt
 
-cp $HOME/sghdev/scratch_gpio/scratchgpio_handler7.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/scratchgpio_handler8.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/Adafruit_I2C.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/sgh_servod $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/killsgh.sh $HOME/sghdev/scratch_gpio/installer/payload
