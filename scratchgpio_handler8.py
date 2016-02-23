@@ -5394,7 +5394,7 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(pin, 0, type="pwm")
 
-                            if self.bFindValue('motor' + str(pin) + ","):
+                            if self.bFindValue('motor' + str(pin) + "="):
                                 #logging.debug("bPowerPin:%s",pin )
                                 if self.valueIsNumeric:
                                     sghGC.pinUpdate(pin, self.valueNumeric, type="pwmmotor")
