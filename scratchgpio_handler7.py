@@ -1455,7 +1455,7 @@ class ScratchListener(threading.Thread):
             sghGC.pinUpdate(pin, 0, "pwm")  #Set pin to PWM mode
         startCount = time.time()  #Get current time
         sghGC.pinFreq(pin, freq)  # Set freq used for PWM cycle
-        sghGC.pinUpdate(pin, 50, "pwm")  # Set duty cycle to 50% to produce square wave
+        sghGC.pinUpdate(pin, 50, "pwmbeep")  # Set duty cycle to 50% to produce square wave
         while (time.time() - startCount) < (duration * 1.0):  # Wait until duration has passed
             time.sleep(0.01)
         sghGC.pinUpdate(pin, 0, "pwm")  #Turn pin off
