@@ -2725,7 +2725,7 @@ class ScratchListener(threading.Thread):
                         self.vPinCheck()  # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
 
                         #check for motor variable commands
-                        motorList = [['motora', 11, 12], ['motorb', 13, 15, ]]
+                        motorList = [['motora', 11, 12], ['motorb', 13, 15 ]]
                         #motorList = [['motora',21,26],['motorb',19,24]]
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
@@ -2813,7 +2813,7 @@ class ScratchListener(threading.Thread):
 
 
                         #check for motor variable commands
-                        motorList = [['motora', 21, 26, 0], ['motorb', 19, 24]]
+                        motorList = [['motora', 21, 26, 0,False], ['motorb', 19, 24,0,False]]
                         if "piroconb" in ADDON:
                             logging.debug("PiRoConB Found:%s", ADDON)
                             motorList = [['motora', 21, 19, 0, False], ['motorb', 26, 24, 0, False]]
@@ -2829,7 +2829,8 @@ class ScratchListener(threading.Thread):
                     elif "robohat" in ADDON:
 
                         #check for motor variable commands
-                        motorList = [['motora', 36, 33, 0], ['motorb', 35, 32]]
+                        motorList = [['motor1', 36, 35, 0, False], ['motor2', 33, 32, 0, False]]
+                        #logging.debug("ADDON:%s", ADDON)
 
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
