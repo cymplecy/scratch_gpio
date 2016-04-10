@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.006  #9Apr16 Add in RoboHat'
+Version = 'v7.1.007  #9Apr16 Add in RoboHat4'
 print "Version:",Version
 import threading
 import socket
@@ -2837,6 +2837,14 @@ class ScratchListener(threading.Thread):
                                 svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
                                 sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+                                
+                        if self.bFindValue('servo'):
+                            print "servo"
+                            for pin in sghGC.validPins:
+                                if self.vFindValue('servo' + str(pin)):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else -150
+                                    svalue = (svalue + 150)
+                                    sghGC.pinServod(pin, svalue)                                
 
                                 ######### End of PiRoCon Variable handling
                                 
