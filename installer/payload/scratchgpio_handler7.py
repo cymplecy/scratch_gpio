@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.007  #9Apr16 Add in RoboHat4'
+Version = 'v7.1.008  #9Apr16 Servod kill delay added'
 print "Version:",Version
 import threading
 import socket

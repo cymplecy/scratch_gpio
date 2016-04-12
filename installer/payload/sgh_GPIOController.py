@@ -711,6 +711,7 @@ class GPIOController :
     def startServod(self, pins):
         print ("Starting servod")
         os.system("sudo pkill -f servod")
+        time.sleep(0.1)
         for pin in pins:
             self.pinUse[pin] = self.PSERVOD
             
