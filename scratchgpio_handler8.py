@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.0001'  #22Jan16  Improvesments to H-Bridge syntax
+Version = 'v8.0.0001'  #20Apr16 Merge Version = 'v7.1.006  #9Apr16 Add in RoboHat'
 print "Version:",Version
 import threading
 import socket
@@ -1934,6 +1934,32 @@ class ScratchListener(threading.Thread):
 
                                 print "pirocon setup"
                                 anyAddOns = True
+                                
+                        if "robohat" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                               sghGC.pinUse[36] = sghGC.POUTPUT  #MotorA
+                                sghGC.pinUse[35] = sghGC.POUTPUT  #MotorB
+                               sghGC.pinUse[33] = sghGC.POUTPUT  #MotorA 
+                                sghGC.pinUse[32] = sghGC.POUTPUT  #MotorB
+                                
+                                sghGC.pinUse[18] = sghGC.POUTPUT  
+                                sghGC.pinUse[22] = sghGC.POUTPUT  #
+                                sghGC.pinUse[12] = sghGC.POUTPUT  #
+                                sghGC.pinUse[31] = sghGC.POUTPUT  #                            
+                                
+                                sghGC.pinUse[7] = sghGC.PINPUT  #
+                                sghGC.pinUse[11] = sghGC.PINPUT  #
+                                sghGC.pinUse[29] = sghGC.PINPUT  #
+                                sghGC.pinUse[13] = sghGC.PINPUT  #
+                                sghGC.pinUse[15] = sghGC.PINPUT  #
+                                sghGC.pinUse[16] = sghGC.PINPUT  #
+
+                                sghGC.setPinMode()
+
+
+                                print "RoboHAT setup"
+                                anyAddOns = True                                        
 
                         if "piringo" in ADDON:
                             with lock:
@@ -2822,6 +2848,18 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
 
                                 ######### End of PiRoCon Variable handling
+                                
+                    elif "robohat" in ADDON:
+
+                        #check for motor variable commands
+                        motorList = [['motora', 36, 33, 0], ['motorb', 35, 32]]
+
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)       
+                                
                     elif "piringo" in ADDON:
                         #do piringo stuff
 
@@ -3893,7 +3931,28 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(motorList[1][2], 1)
                                 sghGC.pinUpdate(motorList[1][1], (100 - self.turnSpeed), "pwmmotor")
 
+                    elif "robohat" in ADDON:  # RoboHAT
 
+                        self.bCheckAll()  # Check for all off/on type broadcasrs
+                        self.bPinCheck(sghGC.validPins)  # Check for pin off/on type broadcasts
+
+                        #check pins
+                        for pin in sghGC.validPins:
+                            if self.bFindOnOff('pin' + str(pin)):
+                                sghGC.pinUpdate(pin, self.OnOrOff)
+
+                            if self.bFind('sonar' + str(pin)):
+                                distance = sghGC.pinSonar(pin)
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'sonar' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                                #print 'sending: %s' % bcast_str
+                                msgQueue.put((5,bcast_str))
+  
+                            #Start using ultrasonic sensor on a pin
+                            if self.bFind('ultra' + str(pin)):
+                                self.startUltra(pin, 0, self.OnOrOff)
+                                
                     elif "piringo" in ADDON:  # piringo
                         #do piringo stuff
                         self.bCheckAll()  # Check for all off/on type broadcasrs
