@@ -1935,12 +1935,12 @@ class ScratchListener(threading.Thread):
                                 print "pirocon setup"
                                 anyAddOns = True
                                 
-                        if "robohat" in ADDON:
+                        if "robohat" in ADDON: 
                             with lock:
                                 sghGC.resetPinMode()
-                               sghGC.pinUse[36] = sghGC.POUTPUT  #MotorA
+                                sghGC.pinUse[36] = sghGC.POUTPUT  #MotorA
                                 sghGC.pinUse[35] = sghGC.POUTPUT  #MotorB
-                               sghGC.pinUse[33] = sghGC.POUTPUT  #MotorA 
+                                sghGC.pinUse[33] = sghGC.POUTPUT  #MotorA 
                                 sghGC.pinUse[32] = sghGC.POUTPUT  #MotorB
                                 
                                 sghGC.pinUse[18] = sghGC.POUTPUT  
