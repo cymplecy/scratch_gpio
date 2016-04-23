@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.0001'  #20Apr16 Merge Version = 'v7.1.006  #9Apr16 Add in RoboHat'
+Version = 'v8.0.0002'  #22Apr16 check run to use subprocess'
 print "Version:",Version
 import threading
 import socket
@@ -1514,7 +1514,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host
+            meVertical, meHorizontal, meDistance, host, killList
 
 
 
@@ -6472,9 +6472,16 @@ class ScratchListener(threading.Thread):
                         textpos = datawithCAPS.find('"run')
                         text = datawithCAPS[textpos + 4:]
                         print text
-                        self.value = text[0:text.find('"')]
+                        self.value = text[0:text.find('"')].strip()
+                        runList = self.value.split(' ')
                         print self.value
-                        os.system(self.value)
+                        print runList
+                        #os.system(.value)
+                        #subprocess.check_call(runList)
+                        killList = "sudo pkill -f " + runList[1]
+                        subprocess.call(killList, shell=True)
+                        print ("Trying to kill" , killList)
+                        subprocess.Popen(self.value, shell=True)
                     #end of broadcast check
 
                     if self.bFind('shutdownpi'):
@@ -6656,6 +6663,7 @@ SOCKET_TIMEOUT = 2
 firstRun = True
 lock = threading.Lock()
 cheerlights = CheerLights()
+killList = ""
 
 piglow = None
 try:
@@ -6799,6 +6807,10 @@ while True:
 
     if (cycle_trace == 'disconnected'):
         print "Scratch disconnected"
+        subprocess.call(killList, shell=True)
+        print "trying to kill" , killList
+        #killList = ""
+        print "external called processes killed"
         cleanup_threads(( listener, sender))
         print "Thread cleanup done after disconnect"
         INVERT = False
@@ -6853,6 +6865,9 @@ while True:
         time.sleep(0.1)
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
+        subprocess.call(killList, shell=True)
+        killList = ""
+        print "external called processes killed"
         cleanup_threads((listener, sender ))
         print "Thread cleanup done after disconnect"
         #time.sleep(5)
