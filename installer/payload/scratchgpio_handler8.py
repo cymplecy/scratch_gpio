@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # ScratchGPIO - control Raspberry Pi GPIO ports using Scratch.
-# Copyright (C) 2013-2015 by Simon Walters based on original code for PiFace by Thomas Preston
+# Copyright (C) 2013-2016 by Simon Walters based on original code for PiFace by Thomas Preston
 
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,8 +16,8 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-# This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v8.0.0001'  #22Jan16  Improvesments to H-Bridge syntax
+# This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
+Version = 'v8.0.0002'  #22Apr16 check run to use subprocess'
 print "Version:",Version
 import threading
 import socket
@@ -1514,7 +1514,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host
+            meVertical, meHorizontal, meDistance, host, killList
 
 
 
@@ -1934,6 +1934,32 @@ class ScratchListener(threading.Thread):
 
                                 print "pirocon setup"
                                 anyAddOns = True
+                                
+                        if "robohat" in ADDON: 
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.pinUse[36] = sghGC.POUTPUT  #MotorA
+                                sghGC.pinUse[35] = sghGC.POUTPUT  #MotorB
+                                sghGC.pinUse[33] = sghGC.POUTPUT  #MotorA 
+                                sghGC.pinUse[32] = sghGC.POUTPUT  #MotorB
+                                
+                                sghGC.pinUse[18] = sghGC.POUTPUT  
+                                sghGC.pinUse[22] = sghGC.POUTPUT  #
+                                sghGC.pinUse[12] = sghGC.POUTPUT  #
+                                sghGC.pinUse[31] = sghGC.POUTPUT  #                            
+                                
+                                sghGC.pinUse[7] = sghGC.PINPUT  #
+                                sghGC.pinUse[11] = sghGC.PINPUT  #
+                                sghGC.pinUse[29] = sghGC.PINPUT  #
+                                sghGC.pinUse[13] = sghGC.PINPUT  #
+                                sghGC.pinUse[15] = sghGC.PINPUT  #
+                                sghGC.pinUse[16] = sghGC.PINPUT  #
+
+                                sghGC.setPinMode()
+
+
+                                print "RoboHAT setup"
+                                anyAddOns = True                                        
 
                         if "piringo" in ADDON:
                             with lock:
@@ -2722,7 +2748,7 @@ class ScratchListener(threading.Thread):
                         self.vPinCheck()  # check for any pin On/Off/High/Low/1/0 any PWM settings using power or motor
 
                         #check for motor variable commands
-                        motorList = [['motora', 11, 12], ['motorb', 13, 15, ]]
+                        motorList = [['motora', 11, 12], ['motorb', 13, 15 ]]
                         #motorList = [['motora',21,26],['motorb',19,24]]
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
@@ -2810,7 +2836,7 @@ class ScratchListener(threading.Thread):
 
 
                         #check for motor variable commands
-                        motorList = [['motora', 21, 26, 0], ['motorb', 19, 24]]
+                        motorList = [['motora', 21, 26, 0,False], ['motorb', 19, 24,0,False]]
                         if "piroconb" in ADDON:
                             logging.debug("PiRoConB Found:%s", ADDON)
                             motorList = [['motora', 21, 19, 0, False], ['motorb', 26, 24, 0, False]]
@@ -2822,6 +2848,26 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
 
                                 ######### End of PiRoCon Variable handling
+                                
+                    elif "robohat" in ADDON:
+
+                        #check for motor variable commands
+                        motorList = [['motor1', 36, 35, 0, False], ['motor2', 33, 32, 0, False]]
+
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)  
+
+                        if self.bFindValue('servo'):
+                            print "servo"
+                            for pin in sghGC.validPins:
+                                if self.vFindValue('servo' + str(pin)):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else -150
+                                    svalue = (svalue + 150)
+                                    sghGC.pinServod(pin, svalue)      
+                                
                     elif "piringo" in ADDON:
                         #do piringo stuff
 
@@ -3893,7 +3939,28 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(motorList[1][2], 1)
                                 sghGC.pinUpdate(motorList[1][1], (100 - self.turnSpeed), "pwmmotor")
 
+                    elif "robohat" in ADDON:  # RoboHAT
 
+                        self.bCheckAll()  # Check for all off/on type broadcasrs
+                        self.bPinCheck(sghGC.validPins)  # Check for pin off/on type broadcasts
+
+                        #check pins
+                        for pin in sghGC.validPins:
+                            if self.bFindOnOff('pin' + str(pin)):
+                                sghGC.pinUpdate(pin, self.OnOrOff)
+
+                            if self.bFind('sonar' + str(pin)):
+                                distance = sghGC.pinSonar(pin)
+                                #print'Distance:',distance,'cm'
+                                sensor_name = 'sonar' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                                #print 'sending: %s' % bcast_str
+                                msgQueue.put((5,bcast_str))
+  
+                            #Start using ultrasonic sensor on a pin
+                            if self.bFind('ultra' + str(pin)):
+                                self.startUltra(pin, 0, self.OnOrOff)
+                                
                     elif "piringo" in ADDON:  # piringo
                         #do piringo stuff
                         self.bCheckAll()  # Check for all off/on type broadcasrs
@@ -5394,7 +5461,7 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(pin, 0, type="pwm")
 
-                            if self.bFindValue('motor' + str(pin) + ","):
+                            if self.bFindValue('motor' + str(pin) + "="):
                                 #logging.debug("bPowerPin:%s",pin )
                                 if self.valueIsNumeric:
                                     sghGC.pinUpdate(pin, self.valueNumeric, type="pwmmotor")
@@ -6405,9 +6472,16 @@ class ScratchListener(threading.Thread):
                         textpos = datawithCAPS.find('"run')
                         text = datawithCAPS[textpos + 4:]
                         print text
-                        self.value = text[0:text.find('"')]
+                        self.value = text[0:text.find('"')].strip()
+                        runList = self.value.split(' ')
                         print self.value
-                        os.system(self.value)
+                        print runList
+                        #os.system(.value)
+                        #subprocess.check_call(runList)
+                        killList = "sudo pkill -f " + runList[1]
+                        subprocess.call(killList, shell=True)
+                        print ("Trying to kill" , killList)
+                        subprocess.Popen(self.value, shell=True)
                     #end of broadcast check
 
                     if self.bFind('shutdownpi'):
@@ -6589,6 +6663,7 @@ SOCKET_TIMEOUT = 2
 firstRun = True
 lock = threading.Lock()
 cheerlights = CheerLights()
+killList = ""
 
 piglow = None
 try:
@@ -6732,6 +6807,10 @@ while True:
 
     if (cycle_trace == 'disconnected'):
         print "Scratch disconnected"
+        subprocess.call(killList, shell=True)
+        print "trying to kill" , killList
+        #killList = ""
+        print "external called processes killed"
         cleanup_threads(( listener, sender))
         print "Thread cleanup done after disconnect"
         INVERT = False
@@ -6786,6 +6865,9 @@ while True:
         time.sleep(0.1)
     except KeyboardInterrupt:
         print ("Keyboard Interrupt")
+        subprocess.call(killList, shell=True)
+        killList = ""
+        print "external called processes killed"
         cleanup_threads((listener, sender ))
         print "Thread cleanup done after disconnect"
         #time.sleep(5)

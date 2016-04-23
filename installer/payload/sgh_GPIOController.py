@@ -298,8 +298,9 @@ class GPIOController :
         
     #reset pinmode
     def resetPinMode(self):
-        #print "resetting pin mode" 
+        print "resetting pin mode" 
         self.stopServod()
+        print "servod stopped"
         for pin in self.validPins:
             try:
                 self.pinRef[pin].stop() # stop PWM from running
@@ -709,8 +710,11 @@ class GPIOController :
             return False     
         
     def startServod(self, pins):
+        print (" ")
         print ("Starting servod")
         os.system("sudo pkill -f servod")
+        time.sleep(0.1)
+        print "any running servod killed"
         for pin in pins:
             self.pinUse[pin] = self.PSERVOD
             
@@ -722,6 +726,7 @@ class GPIOController :
         
         os.system(SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
         #print (SCRIPTPATH +'/sgh_servod --idle-timeout=20000 --p1pins="' + str(pins).strip('[]') + '"')
+        print "servod started"
         
         self.servodPins = pins
 
