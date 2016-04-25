@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.0002'  #22Apr16 check run to use subprocess'
+Version = 'v8.0.0002'  #25Apr boradcast servo added
 print "Version:",Version
 import threading
 import socket
@@ -6392,6 +6392,15 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, int(value & 2 ** led) >> led)
                             #print 'sending: %s' % bcast_str
                             msgQueue.put((5,bcast_str))
+
+                    if self.bFind('servo'):
+                        print "broadcast servo"
+                        for pin in sghGC.validPins:
+                            if self.bFindValue('servo' + str(pin) + ","):
+                                print 'servo' + str(pin) + ","
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else -150
+                                svalue = (svalue + 150)
+                                sghGC.pinServod(pin, svalue)                            
 
                     if self.bFind("setwait"):
                         print "wait"
