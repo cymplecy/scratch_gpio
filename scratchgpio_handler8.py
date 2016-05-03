@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.0002'  #29Apr variable auto link trying out
+Version = 'v8.0.0002'  #3May16 Add in setpinsunused to disable any inputs
 print "Version:",Version
 import threading
 import socket
@@ -2482,6 +2482,7 @@ class ScratchListener(threading.Thread):
                         for pin in sghGC.validPins:
                             #print "checking pin" ,pin
                             if self.bFindValue('config' + str(pin)):
+                                #print "setting pin" ,pin
                                 if self.value == "in":
                                     sghGC.pinUse[pin] = sghGC.PINPUT
                                 if self.value == "inpulldown":
@@ -3700,7 +3701,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
-                        elif self.value == "low":
+                        elif ((self.value == "low") or (self.value == "pulldown")):
                             with lock:
                                 print "set pins to input with pulldown low"
                                 for pin in sghGC.validPins:
@@ -3710,7 +3711,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
-                        elif self.value == "high":
+                        elif ((self.value == "high") or (self.value == "pullup")):
                             with lock:
                                 print "set pins to input with pull ups"
                                 for pin in sghGC.validPins:
@@ -3729,6 +3730,16 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True
+                                
+                        elif self.value == "unused":
+                            with lock:
+                                print "set pins to no in use"
+                                for pin in sghGC.validPins:
+                                    sghGC.pinUse[pin] = sghGC.PUNUSED
+                                #sghGC.pinUse[3] = sghGC.PUNUSED
+                                #sghGC.pinUse[5] = sghGC.PUNUSED
+                                sghGC.setPinMode()
+                                anyAddOns = True                                
 
                     if self.bFindOnOff("sghdebug"):
                         if (self.OnOrOff == True) and (debugLogging == False):

@@ -219,7 +219,7 @@ class GPIOController :
                         # print  name ,"0count on 0 ",dt.datetime.now(),self.pinCount[pin]               
 
     ### Callback input edge detect routine that ignores transients - Readability inspired by @Charwarz
-    def gpioBoth(self,pin,delay = 0.030):
+    def oldgpioBoth(self,pin,delay = 0.030):
         #print dt.datetime.now() , "pin",pin,"laststate", self.pinTriggerLastState[pin]
         
         ### Average out the pin state over the delay period
@@ -243,6 +243,28 @@ class GPIOController :
             #print dt.datetime.now(),"Transient Detected on pin",pin
 
         self.pinTriggerLastState[pin] = pinStateOverDelayPeriod
+        
+    def gpioBoth(self,pin,delay = 0.030):
+        #print dt.datetime.now() , "pin",pin,"laststate", self.pinTriggerLastState[pin]
+        
+        ### Average out the pin state over the delay period
+        avg = 0
+        for loop in range(0,10):
+            avg = avg + self.pinRead(pin)
+        avg = float(avg) / 10.0
+        ###
+        
+        #print dt.datetime.now(), "pin",pin,"average value over delay",avg
+        pinStateOverDelayPeriod = 1 if avg > 0.5 else 0
+
+        if self.pinTriggerLastState[pin] != pinStateOverDelayPeriod: 
+            # update the state if confirmed change has occured
+            #print dt.datetime.now(),"pin",pin,"changed to", pinStateOverDelayPeriod
+            self.gpioMyPinEventDetected[pin] = True
+        #else:
+            #print dt.datetime.now(),"Transient Detected on pin",pin
+
+        self.pinTriggerLastState[pin] = pinStateOverDelayPeriod        
 
 
                     
@@ -342,16 +364,17 @@ class GPIOController :
     def setPinMode(self):
         for pin in self.validPins:
             #print pin
+            try:
+                GPIO.remove_event_detect(pin)
+            except:
+                pass
+            try:
+                self.callbackInUse[pin] = False
+            except:
+                pass
             if (self.pinUse[pin] == self.POUTPUT):
                 print 'setting pin' , pin , ' to out' 
-                try:
-                    GPIO.remove_event_detect(pin)
-                except:
-                    pass
-                try:
-                    self.callbackInUse[pin] = False
-                except:
-                    pass                    
+                                    
                 GPIO.setup(pin,GPIO.OUT)
                 if (self.pinInvert[pin] == True):
                     GPIO.output(pin,1)

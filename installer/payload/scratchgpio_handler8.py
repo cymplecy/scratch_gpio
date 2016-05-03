@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.0002'  #22Apr16 check run to use subprocess'
+Version = 'v8.0.0002'  #3May16 Add in setpinsunused to disable any inputs
 print "Version:",Version
 import threading
 import socket
@@ -1759,6 +1759,32 @@ class ScratchListener(threading.Thread):
                             logging.getLogger().setLevel(logging.INFO)
                             debugLogging = False
                             
+                    if sghGC.autoLink:
+                        testList = self.dataraw.strip().split(" ")
+                        print "testList" ,testList
+                        if testList[0] == "sensor-update":
+                            #try:
+                            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            self.scratch_socket2.connect((sghGC.linkIP, 42001))
+                            sensor_value = testList[2]
+                            sensor_name = testList[1]
+                            sensor_str = ''
+                            if sghGC.linkPrefix is not None:
+                                sensor_str = '"%s" %s ' % ('#' + sghGC.linkPrefix + '#' + sensor_name, sensor_value)
+                            else:
+                                sensor_str = '"%s" %s ' % ('#' + 'other' + '#' + sensor_name, sensor_value)
+                            dataOut = "sensor-update " + sensor_str
+                            print dataOut
+                            n = len(dataOut)
+                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                               chr(n & 0xFF))
+                            self.scratch_socket2.send(b + dataOut)
+                            print "sensor sent as well", dataOut
+                            time.sleep(0.2)
+                            self.scratch_socket2.close()
+                            #except:
+                                #pass                            
+                            
                     if self.vFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
                         PiGlow_Brightness = sghGC.ledDim
@@ -2456,6 +2482,7 @@ class ScratchListener(threading.Thread):
                         for pin in sghGC.validPins:
                             #print "checking pin" ,pin
                             if self.bFindValue('config' + str(pin)):
+                                #print "setting pin" ,pin
                                 if self.value == "in":
                                     sghGC.pinUse[pin] = sghGC.PINPUT
                                 if self.value == "inpulldown":
@@ -3611,36 +3638,39 @@ class ScratchListener(threading.Thread):
 
                 if 'broadcast' in self.dataraw:
 
-                    #print 'broadcast:' , self.dataraw
-                    #print "split",  self.dataraw.split(" ")
-                    if sghGC.autoLink:
-                        for item in self.dataraw.split(" "):
-                            if (item != "") and (item != "broadcast") and (item[0] != "#"):
-                                #print item
-                                if sghGC.linkPrefix is not None:
-                                    dataOut = 'broadcast "' + '#' + sghGC.linkPrefix + '#' + item  + '"'
-                                else:
-                                    dataOut = 'broadcast "' + '#' + 'other' + '#' + item  + '"'
-                                #print dataOut
-                                n = len(dataOut)
-                                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                                    chr(n & 0xFF))
-
-                                if self.scratch_socket2 is not None:
-                                    try:
-                                        self.scratch_socket2.send(b + dataOut)
-                                        print "auto dataOut Sent", dataOut
-                                        #sensor_value = item
-                                        #sensor_name = "LAN"
-                                        #sensor_str = '"%s" %s ' % (sensor_name, sensor_value)
-                                        #dataOut = "sensor-update " + sensor_str
-                                        #n = len(dataOut)
-                                        #b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                                        #    chr(n & 0xFF))
-                                        #self.scratch_socket2.send(b + dataOut)
-                                        #print "sensor sent as well", dataOut
-                                    except:
-                                        pass
+                    # #print 'broadcast:' , self.dataraw
+                    # #print "split",  self.dataraw.split(" ")
+                    # print "autolink" , sghGC.autoLink
+                    # if sghGC.autoLink:
+                        # for item in self.dataraw.split(" "):
+                            # if (item != "") and (item != "broadcast") and (item[0] != "#"):
+                                # print item
+                                # if sghGC.linkPrefix is not None:
+                                    # dataOut = 'broadcast "' + '#' + sghGC.linkPrefix + '#' + item  + '"'
+                                # else:
+                                    # dataOut = 'broadcast "' + '#' + 'other' + '#' + item  + '"'
+                                # print dataOut
+                                # n = len(dataOut)
+                                # b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                    # chr(n & 0xFF))
+                                # try:
+                                    # self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                                    # self.scratch_socket2.connect((sghGC.linkIP, 42001))
+                                    # self.scratch_socket2.send(b + dataOut)
+                                    # print "auto dataOut Sent", dataOut
+                                    # #sensor_value = item
+                                    # #sensor_name = "LAN"
+                                    # #sensor_str = '"%s" %s ' % (sensor_name, sensor_value)
+                                    # #dataOut = "sensor-update " + sensor_str
+                                    # #n = len(dataOut)
+                                    # #b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                    # #    chr(n & 0xFF))
+                                    # #self.scratch_socket2.send(b + dataOut)
+                                    # #print "sensor sent as well", dataOut
+                                    # time.sleep(0.2)
+                                    # self.scratch_socket2.close()
+                                # except:
+                                    # pass
                                     
                     if self.bFindValue("qmsg"):
                         msgQueue.put((5,self.value))
@@ -3671,7 +3701,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
-                        elif self.value == "low":
+                        elif ((self.value == "low") or (self.value == "pulldown")):
                             with lock:
                                 print "set pins to input with pulldown low"
                                 for pin in sghGC.validPins:
@@ -3681,7 +3711,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.setPinMode()
                                 anyAddOns = True
 
-                        elif self.value == "high":
+                        elif ((self.value == "high") or (self.value == "pullup")):
                             with lock:
                                 print "set pins to input with pull ups"
                                 for pin in sghGC.validPins:
@@ -3700,6 +3730,16 @@ class ScratchListener(threading.Thread):
                                 #sghGC.pinUse[5] = sghGC.PUNUSED
                                 sghGC.setPinMode()
                                 anyAddOns = True
+                                
+                        elif self.value == "unused":
+                            with lock:
+                                print "set pins to no in use"
+                                for pin in sghGC.validPins:
+                                    sghGC.pinUse[pin] = sghGC.PUNUSED
+                                #sghGC.pinUse[3] = sghGC.PUNUSED
+                                #sghGC.pinUse[5] = sghGC.PUNUSED
+                                sghGC.setPinMode()
+                                anyAddOns = True                                
 
                     if self.bFindOnOff("sghdebug"):
                         if (self.OnOrOff == True) and (debugLogging == False):
@@ -6254,17 +6294,22 @@ class ScratchListener(threading.Thread):
 
 
                     if self.bFindValue('autolink'):
-                        try:
-                            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            self.scratch_socket2.connect((self.value, 42001))
-                            print self.scratch_socket2
-                            print "Connected to ", self.value
-                            sghGC.autoLink = True
-                            if sghGC.linkPrefix is None:
-                                sghGC.linkPrefix = "other"
-                        except:
-                            print "Failed to connect to ", self.value
-                            pass
+                        sghGC.linkIP = self.value
+                        if sghGC.linkPrefix is None:
+                            sghGC.linkPrefix = "other" 
+                        sghGC.autoLink = True
+                        print "autolink found"
+                        # try:
+                            # self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            # self.scratch_socket2.connect((self.value, 42001))
+                            # print self.scratch_socket2
+                            # print "Connected to ", self.value
+                            # sghGC.autoLink = True
+                            # if sghGC.linkPrefix is None:
+                                # sghGC.linkPrefix = "other"
+                        # except:
+                            # print "Failed to connect to ", self.value
+                            # pass
 
                     if self.bFindValue('link'):
                         try:
@@ -6392,6 +6437,15 @@ class ScratchListener(threading.Thread):
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, int(value & 2 ** led) >> led)
                             #print 'sending: %s' % bcast_str
                             msgQueue.put((5,bcast_str))
+
+                    if self.bFind('servo'):
+                        print "broadcast servo"
+                        for pin in sghGC.validPins:
+                            if self.bFindValue('servo' + str(pin) + ","):
+                                print 'servo' + str(pin) + ","
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else -150
+                                svalue = (svalue + 150)
+                                sghGC.pinServod(pin, svalue)                            
 
                     if self.bFind("setwait"):
                         print "wait"
