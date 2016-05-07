@@ -6602,21 +6602,21 @@ class SendMsgsToScratch(threading.Thread):
             except:
                 print "failed to send this message to Scratch", cmd
                 pass
-            if self.scratch_socket2 is not None:
-                if sghGC.linkPrefix is not None:
-                    dataOut = cmd.replace(' "',' "#' + sghGC.linkPrefix + '#')
-                else:
-                    dataOut = cmd.replace(' "',' "#' + 'other' + '#')
-                n = len(dataOut)
-                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                    chr(n & 0xFF))
-                if sghGC.autoLink:
-                    try:
-                        self.scratch_socket2.send(b + dataOut)
-                        print "auto sensor update Sent", dataOut
-                    except:
-                        print "failed to send this message to other computer", dataOut
-                        pass
+            # if self.scratch_socket2 is not None:
+                # if sghGC.linkPrefix is not None:
+                    # dataOut = cmd.replace(' "',' "#' + sghGC.linkPrefix + '#')
+                # else:
+                    # dataOut = cmd.replace(' "',' "#' + 'other' + '#')
+                # n = len(dataOut)
+                # b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                    # chr(n & 0xFF))
+                # if sghGC.autoLink:
+                    # try:
+                        # self.scratch_socket2.send(b + dataOut)
+                        # print "auto sensor update Sent", dataOut
+                    # except:
+                        # print "failed to send this message to other computer", dataOut
+                        # pass
 
             #print "message sent:" ,cmd
 
