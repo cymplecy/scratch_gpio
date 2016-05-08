@@ -1757,6 +1757,7 @@ class ScratchListener(threading.Thread):
                 self.dataraw = dataraw
 
                 logging.debug("processing dataItems: %s", self.dataraw)
+                print ("processing dataItems:", self.dataraw)
                 #print "Loop processing"
                 #print dataItem, " has been converted to " ,self.dataraw
                 #print
