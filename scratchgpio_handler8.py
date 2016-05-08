@@ -1798,11 +1798,12 @@ class ScratchListener(threading.Thread):
                         testList = self.dataraw.strip().split(" ")
                         #print "testList" ,testList
                         if testList[0] == "sensor-update":
+                            print "Scan sensor update list",testList
                             for i in range(1,len(testList),2):
                                 try:                                
                                     sensor_name = testList[i]
                                     sensor_value = testList[i + 1]
-                                    if ">" not in sensor_name:
+                                    if  sensor_name.find(">") == -1:
                                         self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                                         self.scratch_socket2.connect((sghGC.linkIP, 42001))
                                         sensor_str = '"%s" %s ' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
