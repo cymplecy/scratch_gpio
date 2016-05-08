@@ -1796,7 +1796,7 @@ class ScratchListener(threading.Thread):
                             
                     if sghGC.autoLink:
                         testList = self.dataraw.strip().split(" ")
-                        print "testList" ,testList
+                        #print "testList" ,testList
                         if testList[0] == "sensor-update":
                             for i in range(1,len(testList),2):
                                 try:                                
@@ -1805,20 +1805,14 @@ class ScratchListener(threading.Thread):
                                     if ">" not in sensor_name:
                                         self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                                         self.scratch_socket2.connect((sghGC.linkIP, 42001))
-
-
-                                        sensor_str = ''
-                                        if sghGC.linkPrefix is not None:
-                                            sensor_str = '"%s" %s ' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
-                                        else:
-                                            sensor_str = '"%s" %s ' % ('other' + '>' + sensor_name, sensor_value)
+                                        sensor_str = '"%s" %s ' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
                                         dataOut = "sensor-update " + sensor_str
-                                        print dataOut
+                                        #print dataOut
                                         n = len(dataOut)
                                         b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
                                            chr(n & 0xFF))
                                         self.scratch_socket2.send(b + dataOut)
-                                        print "sensor sent as well", dataOut
+                                        print "sensor sent to other computer as well", dataOut
                                         time.sleep(0.2)
                                         self.scratch_socket2.close()
                                 except:
