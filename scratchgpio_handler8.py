@@ -6336,9 +6336,15 @@ class ScratchListener(threading.Thread):
                         if sghGC.linkPrefix is None:
                             sghGC.linkPrefix = "other" 
                         sghGC.autoLink = True
-                        
-                        print "autolink found"
-                        self.sendSocket2Broadcast('alinkreq'+self.value)
+                        print "autolink enabled"
+                        logging.debug("Finding IP of this machine")
+                        arg = 'ip route list'
+                        p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+                        ipdata = p.communicate()
+                        split_data = ipdata[0].split()
+                        ipaddr2 = split_data[split_data.index('src') + 1]                        
+                        self.sendSocket2Broadcast('alinkreq' + ipaddr2)
+                        print "alinkreq sent to ", self.value , "requesing autolink back to ", ipaddr2
                         
                     if self.bFindValue('alinkreq'):
                         sghGC.linkIP = self.value
