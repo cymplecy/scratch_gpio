@@ -1815,7 +1815,7 @@ class ScratchListener(threading.Thread):
                                            chr(n & 0xFF))
                                         self.scratch_socket2.send(b + dataOut)
                                         print "sensor sent to other computer as well", dataOut
-                                        time.sleep(0.2)
+                                        time.sleep(10)
                                         self.scratch_socket2.close()
                                 except:
                                     pass                            
