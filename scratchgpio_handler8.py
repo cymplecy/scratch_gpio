@@ -6352,8 +6352,8 @@ class ScratchListener(threading.Thread):
                             sghGC.linkPrefix = "other" 
                         sghGC.autoLink = True
                         
-                        print "autolink found"
-                        self.sendSocket2Broadcast('alinkreq',self.value)                        
+                        print "alinkreq from " , self.value , "dealt with"
+                      
     
                     if self.bFindValue('link'):
                         try:
