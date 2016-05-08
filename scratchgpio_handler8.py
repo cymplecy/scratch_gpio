@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.0002'  #7May16 modify autolink
+Version = 'v8.0.001'  #8May16 more autolink mods
 print "Version:",Version
 import threading
 import socket
@@ -1507,7 +1507,42 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUltraRef[pinTrig].start()
                 print 'Ultra started pinging on', str(pinTrig)
                 
+    def sendSocket2(self,sensor_name,sensor_value):     
+        try:                                
+            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.scratch_socket2.connect((sghGC.linkIP, 42001))
+            sensor_str = ''
+            sensor_str = '"%s" %s ' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
+            dataOut = "sensor-update " + sensor_str
+            print dataOut
+            n = len(dataOut)
+            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+               chr(n & 0xFF))
+            self.scratch_socket2.send(b + dataOut)
+            print "sensor data to socket2", dataOut
+            time.sleep(0.2)
+            self.scratch_socket2.close()
+        except:
+            pass               
 
+    def sendSocket2Broadcast(self,broadcastName):       
+        #try:                                
+            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.scratch_socket2.connect((sghGC.linkIP, 42001))
+            dataOut = 'broadcast "' + broadcastName  + '"'        
+            print dataOut
+            n = len(dataOut)
+            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+               chr(n & 0xFF))
+            self.scratch_socket2.send(b + dataOut)
+            print "broadcast to socket2", dataOut
+            time.sleep(0.2)
+            self.scratch_socket2.close()
+        #except:
+        #    pass   
+
+        
+                                            
 
     # noinspection PyPep8Naming
     def run(self):
@@ -1763,25 +1798,28 @@ class ScratchListener(threading.Thread):
                         testList = self.dataraw.strip().split(" ")
                         print "testList" ,testList
                         if testList[0] == "sensor-update":
-                            try:
-                                self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                                self.scratch_socket2.connect((sghGC.linkIP, 42001))
+                            try:                                
                                 sensor_value = testList[2]
                                 sensor_name = testList[1]
-                                sensor_str = ''
-                                if sghGC.linkPrefix is not None:
-                                    sensor_str = '"%s" %s ' % ('#' + sghGC.linkPrefix + '#' + sensor_name, sensor_value)
-                                else:
-                                    sensor_str = '"%s" %s ' % ('#' + 'other' + '#' + sensor_name, sensor_value)
-                                dataOut = "sensor-update " + sensor_str
-                                print dataOut
-                                n = len(dataOut)
-                                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                                   chr(n & 0xFF))
-                                self.scratch_socket2.send(b + dataOut)
-                                print "sensor sent as well", dataOut
-                                time.sleep(0.2)
-                                self.scratch_socket2.close()
+                                if ">" not in sensor_name:
+                                    self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                                    self.scratch_socket2.connect((sghGC.linkIP, 42001))
+
+
+                                    sensor_str = ''
+                                    if sghGC.linkPrefix is not None:
+                                        sensor_str = '"%s" %s ' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
+                                    else:
+                                        sensor_str = '"%s" %s ' % ('other' + '>' + sensor_name, sensor_value)
+                                    dataOut = "sensor-update " + sensor_str
+                                    print dataOut
+                                    n = len(dataOut)
+                                    b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                       chr(n & 0xFF))
+                                    self.scratch_socket2.send(b + dataOut)
+                                    print "sensor sent as well", dataOut
+                                    time.sleep(0.2)
+                                    self.scratch_socket2.close()
                             except:
                                 pass                            
                             
@@ -6298,19 +6336,19 @@ class ScratchListener(threading.Thread):
                         if sghGC.linkPrefix is None:
                             sghGC.linkPrefix = "other" 
                         sghGC.autoLink = True
+                        
                         print "autolink found"
-                        # try:
-                            # self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            # self.scratch_socket2.connect((self.value, 42001))
-                            # print self.scratch_socket2
-                            # print "Connected to ", self.value
-                            # sghGC.autoLink = True
-                            # if sghGC.linkPrefix is None:
-                                # sghGC.linkPrefix = "other"
-                        # except:
-                            # print "Failed to connect to ", self.value
-                            # pass
-
+                        self.sendSocket2Broadcast('alinkreq'+self.value)
+                        
+                    if self.bFindValue('alinkreq'):
+                        sghGC.linkIP = self.value
+                        if sghGC.linkPrefix is None:
+                            sghGC.linkPrefix = "other" 
+                        sghGC.autoLink = True
+                        
+                        print "autolink found"
+                        self.sendSocket2Broadcast('alinkreq',self.value)                        
+    
                     if self.bFindValue('link'):
                         try:
                             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
