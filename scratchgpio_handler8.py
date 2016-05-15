@@ -520,7 +520,7 @@ class ScratchSender(threading.Thread):
         lastPinUpdateTime = time.time()
         lastTimeSinceLastSleep = time.time()
         lastTimeSinceMCPAnalogRead = time.time()
-        self.sleepTime = 0.1
+        self.sleepTime = 2.1
         tick = 0
         lastADC = [256, 256, 256, 256, 256, 256, 256, 256]
         lastpiAndBash = [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
@@ -545,7 +545,7 @@ class ScratchSender(threading.Thread):
         while not self.stopped():
 
             loopTime = time.time() - lastTimeSinceLastSleep
-            #print "how many millisecs since last loop", (loopTime * 1000)
+            print "how many millisecs since last loop", (loopTime * 1000)
             if loopTime < self.sleepTime:
                 sleepdelay = self.sleepTime - loopTime
                 #print "add in sleep of milliesec:",(sleepdelay) * 1000
@@ -874,7 +874,7 @@ class ScratchSender(threading.Thread):
                     logging.debug("Change or triger detected in pin:%s changed to:%s, trigger val:%s", pin,
                                   pin_bit_pattern[listIndex], sghGC.pinTrigger[pin])
                     if (sghGC.pinUse[pin] in [sghGC.PINPUT, sghGC.PINPUTNONE, sghGC.PINPUTDOWN]):
-                        #print pin , pin_value
+                        print "change in pin", pin , pin_value
                         self.broadcast_pin_update(pin, pin_bit_pattern[listIndex])
                         time.sleep(0.05)  # just to give Scratch a better chance to react to event
 
@@ -1509,7 +1509,7 @@ class ScratchListener(threading.Thread):
                 print 'Ultra started pinging on', str(pinTrig)
                 
     def sendSocket2Sensor(self,sensor_name,sensor_value):     
-        #try:                                
+        try:                                
             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.scratch_socket2.connect((sghGC.linkIP, 42001))
             sensor_str = ''
@@ -1523,11 +1523,11 @@ class ScratchListener(threading.Thread):
             print "sensor data to socket2", dataOut
             time.sleep(0.2)
             self.scratch_socket2.close()
-        #except:
-        #    pass               
+        except:
+            pass               
 
     def sendSocket2Broadcast(self,broadcastName):       
-        #try:                                
+        try:                                
             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.scratch_socket2.connect((sghGC.linkIP, 42001))
             dataOut = 'broadcast "' + broadcastName  + '"'        
@@ -1539,8 +1539,8 @@ class ScratchListener(threading.Thread):
             print "broadcast to socket2", dataOut
             time.sleep(0.2)
             self.scratch_socket2.close()
-        #except:
-        #    pass   
+        except:
+            pass   
 
         
                                             
@@ -6643,6 +6643,7 @@ class SendMsgsToScratch(threading.Thread):
         while not self.stopped():
             #print self.msgQueue.get()
             priority,cmd = self.msgQueue.get()
+            print "msg deque" ,priority,cmd
             if cmd == "STOPSENDING":
                 print "STOPSENDING msg retreived from queue"
                 self.stop()
@@ -6654,7 +6655,7 @@ class SendMsgsToScratch(threading.Thread):
             n = len(cmd)
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
             try:
-             self.scratch_socket.send(b + cmd)
+                self.scratch_socket.send(b + cmd)
             except:
                 print "failed to send this message to Scratch", cmd
                 pass
