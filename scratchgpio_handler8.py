@@ -1526,7 +1526,7 @@ class ScratchListener(threading.Thread):
             pass               
 
     def sendSocket2Broadcast(self,broadcastName):       
-        #try:                                
+        try:                                
             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.scratch_socket2.connect((sghGC.linkIP, 42001))
             dataOut = 'broadcast "' + broadcastName  + '"'        
@@ -1538,8 +1538,8 @@ class ScratchListener(threading.Thread):
             print "broadcast to socket2", dataOut
             time.sleep(0.2)
             self.scratch_socket2.close()
-        #except:
-        #    pass   
+        except:
+            pass   
 
         
                                             
