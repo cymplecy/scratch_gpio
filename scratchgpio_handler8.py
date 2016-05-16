@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.001'  #8May16 more autolink mods
+Version = 'v8.0.101'  #16May16 still not made autolink work again!
 print "Version:",Version
 import threading
 import socket
@@ -1013,7 +1013,7 @@ class ScratchListener(threading.Thread):
         self.arm = None
         self.carryOn = True
         self.carryOnInUse = False
-
+        self.varDict = {}
 
     def meArmGotoPoint(self, meHorizontal, meDistance, meVertical):
         self.arm.gotoPoint(int(max(-50, min(50, meHorizontal))), int(max(70, min(150, meDistance))),
@@ -1800,26 +1800,28 @@ class ScratchListener(threading.Thread):
                         #print "testList" ,testList
                         if testList[0] == "sensor-update":
                             print "Scan sensor update list",testList
+                            broadcast_str = ""
                             for i in range(1,len(testList),2):
-                                try:                                
-                                    sensor_name = testList[i]
-                                    sensor_value = testList[i + 1]
-                                    if  sensor_name.find(">") == -1:
-                                        self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                                        self.scratch_socket2.connect((sghGC.linkIP, 42001))
-                                        sensor_str = '"%s" %s ' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
-                                        dataOut = "sensor-update " + sensor_str
-                                        #print dataOut
-                                        n = len(dataOut)
-                                        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                                           chr(n & 0xFF))
-                                        self.scratch_socket2.send(b + dataOut)
-                                        print "sensor sent to other computer as well", dataOut
-                                        time.sleep(10)
-                                        self.scratch_socket2.close()
-                                except:
-                                    pass                            
-                            
+                                sensor_name = testList[i]
+                                sensor_value = testList[i + 1]
+                                if  sensor_name.find(">") == -1:
+                                    if sensor_name in self.varDict:
+                                        if self.varDict[sensor_name] != sensor_value:
+                                            broadcast_str += "<###" + sghGC.linkPrefix + '>' + sensor_name + '##>' + sensor_value  
+                                    else:
+                                        broadcast_str += "<###" + sghGC.linkPrefix + '>' + sensor_name + '##>' + sensor_value  
+                            if broadcast_str != "":
+                                self.sendSocket2Broadcast(broadcast_str)
+
+                    
+                    varList = self.dataraw.strip().split(" ")
+                    if varList[0] == "sensor-update":
+                        for i in range(1,len(varList),2):
+                            sensor_name = varList[i]
+                            sensor_value = varList[i + 1]
+                            self.varDict[sensor_name] = sensor_value
+                            #print "varDict:" , self.varDict                           
+                        
                     if self.vFindValue("bright"):
                         sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
                         PiGlow_Brightness = sghGC.ledDim
@@ -6354,6 +6356,12 @@ class ScratchListener(threading.Thread):
                         sghGC.autoLink = True
                         
                         print "alinkreq from " , self.value , "dealt with"
+                        
+                    if self.bFindValue('<###'):
+                        bList = self.value.split('##>')
+                        print "bListL:", bList
+                        queue_str = 'sensor-update "' + bList[0] + '" ' + bList[1]
+                        msgQueue.put((5,queue_str))                        
                       
     
                     if self.bFindValue('link'):
