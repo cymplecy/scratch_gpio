@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.102'  #19May16 Autolink working on prot 42002
+Version = 'v8.0.110'  #16May16 2nd listening thread for autolink!
 print "Version:",Version
 import threading
 import socket
@@ -52,7 +52,6 @@ except:
 #ui = UInput()
 sense = None
 SH = None
-socketB = None
 
 
 try:
@@ -298,84 +297,7 @@ class ultra(threading.Thread):
                 time.sleep(sghGC.ultraFreq - timeTaken)
         print "ultra run ended for pin:", self.pinTrig
 
-class ListenB(threading.Thread):
-    def __init__(self, myIP):
-        threading.Thread.__init__(self)
-        self.scratch_socketB = None
-        self._stop = threading.Event()
-        self.conn = None
-        self.myIP = myIP
-        print "ListenB init sucessfull"
 
-    def stop(self):
-        self._stop.set()
-        logging.debug("Finding IP of this machine")
-        arg = 'ip route list'
-        p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
-        ipdata = p.communicate()
-        split_data = ipdata[0].split()
-        ipaddr2 = split_data[split_data.index('src') + 1]     
-        self.scratch_socketL = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.scratch_socketL.connect((ipaddr2, 42002))
-        dataOut = "stopthread"        
-        print "sending to myslef" ,dataOut
-        n = len(dataOut)
-        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-           chr(n & 0xFF))
-        self.scratch_socketL.send(b + dataOut)
-        print "broadcast to socketL", dataOut
-        time.sleep(0.2)
-        self.scratch_socketL.close()
-        self.stopB = False
-        print "ListenB Stop Set"
-
-    def stopped(self):
-        return self._stop.isSet()
-
-    def run(self):
-        while True:
-                try:
-                    print 'Trying'
-                    self.scratch_socketB = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.scratch_socketB.bind((self.myIP, 42002))
-                    break
-                except socket.error:
-                    print "unablee fo listen on socketB"
-                    time.sleep(3)    
-
-        #self.scratch_socketB.settimeout(SOCKET_TIMEOUT)
-        #Start listening on socket
-        self.scratch_socketB.listen(5)
-        print 'Socket now listening'
-        connB, addrB = self.scratch_socketB.accept()
-        print "SocketB connected"
-
-        while not self.stopped():
-            #print "SocketB running"
-            #time.sleep(1)
-            dataB = connB.recv(8192)
-            if dataB != "":
-                dataB = dataB.translate(None, '"')
-                print "Data receive on SocketB",dataB
-                dataBsplit = dataB[4:].split('<###')
-                print "split" , dataBsplit
-                print "data pairs"
-                for loop in dataBsplit:
-                    if loop == "stopthread":
-                        self.scratch_socketB.close()
-                        break
-                    item = loop.split('##>')
-                    if len(item) > 1:
-                        bcast_str = 'sensor-update "%s" %s' % (item[0], item[1])
-                        print 'sending: %s' % bcast_str
-                        msgQueue.put(((5,bcast_str)))
-            else:
-                connB, addrB = self.scratch_socketB.accept()
-            #reply = 'OK...' + data
-            #if not data: 
-        print "exiting SocketB run"
-
-        
 class ScratchSender(threading.Thread):
     def __init__(self, socket):
         threading.Thread.__init__(self)
@@ -586,7 +508,7 @@ class ScratchSender(threading.Thread):
 
     def run(self):
         print "ScratchSender run started"
-        global firstRun, ADDON, compass, wii,socketB
+        global firstRun, ADDON, compass, wii
         print lock
         # while firstRun:
         # print "first run running"
@@ -1627,7 +1549,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host, killList,socketB
+            meVertical, meHorizontal, meDistance, host, killList
 
 
 
@@ -6409,11 +6331,6 @@ class ScratchListener(threading.Thread):
 
 
                     if self.bFindValue('autolink'):
-                        try:
-                            socketB.stop()
-                            print "socketb stop sent"
-                        except:
-                            pass                    
                         sghGC.linkIP = self.value
                         if sghGC.linkPrefix is None:
                             sghGC.linkPrefix = "other" 
@@ -6426,47 +6343,17 @@ class ScratchListener(threading.Thread):
                         split_data = ipdata[0].split()
                         ipaddr2 = split_data[split_data.index('src') + 1]   
                         try:
-                        
-                            cmd = 'broadcast "alinkreq' + ipaddr2 +'"'
-                            n = len(cmd)
-                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                                chr(n & 0xFF))
-                            totalcmd = b + cmd
-                            print "trying to send autolink req",cmd
-                            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                            self.scratch_socket2.connect((sghGC.linkIP, 42001))
-                            self.scratch_socket2.send(totalcmd)
-                            print "autokin request sent", cmd
+                            self.sendSocket2Broadcast('alinkreq' + ipaddr2)
+                            print "alinkreq sent to ", self.value , "requesing autolink back to ", ipaddr2
                         except:
-                            print "failed to send autolink"
+                            print "autolink request to ",self.value," has failed"
                             pass
-                        
-                        print "trying to assign socketB"
-                        socketB = ListenB(ipaddr2)
-                        #socketB.daemon = True
-                        print "trying to start socketB"
-                        socketB.start()
-                        print "socketB should have started"
-                           
-                        
                             
                     if self.bFindValue('alinkreq'):
                         sghGC.linkIP = self.value
                         if sghGC.linkPrefix is None:
                             sghGC.linkPrefix = "other" 
                         sghGC.autoLink = True
-                        logging.debug("Finding IP of this machine")
-                        arg = 'ip route list'
-                        p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
-                        ipdata = p.communicate()
-                        split_data = ipdata[0].split()
-                        ipaddr2 = split_data[split_data.index('src') + 1]                           
-                        print "trying to assign socketB"
-                        socketB = ListenB(ipaddr2)
-                        #socketB.daemon = True
-                        print "trying to start socketB"
-                        socketB.start()
-                        print "socketB should have started"                        
                         
                         print "alinkreq from " , self.value , "dealt with"
                         
@@ -6787,6 +6674,461 @@ class SendMsgsToScratch(threading.Thread):
             #print "message sent:" ,cmd
 
         print "SendMsgsToScratch stopped"
+        
+        
+class ScratchListener2(threading.Thread):
+    def __init__(self, socket):
+        threading.Thread.__init__(self)
+        self.scratch_socket = socket
+        self._stop = threading.Event()
+        self.dataraw = ''
+        self.value = None
+        self.valueNumeric = None
+        self.valueIsNumeric = None
+        self.OnOrOff = None
+        self.searchPos = 0
+
+        self.varDict = {}
+
+    def getValue(self, searchString):
+        outputall_pos = self.dataraw.find((searchString + ' '))
+        sensor_value = self.dataraw[(outputall_pos + 1 + len(searchString)):].split()
+        try:
+            return sensor_value[0]
+        except IndexError:
+            return ""
+
+    # Find pos of searchStr - must be preceded by a deself.matrixLimiting  space to be found
+    def bFind(self, searchStr):
+        #print "looking in" ,self.dataraw , "for" , searchStr
+        self.searchPos = self.dataraw.find(' ' + searchStr) + 1
+        #time.sleep(0.1)
+        #if (' '+searchStr in self.dataraw):
+        #print "Found"
+        return (' ' + searchStr in self.dataraw)
+
+    def bFindOn(self, searchStr):
+        return (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(searchStr + '1 '))
+
+    def bFindOff(self, searchStr):
+        return (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(searchStr + '0 '))
+
+    def bFindOnOff(self, searchStr):
+        #print "searching for" ,searchStr
+        self.OnOrOff = None
+        if (self.bFind(searchStr + 'on ') or self.bFind(searchStr + 'high ') or self.bFind(
+                    searchStr + '1 ') or self.bFind(searchStr + 'true ')):
+            self.OnOrOff = 1
+            self.valueNumeric = 1
+            self.value = "on"
+            return True
+        elif (self.bFind(searchStr + 'off ') or self.bFind(searchStr + 'low ') or self.bFind(
+                    searchStr + '0 ') or self.bFind(searchStr + 'false ')):
+            self.OnOrOff = 0
+            self.valueNumeric = 01
+            self.value = "off"
+            return True
+        else:
+            return False
+
+
+    def bFindValue(self, searchStr, searchSuffix=''):
+        #logging.debug("Searching for:%s",searchStr )
+        #return the value of the charachters following the searchstr as float if possible
+        #If not then try to return string
+        #If not then return ""
+        self.value = None
+        self.valueNumeric = None
+        self.valueIsNumeric = False
+
+        if self.bFind(searchStr):
+            if searchSuffix == '':
+                #print "$$$" + self.dataraw + "$$$"
+                #print "search" , searchStr
+                #print "pos", self.searchPos
+                #print "svalue",(self.dataraw[(self.searchPos + len(searchStr)):] + "   ")
+                #print "bfind",(self.dataraw[(self.searchPos + len(searchStr)):] + "    ").split()
+                self.value = (self.dataraw[(self.searchPos + len(searchStr)):] + "   ").strip()
+                if len(self.value) > 0:
+                    self.value = self.value.split()[0]
+                #print "1 s value",self.value
+                #print self.value
+                if isNumeric(self.value):
+                    self.valueNumeric = float(self.value)
+                    self.valueIsNumeric = True
+                    #print "numeric" , self.valueNumeric
+                return True
+            else:
+                self.value = (self.dataraw[(self.searchPos + len(searchStr)):] + "   ").strip()
+                if len(self.value) > 0:
+                    self.value = self.value.split()[0]
+                if self.value.endswith(searchSuffix):
+                    self.value = (self.value[:-len(searchSuffix)]).strip()
+                    #print "2 s value",self.value
+                    #print self.value
+                    if isNumeric(self.value):
+                        self.valueNumeric = float(self.value)
+                        self.valueIsNumeric = True
+                        #print "numeric" , self.valueNumeric
+                    return True
+                else:
+                    return False
+        else:
+            return False
+
+
+    def vFind(self, searchStr):
+        #print "vserarch",searchStr
+        return ((' ' + searchStr + ' ') in self.dataraw)
+
+    def vFindOn(self, searchStr):
+        return (self.vFind(searchStr + 'on') or self.vFind(searchStr + 'high') or self.vFind(searchStr + '1'))
+
+    def vFindOff(self, searchStr):
+        return (self.vFind(searchStr + 'off') or self.vFind(searchStr + 'low') or self.vFind(searchStr + '0'))
+
+    def vFindOnOff(self, searchStr):
+        self.value = None
+        self.valueNumeric = None
+        self.valueIsNumeric = False
+        self.OnOrOff = None
+        if self.vFind(searchStr):
+
+            self.value = self.getValue(searchStr)
+            if str(self.value) in ["high", "on", "1"]:
+                self.valueNumeric = 1
+                self.OnOrOff = 1
+            else:
+                self.valueNumeric = 0
+                self.OnOrOff = 0
+            return True
+        else:
+            return False
+
+    def vFindValue(self, searchStr):
+        #print "searching for ", searchStr
+        self.value = None
+        self.valueNumeric = None
+        self.valueIsNumeric = False
+        if self.vFind(searchStr):
+            #print "found"
+            self.value = self.getValue(searchStr)
+            #print self.value
+            if isNumeric(self.value):
+                self.valueNumeric = float(self.value)
+                self.valueIsNumeric = True
+                #print "numeric" , self.valueNumeric
+            return True
+        else:
+            return False
+
+
+    def stop(self):
+        self._stop.set()
+        print "Listener Stop Set"
+
+    def stopped(self):
+        return self._stop.isSet()
+
+
+               
+    def sendSocket2(self,sensor_name,sensor_value):     
+        try:                                
+            sensor_str = ''
+            sensor_str = '"%s" %s ' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
+            dataOut = "sensor-update " + sensor_str
+            print dataOut
+            n = len(dataOut)
+            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+               chr(n & 0xFF))
+            self.scratch_socket.send(b + dataOut)
+            print "sensor data to socket2", dataOut
+        except:
+            pass               
+
+    def sendSocket2Broadcast(self,broadcastName):       
+        try:                                
+            dataOut = 'broadcast "' + broadcastName  + '"'        
+            print dataOut
+            n = len(dataOut)
+            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+               chr(n & 0xFF))
+            self.scratch_socket2.send(b + dataOut)
+            print "broadcast to socket2", dataOut
+        except:
+            pass   
+
+        
+                                            
+
+    # noinspection PyPep8Naming
+    def run(self):
+        print "ScratchListner run started"
+        global firstRun, cycle_trace, host, killList
+
+
+
+        #firstRun = True #Used for testing in overcoming Scratch "bug/feature"
+        firstRunData = ''
+
+
+
+            #This is main listening routine
+        lcount = 0
+        dataPrevious = ""
+        debugLogging = False
+
+        listenLoopTime = time.time() + 10000
+        datawithCAPS = ''
+        #This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
+        while not self.stopped():
+
+            #print "ListenLoopTime",listenLoopTime-time.time()
+            listenLoopTime = time.time()
+            #lcount += 1
+            #print lcount
+            try:
+                #print "try reading socket"
+                BUFFER_SIZE = 512  # This size will accomdate normal Scratch Control 'droid app sensor updates
+                data = dataPrevious + self.scratch_socket.recv(
+                    BUFFER_SIZE)  # get the data from the socket plus any data not yet processed
+                logging.debug("2datalen: %s", len(data))
+                logging.debug("2RAW: %s", data)
+
+
+                if len(data) > 0:  # Connection still valid so process the data received
+
+                    dataIn = data
+                    # print "datain", dataIn
+
+                    datawithCAPS = data
+                    #dataOut = ""
+                    dataList = []  # used to hold series of broadcasts or sensor updates
+                    dataPrefix = ""  # data to be re-added onto front of incoming data
+                    while len(dataIn) > 0:  # loop thru data
+                        if len(dataIn) < 4:  #If whole length not received then break out of loop
+                            #print "<4 chrs received"
+                            dataPrevious = dataIn  # store data and tag it onto next data read
+                            break
+                        sizeInfo = dataIn[0:4]
+                        size = struct.unpack(">L", sizeInfo)[0]  # get size of Scratch msg
+                        #print "size:", size
+                        if size > 0:
+                            #print dataIn[4:size + 4]
+                            dataMsg = dataIn[4:size + 4].lower()  # turn msg into lower case
+                            #print "msg:",dataMsg
+                            if len(dataMsg) < size:  # if msg recieved is too small
+                                #print "half msg found"
+                                #print size, len(dataMsg)
+                                dataPrevious = dataIn  # store data and tag it onto next data read
+                                break
+                                
+                            if len(dataMsg) == size:  # if msg recieved is correct
+                                if "alloff" in dataMsg:
+                                    allSplit = dataMsg.find("alloff")
+                                    logging.debug("not sure why this code is here Whole message:%s", dataIn)
+
+                            dataPrevious = ""  # no data needs tagging to next read
+                            if ("alloff" in dataMsg) or ("allon" in dataMsg):
+                                dataList.append(dataMsg)
+                            else:
+                                if dataMsg[0:2] == "br":  # removed redundant "broadcast" and "sensor-update" txt
+                                    if dataPrefix == "br":
+                                        dataList[-1] = dataList[-1] + " " + dataMsg[10:]
+                                    else:
+                                        dataList.append(dataMsg)
+                                        dataPrefix = "br"
+                                else:
+                                    if dataPrefix == "se":
+                                        dataList[-1] += dataMsg[13:] #changr from 10 to 13
+                                    else:
+                                        dataList.append(dataMsg)
+                                        dataPrefix = "se"
+
+                            dataIn = dataIn[size + 4:]  # cut data down that's been processed
+
+                            #print "previous:", dataPrevious
+
+
+            except (KeyboardInterrupt, SystemExit):
+                print "reraise error"
+                raise
+            except socket.timeout:
+                #print "No data received: socket timeout"
+                continue
+            except:
+                print "Unknown error occured with receiving data"
+                #raise
+                continue
+
+            #At this point dataList[] contains a series of strings either broadcast or sensor-updates
+            #print "data being processed:" , dataraw
+            #This section is only enabled if flag set - I am in 2 minds as to whether to use it or not!
+            #if (firstRun == True) or (anyAddOns == False):
+            #print
+            #logging.debug("dataList: %s",dataList)
+            #print
+            #print
+            #print "old datalist" , dataList
+
+
+            #print "GPIOPLus" , GPIOPlus
+            #print "dataList to be processed", dataList
+            for dataItem in dataList:
+                #print dataItem
+                #dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
+                dataraw = ' '
+                #print "CAPS", datawithCAPS
+                for item in shlex.split(dataItem):
+                    #print "item in space remover" ,item
+                    if item[0:4] == 'line':
+                        origpos = datawithCAPS.lower().find(item)
+                        item = datawithCAPS[origpos:origpos + len(item)]
+                        item = 'line' + item[4:].strip()
+                        item = item[0:5] + item[5:].lstrip()
+                        dataraw = dataraw + ''.join(item.replace(' ', chr(254))) + ' '
+                    else:
+                        dataraw = dataraw + ''.join(item.replace(' ', '')) + ' '
+                self.dataraw = dataraw
+
+                logging.debug("processing dataItems: %s", self.dataraw)
+                print ("processing dataItems:", self.dataraw)
+                #print "Loop processing"
+                #print dataItem, " has been converted to " ,self.dataraw
+                #print
+                if 'sensor-update' in self.dataraw:
+                    #print "this data ignored" , dataraw
+                    firstRunData = self.dataraw
+                    #dataraw = ''
+                    #firstRun = False
+                            
+                    if sghGC.autoLink:
+                        testList = self.dataraw.strip().split(" ")
+                        #print "testList" ,testList
+                        if testList[0] == "sensor-update":
+                            print "Scan sensor update list",testList
+                            broadcast_str = ""
+                            for i in range(1,len(testList),2):
+                                sensor_name = testList[i]
+                                sensor_value = testList[i + 1]
+                                if  sensor_name.find(">") == -1:
+                                    if sensor_name in self.varDict:
+                                        if self.varDict[sensor_name] != sensor_value:
+                                            broadcast_str = 'sensor-update "%s" %d' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
+                                    else:
+                                        broadcast_str += 'sensor-update "%s" %d' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
+                            if broadcast_str != "":
+                                #print '2sending: %s' % bcast_str
+                                msgQueue.put((5,broadcast_str))
+
+                    
+                    varList = self.dataraw.strip().split(" ")
+                    if varList[0] == "sensor-update":
+                        for i in range(1,len(varList),2):
+                            sensor_name = varList[i]
+                            sensor_value = varList[i + 1]
+                            self.varDict[sensor_name] = sensor_value
+                            #print "varDict:" , self.varDict                           
+                        
+                if 'broadcast' in self.dataraw:
+
+
+                    if self.bFindValue("prefix"):
+                        sghGC.linkPrefix = self.value
+                        print "prefix set to", sghGC.linkPrefix
+
+
+                    if self.bFindValue('autolink'):
+                        sghGC.linkIP = self.value
+                        if sghGC.linkPrefix is None:
+                            sghGC.linkPrefix = "other" 
+                        sghGC.autoLink = True
+                        print "autolink enabled"
+                        logging.debug("Finding IP of this machine")
+                        arg = 'ip route list'
+                        p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+                        ipdata = p.communicate()
+                        split_data = ipdata[0].split()
+                        ipaddr2 = split_data[split_data.index('src') + 1]   
+                        try:
+                            self.sendSocket2Broadcast('alinkreq' + ipaddr2)
+                            print "alinkreq sent to ", self.value , "requesing autolink back to ", ipaddr2
+                        except:
+                            print "autolink request to ",self.value," has failed"
+                            pass
+                            
+                    if self.bFindValue('alinkreq'):
+                        sghGC.linkIP = self.value
+                        if sghGC.linkPrefix is None:
+                            sghGC.linkPrefix = "other" 
+                        sghGC.autoLink = True
+                        
+                        print "alinkreq from " , self.value , "dealt with"
+                        
+                    if self.bFindValue('<###'):
+                        bList = self.value.split('##>')
+                        print "bListL:", bList
+                        #queue_str = 'sensor-update "' + bList[0] + '" ' + bList[1]
+                        #msgQueue.put((5,queue_str))                        
+                      
+    
+                    if self.bFindValue('link'):
+                        try:
+                            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            self.scratch_socket2.connect((self.value, 42001))
+                            print self.scratch_socket2
+                            print "Connected to ", self.value
+                        except:
+                            print "Failed to connect to ", self.value
+                            pass
+
+
+
+                    if self.bFindValue('sendvalue'):
+                        if self.scratch_socket2 is not None:
+                            sensor_name = 'LAN'
+                            cmd = 'sensor-update "%s" %s' % (sensor_name, self.value)
+                            n = len(cmd)
+                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                chr(n & 0xFF))
+                            totalcmd = b + cmd
+                            print "Sending to 2nd sockett",cmd
+                            try:
+                                self.scratch_socket2.send(totalcmd)
+                                print "sent value to 2nd socket", cmd
+                            except:
+                                print "failed to send to 2nd socket"
+                            
+                    elif self.bFindValue('send'):
+                        if self.scratch_socket2 is not None:
+                            print self.dataraw
+                            print self.dataraw.count('send')
+                            #print [match.start() for match in re.finditer(re.escape('send'), self.dataraw)]
+                            totalcmd = ''
+                            for qwe in self.dataraw.split(" "):
+                                #print qwe[0:4]
+                                if qwe[0:4] == 'send':
+                                    #print qwe
+                                    #cmd = qwe[4:]
+                                    cmd = 'broadcast "' + qwe[4:] + '"'
+                                    #print "sneding:",cmd
+                                    n = len(cmd)
+                                    b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                        chr(n & 0xFF))
+                                    totalcmd = totalcmd + b + cmd
+                            #print "Sending to Alt:",totalcmd
+                            try:
+                                self.scratch_socket2.send(totalcmd)
+                            except:
+                                print "send failed"
+                                pass
+                    
+        print "Listener Stopped"
+                    #else:
+                    #print 'received something: %s' % dataraw
+
+
+###  End of  ScratchListner2 Class        
 
 
 def create_socket(host, port):
@@ -6817,14 +7159,7 @@ def cleanup_threads(threads):
     for thread in threads:
         thread.join()
 
-    print "stopping SocketB"
-    try:
-        socketB.stop()
-        print "socketb stop sent"
-    except:
-        pass
-        
-    sghGC.autoLink = False
+
     print "All main threads stopped"
 
     for pin in sghGC.validPins:
@@ -6891,6 +7226,7 @@ firstRun = True
 lock = threading.Lock()
 cheerlights = CheerLights()
 killList = ""
+socket3 = None
 
 piglow = None
 try:
