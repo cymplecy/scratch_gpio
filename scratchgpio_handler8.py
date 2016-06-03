@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.101'  #16May16 still not made autolink work again!
+Version = 'v8.0.102'  #19May16 Autolink working on prot 42002
 print "Version:",Version
 import threading
 import socket
@@ -52,6 +52,7 @@ except:
 #ui = UInput()
 sense = None
 SH = None
+socketB = None
 
 
 try:
@@ -297,7 +298,84 @@ class ultra(threading.Thread):
                 time.sleep(sghGC.ultraFreq - timeTaken)
         print "ultra run ended for pin:", self.pinTrig
 
+class ListenB(threading.Thread):
+    def __init__(self, myIP):
+        threading.Thread.__init__(self)
+        self.scratch_socketB = None
+        self._stop = threading.Event()
+        self.conn = None
+        self.myIP = myIP
+        print "ListenB init sucessfull"
 
+    def stop(self):
+        self._stop.set()
+        logging.debug("Finding IP of this machine")
+        arg = 'ip route list'
+        p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+        ipdata = p.communicate()
+        split_data = ipdata[0].split()
+        ipaddr2 = split_data[split_data.index('src') + 1]     
+        self.scratch_socketL = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.scratch_socketL.connect((ipaddr2, 42002))
+        dataOut = "stopthread"        
+        print "sending to myslef" ,dataOut
+        n = len(dataOut)
+        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+           chr(n & 0xFF))
+        self.scratch_socketL.send(b + dataOut)
+        print "broadcast to socketL", dataOut
+        time.sleep(0.2)
+        self.scratch_socketL.close()
+        self.stopB = False
+        print "ListenB Stop Set"
+
+    def stopped(self):
+        return self._stop.isSet()
+
+    def run(self):
+        while True:
+                try:
+                    print 'Trying'
+                    self.scratch_socketB = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    self.scratch_socketB.bind((self.myIP, 42002))
+                    break
+                except socket.error:
+                    print "unablee fo listen on socketB"
+                    time.sleep(3)    
+
+        #self.scratch_socketB.settimeout(SOCKET_TIMEOUT)
+        #Start listening on socket
+        self.scratch_socketB.listen(5)
+        print 'Socket now listening'
+        connB, addrB = self.scratch_socketB.accept()
+        print "SocketB connected"
+
+        while not self.stopped():
+            #print "SocketB running"
+            #time.sleep(1)
+            dataB = connB.recv(8192)
+            if dataB != "":
+                dataB = dataB.translate(None, '"')
+                print "Data receive on SocketB",dataB
+                dataBsplit = dataB[4:].split('<###')
+                print "split" , dataBsplit
+                print "data pairs"
+                for loop in dataBsplit:
+                    if loop == "stopthread":
+                        self.scratch_socketB.close()
+                        break
+                    item = loop.split('##>')
+                    if len(item) > 1:
+                        bcast_str = 'sensor-update "%s" %s' % (item[0], item[1])
+                        print 'sending: %s' % bcast_str
+                        msgQueue.put(((5,bcast_str)))
+            else:
+                connB, addrB = self.scratch_socketB.accept()
+            #reply = 'OK...' + data
+            #if not data: 
+        print "exiting SocketB run"
+
+        
 class ScratchSender(threading.Thread):
     def __init__(self, socket):
         threading.Thread.__init__(self)
@@ -508,7 +586,7 @@ class ScratchSender(threading.Thread):
 
     def run(self):
         print "ScratchSender run started"
-        global firstRun, ADDON, compass, wii
+        global firstRun, ADDON, compass, wii,socketB
         print lock
         # while firstRun:
         # print "first run running"
@@ -1510,7 +1588,7 @@ class ScratchListener(threading.Thread):
     def sendSocket2(self,sensor_name,sensor_value):     
         try:                                
             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.scratch_socket2.connect((sghGC.linkIP, 42001))
+            self.scratch_socket2.connect((sghGC.linkIP, 42002))
             sensor_str = ''
             sensor_str = '"%s" %s ' % (sghGC.linkPrefix + '>' + sensor_name, sensor_value)
             dataOut = "sensor-update " + sensor_str
@@ -1528,7 +1606,7 @@ class ScratchListener(threading.Thread):
     def sendSocket2Broadcast(self,broadcastName):       
         try:                                
             self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.scratch_socket2.connect((sghGC.linkIP, 42001))
+            self.scratch_socket2.connect((sghGC.linkIP, 42002))
             dataOut = 'broadcast "' + broadcastName  + '"'        
             print dataOut
             n = len(dataOut)
@@ -1549,7 +1627,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host, killList
+            meVertical, meHorizontal, meDistance, host, killList,socketB
 
 
 
@@ -6331,6 +6409,11 @@ class ScratchListener(threading.Thread):
 
 
                     if self.bFindValue('autolink'):
+                        try:
+                            socketB.stop()
+                            print "socketb stop sent"
+                        except:
+                            pass                    
                         sghGC.linkIP = self.value
                         if sghGC.linkPrefix is None:
                             sghGC.linkPrefix = "other" 
@@ -6343,17 +6426,47 @@ class ScratchListener(threading.Thread):
                         split_data = ipdata[0].split()
                         ipaddr2 = split_data[split_data.index('src') + 1]   
                         try:
-                            self.sendSocket2Broadcast('alinkreq' + ipaddr2)
-                            print "alinkreq sent to ", self.value , "requesing autolink back to ", ipaddr2
+                        
+                            cmd = 'broadcast "alinkreq' + ipaddr2 +'"'
+                            n = len(cmd)
+                            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                                chr(n & 0xFF))
+                            totalcmd = b + cmd
+                            print "trying to send autolink req",cmd
+                            self.scratch_socket2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                            self.scratch_socket2.connect((sghGC.linkIP, 42001))
+                            self.scratch_socket2.send(totalcmd)
+                            print "autokin request sent", cmd
                         except:
-                            print "autolink request to ",self.value," has failed"
+                            print "failed to send autolink"
                             pass
+                        
+                        print "trying to assign socketB"
+                        socketB = ListenB(ipaddr2)
+                        #socketB.daemon = True
+                        print "trying to start socketB"
+                        socketB.start()
+                        print "socketB should have started"
+                           
+                        
                             
                     if self.bFindValue('alinkreq'):
                         sghGC.linkIP = self.value
                         if sghGC.linkPrefix is None:
                             sghGC.linkPrefix = "other" 
                         sghGC.autoLink = True
+                        logging.debug("Finding IP of this machine")
+                        arg = 'ip route list'
+                        p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
+                        ipdata = p.communicate()
+                        split_data = ipdata[0].split()
+                        ipaddr2 = split_data[split_data.index('src') + 1]                           
+                        print "trying to assign socketB"
+                        socketB = ListenB(ipaddr2)
+                        #socketB.daemon = True
+                        print "trying to start socketB"
+                        socketB.start()
+                        print "socketB should have started"                        
                         
                         print "alinkreq from " , self.value , "dealt with"
                         
@@ -6704,7 +6817,14 @@ def cleanup_threads(threads):
     for thread in threads:
         thread.join()
 
-
+    print "stopping SocketB"
+    try:
+        socketB.stop()
+        print "socketb stop sent"
+    except:
+        pass
+        
+    sghGC.autoLink = False
     print "All main threads stopped"
 
     for pin in sghGC.validPins:
