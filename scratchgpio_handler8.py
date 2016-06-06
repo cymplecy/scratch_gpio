@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.102'  #19May16 Autolink working on prot 42002
+Version = 'v8.0.103'  #3Jun6 
 print "Version:",Version
 import threading
 import socket
@@ -6698,10 +6698,16 @@ class ScratchListener(threading.Thread):
                         print runList
                         #os.system(.value)
                         #subprocess.check_call(runList)
-                        killList = "sudo pkill -f " + runList[1]
-                        subprocess.call(killList, shell=True)
-                        print ("Trying to kill" , killList)
-                        subprocess.Popen(self.value, shell=True)
+                        try:
+                            killList = "sudo pkill -f " + runList[1]
+                            subprocess.call(killList, shell=True)
+                            print ("Trying to kill" , killList)
+                        except:
+                            pass
+                        try:
+                            subprocess.Popen(self.value, shell=True)
+                        except:
+                            pass
                     #end of broadcast check
 
                     if self.bFind('shutdownpi'):
