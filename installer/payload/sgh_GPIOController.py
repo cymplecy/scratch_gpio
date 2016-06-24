@@ -17,6 +17,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# V1.1 24June16
 
 
 import RPi.GPIO as GPIO
@@ -65,8 +66,8 @@ class GPIOController :
         self.PCOUNT = 256
         self.PINPUTDOWN = 512
         self.PINPUTNONE = 1024
-        self.PPWMMOTOR = 2048
-        self.PPWMLED = 4096
+        #self.PPWMMOTOR = 2048
+        #self.PPWMLED = 4096
 
         #self.INVERT = False
         self.ledDim = 100
@@ -481,22 +482,11 @@ class GPIOController :
 
                 elif (self.pinUse[pin] == self.PPWM): # pin was set as pwm
                     #print "pinUpdate p,v,t,pwmref: ",pin,value,type,self.pinRef[pin]
-                    try:
-                        #print "pinUpdate p,v,t,pwmref: ",pin,value,type,self.pinRef[pin]
-                        #print ("Stopping previous instance on pin",pin)
-                        #print "pinref on pin" ,pin , "is" ,self.pinRef[pin]
-                        self.pinRef[pin].stop()
-                        #print ("previous instance on pin",pin ,"stopped")
-                        self.pinRef[pin] = None
-                    except:
-                        pass
-                    self.pinUse[pin] = self.POUTPUT # switch it to output
+                    #print "pwm pin", pin , " sent digital on off: ",value
+                    value = 100 if value else 0
+                    self.pinRef[pin].ChangeDutyCycle(value)
 
-                    GPIO.setup(pin,GPIO.OUT)
-                    #print "switched to output"
-                    GPIO.output(pin, int(value)) # set output to 1 to 0
                     
-                    #print 'pin' , pin , ' was PWM now set to ' , value                       
         except ValueError:
             print "mistake made in trying to update an invalid pin"
             print pin,value,type

@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.008  #9Apr16 Servod kill delay added'
+Version = 'v7.1.100'  #24Jun16 Bypass PWM threading issue'
 print "Version:",Version
 import threading
 import socket
