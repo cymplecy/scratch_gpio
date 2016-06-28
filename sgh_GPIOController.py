@@ -18,6 +18,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # V1.1 24June16
+# V1.1.1 28Jun16 - revert regression on constants - idiot!
 
 
 import RPi.GPIO as GPIO
@@ -66,8 +67,8 @@ class GPIOController :
         self.PCOUNT = 256
         self.PINPUTDOWN = 512
         self.PINPUTNONE = 1024
-        #self.PPWMMOTOR = 2048
-        #self.PPWMLED = 4096
+        self.PPWMMOTOR = 2048
+        self.PPWMLED = 4096
 
         #self.INVERT = False
         self.ledDim = 100
