@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.52'  #10Sep16 More change for neopixles and piconzero
+Version = 'v8.0.53'  #10Sep16 digital inputs
 print "Version:",Version
 import threading
 import socket
@@ -1060,6 +1060,17 @@ class ScratchSender(threading.Thread):
                                 sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
                         if sensor_str != "":
                             msgQueue.put((0,"sensor-update " + sensor_str))
+                            
+            if "piconzero" in ADDON:
+                if tick % 5 == 0:
+                    sensor_str = ""
+                    for loop in range(0,4):
+                            sensor_name = "digital" + str(loop)
+                            sensor_value =  str(pz.readInput(loop))
+                            #print sensor_name,sensor_value
+                            sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
+                    if sensor_str != "":
+                        msgQueue.put((0,"sensor-update " + sensor_str))                            
 
         print "Sender Stopped"
 
@@ -3532,6 +3543,20 @@ class ScratchListener(threading.Thread):
                                 for pin in [7,11,13,29,31,32,33,36,40,37,38,35]:
                                     sghGC.pinUpdate(pin, 0)  # turn all the pins physically off
                                 anyAddOns = True
+                        
+                        if "piconzero" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                #for pin in [7,11,13,29,31,32,33,36,40,37,38,35]:
+                                #    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                #for pin in [16,15,18,22]:
+                                #    sghGC.pinUse[pin] = sghGC.PINPUT
+                                #sghGC.setPinMode()
+                                #for pin in [7,11,13,29,31,32,33,36,40,37,38,35]:
+                                #    sghGC.pinUpdate(pin, 0)  # turn all the pins physically off
+                                for loop in range(0,4):
+                                    pz.setInputConfig (loop, 0, True)
+                                anyAddOns = True                                
 
 
                         for pin in sghGC.validPins:
