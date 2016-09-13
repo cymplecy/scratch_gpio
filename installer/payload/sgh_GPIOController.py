@@ -737,7 +737,7 @@ class GPIOController :
         print (" ")
         print ("Starting servod")
         os.system("sudo pkill -f servod")
-        time.sleep(0.1)
+        time.sleep(1.0)
         print "any running servod killed"
         for pin in pins:
             self.pinUse[pin] = self.PSERVOD

@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.53'  #10Sep16 digital inputs
+Version = 'v8.0.55'  #13Sep16 More neo mods
 print "Version:",Version
 import threading
 import socket
@@ -1638,6 +1638,8 @@ class ScratchListener(threading.Thread):
 
     def neoProcessing(self,ADDON,UH):
         print "inside neoprocsssing"
+        ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
+            'invert', 'random']        
         oldADDON = ADDON
         if "playhat" in ADDON:
             ADDON = ADDON + " neopixels9"
@@ -1749,7 +1751,7 @@ class ScratchListener(threading.Thread):
                 
 
         def neoBright(level):
-            #print "level", level 
+            print "level set to ", level 
             if "sensehat" in ADDON:
                 if level < 1:
                     SH.low_light = True
@@ -1809,6 +1811,14 @@ class ScratchListener(threading.Thread):
             #print "outside", self.matrixMult,self.matrixLimit,self.matrixRangemax
 
             if ("unicorn" in ADDON or "sensehat" in ADDON):
+                ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
+                              'invert', 'random']
+
+                if tcolours is None:  #only define dictionary on first pass
+                    tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+                                'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
+                                'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
+                                'invert': (0, 0, 0)}                
                 if self.bFind("pixelson"):
                     for y in range(0, 8):
                         for x in range(0, 8):
@@ -4777,8 +4787,14 @@ class ScratchListener(threading.Thread):
                                     #print i, svalue
                                     pcaPWM.setPWM(i, 0, int(min(780, max(120, 450 - (svalue * 3.33333)))))
 
-
-                                    ### Check for Broadcast type messages being received
+                    if "puppet" in ADDON:
+                        puppetList = [['leftarm', 11,1], ['rightarm', 15,-1],['leftleg', 12,-1], ['rightleg', 13,1]]
+                        for listLoop in puppetList:
+                            if self.vFindValue(listLoop[0]):
+                                if self.valueIsNumeric:
+                                    sghGC.pinServod(listLoop[1], 50 + ((90 - (self.valueNumeric * listLoop[2])) * 200 / 180))
+                                        
+                ### Check for Broadcast type messages being received
                 #print "loggin level",debugLogging
                 if (debugLogging == False):
                     logging.getLogger().setLevel(logging.INFO)
