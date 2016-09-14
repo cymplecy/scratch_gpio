@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.55'  #13Sep16 More neo mods
+Version = 'v8.0.56'  #43Sep16 MQTT added
 print "Version:",Version
 import threading
 import socket
@@ -43,10 +43,9 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 import urllib2
-print "importing piconzero"
-import piconzero as pz
-pz.init()
-print "importing piconzero"
+import sgh_unicornhat as UH
+print "UH", UH
+
 #import uinput
 try:
     from sgh_webcamcolour import ColourTracker
@@ -123,8 +122,28 @@ try:
 except:
     print "Minecraft NOT imported OK"
     pass
+    
+try:
+    import piconzero as pz
+    pz.init()
+    print "importing piconzero"
+except:
+    print "Warning: PiConZero NOT imported - missing module"
+    pass    
+    
+    
+    
+try:
+    import paho.mqtt.publish as publish
+    import paho.mqtt.client as mqtt
+except:
+    print "Warning: MQTT Paho NOT imported - missing module"
+    pass    
+      
+    
 
 sghCT = None #reserve for captouch
+
 
 class Compass:
     __scales = {
@@ -257,6 +276,25 @@ def sign(number): return cmp(number, 0)
 def parse_data(dataraw, search_string):
     outputall_pos = dataraw.find(search_string)
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
+    
+def on_connect(client, userdata, rc):
+    print("Connected with result code "+str(rc))
+    # Subscribing in on_connect() means that if we lose the connection and
+    # reconnect then subscriptions will be renewed.
+    #try:
+    client.subscribe(sghGC.mqttTopic)
+    #except:
+    #    print "mqtt subscribe failed"
+    #    pass
+
+# The callback for when a PUBLISH message is received from the server.
+def on_message(client, userdata, msg):
+    print
+    print time.asctime(), "\nTopic: ", msg.topic+'\nMessage: '+str(msg.payload), "\nreceived over MQTT"
+    msgQueue.put((5,'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) +'"'))
+
+    
+
 
 
 class MyError(Exception):
@@ -1637,26 +1675,18 @@ class ScratchListener(threading.Thread):
             pass   
 
     def neoProcessing(self,ADDON,UH):
-        print "inside neoprocsssing"
+        #print "inside neoprocsssing"
         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
             'invert', 'random']        
         oldADDON = ADDON
         if "playhat" in ADDON:
             ADDON = ADDON + " neopixels9"
          
-        
+  
         if "sensehat" in ADDON:
             from sense_hat import SenseHat
             SH = SenseHat()
-
-        elif (UH is None) and ("piconzero" not in ADDON):
-            #try:
-                import sgh_unicornhat as UH
-                print "UnicornHat imported OK"
-            #except:
-                #print "UnicornHat software not installed"
-                #break
-        #print "addon", ADDON
+    
         tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
                     'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
                     'orange': (255, 128, 0), 'skyblue': (0, 127, 255), 'purple': (128,0,128), 'yellowgreen': (127,255,127), 'pink': (254,0,255), 'brightgreen': (1,255,0),
@@ -2627,7 +2657,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host, killList,socketB
+            meVertical, meHorizontal, meDistance, host, killList,socketB, UH
 
 
 
@@ -2652,7 +2682,7 @@ class ScratchListener(threading.Thread):
         tcolours = None  # set tcolours to None so it can be detected later
         pnblcd = None
         cheerList = None
-        UH = None
+
 
         if not GPIOPlus:
             with lock:
@@ -4793,6 +4823,9 @@ class ScratchListener(threading.Thread):
                             if self.vFindValue(listLoop[0]):
                                 if self.valueIsNumeric:
                                     sghGC.pinServod(listLoop[1], 50 + ((90 - (self.valueNumeric * listLoop[2])) * 200 / 180))
+                                    
+                    if self.vFindValue("mqttbroker"):
+                        sghGC.mqttBroker = self.value
                                         
                 ### Check for Broadcast type messages being received
                 #print "loggin level",debugLogging
@@ -6872,6 +6905,32 @@ class ScratchListener(threading.Thread):
                             subprocess.Popen(self.value, shell=True)
                         except:
                             pass
+
+                    if self.bFindValue("sendmqtt"):
+                        params = self.value.split(',')                    
+                        try:
+                            publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker)
+                        except:
+                            print "MQTT send failed"
+                            pass           
+                            
+                    if self.bFindValue("mqttlisten"):
+                        print "inside listener"
+                        if sghGC.mqttListener is not None:
+                            sghGC.mqttClient.loop_stop()
+                            sghGC.mqttClient.disconnect()
+                            print "mqttlistener stopped"
+                        
+                        #try:
+                        sghGC.mqttTopic = self.value
+                        sghGC.mqttClient.connect(sghGC.mqttBroker, 1883)
+                        sghGC.mqttClient.loop_start()
+                        print "mqttlistener started"
+                        sghGC.mqttListener = True
+                        #except:
+                        #    print "MQTT send failed"
+                        #    pass
+                        print "listener",sghGC.mqttListener
                     #end of broadcast check
 
                     if self.bFind('shutdownpi'):
@@ -7034,6 +7093,12 @@ def cleanup_threads(threads):
         ColourTracker.join()
     except:
         pass
+        
+    try:
+        print "stopping mqtt listen"
+        sghGC.mqttClient.loop_stop()
+    except:
+        pass
 
 
     print ("cleanup threads finished")
@@ -7179,6 +7244,11 @@ try:
 except:
     pass
     #print "Colour Tracking Not Enabled"
+    
+sghGC.mqttClient = mqtt.Client()
+sghGC.mqttClient.on_connect = on_connect
+sghGC.mqttClient.on_message = on_message    
+
 
 if __name__ == '__main__':
     SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]
@@ -7265,7 +7335,10 @@ while True:
         subprocess.call(killList, shell=True)
         killList = ""
         print "external called processes killed"
-        pz.cleanup()
+        try:
+            pz.cleanup()
+        except:
+            pass
         cleanup_threads((listener, sender ))
         print "Thread cleanup done after disconnect"
         #time.sleep(5)
