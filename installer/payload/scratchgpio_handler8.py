@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.576'  #15Sep16 Neopixel still giving bugs -another squahsed 
+Version = 'v8.0.6'  #16Sep16 playing with broadcasts!
 print "Version:",Version
 import threading
 import socket
@@ -294,7 +294,8 @@ def on_message(client, userdata, msg):
     print
     print time.asctime(), "\nTopic: ", msg.topic+'\nMessage: '+str(msg.payload), "\nreceived over MQTT"
     msgQueue.put((5,'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) +'"'))
-
+    time.sleep(0.1)
+    msgQueue.put((5,'broadcast "' + str(msg.topic) + '"'))
     
 
 
@@ -2830,7 +2831,7 @@ class ScratchListener(threading.Thread):
             #logging.debug("dataList: %s",dataList)
             #print
             #print
-            #print "old datalist" , dataList
+            print "old datalist" , dataList
 
             if any("move" in s for s in dataList) or any("turn" in s for s in dataList):# or any("cheerlight" in s for s in dataList):
                 #print "move/turn found in dataList so going to expandList"
@@ -2871,6 +2872,23 @@ class ScratchListener(threading.Thread):
                 #print "Loop processing"
                 #print dataItem, " has been converted to " ,self.dataraw
                 #print
+                
+                if 'broadcast' in dataItem:
+                    #print
+                    #print "data before split" ,self.dataraw
+                    #print
+                    broadcastList = self.dataraw[10:].split(' ')
+                    individualBroadcasts =[]
+                    for each in broadcastList:
+                        if len(each) > 1<> " ":
+                            individualBroadcasts.append(' broadcast ' + each + ' ')
+                        
+                    #print "individual List: "
+                    #for each in individualBroadcasts:
+                    #    print "$$$",each
+                    #print
+
+                
                 if 'sensor-update' in self.dataraw:
                     #print "this data ignored" , dataraw
                     firstRunData = self.dataraw
@@ -6909,12 +6927,29 @@ class ScratchListener(threading.Thread):
                             pass
 
                     if self.bFindValue("sendmqtt"):
-                        params = self.value.split(',')                    
-                        try:
-                            publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker)
-                        except:
-                            print "MQTT send failed"
-                            pass           
+                        #print "processiung sendmqtt"
+                        olddataraw = self.dataraw
+                        #print "$$$",self.dataraw
+                        for each in individualBroadcasts:
+                            self.dataraw = each
+                            #print "each$$$",each
+                            if self.bFindValue("sendmqtt"):
+                                #print "value$$$",self.value
+                                params = self.value.split(',') 
+                                #print "params$$$"
+                                try:
+                                    if len(params) == 2:
+                                        print publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker)
+                                        print "mqtt published",sghGC.mqttBroker,params[0],params[1]
+                                    elif len(params) == 3:
+                                        print publish.single(params[0], payload=params[1], qos=2, hostname=params[2])    
+                                        print "mqtt published",params[2],params[0],params[1]                                
+                                except:
+                                    #print
+                                    #print "MQTT send failed"
+                                    #print
+                                    pass          
+                        self.dataraw = olddataraw
                             
                     if self.bFindValue("mqttlisten"):
                         print "inside listener"
