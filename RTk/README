@@ -1,0 +1,15 @@
+The latest version of this anyio package can always be obtained from:
+
+https://github.com/whaleygeek/anyio
+
+
+The ProMicro.inf in the anyio/firmware folder originally came from
+the sparkfun github repository, and is included here for convenience
+only. You can always get the latest version from here:
+
+https://github.com/sparkfun/SF32u4_boards/blob/master/driver/ProMicro.inf
+
+
+@whaleygeek
+David Whale
+30th Aug 2014

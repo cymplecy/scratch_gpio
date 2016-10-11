@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.6'  #16Sep16 playing with broadcasts!
+Version = 'v8.0.7rtk'  #11Oct16 Vesion for use with RtkGPIo
 print "Version:",Version
 import threading
 import socket
@@ -37,7 +37,7 @@ import sgh_Minecraft
 import sgh_pnbLCD
 import logging
 import subprocess
-import sgh_RasPiCamera
+#import sgh_RasPiCamera
 #import pygame removed because causing random failures
 import random
 import Queue

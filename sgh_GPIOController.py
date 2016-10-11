@@ -20,7 +20,7 @@
 #V8.0.1 13Sep16 mqttbroker variable added
 
 
-import RPi.GPIO as GPIO
+import RTk.GPIO as GPIO
 import time
 import os
 import datetime as dt
@@ -401,7 +401,7 @@ class GPIOController :
                 except:
                     pass             
             elif (self.pinUse[pin] == self.PINPUTNONE):
-                print 'setting pin' , pin , ' to in with pull down' 
+                print 'setting pin' , pin , ' to in with no pull resistors'
                 GPIO.setup(pin,GPIO.IN)
                 try:
                     GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
