@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.0.102'  #19May16 Autolink working on prot 42002
+Version = 'v8.0.5'  #7Sep16 change to run to not pkill
 print "Version:",Version
 import threading
 import socket
@@ -43,6 +43,10 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 import urllib2
+print "importing piconzero"
+import piconzero as pz
+pz.init()
+print "importing piconzero"
 #import uinput
 try:
     from sgh_webcamcolour import ColourTracker
@@ -286,6 +290,8 @@ class ultra(threading.Thread):
                 sensor_name = 'ultra' + str(self.pinTrig)
                 if "pi2go" in ADDON:
                     sensor_name = 'ultra'
+                if "piconzero" in ADDON:
+                    sensor_name = 'ultra'                    
             else:
                 distance = sghGC.pinSonar2(self.pinTrig, self.pinEcho)
                 sensor_name = 'ultra' + str(self.pinEcho)
@@ -3467,6 +3473,22 @@ class ScratchListener(threading.Thread):
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
                                 sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
 
+                    elif "piconzero" in ADDON:
+                        if self.vFindValue("motora"):
+                            svalue = min(128, max(-128, int(self.valueNumeric * 1.28))) if self.valueIsNumeric else 0
+                            pz.setMotor(1,svalue)
+                        if self.vFindValue("motorb"):
+                            svalue = min(128, max(-128, int(self.valueNumeric * 1.28))) if self.valueIsNumeric else 0
+                            pz.setMotor(0,svalue)
+                        for loop in range(0, 6):
+                            if self.vFindValue("servo" + str(loop)):
+                                svalue = min(180, max(-0, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                print "servo",loop,svalue
+                                pz.setOutputConfig(0, 2)
+                                pz.setOutput(0, svalue)
+
+                        
+                        
 
                     else:  #normal variable processing with no add on board
 
@@ -5537,7 +5559,7 @@ class ScratchListener(threading.Thread):
 
                         ADDON = oldADDON #restore after possible parthat use
 
-                    if "piandbash" in ADDON:
+                    elif "piandbash" in ADDON:
                         if self.bFindOnOff('all'):
                             mcp.output(8, self.OnOrOff)
                             mcp.output(12, self.OnOrOff)
@@ -5586,7 +5608,7 @@ class ScratchListener(threading.Thread):
                             pnblcd.lcd_byte(pnblcd.LCD_LINE_2, pnblcd.LCD_CMD)
                             pnblcd.lcd_string(self.value)
 
-                    if "agobo" in ADDON:
+                    elif "agobo" in ADDON:
                         if self.bFindOnOff('all'):
                             sghGC.pinUpdate(15, self.OnOrOff)
                             sghGC.pinUpdate(13, self.OnOrOff)
@@ -5596,6 +5618,9 @@ class ScratchListener(threading.Thread):
                         if self.bFindOnOff('rightled'):
                             sghGC.pinUpdate(13, self.OnOrOff)
 
+                    elif "piconzero"  in ADDON:    
+                        if self.bFind('ultra'):
+                            self.startUltra(38, 0, self.OnOrOff)
 
 
                     else:  # Plain GPIO Broadcast processing
@@ -5640,7 +5665,7 @@ class ScratchListener(threading.Thread):
                                 msgQueue.put((5,bcast_str))
 
                                 #Start using ultrasonic sensor on a pin
-                            if self.bFind('ultra' + str(pin)):
+                            if self.bFindValue('ultra' + str(pin)," "):
                                 print 'start pinging on', str(pin)
                                 self.startUltra(pin, 0, self.OnOrOff)
 
@@ -6687,21 +6712,45 @@ class ScratchListener(threading.Thread):
                             ColourTracker.limits[int(index)] = int(value)
                             print "limits:", ColourTracker.limits
                             
+                    if self.bFindValue("kill"):
+                        print "caps",datawithCAPS
+                        textpos = datawithCAPS.find('"run')
+                        text = datawithCAPS[textpos + 4:]
+                        print text
+                        self.value = text[0:text.find('"')].strip()
+                        print "self.value" , self.value
+                        runList = self.value.split(' ')
+                        print "runlist" , runList
+                        #os.system(.value)
+                        #subprocess.check_call(runList)
+                        try:
+                            killList = "sudo pkill -f " + runList[1]
+                            subprocess.call(killList, shell=True)
+                            print ("Trying to kill" , killList)
+                        except:
+                            pass
+                            
                     if self.bFindValue("run"):
                         print "caps",datawithCAPS
                         textpos = datawithCAPS.find('"run')
                         text = datawithCAPS[textpos + 4:]
                         print text
                         self.value = text[0:text.find('"')].strip()
+                        print "self.value" , self.value
                         runList = self.value.split(' ')
-                        print self.value
-                        print runList
+                        print "runlist" , runList
                         #os.system(.value)
                         #subprocess.check_call(runList)
-                        killList = "sudo pkill -f " + runList[1]
-                        subprocess.call(killList, shell=True)
-                        print ("Trying to kill" , killList)
-                        subprocess.Popen(self.value, shell=True)
+                        # try:
+                            # killList = "sudo pkill -f " + runList[1]
+                            # subprocess.call(killList, shell=True)
+                            # print ("Trying to kill" , killList)
+                        # except:
+                            # pass
+                        try:
+                            subprocess.Popen(self.value, shell=True)
+                        except:
+                            pass
                     #end of broadcast check
 
                     if self.bFind('shutdownpi'):
@@ -7095,6 +7144,7 @@ while True:
         subprocess.call(killList, shell=True)
         killList = ""
         print "external called processes killed"
+        pz.cleanup()
         cleanup_threads((listener, sender ))
         print "Thread cleanup done after disconnect"
         #time.sleep(5)
