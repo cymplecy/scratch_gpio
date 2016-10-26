@@ -18,6 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 Version = 'v8.0.6'  #16Sep16 playing with broadcasts!
+
 print "Version:",Version
 import threading
 import socket
@@ -43,6 +44,10 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 import urllib2
+print "importing piconzero"
+import piconzero as pz
+pz.init()
+print "importing piconzero"
 
 #import uinput
 try:
@@ -4542,6 +4547,7 @@ class ScratchListener(threading.Thread):
                             if self.vFindValue("servo" + str(loop)):
                                 svalue = min(180, max(-0, int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 print "servo",loop,svalue
+
                                 pz.setOutputConfig(loop, 2)
                                 pz.setOutput(loop, svalue)
                                 
@@ -4556,6 +4562,7 @@ class ScratchListener(threading.Thread):
                                 print "power",loop,svalue
                                 pz.setOutputConfig(loop, 1)
                                 pz.setOutput(loop, svalue)                                  
+
 
                         
                         
@@ -6968,6 +6975,7 @@ class ScratchListener(threading.Thread):
                         #    print "MQTT send failed"
                         #    pass
                         print "listener",sghGC.mqttListener
+
                     #end of broadcast check
 
                     if self.bFind('shutdownpi'):
@@ -7376,6 +7384,7 @@ while True:
             pz.cleanup()
         except:
             pass
+
         cleanup_threads((listener, sender ))
         print "Thread cleanup done after disconnect"
         #time.sleep(5)
