@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.1.0'  # 3Nov16 in middle of changes to pixels
+Version = 'v8.1.01'  # 14Nov16 no change from 3Nov but jsut updating github
 
 print "Version:", Version
 import threading
