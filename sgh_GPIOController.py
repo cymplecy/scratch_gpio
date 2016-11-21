@@ -17,7 +17,7 @@
 #You should have received a copy of the GNU General Public License
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-#V8.0.1 13Sep16 mqttbroker variable added
+#V8.0.06 20Nov16 Name mapping list added
 
 
 import RPi.GPIO as GPIO
@@ -128,6 +128,8 @@ class GPIOController :
         self.mqttListener = None
         self.mqttClient = None
         self.mqttTopic = None
+        
+        self.pinMapName = [None] * self.numOfPins  
 
         self.validPins =      [ 3,         5,       7, 8,   10,11,12,13,   15,16,   18,19,   21,22,23,24,   26]
         

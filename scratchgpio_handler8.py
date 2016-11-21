@@ -17,8 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.1.01'  # 14Nov16 no change from 3Nov but jsut updating github
-
+Version = 'v8.1.07'  # 21Nov16 initial pin mapping
 print "Version:", Version
 import threading
 import socket
@@ -451,7 +450,9 @@ class ScratchSender(threading.Thread):
         # Normal action is to just send updates to pin values but this can be modified if known addon in use
         sensor_name = "pin" + str(pin)
         sensorValue = str(value)
-        if "ladder" in ADDON:
+        if sghGC.pinMapName[pin] is not None:
+            sensor_name = sghGC.pinMapName[pin]
+        elif "ladder" in ADDON:
             # do ladderboard stuff
             sensor_name = "switch" + str([0, 21, 19, 24, 26].index(pin))
         elif "motorpitx" in ADDON:
@@ -647,6 +648,7 @@ class ScratchSender(threading.Thread):
 
         joyx, joyy, accelx, accely, accelz, button = [0, 0, 0, 0, 0, 0]
         lastAngle = 0
+        sghGC.pinMapName = [None] * sghGC.numOfPins
         if wii is not None:
             sensor_name = 'angle'
             bcast_str = '"' + sensor_name + '" ' + str(int(0))
@@ -1775,9 +1777,77 @@ class ScratchListener(threading.Thread):
             self.matrixUse = int(rtnNumeric(ADDON[9 + ADDON.index('neopixels'):], 64))
         if ("piconzero" in ADDON):
             self.matrixUse = 64
+            
+        if self.bFindValue("matrixuse"):
+            # print "mu" , self.value
+            if self.value == '4':
+                self.matrixUse = 4
+                self.matrixMult = 4
+                self.matrixLimit = 4
+                self.matrixRangemax = 2
+                # print self.matrixMult,self.matrixLimit,self.matrixRangemax
+            elif self.value == '9':
+                self.matrixUse = 9
+                self.matrixMult = 3
+                self.matrixLimit = 2
+                self.matrixRangemax = 3
+                # print self.matrixMult,self.matrixLimit,self.matrixRangemax
+            elif self.value == '16':
+                self.matrixUse = 16
+                self.matrixMult = 2
+                self.matrixLimit = 2
+                self.matrixRangemax = 4
+                # print self.matrixMult,self.matrixLimit,self.matrixRangemax
+            else:
+                self.matrixUse = 64
+                self.matrixMult = 1
+                self.matrixLimit = 1
+                self.matrixRangemax = 8
+                # print self.matrixMult,self.matrixLimit,self.matrixRangemax
+
+
+
+        # print "outside", self.matrixMult,self.matrixLimit,self.matrixRangemax
+
+
+        if self.bFindValue("red"):
+            self.matrixRed = int(self.valueNumeric) if self.valueIsNumeric else 0
+            if self.value == "on": self.matrixRed = 255
+            if self.value == "off": self.matrixRed = 0
+
+        if self.bFindValue("green"):
+            self.matrixGreen = int(self.valueNumeric) if self.valueIsNumeric else 0
+            if self.value == "on": self.matrixGreen = 255
+            if self.value == "off": self.matrixGreen = 0
+
+        if self.bFindValue("blue"):
+            self.matrixBlue = int(self.valueNumeric) if self.valueIsNumeric else 0
+            if self.value == "on": self.matrixBlue = 255
+            if self.value == "off": self.matrixBlue = 0
+
+        if self.bFindValue("colour"):
+            #print "colour" ,self.value
+            if self.value[0] == "#":
+                try:
+                    self.value = (self.value + "00000000")[0:7]
+                    self.matrixRed = int(self.value[1:3], 16)
+                    self.matrixGreen = int(self.value[3:5], 16)
+                    self.matrixBlue = int(self.value[5:], 16)
+                    # print "matrxired", self.matrixRed
+                except:
+                    pass
+            else:
+                self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(self.value)
+                # if scolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
+                #    ledcolours[random.randint(0, 6)], (128, 128, 128))
+            # self.tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
+
+            #print "rgb", self.matrixRed, self.matrixGreen, self.matrixBlue
+            # print self.tcolours
+            
 
         if ("neopixels" in ADDON) or ("piconzero" in ADDON):
-
+            #print "processing neopixels",self.dataraw
 
             if self.bFind("pixelson"):
                 for index in range(0, self.matrixUse):
@@ -1865,18 +1935,16 @@ class ScratchListener(threading.Thread):
                 # listenLoopTime = time.time()
                 pixelProcessed = False
 
-                print "selfdata:", self.dataraw, "len:", len(self.dataraw)
-                # print "regex:",re.findall(r'\d+', self.dataraw)
-                # print "regex:",re.findall('[a-zA-Z]+', self.dataraw)
-                print "regex:", re.findall('pixel([0-9]+)',self.dataraw)# ([A-Za-z]+)', self.dataraw)
+                #print "selfdata:", self.dataraw, "len:", len(self.dataraw)
+                #print "regex:", re.findall('pixel([0-9]+)',self.dataraw)# ([A-Za-z]+)', self.dataraw)
                 regresult = re.findall('pixel([0-9]+)', self.dataraw) # ([A-Za-z]+)', self.dataraw)
-                print "reghex:", re.findall('/(0x)?[0-9a-f]+/i',self.dataraw)
+                #print "reghex:", re.findall('/(0x)?[0-9a-f]+/i',self.dataraw)
 
                 if self.bFindValue('pixel' + regresult[0]):
                     pixNum = int(regresult[0]) - 1
-                    print "pixNuM:", pixNum
+                    #print "pixNuM:", pixNum
                     pixCol = self.value
-                    print "pixCoL:", pixCol
+                    #print "pixCoL:", pixCol
                     if 0 <= pixNum <= self.matrixUse:
 
                         if pixCol == "on":
@@ -2016,72 +2084,6 @@ class ScratchListener(threading.Thread):
                 self.neoShow()
                 matrixBright(sghGC.ledDim / 100.0)
 
-        elif self.bFindValue("matrixuse"):
-            # print "mu" , self.value
-            if self.value == '4':
-                self.matrixUse = 4
-                self.matrixMult = 4
-                self.matrixLimit = 4
-                self.matrixRangemax = 2
-                # print self.matrixMult,self.matrixLimit,self.matrixRangemax
-            elif self.value == '9':
-                self.matrixUse = 9
-                self.matrixMult = 3
-                self.matrixLimit = 2
-                self.matrixRangemax = 3
-                # print self.matrixMult,self.matrixLimit,self.matrixRangemax
-            elif self.value == '16':
-                self.matrixUse = 16
-                self.matrixMult = 2
-                self.matrixLimit = 2
-                self.matrixRangemax = 4
-                # print self.matrixMult,self.matrixLimit,self.matrixRangemax
-            else:
-                self.matrixUse = 64
-                self.matrixMult = 1
-                self.matrixLimit = 1
-                self.matrixRangemax = 8
-                # print self.matrixMult,self.matrixLimit,self.matrixRangemax
-
-
-
-        # print "outside", self.matrixMult,self.matrixLimit,self.matrixRangemax
-
-
-        elif self.bFindValue("red"):
-            self.matrixRed = int(self.valueNumeric) if self.valueIsNumeric else 0
-            if self.value == "on": self.matrixRed = 255
-            if self.value == "off": self.matrixRed = 0
-
-        elif self.bFindValue("green"):
-            self.matrixGreen = int(self.valueNumeric) if self.valueIsNumeric else 0
-            if self.value == "on": self.matrixGreen = 255
-            if self.value == "off": self.matrixGreen = 0
-
-        elif self.bFindValue("blue"):
-            self.matrixBlue = int(self.valueNumeric) if self.valueIsNumeric else 0
-            if self.value == "on": self.matrixBlue = 255
-            if self.value == "off": self.matrixBlue = 0
-
-        elif self.bFindValue("colour"):
-            # print "colour" ,self.value
-            if self.value[0] == "#":
-                try:
-                    self.value = (self.value + "00000000")[0:7]
-                    self.matrixRed = int(self.value[1:3], 16)
-                    self.matrixGreen = int(self.value[3:5], 16)
-                    self.matrixBlue = int(self.value[5:], 16)
-                    # print "matrxired", self.matrixRed
-                except:
-                    pass
-            else:
-                self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(self.value)
-                # if scolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
-                #    ledcolours[random.randint(0, 6)], (128, 128, 128))
-            # self.tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
-
-            print "rgb", self.matrixRed, self.matrixGreen, self.matrixBlue
-            # print self.tcolours
 
         elif ("unicorn" in ADDON or "sensehat" in ADDON):
             ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
@@ -2682,7 +2684,7 @@ class ScratchListener(threading.Thread):
                 if len(data) > 0:  # Connection still valid so process the data received
 
                     dataIn = data
-                    print "datain", dataIn
+                    #print "datain", dataIn
 
                     # if sghGC.autoLink:
                     #     print "autolink"
@@ -2714,7 +2716,7 @@ class ScratchListener(threading.Thread):
                                 # print size, len(dataMsg)
                                 dataPrevious = dataIn  # store data and tag it onto next data read
                                 break
-                            print "msg:",dataMsg
+                            #print "msg:",dataMsg
                             dataList.append(dataMsg)
                             # if len(dataMsg) == size:  # if msg recieved is correct
                             #     if "alloff" in dataMsg:
@@ -2791,10 +2793,7 @@ class ScratchListener(threading.Thread):
                 dataList = newList
                 # print "new dataList" ,dataList
 
-            # print "GPIOPLus" , GPIOPlus
-            # print
-            # print "Processing Start"
-            print "dataList to be processed", dataList
+            #print "dataList to be processed", dataList
             for dataItem in dataList:
                 # print dataItem
                 # dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
@@ -2870,12 +2869,12 @@ class ScratchListener(threading.Thread):
                             if broadcast_str != "":
                                 self.sendSocket2Broadcast(broadcast_str)
 
-                    varList = self.dataraw.strip().split(" ")
-                    if varList[0] == "sensor-update":
-                        for i in range(1, len(varList), 2):
-                            sensor_name = varList[i]
-                            sensor_value = varList[i + 1]
-                            self.varDict[sensor_name] = sensor_value
+                    # varList = self.dataraw.strip().split(" ")
+                    # if varList[0] == "sensor-update":
+                        # for i in range(1, len(varList), 2):
+                            # sensor_name = varList[i]
+                            # sensor_value = varList[i + 1]
+                            # self.varDict[sensor_name] = sensor_value
                             # print "varDict:" , self.varDict
 
                     if self.vFindValue("bright"):
@@ -6740,7 +6739,7 @@ class ScratchListener(threading.Thread):
                                 pass
                         # print cheerList
                         cheerColour = cheerList[lookupColour - 1]
-                        print "new colour", cheerColour
+                        #print "new colour", cheerColour
                         bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
                         msgQueue.put((5, bcast_str))
                         if self.carryOnInUse == True:
@@ -6837,10 +6836,10 @@ class ScratchListener(threading.Thread):
                         # print "params$$$"
                         try:
                             if len(params) == 2:
-                                print publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker)
+                                print publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
                                 print "mqtt published", sghGC.mqttBroker, params[0], params[1]
                             elif len(params) == 3:
-                                print publish.single(params[0], payload=params[1], qos=2, hostname=params[2])
+                                print publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
                                 print "mqtt published", params[2], params[0], params[1]
                         except:
                             # print
@@ -6870,6 +6869,12 @@ class ScratchListener(threading.Thread):
 
                     if self.bFind('shutdownpi'):
                         os.system('sudo shutdown -h "now"')
+                        
+                    if self.bFindValue('mappin'):
+                        params = self.value.split(',')
+                        sghGC.pinMapName[int(params[0])] = params[1]  
+                    
+                    
 
 
                         # print "encoderinUse state" ,sghGC.encoderInUse
