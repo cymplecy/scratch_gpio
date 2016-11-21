@@ -19,7 +19,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 # V1.1 24June16
 # V1.1.1 28Jun16 - revert regression on constants - idiot!
-
+# Version = 'v7.1.200'  #21Nov16 Map Pins
 
 import RPi.GPIO as GPIO
 import time
@@ -124,6 +124,8 @@ class GPIOController :
         self.lightInfo = False
         self.autoLink = False
         self.linkPrefix = None
+        
+        self.pinMapName = [None] * self.numOfPins  #  from sgh8        
 
         self.validPins =      [ 3,         5,       7, 8,   10,11,12,13,   15,16,   18,19,   21,22,23,24,   26]
         

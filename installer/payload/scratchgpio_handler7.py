@@ -17,7 +17,7 @@
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)lly
-Version = 'v7.1.100'  #24Jun16 Bypass PWM threading issue'
+Version = 'v7.1.200'  #21Nov16 Map Pins
 print "Version:",Version
 import threading
 import socket
@@ -327,7 +327,9 @@ class ScratchSender(threading.Thread):
         #Normal action is to just send updates to pin values but this can be modified if known addon in use
         sensor_name = "pin" + str(pin)
         sensorValue = str(value)
-        if "ladder" in ADDON:
+        if sghGC.pinMapName[pin] is not None:
+            sensor_name = sghGC.pinMapName[pin]
+        elif "ladder" in ADDON:
             #do ladderboard stuff
             sensor_name = "switch" + str([0, 21, 19, 24, 26].index(pin))
         elif "motorpitx" in ADDON:
@@ -526,6 +528,7 @@ class ScratchSender(threading.Thread):
 
         joyx, joyy, accelx, accely, accelz, button = [0, 0, 0, 0, 0, 0]
         lastAngle = 0
+        sghGC.pinMapName = [None] * sghGC.numOfPins        
         if wii is not None:
             sensor_name = 'angle'
             bcast_str = '"' + sensor_name + '" ' + str(int(0))
@@ -6279,7 +6282,14 @@ class ScratchListener(threading.Thread):
                             ColourTracker.limits[int(index)] = int(value)
                             print "limits:", ColourTracker.limits
 
-
+                    if self.bFindValue('mappin'):
+                        try:
+                            params = self.value.split(',')
+                            sghGC.pinMapName[int(params[0])] = params[1]  
+                        except:
+                            print "something went wrong with mappin"
+                            pass
+                        
                     #end of broadcast check
 
                     if self.bFind('shutdownpi'):
@@ -6287,8 +6297,8 @@ class ScratchListener(threading.Thread):
 
 
                     #print "encoderinUse state" ,sghGC.encoderInUse
-                    if sghGC.encoderInUse == 0:
-                        msgQueue.put((5,'sensor-update "encoder" "stopped"'))  # inform Scratch that turning is finished
+#                    if sghGC.encoderInUse == 0:
+#                        msgQueue.put((5,'sensor-update "encoder" "stopped"'))  # inform Scratch that turning is finished
 
                 if 'stop handler' in dataraw:
                     print "stop handler msg setn from Scratch"
