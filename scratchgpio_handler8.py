@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.1.07'  # 21Nov16 initial pin mapping
+Version = 'v8.1.08'  # 22Nov16 add trt exept pin mapping
 print "Version:", Version
 import threading
 import socket
@@ -289,8 +289,8 @@ def on_connect(client, userdata, rc):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print
-    print time.asctime(), "\nTopic: ", msg.topic + '\nMessage: ' + str(msg.payload), "\nreceived over MQTT"
+    #print
+    #print time.asctime(), "\nTopic: ", msg.topic + '\nMessage: ' + str(msg.payload), "\nreceived over MQTT"
     msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
     time.sleep(0.1)
     msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))
@@ -6836,11 +6836,11 @@ class ScratchListener(threading.Thread):
                         # print "params$$$"
                         try:
                             if len(params) == 2:
-                                print publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
-                                print "mqtt published", sghGC.mqttBroker, params[0], params[1]
+                                publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
+                                #print "mqtt published", sghGC.mqttBroker, params[0], params[1]
                             elif len(params) == 3:
-                                print publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
-                                print "mqtt published", params[2], params[0], params[1]
+                                publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
+                                #print "mqtt published", params[2], params[0], params[1]
                         except:
                             # print
                             # print "MQTT send failed"
@@ -6871,8 +6871,12 @@ class ScratchListener(threading.Thread):
                         os.system('sudo shutdown -h "now"')
                         
                     if self.bFindValue('mappin'):
-                        params = self.value.split(',')
-                        sghGC.pinMapName[int(params[0])] = params[1]  
+                        try:
+                            params = self.value.split(',')
+                            sghGC.pinMapName[int(params[0])] = params[1]  
+                        except:
+                            print "mappin failed"
+                            pass
                     
                     
 
