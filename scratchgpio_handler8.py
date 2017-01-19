@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.1.08'  # 22Nov16 add trt exept pin mapping
+Version = 'v8.1.15'  # 6Jan17 debugging carryon
 print "Version:", Version
 import threading
 import socket
@@ -280,11 +280,11 @@ def on_connect(client, userdata, rc):
     print("Connected with result code " + str(rc))
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
-    # try:
-    client.subscribe(sghGC.mqttTopic)
-    # except:
-    #    print "mqtt subscribe failed"
-    #    pass
+    try:
+        client.subscribe(sghGC.mqttTopic)
+    except:
+        print "mqtt subscribe failed"
+        pass
 
 
 # The callback for when a PUBLISH message is received from the server.
@@ -1152,7 +1152,7 @@ class ScratchListener(threading.Thread):
         self.tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
                          'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
                          'orange': (255, 128, 0), 'skyblue': (0, 127, 255), 'purple': (128, 0, 128),
-                         'yellowgreen': (127, 255, 127), 'pink': (254, 0, 255), 'brightgreen': (1, 255, 0),
+                         'yellowgreen': (127, 255, 127), 'pink': (255, 192, 203), 'brightgreen': (1, 255, 0),
                          'brown': (165, 42, 42), 'aqua': (90, 213, 213), 'grey': (128, 128, 128),
                          'grey2': (127, 127, 127), 'black': (0, 0, 0),
                          'white': (255, 255, 255),
@@ -1898,36 +1898,6 @@ class ScratchListener(threading.Thread):
                     # except:
                     #    pass
 
-                if self.bFindValue("pixels", "on"):
-                    try:
-                        start, end = self.value.split(",")
-                        start = int(start)
-                        if end[0] == "+":
-                            end = start + int(end[1:])
-                        end = int(end)
-                        for loop in range(start, end + 1):
-                            self.setNeoPixel(loop, self.matrixRed, self.matrixGreen,
-                                             self.matrixBlue)
-                        self.neoShow()
-                        pixelProcessed = True
-                    except:
-                        pass
-
-                if self.bFindValue("pixels", "off"):
-                    self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB("black")
-                    try:
-                        start, end = self.value.split(",")
-                        start = int(start)
-                        if end[0] == "+":
-                            end = start + int(end[1:])
-                        end = int(end)
-                        for loop in range(start, end + 1):
-                            self.setNeoPixel(loop, self.matrixRed, self.matrixGreen,
-                                             self.matrixBlue)
-                        self.neoShow()
-                        pixelProcessed = True
-                    except:
-                        pass
 
             elif self.bFind("pixel"):
                 # print
@@ -1949,13 +1919,13 @@ class ScratchListener(threading.Thread):
 
                         if pixCol == "on":
                             self.setNeoPixel(int(pixNum), self.matrixRed, self.matrixGreen, self.matrixBlue)
-                            # print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
+                            #print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
                             self.neoShow()
                             pixelProcessed = True
 
                         elif pixCol == "off":
-                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB("black")
-                            self.setNeoPixel(int(pixNum), self.matrixRed, self.matrixGreen, self.matrixBlue)
+                            #self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB("black")
+                            self.setNeoPixel(int(pixNum), 0,0,0)
                             # print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
                             self.neoShow()
                             pixelProcessed = True
@@ -2656,12 +2626,12 @@ class ScratchListener(threading.Thread):
         dataPrevious = ""
         debugLogging = False
 
-        # listenLoopTime = time.time() + 10000
+        listenLoopTime = time.time()
         datawithCAPS = ''
         # This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
         while not self.stopped():
 
-            # print "ListenLoopTime",listenLoopTime-time.time()
+
 
             # lcount += 1
             # print lcount
@@ -2774,9 +2744,10 @@ class ScratchListener(threading.Thread):
             # print
             # print
             # print "old datalist" , dataList
-            # listenLoopTime = time.time()
             # print
-            # print "Start loop time"
+
+            listenLoopTime = time.time()
+            
             if any("move" in s for s in dataList) or any(
                             "turn" in s for s in dataList):  # or any("cheerlight" in s for s in dataList):
                 # #print "move/turn found in dataList so going to expandList"
@@ -2793,12 +2764,19 @@ class ScratchListener(threading.Thread):
                 dataList = newList
                 # print "new dataList" ,dataList
 
-            #print "dataList to be processed", dataList
+            print "dataList to be processed", dataList
+            #if "\\x" in dataList:
+            #    print "purging"
+            #    dataList = []
             for dataItem in dataList:
-                # print dataItem
+                print 
+                print "datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                print "dataIteM:",dataItem
                 # dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 dataraw = ' '
+
                 # print "CAPS", datawithCAPS
+                #try:
                 for item in shlex.split(dataItem):
                     # print "item in space remover" ,item
                     if item[0:4] == 'line':
@@ -2809,6 +2787,10 @@ class ScratchListener(threading.Thread):
                         dataraw = dataraw + ''.join(item.replace(' ', chr(254))) + ' '
                     else:
                         dataraw = dataraw + ''.join(item.replace(' ', '')) + ' '
+                #except:
+                #    print "error in shlex.split"
+                #    dataraw = ''
+                #    pass
                 self.dataraw = dataraw
 
                 logging.debug("processing dataItems: %s", self.dataraw)
@@ -6726,6 +6708,9 @@ class ScratchListener(threading.Thread):
                         self.carryOnInUse = True
 
                     if self.bFindValue("getcheerlights"):
+
+                        self.carryOn = False
+                        cheertime = time.time()
                         # print self.value
                         lookupColour = min(10, max(1, int(self.valueNumeric))) if self.valueIsNumeric else 1
                         # print(lookupColour)
@@ -6739,12 +6724,16 @@ class ScratchListener(threading.Thread):
                                 pass
                         # print cheerList
                         cheerColour = cheerList[lookupColour - 1]
+
                         #print "new colour", cheerColour
                         bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
                         msgQueue.put((5, bcast_str))
+                        print "timE:" , time.time() - cheertime
                         if self.carryOnInUse == True:
                             bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
                             msgQueue.put((1, bcast_str))
+                            print "carryon true"
+                            time.sleep(2)
                             # print "data valid", time.time()
 
                     if "playhat" in ADDON:
@@ -6830,7 +6819,7 @@ class ScratchListener(threading.Thread):
                         except:
                             pass
 
-                    if self.bFindValue("sendmqtt"):
+                    if (self.bFindValue("sendmqtt") or self.bFindValue("mqttpublish")):
                         # print "value$$$",self.value
                         params = self.value.split(',')
                         # print "params$$$"
@@ -6843,26 +6832,27 @@ class ScratchListener(threading.Thread):
                                 #print "mqtt published", params[2], params[0], params[1]
                         except:
                             # print
-                            # print "MQTT send failed"
+                            print "MQTT send failed"
                             # print
                             pass
 
                     if self.bFindValue("mqttsubscribe"):
                         print "inside subscribe"
-                        if sghGC.mqttListener is not None:
-                            sghGC.mqttClient.loop_stop()
-                            sghGC.mqttClient.disconnect()
-                            print "mqttlistener stopped"
+                        try:                        
+                            if sghGC.mqttListener is not None:
+                                sghGC.mqttClient.loop_stop()
+                                sghGC.mqttClient.disconnect()
+                                print "mqttlistener stopped"
 
-                        # try:
-                        sghGC.mqttTopic = self.value
-                        sghGC.mqttClient.connect(sghGC.mqttBroker, 1883)
-                        sghGC.mqttClient.loop_start()
-                        print "mqttsubscriber started"
-                        sghGC.mqttListener = True
-                        # except:
-                        #    print "MQTT send failed"
-                        #    pass
+
+                            sghGC.mqttTopic = self.value
+                            sghGC.mqttClient.connect(sghGC.mqttBroker, 1883)
+                            sghGC.mqttClient.loop_start()
+                            print "mqttsubscriber started"
+                            sghGC.mqttListener = True
+                        except:
+                            print "MQTT subscribe failed"
+                            pass
                         print "listener", sghGC.mqttListener
 
                     # end of broadcast check
@@ -6877,6 +6867,12 @@ class ScratchListener(threading.Thread):
                         except:
                             print "mappin failed"
                             pass
+
+                    self.carryOn = False
+                    self.carryOnInUse = True
+                    print "wait"
+                    bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                    msgQueue.put((1, bcast_str))                              
                     
                     
 
@@ -6889,14 +6885,13 @@ class ScratchListener(threading.Thread):
                     print "stop handler msg setn from Scratch"
                     cleanup_threads((listener, sender))
                     sys.exit()
-                if self.carryOnInUse == True:
-                    bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
-                    msgQueue.put((2, bcast_str))
+                #if self.carryOnInUse == True:
+                #    bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                #    msgQueue.put((2, bcast_str))
 
-                self.carryOn = False
+              
 
-
-                # print "loop timE:",time.time() - listenLoopTime
+                print "loop timE:",time.time() - listenLoopTime
 
         print "Listener Stopped"
         # else:
@@ -6940,6 +6935,7 @@ class SendMsgsToScratch(threading.Thread):
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
             try:
                 self.scratch_socket.send(b + cmd)
+                print "msg sent to Scratch", cmd
             except:
                 print "failed to send this message to Scratch", cmd
                 pass
