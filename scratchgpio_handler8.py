@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.00'  # 20Jan17 debugging piconzero
+Version = 'v8.2.01'  # 20Jan17 debugging piconzero sensor prints removed
 print "Version:", Version
 import threading
 import socket
@@ -4442,9 +4442,9 @@ class ScratchListener(threading.Thread):
                                 pz.setOutput(loop, svalue)
 
                         for loop in range(0, 6):
-                            if self.vFindOnOff("pin" + str(loop)):
+                            if self.vFindOnOff("output" + str(loop)):
                                 svalue = self.OnOrOff
-                                print "pin", loop, svalue
+                                print "output", loop, svalue
                                 pz.setOutputConfig(loop, 0)
                                 pz.setOutput(loop, svalue)
                             if self.vFindValue("power" + str(loop)):
@@ -5679,7 +5679,7 @@ class ScratchListener(threading.Thread):
                                 pz.setOutput(loop, svalue)
 
                         for loop in range(0, 6):
-                            if self.bFindOnOff("pin" + str(loop) + ","):
+                            if self.bFindOnOff("output" + str(loop) + ","):
                                 svalue = self.OnOrOff
                                 print "pin", loop, svalue
                                 pz.setOutputConfig(loop, 0)
@@ -6934,7 +6934,7 @@ class SendMsgsToScratch(threading.Thread):
             b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
             try:
                 self.scratch_socket.send(b + cmd)
-                print "msg sent to Scratch", cmd
+                #print "msg sent to Scratch", cmd
             except:
                 print "failed to send this message to Scratch", cmd
                 pass
