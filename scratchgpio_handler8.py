@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.1.15'  # 6Jan17 debugging carryon
+Version = 'v8.2.00'  # 20Jan17 debugging piconzero
 print "Version:", Version
 import threading
 import socket
@@ -118,14 +118,13 @@ except:
     print "Minecraft NOT imported OK"
     pass
 
-try:
-    import piconzero as pz
-
-    pz.init()
-    print "importing piconzero"
-except:
-    print "Warning: PiConZero NOT imported - missing module"
-    pass
+#try:
+import piconzero as pz
+pz.init()
+print "importing piconzero"
+#except:
+#    print "Warning: PiConZero NOT imported - missing module"
+ #   pass
 
 try:
     import paho.mqtt.publish as publish
