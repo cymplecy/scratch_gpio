@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.01'  # 20Jan17 debugging piconzero sensor prints removed
+Version = 'v8.2.10'  # 27Jan17 adjust ment for try except piconzero
 print "Version:", Version
 import threading
 import socket
@@ -118,19 +118,19 @@ except:
     print "Minecraft NOT imported OK"
     pass
 
-#try:
-import piconzero as pz
-pz.init()
-print "importing piconzero"
-#except:
-#    print "Warning: PiConZero NOT imported - missing module"
- #   pass
+try:
+    import piconzero as pz
+    pz.init()
+    print "importing piconzero"
+except:
+    print "Warning: PiConZero NOT imported - enable i2c in raspi-config advanced"
+    pass
 
 try:
     import paho.mqtt.publish as publish
     import paho.mqtt.client as mqtt
 except:
-    print "Warning: MQTT Paho NOT imported - missing module"
+    print "Warning: MQTT Paho NOT imported - run sudo pip install paho-mqtt"
     pass
 
 try:
