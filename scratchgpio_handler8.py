@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.10'  # 27Jan17 adjust ment for try except piconzero
+Version = 'v8.2.012'  # 3Feb17 comment out re-broadcasting mqtt rcvd messages
 print "Version:", Version
 import threading
 import socket
@@ -291,8 +291,8 @@ def on_message(client, userdata, msg):
     #print
     #print time.asctime(), "\nTopic: ", msg.topic + '\nMessage: ' + str(msg.payload), "\nreceived over MQTT"
     msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
-    time.sleep(0.1)
-    msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))
+    #time.sleep(0.1)
+    #msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))
 
 
 class MyError(Exception):
