@@ -17,8 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.012'  # 3Feb17 comment out re-broadcasting mqtt rcvd messages
-print "Version:", Version
+Version = 'v8.2.013'  # 6Feb17 remove carry on action with cheerlights
 import threading
 import socket
 import time
@@ -6699,12 +6698,12 @@ class ScratchListener(threading.Thread):
                                 svalue = (svalue + 150)
                                 sghGC.pinServod(pin, svalue)
 
-                    if self.bFind("setwait"):
-                        print "wait"
-                        bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
-                        msgQueue.put((1, bcast_str))
-                        self.carryOn = False
-                        self.carryOnInUse = True
+                    # if self.bFind("setwait"):
+                        # print "wait"
+                        # bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                        # msgQueue.put((1, bcast_str))
+                        # self.carryOn = False
+                        # self.carryOnInUse = True
 
                     if self.bFindValue("getcheerlights"):
 
@@ -6727,13 +6726,13 @@ class ScratchListener(threading.Thread):
                         #print "new colour", cheerColour
                         bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
                         msgQueue.put((5, bcast_str))
-                        print "timE:" , time.time() - cheertime
-                        if self.carryOnInUse == True:
-                            bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
-                            msgQueue.put((1, bcast_str))
-                            print "carryon true"
-                            time.sleep(2)
-                            # print "data valid", time.time()
+                        # print "timE:" , time.time() - cheertime
+                        # if self.carryOnInUse == True:
+                            # bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
+                            # msgQueue.put((1, bcast_str))
+                            # print "carryon true"
+                            # time.sleep(2)
+                            # # print "data valid", time.time()
 
                     if "playhat" in ADDON:
 
