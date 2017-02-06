@@ -7,6 +7,11 @@ class GetJSONFromURL():
     def __init__(self):
         self.lastID = 0
 
+    def flatten_dict(self,dd, separator='_', prefix=''):
+        return { prefix + separator + k if prefix else k : v
+                 for kk, vv in dd.items()
+                 for k, v in self.flatten_dict(vv, separator, kk).items()
+                 } if isinstance(dd, dict) else { prefix : dd }        
         
     def parse_dict(self,init, lkey=''):
         ret = {}
@@ -25,10 +30,7 @@ class GetJSONFromURL():
         #print feedData
         jsonFeed.close()
         data = json.loads(feedData)
-        print
-        #print  data.get("temp")
-        print self.parse_dict(data)
-        print
-        return self.parse_dict(data)
+        #return self.parse_dict(data)
+        return self.flatten_dict(data)
 
           

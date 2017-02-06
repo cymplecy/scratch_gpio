@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.013'  # 6Feb17 remove carry on action with cheerlights
+Version = 'v8.2.014'  # 7Feb17 getweather added
 import threading
 import socket
 import time
@@ -42,6 +42,9 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 import urllib2
+from sgh_GetJSONFromURL import GetJSONFromURL
+
+getjsonfromurl = GetJSONFromURL()
 
 # import uinput
 try:
@@ -6733,6 +6736,38 @@ class ScratchListener(threading.Thread):
                             # print "carryon true"
                             # time.sleep(2)
                             # # print "data valid", time.time()
+
+                    if self.bFindValue("getweather"):
+                        params = self.value.split(',')
+                        wappid = "4041655e60abaea9a9134b6e78ca864f"
+                        wcitycountry = "Chorley,uk"
+                        if len(params) > 0:
+                            if len(params[-1]) > 20: 
+                                wappid = params[-1]
+                                params = params[0:-1]
+                            if len(params) > 1:
+                                wcitycountry = params[0] + "," + params[1]
+                            else:
+                                wcitycountry = params[0]
+                            
+                        
+                        weatherdata = getjsonfromurl.getJSON("http://api.openweathermap.org/data/2.5/weather?q=" + wcitycountry + ",&appid=" + wappid)
+                        print weatherdata
+                        bcast_str = 'sensor-update "%s" %s' % ("outsidetemperature", str(float(weatherdata.get("main_temp")) - 273.15))
+                        msgQueue.put((5, bcast_str))
+                        bcast_str = 'sensor-update "%s" %s' % ("sunset", dt.datetime.fromtimestamp(weatherdata.get("sys_sunset")).strftime('%H%M'))
+                        msgQueue.put((5, bcast_str))
+                        bcast_str = 'sensor-update "%s" %s' % ("sunrise", dt.datetime.fromtimestamp(weatherdata.get("sys_sunrise")).strftime('%H%M'))
+                        msgQueue.put((5, bcast_str))
+                        bcast_str = 'sensor-update "%s" %s' % ("pressure", weatherdata.get("main_pressure"))
+                        msgQueue.put((5, bcast_str))          
+                        bcast_str = 'sensor-update "%s" %s' % ("windspeed", weatherdata.get("wind_speed"))
+                        msgQueue.put((5, bcast_str))    
+                        bcast_str = 'sensor-update "%s" %s' % ("winddirection", weatherdata.get("wind_deg"))
+                        msgQueue.put((5, bcast_str))                              
+
+
+                          
 
                     if "playhat" in ADDON:
 

@@ -3,18 +3,10 @@ import scratch
 import os as os
 import paho.mqtt.client as mqtt
 import time as time
+from sgh_GetJSONFromURL import GetJSONFromURL
 
+getjsonfromurl = GetJSONFromURL()
 
-def on_connect(client, userdata, rc):
-    print("Connected with result code "+str(rc))
-    # Subscribing in on_connect() means that if we lose the connection and
-    # reconnect then subscriptions will be renewed.
-    client.subscribe("cycy42/+")
-
-# The callback for when a PUBLISH message is received from the server.
-def on_message(client, userdata, msg):
-    print
-    print time.asctime(), " Topic: ", msg.topic+'\nMessage: '+str(msg.payload), " received over MQTT"
 
     
 def listen():
@@ -25,9 +17,7 @@ def listen():
            raise StopIteration
 
 s = scratch.Scratch()
-client = mqtt.Client()
-client.on_connect = on_connect
-client.on_message = on_message
+
 
 result = False
 while result is False:
@@ -43,9 +33,11 @@ while result is False:
 
 for msg in listen():
     print msg
-    # if msg[0] == 'broadcast':
-        # if msg[1][:4] == "gpio":
-            # os.system(msg[1])
+    if msg[0] == 'broadcast':
+        if msg[1][:10] == "getweather":
+            data = getjsonfromurl.getJSON("http://api.openweathermap.org/data/2.5/weather?q=Chorley,uk&appid=4041655e60abaea9a9134b6e78ca864f")
+            print data
+            s.sensorupdate({"main_temp" : data.get("main_temp")})
         # elif msg[1][:4] == "mqtt":
             # print "mqtt"
             # if msg[1][:10] == "mqttbroker":
