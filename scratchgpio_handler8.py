@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.014'  # 7Feb17 getweather added
+Version = 'v8.2.015'  # 9Feb17 Change subscribe and broker connect philopshy
 import threading
 import socket
 import time
@@ -284,7 +284,7 @@ def on_connect(client, userdata, rc):
     try:
         client.subscribe(sghGC.mqttTopic)
     except:
-        print "mqtt subscribe failed"
+        print "WARNING NOT ERROR subscribe inside connect failed"
         pass
 
 
@@ -4744,6 +4744,19 @@ class ScratchListener(threading.Thread):
 
                     if self.vFindValue("mqttbroker"):
                         sghGC.mqttBroker = self.value
+                        try:                        
+                            if sghGC.mqttListener is not None:
+                                sghGC.mqttClient.loop_stop()
+                                sghGC.mqttClient.disconnect()
+                                print "mqttlistener stopped"
+
+                            sghGC.mqttClient.connect(sghGC.mqttBroker, 1883)
+                            sghGC.mqttClient.loop_start()
+                            print "mqttsubscriber started"
+                            sghGC.mqttListener = True
+                        except:
+                            print "MQTT broker request failed"
+                            pass                        
 
                 ### Check for Broadcast type messages being received
                 # print "loggin level",debugLogging
@@ -6859,10 +6872,10 @@ class ScratchListener(threading.Thread):
                         try:
                             if len(params) == 2:
                                 publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
-                                #print "mqtt published", sghGC.mqttBroker, params[0], params[1]
+                                print "mqtt published", sghGC.mqttBroker, params[0], params[1]
                             elif len(params) == 3:
                                 publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
-                                #print "mqtt published", params[2], params[0], params[1]
+                                print "mqtt published", params[2], params[0], params[1]
                         except:
                             # print
                             print "MQTT send failed"
@@ -6872,21 +6885,13 @@ class ScratchListener(threading.Thread):
                     if self.bFindValue("mqttsubscribe"):
                         print "inside subscribe"
                         try:                        
-                            if sghGC.mqttListener is not None:
-                                sghGC.mqttClient.loop_stop()
-                                sghGC.mqttClient.disconnect()
-                                print "mqttlistener stopped"
-
-
                             sghGC.mqttTopic = self.value
-                            sghGC.mqttClient.connect(sghGC.mqttBroker, 1883)
-                            sghGC.mqttClient.loop_start()
+                            sghGC.mqttClient.subscribe(sghGC.mqttTopic)
                             print "mqttsubscriber started"
-                            sghGC.mqttListener = True
                         except:
                             print "MQTT subscribe failed"
                             pass
-                        print "listener", sghGC.mqttListener
+
 
                     # end of broadcast check
 
@@ -7270,6 +7275,7 @@ while True:
     if (cycle_trace == 'start'):
         ADDON = ""
         INVERT = False
+        sghGC.mqttTopic = None
         # open the socket
         print 'Starting to connect...',
         the_socket = create_socket(host, PORT)
