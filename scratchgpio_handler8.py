@@ -291,9 +291,9 @@ def on_connect(client, userdata, rc):
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     #print
-    #print time.asctime(), "\nTopic: ", msg.topic + '\nMessage: ' + str(msg.payload), "\nreceived over MQTT"
+    print "....", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "Topic: ", msg.topic + ' Message: ' + str(msg.payload), " rcvd"
     msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
-    #time.sleep(0.1)
+    time.sleep(0.1)
     #msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))
 
 
@@ -2641,7 +2641,7 @@ class ScratchListener(threading.Thread):
                 BUFFER_SIZE = 512  # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(
                     BUFFER_SIZE)  # get the data from the socket plus any data not yet processed
-                logging.debug("datalen: %s", len(data))
+                print ("datalen: %s", len(data))
                 logging.debug("RAW: %s", data)
 
                 if "send-vars" in data:
@@ -2765,35 +2765,41 @@ class ScratchListener(threading.Thread):
                 dataList = newList
                 # print "new dataList" ,dataList
 
+            print
+            print "STARTING OUTSIDE LOOP"
             print "dataList to be processed", dataList
             #if "\\x" in dataList:
             #    print "purging"
             #    dataList = []
             for dataItem in dataList:
                 print 
-                print "datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-                print "dataIteM:",dataItem
+                print "    datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                print "    dataIteM:",dataItem
                 # dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 dataraw = ' '
 
                 # print "CAPS", datawithCAPS
-                #try:
-                for item in shlex.split(dataItem):
-                    # print "item in space remover" ,item
-                    if item[0:4] == 'line':
-                        origpos = datawithCAPS.lower().find(item)
-                        item = datawithCAPS[origpos:origpos + len(item)]
-                        item = 'line' + item[4:].strip()
-                        item = item[0:5] + item[5:].lstrip()
-                        dataraw = dataraw + ''.join(item.replace(' ', chr(254))) + ' '
-                    else:
-                        dataraw = dataraw + ''.join(item.replace(' ', '')) + ' '
-                #except:
-                #    print "error in shlex.split"
-                #    dataraw = ''
-                #    pass
+                try:
+                    for item in shlex.split(dataItem):
+                        # print "item in space remover" ,item
+                        if item[0:4] == 'line':
+                            origpos = datawithCAPS.lower().find(item)
+                            item = datawithCAPS[origpos:origpos + len(item)]
+                            item = 'line' + item[4:].strip()
+                            item = item[0:5] + item[5:].lstrip()
+                            dataraw = dataraw + ''.join(item.replace(' ', chr(254))) + ' '
+                        else:
+                            dataraw = dataraw + ''.join(item.replace(' ', '')) + ' '
+                except:
+                    print "error in shlex.split"
+                    dataraw = ''
+                    break
                 self.dataraw = dataraw
-
+                if self.dataraw == '':
+                    print
+                    print "NO DATA - BREAKING LOOP"
+                    print "======================="
+                    print
                 logging.debug("processing dataItems: %s", self.dataraw)
                 # print ("processing dataItems:", self.dataraw)
                 # print "Loop processing"
@@ -6866,21 +6872,23 @@ class ScratchListener(threading.Thread):
                             pass
 
                     if (self.bFindValue("sendmqtt") or self.bFindValue("mqttpublish")):
+                        #time.sleep(1)
                         # print "value$$$",self.value
-                        params = self.value.split(',')
-                        # print "params$$$"
-                        try:
-                            if len(params) == 2:
-                                publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
-                                print "mqtt published", sghGC.mqttBroker, params[0], params[1]
-                            elif len(params) == 3:
-                                publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
-                                print "mqtt published", params[2], params[0], params[1]
-                        except:
-                            # print
-                            print "MQTT send failed"
-                            # print
-                            pass
+                        msgQueue.put((11, self.value))                        
+                        # params = self.value.split(',')
+                        # # print "params$$$"
+                        # try:
+                            # if len(params) == 2:
+                                # publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
+                                # print "----mqtt published", sghGC.mqttBroker, params[0], params[1]
+                            # elif len(params) == 3:
+                                # publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
+                                # print "----mqtt published", params[2], params[0], params[1]
+                        # except:
+                            # # print
+                            # print "MQTT send failed"
+                            # # print
+                            # pass
 
                     if self.bFindValue("mqttsubscribe"):
                         print "inside subscribe"
@@ -6906,11 +6914,11 @@ class ScratchListener(threading.Thread):
                             print "mappin failed"
                             pass
 
-                    self.carryOn = False
-                    self.carryOnInUse = True
-                    print "wait"
-                    bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
-                    msgQueue.put((1, bcast_str))                              
+                    #self.carryOn = False
+                    #self.carryOnInUse = True
+                    #print "wait"
+                    #bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                    #msgQueue.put((1, bcast_str))                              
                     
                     
 
@@ -6967,33 +6975,32 @@ class SendMsgsToScratch(threading.Thread):
                 while not self.msgQueue.empty():
                     dummy = self.msgQueue.get()
                 break
-            # if priority == 1:
-            #     print "deque P1 at", time.time()
-            n = len(cmd)
-            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
-            try:
-                self.scratch_socket.send(b + cmd)
-                #print "msg sent to Scratch", cmd
-            except:
-                print "failed to send this message to Scratch", cmd
-                pass
-                # if self.scratch_socket2 is not None:
-                # if sghGC.linkPrefix is not None:
-                # dataOut = cmd.replace(' "',' "#' + sghGC.linkPrefix + '#')
-                # else:
-                # dataOut = cmd.replace(' "',' "#' + 'other' + '#')
-                # n = len(dataOut)
-                # b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                # chr(n & 0xFF))
-                # if sghGC.autoLink:
-                # try:
-                # self.scratch_socket2.send(b + dataOut)
-                # print "auto sensor update Sent", dataOut
-                # except:
-                # print "failed to send this message to other computer", dataOut
-                # pass
-
-                # print "message sent:" ,cmd
+            if priority == 11:
+                params = cmd.split(',')
+                # print "params$$$"
+                try:
+                    if len(params) == 2:
+                        publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
+                        print "----mqtt published", sghGC.mqttBroker, params[0], params[1]
+                    elif len(params) == 3:
+                        publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
+                        print "----mqtt published", params[2], params[0], params[1]
+                except:
+                    # print
+                    print "MQTT send failed"
+                    # print
+                    pass
+            else:
+                # if priority == 1:
+                #     print "deque P1 at", time.time()
+                n = len(cmd)
+                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
+                try:
+                    self.scratch_socket.send(b + cmd)
+                    #print "msg sent to Scratch", cmd
+                except:
+                    print "failed to send this message to Scratch", cmd
+                    pass
 
         print "SendMsgsToScratch stopped"
 
