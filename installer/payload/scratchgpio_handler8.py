@@ -17,8 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.00'  # 20Jan17 debugging piconzero
-print "Version:", Version
+Version = 'v8.2.016'  # 15Feb17 Quick release  for Chris wilde
 import threading
 import socket
 import time
@@ -43,6 +42,9 @@ import random
 import Queue
 from sgh_cheerlights import CheerLights
 import urllib2
+from sgh_GetJSONFromURL import GetJSONFromURL
+
+getjsonfromurl = GetJSONFromURL()
 
 # import uinput
 try:
@@ -118,19 +120,19 @@ except:
     print "Minecraft NOT imported OK"
     pass
 
-#try:
-import piconzero as pz
-pz.init()
-print "importing piconzero"
-#except:
-#    print "Warning: PiConZero NOT imported - missing module"
- #   pass
+try:
+    import piconzero as pz
+    pz.init()
+    print "importing piconzero"
+except:
+    print "Warning: PiConZero NOT imported - enable i2c in raspi-config advanced"
+    pass
 
 try:
     import paho.mqtt.publish as publish
     import paho.mqtt.client as mqtt
 except:
-    print "Warning: MQTT Paho NOT imported - missing module"
+    print "Warning: MQTT Paho NOT imported - run sudo pip install paho-mqtt"
     pass
 
 try:
@@ -282,17 +284,17 @@ def on_connect(client, userdata, rc):
     try:
         client.subscribe(sghGC.mqttTopic)
     except:
-        print "mqtt subscribe failed"
+        print "WARNING NOT ERROR subscribe inside connect failed"
         pass
 
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     #print
-    #print time.asctime(), "\nTopic: ", msg.topic + '\nMessage: ' + str(msg.payload), "\nreceived over MQTT"
+    print "....", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "Topic: ", msg.topic + ' Message: ' + str(msg.payload), " rcvd"
     msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
     time.sleep(0.1)
-    msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))
+    #msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))
 
 
 class MyError(Exception):
@@ -1475,9 +1477,11 @@ class ScratchListener(threading.Thread):
         return self._stop.isSet()
 
     def stepperUpdate(self, pins, value, steps=2123456789, stepDelay=0.003):
-        # print "pin" , pins , "value" , value
+    # Try and update stepper - if fail assume 1st time called and setup stepper and start
+        print "pin" , pins , "speed" , value, "steps", steps
         # print "Stepper type", sgh_Stepper.sghStepper, "this one", type(sghGC.pinRef[pins[0]])
         try:
+            #print "StepperFinishedMoving Normal", sghGC.pinRef[pins[0]].finishedMoving[pins[0]]
             sghGC.pinRef[pins[0]].changeSpeed(max(-100, min(100, value)), steps)  # just update Stepper value
             # print "stepper updated"
             # print ("pin",pins, "set to", value)
@@ -1490,10 +1494,15 @@ class ScratchListener(threading.Thread):
                 pass
             sghGC.pinRef[pins[0]] = None
             # time.sleep(5)
-            # print ("New Stepper instance started", pins)
+            print ("New Stepper instance started", pins)
             sghGC.pinRef[pins[0]] = sgh_Stepper.sghStepper(sghGC, pins, stepDelay)  # create new Stepper instance
+            #print "StepperFinishedMoving Initial", sghGC.pinRef[pins[0]].finishedMoving[pins[0]]            
+            # set intial speeed and/or steps
             sghGC.pinRef[pins[0]].changeSpeed(max(-100, min(100, value)), steps)  # update Stepper value
-            sghGC.pinRef[pins[0]].start()  # update Stepper value
+            sghGC.pinRef[pins[0]].start()  # update Stepper value            
+
+
+            print "stepper started on ", pins
             # print 'pin' , pins , ' changed to Stepper'
             # print ("pins",pins, "set to", value)
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
@@ -2639,7 +2648,7 @@ class ScratchListener(threading.Thread):
                 BUFFER_SIZE = 512  # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(
                     BUFFER_SIZE)  # get the data from the socket plus any data not yet processed
-                logging.debug("datalen: %s", len(data))
+                print ("datalen: %s", len(data))
                 logging.debug("RAW: %s", data)
 
                 if "send-vars" in data:
@@ -2763,35 +2772,41 @@ class ScratchListener(threading.Thread):
                 dataList = newList
                 # print "new dataList" ,dataList
 
+            print
+            print "STARTING OUTSIDE LOOP"
             print "dataList to be processed", dataList
             #if "\\x" in dataList:
             #    print "purging"
             #    dataList = []
             for dataItem in dataList:
                 print 
-                print "datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-                print "dataIteM:",dataItem
+                print "    datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                print "    dataIteM:",dataItem
                 # dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 dataraw = ' '
 
                 # print "CAPS", datawithCAPS
-                #try:
-                for item in shlex.split(dataItem):
-                    # print "item in space remover" ,item
-                    if item[0:4] == 'line':
-                        origpos = datawithCAPS.lower().find(item)
-                        item = datawithCAPS[origpos:origpos + len(item)]
-                        item = 'line' + item[4:].strip()
-                        item = item[0:5] + item[5:].lstrip()
-                        dataraw = dataraw + ''.join(item.replace(' ', chr(254))) + ' '
-                    else:
-                        dataraw = dataraw + ''.join(item.replace(' ', '')) + ' '
-                #except:
-                #    print "error in shlex.split"
-                #    dataraw = ''
-                #    pass
+                try:
+                    for item in shlex.split(dataItem):
+                        # print "item in space remover" ,item
+                        if item[0:4] == 'line':
+                            origpos = datawithCAPS.lower().find(item)
+                            item = datawithCAPS[origpos:origpos + len(item)]
+                            item = 'line' + item[4:].strip()
+                            item = item[0:5] + item[5:].lstrip()
+                            dataraw = dataraw + ''.join(item.replace(' ', chr(254))) + ' '
+                        else:
+                            dataraw = dataraw + ''.join(item.replace(' ', '')) + ' '
+                except:
+                    print "error in shlex.split"
+                    dataraw = ''
+                    break
                 self.dataraw = dataraw
-
+                if self.dataraw == '':
+                    print
+                    print "NO DATA - BREAKING LOOP"
+                    print "======================="
+                    print
                 logging.debug("processing dataItems: %s", self.dataraw)
                 # print ("processing dataItems:", self.dataraw)
                 # print "Loop processing"
@@ -4442,9 +4457,9 @@ class ScratchListener(threading.Thread):
                                 pz.setOutput(loop, svalue)
 
                         for loop in range(0, 6):
-                            if self.vFindOnOff("pin" + str(loop)):
+                            if self.vFindOnOff("output" + str(loop)):
                                 svalue = self.OnOrOff
-                                print "pin", loop, svalue
+                                print "output", loop, svalue
                                 pz.setOutputConfig(loop, 0)
                                 pz.setOutput(loop, svalue)
                             if self.vFindValue("power" + str(loop)):
@@ -4742,6 +4757,19 @@ class ScratchListener(threading.Thread):
 
                     if self.vFindValue("mqttbroker"):
                         sghGC.mqttBroker = self.value
+                        try:                        
+                            if sghGC.mqttListener is not None:
+                                sghGC.mqttClient.loop_stop()
+                                sghGC.mqttClient.disconnect()
+                                print "mqttlistener stopped"
+
+                            sghGC.mqttClient.connect(sghGC.mqttBroker, 1883)
+                            sghGC.mqttClient.loop_start()
+                            print "mqttsubscriber started"
+                            sghGC.mqttListener = True
+                        except:
+                            print "MQTT broker request failed"
+                            pass                        
 
                 ### Check for Broadcast type messages being received
                 # print "loggin level",debugLogging
@@ -5679,7 +5707,7 @@ class ScratchListener(threading.Thread):
                                 pz.setOutput(loop, svalue)
 
                         for loop in range(0, 6):
-                            if self.bFindOnOff("pin" + str(loop) + ","):
+                            if self.bFindOnOff("output" + str(loop) + ","):
                                 svalue = self.OnOrOff
                                 print "pin", loop, svalue
                                 pz.setOutputConfig(loop, 0)
@@ -5746,58 +5774,29 @@ class ScratchListener(threading.Thread):
                         # print ("loop" , listLoop)
                         if self.bFindValue(stepperList[listLoop][0]):
                             if self.valueIsNumeric:
-                                self.stepperUpdate(stepperList[listLoop][1], 10, self.valueNumeric)
+                                if self.valueNumeric > 0:
+                                    try:
+                                        time.sleep(0.2)
+                                        print "sleeping" ,sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]]
+                                        while sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]] != 0:
+                                            time.sleep(0.1)
+                                        print "awake"
+                                    except:
+                                        pass
+                                    self.stepperUpdate(stepperList[listLoop][1], 100, self.valueNumeric)
+                                elif self.valueNumeric < 0:
+                                    try:
+                                        time.sleep(0.2)
+                                        print "sleeping" ,sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]]
+                                        while sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]] != 0:
+                                            time.sleep(0.1)
+                                        print "awake"
+                                    except:
+                                        pass
+                                    self.stepperUpdate(stepperList[listLoop][1], -100, abs(self.valueNumeric))
                             else:
                                 self.stepperUpdate(stepperList[listLoop][1], 0)
 
-                                # if steppersInUse == True:
-                                # #logging.debug("Steppers in use")
-                                # stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
-                                # for listLoop in range(0,2):
-                                # if self.vFindValue(stepperList[listLoop][0]):
-                                # logging.debug("Stepper found %s",stepperList[listLoop][0])
-                                # if self.valueIsNumeric:
-                                # self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
-                                # else:
-                                # self.stepperUpdate(stepperList[listLoop][1],0)
-
-                                # stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
-                                # for listLoop in range(0,2):
-                                # #print ("look for steppers")
-                                # if self.vFindValue(stepperList[listLoop][0]):
-                                # print ("Found stepper",stepperList[listLoop][0])
-                                # if self.valueIsNumeric:
-                                # print ("value =",self.value)
-                                # print stepperList[listLoop][1][0]
-                                # try:
-                                # print ("Trying to see if turn prev set")
-                                # direction = int(100 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
-                                # steps = abs(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]])
-                                # except:
-                                # direction = int(100 * sign(int(self.valueNumeric)))
-                                # steps = abs(int(self.valueNumeric))
-                                # turn = [None] * sghGC.numOfPins
-                                # pass
-                                # print ("direction and steps",direction,steps)
-                                # self.stepperUpdate(stepperList[listLoop][1],direction,steps)
-                                # turn[stepperList[listLoop][1][0]] = self.valueNumeric
-                                # print ("position set to :",turn[stepperList[listLoop][1][0]])
-                                # else:
-                                # self.stepperUpdate(stepperList[listLoop][1],0)
-                                # try:
-                                # turn[stepperList[listLoop][1][0]] = 0
-                                # except:
-                                # turn = [None] * sghGC.numOfPins
-                                # turn[stepperList[listLoop][1][0]] = 0
-                                # pass
-                                # else:
-                                # motorList = [['motora',11],['motorb',12]]
-                                # for listLoop in range(0,2):
-                                # if self.vFindValue(motorList[listLoop][0]):
-                                # if self.valueIsNumeric:
-                                # sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
-                                # else:
-                                # sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
 
                     if self.bFindValue('pinpattern'):
                         if "pitt" in ADDON:
@@ -6699,12 +6698,12 @@ class ScratchListener(threading.Thread):
                                 svalue = (svalue + 150)
                                 sghGC.pinServod(pin, svalue)
 
-                    if self.bFind("setwait"):
-                        print "wait"
-                        bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
-                        msgQueue.put((1, bcast_str))
-                        self.carryOn = False
-                        self.carryOnInUse = True
+                    # if self.bFind("setwait"):
+                        # print "wait"
+                        # bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                        # msgQueue.put((1, bcast_str))
+                        # self.carryOn = False
+                        # self.carryOnInUse = True
 
                     if self.bFindValue("getcheerlights"):
 
@@ -6727,13 +6726,45 @@ class ScratchListener(threading.Thread):
                         #print "new colour", cheerColour
                         bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
                         msgQueue.put((5, bcast_str))
-                        print "timE:" , time.time() - cheertime
-                        if self.carryOnInUse == True:
-                            bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
-                            msgQueue.put((1, bcast_str))
-                            print "carryon true"
-                            time.sleep(2)
-                            # print "data valid", time.time()
+                        # print "timE:" , time.time() - cheertime
+                        # if self.carryOnInUse == True:
+                            # bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
+                            # msgQueue.put((1, bcast_str))
+                            # print "carryon true"
+                            # time.sleep(2)
+                            # # print "data valid", time.time()
+
+                    if self.bFindValue("getweather"):
+                        params = self.value.split(',')
+                        wappid = "4041655e60abaea9a9134b6e78ca864f"
+                        wcitycountry = "Chorley,uk"
+                        if len(params) > 0:
+                            if len(params[-1]) > 20: 
+                                wappid = params[-1]
+                                params = params[0:-1]
+                            if len(params) > 1:
+                                wcitycountry = params[0] + "," + params[1]
+                            else:
+                                wcitycountry = params[0]
+                            
+                        
+                        weatherdata = getjsonfromurl.getJSON("http://api.openweathermap.org/data/2.5/weather?q=" + wcitycountry + ",&appid=" + wappid)
+                        print weatherdata
+                        bcast_str = 'sensor-update "%s" %s' % ("outsidetemperature", str(float(weatherdata.get("main_temp")) - 273.15))
+                        msgQueue.put((5, bcast_str))
+                        bcast_str = 'sensor-update "%s" %s' % ("sunset", dt.datetime.fromtimestamp(weatherdata.get("sys_sunset")).strftime('%H%M'))
+                        msgQueue.put((5, bcast_str))
+                        bcast_str = 'sensor-update "%s" %s' % ("sunrise", dt.datetime.fromtimestamp(weatherdata.get("sys_sunrise")).strftime('%H%M'))
+                        msgQueue.put((5, bcast_str))
+                        bcast_str = 'sensor-update "%s" %s' % ("pressure", weatherdata.get("main_pressure"))
+                        msgQueue.put((5, bcast_str))          
+                        bcast_str = 'sensor-update "%s" %s' % ("windspeed", weatherdata.get("wind_speed"))
+                        msgQueue.put((5, bcast_str))    
+                        bcast_str = 'sensor-update "%s" %s' % ("winddirection", weatherdata.get("wind_deg"))
+                        msgQueue.put((5, bcast_str))                              
+
+
+                          
 
                     if "playhat" in ADDON:
 
@@ -6819,40 +6850,34 @@ class ScratchListener(threading.Thread):
                             pass
 
                     if (self.bFindValue("sendmqtt") or self.bFindValue("mqttpublish")):
+                        #time.sleep(1)
                         # print "value$$$",self.value
-                        params = self.value.split(',')
-                        # print "params$$$"
-                        try:
-                            if len(params) == 2:
-                                publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
-                                #print "mqtt published", sghGC.mqttBroker, params[0], params[1]
-                            elif len(params) == 3:
-                                publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
-                                #print "mqtt published", params[2], params[0], params[1]
-                        except:
-                            # print
-                            print "MQTT send failed"
-                            # print
-                            pass
+                        msgQueue.put((11, self.value))                        
+                        # params = self.value.split(',')
+                        # # print "params$$$"
+                        # try:
+                            # if len(params) == 2:
+                                # publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
+                                # print "----mqtt published", sghGC.mqttBroker, params[0], params[1]
+                            # elif len(params) == 3:
+                                # publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
+                                # print "----mqtt published", params[2], params[0], params[1]
+                        # except:
+                            # # print
+                            # print "MQTT send failed"
+                            # # print
+                            # pass
 
                     if self.bFindValue("mqttsubscribe"):
                         print "inside subscribe"
                         try:                        
-                            if sghGC.mqttListener is not None:
-                                sghGC.mqttClient.loop_stop()
-                                sghGC.mqttClient.disconnect()
-                                print "mqttlistener stopped"
-
-
                             sghGC.mqttTopic = self.value
-                            sghGC.mqttClient.connect(sghGC.mqttBroker, 1883)
-                            sghGC.mqttClient.loop_start()
+                            sghGC.mqttClient.subscribe(sghGC.mqttTopic)
                             print "mqttsubscriber started"
-                            sghGC.mqttListener = True
                         except:
                             print "MQTT subscribe failed"
                             pass
-                        print "listener", sghGC.mqttListener
+
 
                     # end of broadcast check
 
@@ -6867,11 +6892,11 @@ class ScratchListener(threading.Thread):
                             print "mappin failed"
                             pass
 
-                    self.carryOn = False
-                    self.carryOnInUse = True
-                    print "wait"
-                    bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
-                    msgQueue.put((1, bcast_str))                              
+                    #self.carryOn = False
+                    #self.carryOnInUse = True
+                    #print "wait"
+                    #bcast_str = 'sensor-update "%s" %s' % ("carryon", "false")
+                    #msgQueue.put((1, bcast_str))                              
                     
                     
 
@@ -6928,33 +6953,32 @@ class SendMsgsToScratch(threading.Thread):
                 while not self.msgQueue.empty():
                     dummy = self.msgQueue.get()
                 break
-            # if priority == 1:
-            #     print "deque P1 at", time.time()
-            n = len(cmd)
-            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
-            try:
-                self.scratch_socket.send(b + cmd)
-                print "msg sent to Scratch", cmd
-            except:
-                print "failed to send this message to Scratch", cmd
-                pass
-                # if self.scratch_socket2 is not None:
-                # if sghGC.linkPrefix is not None:
-                # dataOut = cmd.replace(' "',' "#' + sghGC.linkPrefix + '#')
-                # else:
-                # dataOut = cmd.replace(' "',' "#' + 'other' + '#')
-                # n = len(dataOut)
-                # b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-                # chr(n & 0xFF))
-                # if sghGC.autoLink:
-                # try:
-                # self.scratch_socket2.send(b + dataOut)
-                # print "auto sensor update Sent", dataOut
-                # except:
-                # print "failed to send this message to other computer", dataOut
-                # pass
-
-                # print "message sent:" ,cmd
+            if priority == 11:
+                params = cmd.split(',')
+                # print "params$$$"
+                try:
+                    if len(params) == 2:
+                        publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
+                        print "----mqtt published", sghGC.mqttBroker, params[0], params[1]
+                    elif len(params) == 3:
+                        publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
+                        print "----mqtt published", params[2], params[0], params[1]
+                except:
+                    # print
+                    print "MQTT send failed"
+                    # print
+                    pass
+            else:
+                # if priority == 1:
+                #     print "deque P1 at", time.time()
+                n = len(cmd)
+                b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
+                try:
+                    self.scratch_socket.send(b + cmd)
+                    #print "msg sent to Scratch", cmd
+                except:
+                    print "failed to send this message to Scratch", cmd
+                    pass
 
         print "SendMsgsToScratch stopped"
 
@@ -7236,6 +7260,7 @@ while True:
     if (cycle_trace == 'start'):
         ADDON = ""
         INVERT = False
+        sghGC.mqttTopic = None
         # open the socket
         print 'Starting to connect...',
         the_socket = create_socket(host, PORT)

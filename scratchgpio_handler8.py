@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.015'  # 9Feb17 Change subscribe and broker connect philopshy
+Version = 'v8.2.016'  # 15Feb17 Quick release  for Chris wilde
 import threading
 import socket
 import time
@@ -1477,9 +1477,11 @@ class ScratchListener(threading.Thread):
         return self._stop.isSet()
 
     def stepperUpdate(self, pins, value, steps=2123456789, stepDelay=0.003):
-        # print "pin" , pins , "value" , value
+    # Try and update stepper - if fail assume 1st time called and setup stepper and start
+        print "pin" , pins , "speed" , value, "steps", steps
         # print "Stepper type", sgh_Stepper.sghStepper, "this one", type(sghGC.pinRef[pins[0]])
         try:
+            #print "StepperFinishedMoving Normal", sghGC.pinRef[pins[0]].finishedMoving[pins[0]]
             sghGC.pinRef[pins[0]].changeSpeed(max(-100, min(100, value)), steps)  # just update Stepper value
             # print "stepper updated"
             # print ("pin",pins, "set to", value)
@@ -1492,10 +1494,15 @@ class ScratchListener(threading.Thread):
                 pass
             sghGC.pinRef[pins[0]] = None
             # time.sleep(5)
-            # print ("New Stepper instance started", pins)
+            print ("New Stepper instance started", pins)
             sghGC.pinRef[pins[0]] = sgh_Stepper.sghStepper(sghGC, pins, stepDelay)  # create new Stepper instance
+            #print "StepperFinishedMoving Initial", sghGC.pinRef[pins[0]].finishedMoving[pins[0]]            
+            # set intial speeed and/or steps
             sghGC.pinRef[pins[0]].changeSpeed(max(-100, min(100, value)), steps)  # update Stepper value
-            sghGC.pinRef[pins[0]].start()  # update Stepper value
+            sghGC.pinRef[pins[0]].start()  # update Stepper value            
+
+
+            print "stepper started on ", pins
             # print 'pin' , pins , ' changed to Stepper'
             # print ("pins",pins, "set to", value)
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
@@ -5767,58 +5774,29 @@ class ScratchListener(threading.Thread):
                         # print ("loop" , listLoop)
                         if self.bFindValue(stepperList[listLoop][0]):
                             if self.valueIsNumeric:
-                                self.stepperUpdate(stepperList[listLoop][1], 10, self.valueNumeric)
+                                if self.valueNumeric > 0:
+                                    try:
+                                        time.sleep(0.2)
+                                        print "sleeping" ,sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]]
+                                        while sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]] != 0:
+                                            time.sleep(0.1)
+                                        print "awake"
+                                    except:
+                                        pass
+                                    self.stepperUpdate(stepperList[listLoop][1], 100, self.valueNumeric)
+                                elif self.valueNumeric < 0:
+                                    try:
+                                        time.sleep(0.2)
+                                        print "sleeping" ,sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]]
+                                        while sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]] != 0:
+                                            time.sleep(0.1)
+                                        print "awake"
+                                    except:
+                                        pass
+                                    self.stepperUpdate(stepperList[listLoop][1], -100, abs(self.valueNumeric))
                             else:
                                 self.stepperUpdate(stepperList[listLoop][1], 0)
 
-                                # if steppersInUse == True:
-                                # #logging.debug("Steppers in use")
-                                # stepperList = [['motora',[11,12,13,15]],['motorb',[16,18,22,7]]]
-                                # for listLoop in range(0,2):
-                                # if self.vFindValue(stepperList[listLoop][0]):
-                                # logging.debug("Stepper found %s",stepperList[listLoop][0])
-                                # if self.valueIsNumeric:
-                                # self.stepperUpdate(stepperList[listLoop][1],self.valueNumeric)
-                                # else:
-                                # self.stepperUpdate(stepperList[listLoop][1],0)
-
-                                # stepperList = [['positiona',[11,12,13,15]],['positionb',[16,18,22,7]]]
-                                # for listLoop in range(0,2):
-                                # #print ("look for steppers")
-                                # if self.vFindValue(stepperList[listLoop][0]):
-                                # print ("Found stepper",stepperList[listLoop][0])
-                                # if self.valueIsNumeric:
-                                # print ("value =",self.value)
-                                # print stepperList[listLoop][1][0]
-                                # try:
-                                # print ("Trying to see if turn prev set")
-                                # direction = int(100 * sign(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]]))
-                                # steps = abs(int(self.valueNumeric) - turn[stepperList[listLoop][1][0]])
-                                # except:
-                                # direction = int(100 * sign(int(self.valueNumeric)))
-                                # steps = abs(int(self.valueNumeric))
-                                # turn = [None] * sghGC.numOfPins
-                                # pass
-                                # print ("direction and steps",direction,steps)
-                                # self.stepperUpdate(stepperList[listLoop][1],direction,steps)
-                                # turn[stepperList[listLoop][1][0]] = self.valueNumeric
-                                # print ("position set to :",turn[stepperList[listLoop][1][0]])
-                                # else:
-                                # self.stepperUpdate(stepperList[listLoop][1],0)
-                                # try:
-                                # turn[stepperList[listLoop][1][0]] = 0
-                                # except:
-                                # turn = [None] * sghGC.numOfPins
-                                # turn[stepperList[listLoop][1][0]] = 0
-                                # pass
-                                # else:
-                                # motorList = [['motora',11],['motorb',12]]
-                                # for listLoop in range(0,2):
-                                # if self.vFindValue(motorList[listLoop][0]):
-                                # if self.valueIsNumeric:
-                                # sghGC.pinUpdate(motorList[listLoop][1],self.valueNumeric,type="pwm")
-                                # else:
-                                # sghGC.pinUpdate(motorList[listLoop][1],0,type="pwm")
 
                     if self.bFindValue('pinpattern'):
                         if "pitt" in ADDON:

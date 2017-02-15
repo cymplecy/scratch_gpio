@@ -128,6 +128,7 @@ class GPIOController :
         self.mqttListener = None
         self.mqttClient = None
         self.mqttTopic = None
+
         
         self.pinMapName = [None] * self.numOfPins  
 
