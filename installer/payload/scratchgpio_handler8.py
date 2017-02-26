@@ -5758,12 +5758,12 @@ class ScratchListener(threading.Thread):
                         for loop in range(0, 6):
                             if self.bFindOnOff("output" + str(loop) + ","):
                                 svalue = self.OnOrOff
-                                print "pin", loop, svalue
+                                #print "pin", loop, svalue
                                 pz.setOutputConfig(loop, 0)
                                 pz.setOutput(loop, svalue)
                             if self.bFindValue("power" + str(loop) + ","):
                                 svalue = min(100, max(0, int(self.valueNumeric))) if self.valueIsNumeric else 0
-                                print "power", loop, svalue
+                                #print "power", loop, svalue
                                 pz.setOutputConfig(loop, 1)
                                 pz.setOutput(loop, svalue)
                         for pin in [7,11,12,13,15]:
@@ -5784,7 +5784,7 @@ class ScratchListener(threading.Thread):
                         pz.setMotor(1, 0)
                         pz.setMotor(0, 0)
                         for loop in range(0, 6):
-                            print  pz.getOutputConfig(loop)
+                            #print  pz.getOutputConfig(loop)
                             pz.setOutputConfig(loop, 0)
                             pz.setOutput(loop, 0)
                         for pin in [7,11,12,13,15]:
