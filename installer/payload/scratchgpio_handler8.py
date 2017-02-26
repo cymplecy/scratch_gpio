@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.017'  # 26Feb17 PiConZero mods
+Version = 'v8.2.018'  # 26Feb17 Fix PiConZero UH problem
 import threading
 import socket
 import time
@@ -136,7 +136,7 @@ except:
     pass
 
 try:
-    import sgh_unicornhat as UH
+    import sgh_unicornhat as UHt
 except:
     print "Warning: UnicornHAT NOT imported - probaly not installed"
     pass
@@ -1106,7 +1106,7 @@ class ScratchSender(threading.Thread):
                 if tick % 5 == 0:
                     sensor_str = ""
                     for loop in range(0, 4):
-                        sensor_name = "digital" + str(loop)
+                        sensor_name = "input" + str(loop)
                         sensor_value = str(pz.readInput(loop))
                         # print sensor_name,sensor_value
                         sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
@@ -1771,7 +1771,7 @@ class ScratchListener(threading.Thread):
         else:
             UH.brightness(level)
 
-    def neoProcessing(self, ADDON, UH):
+    def neoProcessing(self, ADDON, UH=None):
         # print
         # print "neostart"
         listenLoopTime = time.time()
@@ -1899,7 +1899,7 @@ class ScratchListener(threading.Thread):
                             end = start + int(end[1:])
                         end = int(end)
                         for loop in range(start, end + 1):
-                            gnp = UH.get_neopixel(loop)
+                            gnp = self.getNeoPixel(loop)
                             print "before", gnp
                             gnpi = map(lambda a: (255 - a), gnp)
                             print "after", gnpi
@@ -1919,10 +1919,10 @@ class ScratchListener(threading.Thread):
                             end = start + int(end[1:])
                         end = int(end)
                         print "start,end",start, end
-                        lr, lg, lb = UH.get_neopixel(start-1)
+                        lr, lg, lb = self.getNeoPixel(start-1)
                         print "start",lr,lg,lb
                         for loop in range(start-1, end-1):
-                            oldr, oldg, oldb = UH.get_neopixel(loop + 1)
+                            oldr, oldg, oldb = self.getNeoPixel(loop + 1)
                             print "loop",oldr,oldg,oldb
                             # print "oldpixel" , oldpixel
                             self.setNeoPixel(loop, oldr, oldg, oldb)
@@ -1946,7 +1946,7 @@ class ScratchListener(threading.Thread):
                 
                 if self.bFindValue("pixel", "invert"):
                     try:
-                        gnp = UH.get_neopixel(int(self.valueNumeric - 1))
+                        gnp = self.getNeoPixel(int(self.valueNumeric - 1))
                         #print "before", gnp
                         gnpi = map(lambda a: (255 - a), gnp)
                         #print "after", gnpi
@@ -1984,7 +1984,7 @@ class ScratchListener(threading.Thread):
                             self.neoShow()
                             pixelProcessed = True
                         elif pixCol == "invert":
-                            gnp = UH.get_neopixel(int(pixNum))
+                            gnp = self.getNeoPixel(int(pixNum))
                             print "before", gnp
                             gnpi = map(lambda a: (255 - a), gnp)
                             print "after", gnpi
@@ -2014,7 +2014,7 @@ class ScratchListener(threading.Thread):
             elif self.bFind("getpixel"):
                 for led in range(0, self.matrixUse):
                     if (self.bFindValue("getpixel") and self.value == str(led + 1)):
-                        gnp = UH.get_neopixel(int(led))
+                        gnp = self.getNeoPixel(int(led))
                         # print "led,gnp",led,gnp
                         r, g, b = gnp
                         bcolourname = "#" + ("000000" + (str(hex(b + (g * 256) + (r * 256 * 256))))[
@@ -2048,7 +2048,7 @@ class ScratchListener(threading.Thread):
             elif self.bFindValue("shift"):
                 if self.value != "down":
                     for index in range(self.matrixUse, 0, - 1):
-                        oldr, oldg, oldb = UH.get_neopixel(index - 1)
+                        oldr, oldg, oldb = self.getNeoPixel(index - 1)
                         print "oldpixel", index, oldr, oldg, oldb
                         self.setNeoPixel(index, oldr, oldg, oldb)
                     # UH.set_neopixel(1, 0, 0, 0)
@@ -2518,7 +2518,7 @@ class ScratchListener(threading.Thread):
                     for i in header:
                         f.write(chr(i))
                     for i in range(0, 64):
-                        r, g, b = UH.get_pixel(i % 8, 7 - (i // 8))
+                        r, g, b = self.getNeoPixel(i % 8, 7 - (i // 8))
                         # print "rgb",r,g,b
                         f.write(chr(b))
                         f.write(chr(g))
@@ -5737,7 +5737,7 @@ class ScratchListener(threading.Thread):
 
                     elif "piconzero" in ADDON:
                         print "broadcast piconzero processing"
-                        self.neoProcessing(ADDON, UH)
+                        self.neoProcessing(ADDON)
 
                         if self.bFind('ultra'):
                             self.startUltra(38, 0, self.OnOrOff)
@@ -5771,10 +5771,20 @@ class ScratchListener(threading.Thread):
                             if self.bFindOnOff("g" + ("00" + str(sghGC.gpioLookup[pin]))[-2:]):
                                 sghGC.pinUpdate(pin, self.OnOrOff)
                                 
+                    if self.bFind("setanalog"):                                
+                        for pin in [0,1,2,3]:
+                            if self.bFindValue("setanalog" + str(pin)):
+                                pz.setInputConfig(pin,1)
+                    if self.bFind("settemp"):                                
+                        for pin in [0,1,2,3]:
+                            if self.bFindValue("settemp" + str(pin)):
+                                pz.setInputConfig(pin,2)                                
+                    
                     if self.bFind("alloff"):
                         pz.setMotor(1, 0)
                         pz.setMotor(0, 0)
                         for loop in range(0, 6):
+                            print  pz.getOutputConfig(loop)
                             pz.setOutputConfig(loop, 0)
                             pz.setOutput(loop, 0)
                         for pin in [7,11,12,13,15]:
