@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.016'  # 15Feb17 Quick release  for Chris wilde
+Version = 'v8.2.017'  # 26Feb17 PiConZero mods
 import threading
 import socket
 import time
@@ -1492,6 +1492,10 @@ class ScratchListener(threading.Thread):
 
             except:
                 pass
+            for item in pins:
+                print "pin", item
+                sghGC.pinUpdate(item, 0)
+            stepperInUse = True
             sghGC.pinRef[pins[0]] = None
             # time.sleep(5)
             print ("New Stepper instance started", pins)
@@ -1723,7 +1727,8 @@ class ScratchListener(threading.Thread):
             R, G, B = SH.get_pixel(x, y)
             return [R, G, B]
         else:
-            UH.set_pixel(x, y, R, G, B)
+            R ,G, B = UH.get_pixel(x, y)
+            return [R, G, B]
 
     def neoShow(self):
         # print "show called"
@@ -1887,25 +1892,46 @@ class ScratchListener(threading.Thread):
                             pass
 
                 if self.bFindValue("pixels", "invert"):
-                    # try:
-                    start, end = self.value.split(",")
-                    start = int(start)
-                    if end[0] == "+":
-                        end = start + int(end[1:])
-                    end = int(end)
-                    for loop in range(start, end + 1):
-                        gnp = UH.get_neopixel(loop)
-                        print "before", gnp
-                        gnpi = map(lambda a: (255 - a), gnp)
-                        print "after", gnpi
-                        r, g, b = gnpi
-                        # print "rgb", r,g,b
-                        self.setNeoPixel(loop, r, g, b)
-                    self.neoShow()
-                    pixelProcessed = True
-                    # except:
-                    #    pass
-
+                    try:
+                        start, end = self.value.split(",")
+                        start = int(start)
+                        if end[0] == "+":
+                            end = start + int(end[1:])
+                        end = int(end)
+                        for loop in range(start, end + 1):
+                            gnp = UH.get_neopixel(loop)
+                            print "before", gnp
+                            gnpi = map(lambda a: (255 - a), gnp)
+                            print "after", gnpi
+                            r, g, b = gnpi
+                            # print "rgb", r,g,b
+                            self.setNeoPixel(loop, r, g, b)
+                        self.neoShow()
+                        pixelProcessed = True
+                    except:
+                        pass
+                    
+                if self.bFindValue("pixels", "rotate"):
+                    try:
+                        start, end = self.value.split(",")
+                        start = int(start)
+                        if end[0] == "+":
+                            end = start + int(end[1:])
+                        end = int(end)
+                        print "start,end",start, end
+                        lr, lg, lb = UH.get_neopixel(start-1)
+                        print "start",lr,lg,lb
+                        for loop in range(start-1, end-1):
+                            oldr, oldg, oldb = UH.get_neopixel(loop + 1)
+                            print "loop",oldr,oldg,oldb
+                            # print "oldpixel" , oldpixel
+                            self.setNeoPixel(loop, oldr, oldg, oldb)
+                        self.setNeoPixel(end-1, lr, lg, lb)                        
+                        self.neoShow()
+                        pixelProcessed = True 
+                    except:
+                        pass
+                    
 
             elif self.bFind("pixel"):
                 # print
@@ -1917,8 +1943,22 @@ class ScratchListener(threading.Thread):
                 #print "regex:", re.findall('pixel([0-9]+)',self.dataraw)# ([A-Za-z]+)', self.dataraw)
                 regresult = re.findall('pixel([0-9]+)', self.dataraw) # ([A-Za-z]+)', self.dataraw)
                 #print "reghex:", re.findall('/(0x)?[0-9a-f]+/i',self.dataraw)
-
-                if self.bFindValue('pixel' + regresult[0]):
+                
+                if self.bFindValue("pixel", "invert"):
+                    try:
+                        gnp = UH.get_neopixel(int(self.valueNumeric - 1))
+                        #print "before", gnp
+                        gnpi = map(lambda a: (255 - a), gnp)
+                        #print "after", gnpi
+                        r, g, b = gnpi
+                        # print "rgb", r,g,b
+                        self.setNeoPixel(int(self.valueNumeric - 1), r, g, b)
+                        self.neoShow()
+                        pixelProcessed = True
+                    except:
+                        pass
+                        
+                elif self.bFindValue('pixel' + regresult[0]):
                     pixNum = int(regresult[0]) - 1
                     #print "pixNuM:", pixNum
                     pixCol = self.value
@@ -2013,14 +2053,7 @@ class ScratchListener(threading.Thread):
                         self.setNeoPixel(index, oldr, oldg, oldb)
                     # UH.set_neopixel(1, 0, 0, 0)
                     self.neoShow()
-            elif self.bFind("rotate"):
-                lr, lg, lb = UH.get_neopixel(0)
-                for index in range(0, self.matrixUse - 1):
-                    oldr, oldg, oldb = UH.get_neopixel(index + 1)
-                    # print "oldpixel" , oldpixel
-                    self.setNeoPixel(index, oldr, oldg, oldb)
-                self.setNeoPixel(self.matrixUse - 1, lr, lg, lb)
-                self.neoShow()
+
 
             elif self.bFind("sweep"):
                 print "sweep"
@@ -2030,7 +2063,7 @@ class ScratchListener(threading.Thread):
                     self.neoShow()
                     time.sleep(0.05)  # delay during sweep
 
-            elif self.bFindValue("pixelfade"):
+            elif self.bFindValue("fade"):
                 values = self.value.split(",")
                 # print "v,bright",values[0],sghGC.ledDim
                 newbright = sghGC.ledDim
@@ -2054,13 +2087,13 @@ class ScratchListener(threading.Thread):
                     sghGC.ledDim = max(0, min(255, (sghGC.ledDim + brightdelta)))
                     # print sghGC.ledDim
                     self.neoShow()
-                    matrixBright(sghGC.ledDim / 100.0)
+                    self.matrixBright(sghGC.ledDim / 100.0)
                     time.sleep(0.05)  # delay during fade
                 self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(self.value)
                 self.setNeoPixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
                 sghGC.ledDim == int(newbright)
                 self.neoShow()
-                matrixBright(sghGC.ledDim / 100.0)
+                self.matrixBright(sghGC.ledDim / 100.0)
 
 
         elif ("unicorn" in ADDON or "sensehat" in ADDON):
@@ -2075,13 +2108,13 @@ class ScratchListener(threading.Thread):
             if self.bFind("pixelson"):
                 for y in range(0, 8):
                     for x in range(0, 8):
-                        matrixSetPixel(x, y, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        self.matrixSetPixel(x, y, self.matrixRed, self.matrixGreen, self.matrixBlue)
                 self.neoShow()
 
             if self.bFind("pixelsoff"):
                 for y in range(0, 8):
                     for x in range(0, 8):
-                        matrixSetPixel(x, y, 0, 0, 0)
+                        self.matrixSetPixel(x, y, 0, 0, 0)
                 self.neoShow()
 
             if self.bFindValue("sweep"):
@@ -2095,14 +2128,14 @@ class ScratchListener(threading.Thread):
                             self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(self.value, (0, 0, 0))
                         for yy in range(0, self.matrixLimit):
                             for xx in range(0, self.matrixLimit):
-                                matrixSetPixel((xm * self.matrixMult) + xx,
+                                self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                7 - ((ym * self.matrixMult) + yy), self.matrixRed,
                                                self.matrixGreen, self.matrixBlue)
                         self.neoShow()
                         time.sleep(0.05)  # delay during sweep
 
             if self.bFindValue("write"):
-                matrixWrite(self.value, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                self.matrixWrite(self.value, self.matrixRed, self.matrixGreen, self.matrixBlue)
 
             if self.bFindValue("originx"):
                 self.originX = min(max(int(self.valueNumeric), 0), 7) if self.valueIsNumeric else 0
@@ -2130,19 +2163,19 @@ class ScratchListener(threading.Thread):
                                     for xx in range(0, self.matrixLimit):
                                         # print "led no" ,led
                                         if (ledcolour != "invert"):
-                                            matrixSetPixel((xm * self.matrixMult) + xx,
+                                            self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                            7 - ((ym * self.matrixMult) + yy),
                                                            self.matrixRed, self.matrixGreen,
                                                            self.matrixBlue)
                                         else:
-                                            gnp = matrixGetPixel((xm * self.matrixMult) + xx,
+                                            gnp = self.matrixGetPixel((xm * self.matrixMult) + xx,
                                                                  7 - ((ym * self.matrixMult) + yy))
                                             # print "before" ,gnp
                                             gnpi = map(lambda a: (255 - a), gnp)
                                             # print "after", gnpi
                                             r, g, b = gnpi
                                             # print "rgb", r,g,b
-                                            matrixSetPixel((xm * self.matrixMult) + xx,
+                                            self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                            7 - ((ym * self.matrixMult) + yy), r, g, b)
                                 self.neoShow()
                                 pixelProcessed = True
@@ -2165,7 +2198,7 @@ class ScratchListener(threading.Thread):
                                         b = int(c[5:], 16)
                                         for yy in range(0, self.matrixLimit):
                                             for xx in range(0, self.matrixLimit):
-                                                matrixSetPixel((xm * self.matrixMult) + xx,
+                                                self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                                7 - ((ym * self.matrixMult) + yy), r,
                                                                g, b)
                                         self.neoShow()
@@ -2186,7 +2219,7 @@ class ScratchListener(threading.Thread):
                                 # print "3rd catch xm,ym ", xm, ym
                                 for yy in range(0, self.matrixLimit):
                                     for xx in range(0, self.matrixLimit):
-                                        matrixSetPixel((xm * self.matrixMult) + xx,
+                                        self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                        7 - ((ym * self.matrixMult) + yy),
                                                        self.matrixRed, self.matrixGreen,
                                                        self.matrixBlue)
@@ -2204,7 +2237,7 @@ class ScratchListener(threading.Thread):
                             # print self.matrixMult,self.matrixLimit,self.matrixRangemax,led, ym, ym
                             for yy in range(0, self.matrixLimit):
                                 for xx in range(0, self.matrixLimit):
-                                    matrixSetPixel((xm * self.matrixMult) + xx,
+                                    self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                    7 - ((ym * self.matrixMult) + yy), self.matrixRed,
                                                    self.matrixGreen, self.matrixBlue)
                             self.neoShow()
@@ -2323,7 +2356,7 @@ class ScratchListener(threading.Thread):
                     for xm in range(0, self.matrixRangemax):
                         oldr, oldg, oldb = matrixGetPixel(xm, ym)
                         # print "oldpixel" , oldpixel
-                        matrixSetPixel(xm, ym, 255 - oldr, 255 - oldg, 255 - oldb)
+                        self.matrixSetPixel(xm, ym, 255 - oldr, 255 - oldg, 255 - oldb)
                 self.neoShow()
 
             if self.bFind("moveleft"):
@@ -2331,37 +2364,37 @@ class ScratchListener(threading.Thread):
                     for x in range(0, self.matrixRangemax - 1):
                         oldr, oldg, oldb = matrixGetPixel(x + 1, y)
                         # print "oldpixel" , oldpixel
-                        matrixSetPixel(x, y, oldr, oldg, oldb)
-                    matrixSetPixel(7, y, 0, 0, 0)
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(7, y, 0, 0, 0)
                 self.neoShow()
 
             if self.bFind("moveright"):
                 for y in range(0, self.matrixRangemax):
                     for x in range(self.matrixRangemax - 1, 0, -1):
                         # print "y,x",y,x
-                        oldr, oldg, oldb = matrixGetPixel(x - 1, y)
+                        oldr, oldg, oldb = self.matrixGetPixel(x - 1, y)
                         # print "oldpixel" , oldpixel
-                        matrixSetPixel(x, y, oldr, oldg, oldb)
-                    matrixSetPixel(0, y, 0, 0, 0)
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(0, y, 0, 0, 0)
                 self.neoShow()
 
             if self.bFind("moveup"):
                 for x in range(0, self.matrixRangemax):
                     for y in range(0, self.matrixRangemax - 1):
-                        oldr, oldg, oldb = matrixGetPixel(x, y + 1)
+                        oldr, oldg, oldb = self.matrixGetPixel(x, y + 1)
                         # print "oldpixel" , oldpixel
-                        matrixSetPixel(x, y, oldr, oldg, oldb)
-                    matrixSetPixel(x, 7, 0, 0, 0)
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(x, 7, 0, 0, 0)
                 self.neoShow()
 
             if self.bFind("movedown"):
                 for x in range(0, self.matrixRangemax):
                     for y in range(self.matrixRangemax - 1, 0, -1):
                         # print "y,x",y,x
-                        oldr, oldg, oldb = matrixGetPixel(x, y - 1)
+                        oldr, oldg, oldb = self.matrixGetPixel(x, y - 1)
                         # print "oldpixel" , oldpixel
-                        matrixSetPixel(x, y, oldr, oldg, oldb)
-                    matrixSetPixel(x, 0, 0, 0, 0)
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(x, 0, 0, 0, 0)
                 self.neoShow()
 
             rowList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
@@ -2636,6 +2669,7 @@ class ScratchListener(threading.Thread):
 
         listenLoopTime = time.time()
         datawithCAPS = ''
+        BUFFER_SIZE = 5120 # This size will accomdate normal Scratch Control 'droid app sensor updates
         # This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
         while not self.stopped():
 
@@ -2645,10 +2679,13 @@ class ScratchListener(threading.Thread):
             # print lcount
             try:
                 # print "try reading socket"
-                BUFFER_SIZE = 512  # This size will accomdate normal Scratch Control 'droid app sensor updates
+                #BUFFER_SIZE = 512  # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(
                     BUFFER_SIZE)  # get the data from the socket plus any data not yet processed
                 print ("datalen: %s", len(data))
+                if len(data) > int(0.8 * float(BUFFER_SIZE)):
+                    BUFFER_SIZE = int(BUFFER_SIZE * 1.5)
+                    print ("BUFFER_SIZE increased to:", BUFFER_SIZE )
                 logging.debug("RAW: %s", data)
 
                 if "send-vars" in data:
@@ -2782,6 +2819,13 @@ class ScratchListener(threading.Thread):
                 print 
                 print "    datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
                 print "    dataIteM:",dataItem
+                if len(dataItem) == 0:
+                    print ("BREAKING OUT OF FOR LOOP AS EMPTY ITEM FOUND")
+                    break
+                # if (time.time() - listenLoopTime) > 5:
+                    # print ("BREAKING OUT OF FOR LOOP AS TAKING TOO LONG")
+                    # listenLoopTime = time.time()
+                    # break 
                 # dataraw = ' '.join([item.replace(' ','') for item in shlex.split(dataItem)])
                 dataraw = ' '
 
@@ -3533,6 +3577,11 @@ class ScratchListener(threading.Thread):
                                 #    sghGC.pinUpdate(pin, 0)  # turn all the pins physically off
                                 for loop in range(0, 4):
                                     pz.setInputConfig(loop, 0, True)
+                                for pin in [7,11,12,13,15]:
+                                    sghGC.pinUse[pin] = sghGC.POUTPUT
+                                sghGC.setPinMode()   
+                                for pin in [7,11,12,13,15]:
+                                    sghGC.pinUpdate(pin, 0)
                                 anyAddOns = True
 
                         for pin in sghGC.validPins:
@@ -5717,7 +5766,19 @@ class ScratchListener(threading.Thread):
                                 print "power", loop, svalue
                                 pz.setOutputConfig(loop, 1)
                                 pz.setOutput(loop, svalue)
-
+                        for pin in [7,11,12,13,15]:
+                            #print ("00" + str(sghGC.gpioLookup[pin]))[-2:]
+                            if self.bFindOnOff("g" + ("00" + str(sghGC.gpioLookup[pin]))[-2:]):
+                                sghGC.pinUpdate(pin, self.OnOrOff)
+                                
+                    if self.bFind("alloff"):
+                        pz.setMotor(1, 0)
+                        pz.setMotor(0, 0)
+                        for loop in range(0, 6):
+                            pz.setOutputConfig(loop, 0)
+                            pz.setOutput(loop, 0)
+                        for pin in [7,11,12,13,15]:
+                            sghGC.pinUpdate(pin, 0)                        
 
 
                     else:  # Plain GPIO Broadcast processing

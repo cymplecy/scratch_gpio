@@ -21,6 +21,7 @@ Version =  '0.1.1' # 15Feb17
 import time
 import threading
 import datetime as dt
+import math
 
 
 
@@ -43,6 +44,7 @@ class sghStepper(threading.Thread):
         self.paused = False
         self.pause_start_time = dt.datetime.now()
         self.finishedMoving = [-1] * 41
+        self.accError = 0
 
     def start(self):
         self.thread = threading.Thread(None, self.run, None, (), {})
@@ -59,6 +61,20 @@ class sghStepper(threading.Thread):
     def changeSpeed(self, stepperSpeed,steps):
         self.stepperSpeed = int(stepperSpeed)
         self.steps = int(steps)
+        print "steps",self.steps
+        self.accError = self.accError + math.copysign((steps - self.steps) , stepperSpeed)
+        print "acc erro", self.accError
+        print "acc error int", int(self.accError)
+        if stepperSpeed < 0:
+            if self.accError < 0:
+                self.steps = self.steps + abs(int(self.accError))
+                self.accError = self.accError - int(self.accError)
+        if stepperSpeed > 0:
+            if self.accError > 0:
+                self.steps = self.steps + abs(int(self.accError))
+                self.accError = self.accError - int(self.accError)                   
+        print "new steps", self.steps
+        print "acc erro", self.accError
         self.steps_start = self.steps
         self.slow_start = self.steps - int(min(64,max(1,int(float(self.steps)*0.8))))
         if self.steps > (self.BigNum / 2):
