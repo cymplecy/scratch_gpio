@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.018'  # 26Feb17 Fix PiConZero UH problem
+Version = 'v8.2.019'  # 26Feb17 setdigital added to picnzero
 import threading
 import socket
 import time
@@ -5778,7 +5778,11 @@ class ScratchListener(threading.Thread):
                     if self.bFind("settemp"):                                
                         for pin in [0,1,2,3]:
                             if self.bFindValue("settemp" + str(pin)):
-                                pz.setInputConfig(pin,2)                                
+                                pz.setInputConfig(pin,2)      
+                    if self.bFind("setdigital"):                                
+                        for pin in [0,1,2,3]:
+                            if self.bFindValue("setdigital" + str(pin)):
+                                pz.setInputConfig(pin,0)
                     
                     if self.bFind("alloff"):
                         pz.setMotor(1, 0)
