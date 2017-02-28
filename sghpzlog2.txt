@@ -1,0 +1,1182 @@
+webcam not imported
+ADAfruit Board Revision Detects: 1
+8x8 NOT imported
+importing piconzero
+RPi.GPIO Version 0.6.3
+Board Revision 3
+sghGC Debug enabled
+pi Revision 3
+PiGlow init
+i2cbus: 1
+self.bus: <smbus.SMBus object at 0x75af8260>
+<Adafruit_I2C.Adafruit_I2C instance at 0x75c2fe18>
+Error accessing device at address 0x40
+init PCF8591
+Error accessing device at address 0x20
+Unable to determine Raspberry Pi revision.
+pi camera init
+starting at 0
+RasPiCamera Detected
+PATH: /home/pi/sghdev/scratch_gpio
+Starting to connect... Trying
+Connected!
+Sender Init
+Send Msgs Init
+Running....
+ScratchListner run started
+ScratchSender run started
+<thread.lock object at 0x76d3bef0>
+msgs runnning
+('datalen: %s', 287)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "addon" "neopixels90" "lastcheer" "black" "lastcolour" "none" "lastcolourcheer" 0 "lasthour" 12 "lastkitchcolour" "yellow" "bright" 38 "collookup" "yellow" "collookuploop" 49 "colourrgbblue" 0 "colourrgbgreen" 255 "colourrgbred" 255 "loop" 65 "mqttbroker" "win8.local" ']
+
+    datatime 2017-02-28 12:44:09
+    dataIteM: sensor-update "addon" "neopixels90" "lastcheer" "black" "lastcolour" "none" "lastcolourcheer" 0 "lasthour" 12 "lastkitchcolour" "yellow" "bright" 38 "collookup" "yellow" "collookuploop" 49 "colourrgbblue" 0 "colourrgbgreen" 255 "colourrgbred" 255 "loop" 65 "mqttbroker" "win8.local" 
+('neopixels90', ' declared')
+level set to  0.38
+AD: neopixels90
+mqttsubscriber started
+loop timE: 0.212114095688
+Connected with result code 0
+WARNING NOT ERROR subscribe inside connect failed
+('datalen: %s', 25)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "lookuprgb"']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: broadcast "lookuprgb"
+loop timE: 0.0222139358521
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 5 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 5 
+loop timE: 0.00983214378357
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 9 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 9 
+loop timE: 0.00396203994751
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 13 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 13 
+loop timE: 0.00373005867004
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 17 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 17 
+loop timE: 0.00394797325134
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 21 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 21 
+loop timE: 0.00589203834534
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 25 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 25 
+loop timE: 0.003662109375
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 29 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 29 
+loop timE: 0.00619721412659
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 33 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 33 
+loop timE: 0.00360584259033
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 37 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 37 
+loop timE: 0.0035297870636
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 41 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 41 
+loop timE: 0.00662589073181
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 45 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 45 
+loop timE: 0.00902891159058
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 49 ']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: sensor-update "collookuploop" 49 
+loop timE: 0.0120899677277
+('datalen: %s', 284)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/cheerlightsrgbred,255"', 'broadcast "mqtt publish test/cheerlightsrgbgreen,255"', 'broadcast "mqtt publish test/cheerlightsrgbblue,0"', 'broadcast "mqtt publish test/cheerlights,yellow"', 'broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbred,255"
+loop timE: 0.038094997406
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbgreen,255"
+----mqtt published win8.local test/cheerlightsrgbred 255
+loop timE: 0.108697891235
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbblue,0"
+----mqtt published win8.local test/cheerlightsrgbgreen 255
+loop timE: 0.185652971268
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow"
+----mqtt published win8.local test/cheerlightsrgbblue 0
+loop timE: 0.243007898331
+
+    datatime 2017-02-28 12:44:14
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/cheerlights yellow
+loop timE: 0.283123970032
+----mqtt published mosquitto.org test/cheerlights yellow
+('datalen: %s', 60)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow"']
+
+    datatime 2017-02-28 12:44:15
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow"
+loop timE: 0.0218451023102
+('datalen: %s', 74)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:15
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/colouredcheerlights yellow
+loop timE: 0.0549068450928
+('datalen: %s', 55)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "get cheerlights"', 'broadcast "get time"']
+
+    datatime 2017-02-28 12:44:15
+    dataIteM: broadcast "get cheerlights"
+----mqtt published mosquitto.org test/colouredcheerlights yellow
+loop timE: 0.551995038986
+
+    datatime 2017-02-28 12:44:16
+    dataIteM: broadcast "get time"
+loop timE: 0.569545984268
+('datalen: %s', 25)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "lookuprgb"']
+
+    datatime 2017-02-28 12:44:22
+    dataIteM: broadcast "lookuprgb"
+loop timE: 0.0144090652466
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 5 ']
+
+    datatime 2017-02-28 12:44:22
+    dataIteM: sensor-update "collookuploop" 5 
+loop timE: 0.00602507591248
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 9 ']
+
+    datatime 2017-02-28 12:44:22
+    dataIteM: sensor-update "collookuploop" 9 
+loop timE: 0.00800895690918
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 13 ']
+
+    datatime 2017-02-28 12:44:22
+    dataIteM: sensor-update "collookuploop" 13 
+loop timE: 0.0124778747559
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 17 ']
+
+    datatime 2017-02-28 12:44:22
+    dataIteM: sensor-update "collookuploop" 17 
+loop timE: 0.00637006759644
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 21 ']
+
+    datatime 2017-02-28 12:44:22
+    dataIteM: sensor-update "collookuploop" 21 
+loop timE: 0.00463199615479
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 25 ']
+
+    datatime 2017-02-28 12:44:22
+    dataIteM: sensor-update "collookuploop" 25 
+loop timE: 0.00501894950867
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 29 ']
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: sensor-update "collookuploop" 29 
+loop timE: 0.0116240978241
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 33 ']
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: sensor-update "collookuploop" 33 
+loop timE: 0.00459814071655
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 37 ']
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: sensor-update "collookuploop" 37 
+loop timE: 0.00668215751648
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 41 ']
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: sensor-update "collookuploop" 41 
+loop timE: 0.00637984275818
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 45 ']
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: sensor-update "collookuploop" 45 
+loop timE: 0.00355219841003
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 49 ']
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: sensor-update "collookuploop" 49 
+loop timE: 0.00357985496521
+('datalen: %s', 284)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/cheerlightsrgbred,255"', 'broadcast "mqtt publish test/cheerlightsrgbgreen,255"', 'broadcast "mqtt publish test/cheerlightsrgbblue,0"', 'broadcast "mqtt publish test/cheerlights,yellow"', 'broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbred,255"
+loop timE: 0.0453288555145
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbgreen,255"
+----mqtt published win8.local test/cheerlightsrgbred 255
+loop timE: 0.117522954941
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbblue,0"
+----mqtt published win8.local test/cheerlightsrgbgreen 255
+loop timE: 0.194693803787
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow"
+----mqtt published win8.local test/cheerlightsrgbblue 0
+loop timE: 0.233383893967
+
+    datatime 2017-02-28 12:44:23
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/cheerlights yellow
+loop timE: 0.260257959366
+----mqtt published mosquitto.org test/cheerlights yellow
+('datalen: %s', 60)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow"']
+
+    datatime 2017-02-28 12:44:24
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow"
+loop timE: 0.0153419971466
+('datalen: %s', 74)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:24
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/colouredcheerlights yellow
+loop timE: 0.0284380912781
+----mqtt published mosquitto.org test/colouredcheerlights yellow
+('datalen: %s', 55)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "get cheerlights"', 'broadcast "get time"']
+
+    datatime 2017-02-28 12:44:24
+    dataIteM: broadcast "get cheerlights"
+loop timE: 0.287442922592
+
+    datatime 2017-02-28 12:44:24
+    dataIteM: broadcast "get time"
+loop timE: 0.302582979202
+('datalen: %s', 25)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "lookuprgb"']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: broadcast "lookuprgb"
+loop timE: 0.0149850845337
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 5 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 5 
+loop timE: 0.00402188301086
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 9 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 9 
+loop timE: 0.00505995750427
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 13 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 13 
+loop timE: 0.011470079422
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 17 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 17 
+loop timE: 0.00365996360779
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 21 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 21 
+loop timE: 0.00861215591431
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 25 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 25 
+loop timE: 0.00371980667114
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 29 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 29 
+loop timE: 0.00783205032349
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 33 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 33 
+loop timE: 0.00770092010498
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 37 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 37 
+loop timE: 0.00521993637085
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 41 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 41 
+loop timE: 0.00431394577026
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 45 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 45 
+loop timE: 0.00363612174988
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 49 ']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: sensor-update "collookuploop" 49 
+loop timE: 0.00595998764038
+('datalen: %s', 284)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/cheerlightsrgbred,255"', 'broadcast "mqtt publish test/cheerlightsrgbgreen,255"', 'broadcast "mqtt publish test/cheerlightsrgbblue,0"', 'broadcast "mqtt publish test/cheerlights,yellow"', 'broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbred,255"
+loop timE: 0.0389828681946
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbgreen,255"
+loop timE: 0.0790958404541
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbblue,0"
+----mqtt published win8.local test/cheerlightsrgbred 255
+loop timE: 0.123168945312
+
+    datatime 2017-02-28 12:44:31
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow"
+----mqtt published win8.local test/cheerlightsrgbgreen 255
+loop timE: 0.161978006363
+
+    datatime 2017-02-28 12:44:32
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/cheerlightsrgbblue 0
+----mqtt published win8.local test/cheerlights yellow
+loop timE: 0.194522857666
+----mqtt published mosquitto.org test/cheerlights yellow
+('datalen: %s', 60)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow"']
+
+    datatime 2017-02-28 12:44:32
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow"
+loop timE: 0.0189478397369
+('datalen: %s', 74)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:32
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"
+loop timE: 0.0233459472656
+----mqtt published win8.local test/colouredcheerlights yellow
+('datalen: %s', 55)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "get cheerlights"', 'broadcast "get time"']
+
+    datatime 2017-02-28 12:44:33
+    dataIteM: broadcast "get cheerlights"
+----mqtt published mosquitto.org test/colouredcheerlights yellow
+loop timE: 0.51347899437
+
+    datatime 2017-02-28 12:44:33
+    dataIteM: broadcast "get time"
+loop timE: 0.532413005829
+('datalen: %s', 25)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "lookuprgb"']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: broadcast "lookuprgb"
+loop timE: 0.0180258750916
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 5 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 5 
+loop timE: 0.00409507751465
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 9 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 9 
+loop timE: 0.00547695159912
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 13 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 13 
+loop timE: 0.00576090812683
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 17 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 17 
+loop timE: 0.00938606262207
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 21 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 21 
+loop timE: 0.00794792175293
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 25 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 25 
+loop timE: 0.00528001785278
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 29 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 29 
+loop timE: 0.00515389442444
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 33 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 33 
+loop timE: 0.00659489631653
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 37 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 37 
+loop timE: 0.00384521484375
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 41 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 41 
+loop timE: 0.00475978851318
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 45 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 45 
+loop timE: 0.00352597236633
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 49 ']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: sensor-update "collookuploop" 49 
+loop timE: 0.00488686561584
+('datalen: %s', 284)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/cheerlightsrgbred,255"', 'broadcast "mqtt publish test/cheerlightsrgbgreen,255"', 'broadcast "mqtt publish test/cheerlightsrgbblue,0"', 'broadcast "mqtt publish test/cheerlights,yellow"', 'broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbred,255"
+loop timE: 0.0190370082855
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbgreen,255"
+loop timE: 0.0308570861816
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbblue,0"
+loop timE: 0.05633020401
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow"
+loop timE: 0.0669510364532
+
+    datatime 2017-02-28 12:44:40
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"
+loop timE: 0.0923600196838
+----mqtt published win8.local test/cheerlightsrgbred 255
+----mqtt published win8.local test/cheerlights yellow
+----mqtt published mosquitto.org test/cheerlights yellow
+----mqtt published win8.local test/cheerlightsrgbblue 0
+----mqtt published win8.local test/cheerlightsrgbgreen 255
+('datalen: %s', 60)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow"']
+
+    datatime 2017-02-28 12:44:41
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow"
+loop timE: 0.0230958461761
+('datalen: %s', 74)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:41
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"
+loop timE: 0.0108799934387
+----mqtt published win8.local test/colouredcheerlights yellow
+('datalen: %s', 55)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "get cheerlights"', 'broadcast "get time"']
+
+    datatime 2017-02-28 12:44:41
+    dataIteM: broadcast "get cheerlights"
+loop timE: 0.341233968735
+
+    datatime 2017-02-28 12:44:41
+    dataIteM: broadcast "get time"
+loop timE: 0.354724168777
+----mqtt published mosquitto.org test/colouredcheerlights yellow
+('datalen: %s', 25)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "lookuprgb"']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: broadcast "lookuprgb"
+loop timE: 0.0186169147491
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 5 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 5 
+loop timE: 0.0044891834259
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 9 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 9 
+loop timE: 0.00591111183167
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 13 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 13 
+loop timE: 0.00380611419678
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 17 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 17 
+loop timE: 0.00389695167542
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 21 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 21 
+loop timE: 0.00381803512573
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 25 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 25 
+loop timE: 0.00649404525757
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 29 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 29 
+loop timE: 0.00363397598267
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 33 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 33 
+loop timE: 0.00377011299133
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 37 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 37 
+loop timE: 0.00609397888184
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 41 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 41 
+loop timE: 0.00569105148315
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 45 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 45 
+loop timE: 0.00374603271484
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 49 ']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: sensor-update "collookuploop" 49 
+loop timE: 0.00534701347351
+('datalen: %s', 284)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/cheerlightsrgbred,255"', 'broadcast "mqtt publish test/cheerlightsrgbgreen,255"', 'broadcast "mqtt publish test/cheerlightsrgbblue,0"', 'broadcast "mqtt publish test/cheerlights,yellow"', 'broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbred,255"
+loop timE: 0.028559923172
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbgreen,255"
+----mqtt published win8.local test/cheerlightsrgbred 255
+loop timE: 0.0749089717865
+
+    datatime 2017-02-28 12:44:48
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbblue,0"
+----mqtt published win8.local test/cheerlightsrgbgreen 255
+loop timE: 0.151935815811
+
+    datatime 2017-02-28 12:44:49
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow"
+----mqtt published win8.local test/cheerlightsrgbblue 0
+loop timE: 0.219383001328
+
+    datatime 2017-02-28 12:44:49
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/cheerlights yellow
+loop timE: 0.289627790451
+----mqtt published mosquitto.org test/cheerlights yellow
+('datalen: %s', 60)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow"']
+
+    datatime 2017-02-28 12:44:49
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow"
+loop timE: 0.0216820240021
+('datalen: %s', 74)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:49
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"
+loop timE: 0.0216870307922
+----mqtt published win8.local test/colouredcheerlights yellow
+----mqtt published mosquitto.org test/colouredcheerlights yellow
+('datalen: %s', 55)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "get cheerlights"', 'broadcast "get time"']
+
+    datatime 2017-02-28 12:44:50
+    dataIteM: broadcast "get cheerlights"
+loop timE: 0.262797117233
+
+    datatime 2017-02-28 12:44:50
+    dataIteM: broadcast "get time"
+loop timE: 0.287208080292
+('datalen: %s', 25)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "lookuprgb"']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: broadcast "lookuprgb"
+loop timE: 0.0166609287262
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 5 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 5 
+loop timE: 0.00803899765015
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 9 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 9 
+loop timE: 0.0116000175476
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 13 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 13 
+loop timE: 0.00905895233154
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 17 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 17 
+loop timE: 0.00348401069641
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 21 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 21 
+loop timE: 0.00435996055603
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 25 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 25 
+loop timE: 0.00364303588867
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 29 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 29 
+loop timE: 0.00974202156067
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 33 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 33 
+loop timE: 0.00723600387573
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 37 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 37 
+loop timE: 0.00795793533325
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 41 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 41 
+loop timE: 0.00374102592468
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 45 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 45 
+loop timE: 0.00597906112671
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 49 ']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: sensor-update "collookuploop" 49 
+loop timE: 0.00713396072388
+('datalen: %s', 284)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/cheerlightsrgbred,255"', 'broadcast "mqtt publish test/cheerlightsrgbgreen,255"', 'broadcast "mqtt publish test/cheerlightsrgbblue,0"', 'broadcast "mqtt publish test/cheerlights,yellow"', 'broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbred,255"
+loop timE: 0.0373420715332
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbgreen,255"
+----mqtt published win8.local test/cheerlightsrgbred 255
+loop timE: 0.0970668792725
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbblue,0"
+----mqtt published win8.local test/cheerlightsrgbgreen 255
+loop timE: 0.176917076111
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow"
+----mqtt published win8.local test/cheerlightsrgbblue 0
+loop timE: 0.248553991318
+
+    datatime 2017-02-28 12:44:57
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/cheerlights yellow
+loop timE: 0.315145015717
+----mqtt published mosquitto.org test/cheerlights yellow
+('datalen: %s', 60)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow"']
+
+    datatime 2017-02-28 12:44:58
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow"
+loop timE: 0.020644903183
+('datalen: %s', 74)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:44:58
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/colouredcheerlights yellow
+loop timE: 0.0261511802673
+----mqtt published mosquitto.org test/colouredcheerlights yellow
+('datalen: %s', 55)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "get cheerlights"', 'broadcast "get time"']
+
+    datatime 2017-02-28 12:44:58
+    dataIteM: broadcast "get cheerlights"
+loop timE: 0.245374917984
+
+    datatime 2017-02-28 12:44:58
+    dataIteM: broadcast "get time"
+loop timE: 0.257038831711
+('datalen: %s', 25)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "lookuprgb"']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: broadcast "lookuprgb"
+loop timE: 0.0219171047211
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 5 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 5 
+loop timE: 0.00396299362183
+('datalen: %s', 36)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 9 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 9 
+loop timE: 0.00370192527771
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 13 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 13 
+loop timE: 0.00406193733215
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 17 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 17 
+loop timE: 0.00938701629639
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 21 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 21 
+loop timE: 0.00372695922852
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 25 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 25 
+loop timE: 0.00376796722412
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 29 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 29 
+loop timE: 0.0057680606842
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 33 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 33 
+loop timE: 0.00380516052246
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 37 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 37 
+loop timE: 0.00365495681763
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 41 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 41 
+loop timE: 0.00584506988525
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 45 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 45 
+loop timE: 0.00773596763611
+('datalen: %s', 37)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['sensor-update "collookuploop" 49 ']
+
+    datatime 2017-02-28 12:45:05
+    dataIteM: sensor-update "collookuploop" 49 
+loop timE: 0.00364303588867
+('datalen: %s', 284)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/cheerlightsrgbred,255"', 'broadcast "mqtt publish test/cheerlightsrgbgreen,255"', 'broadcast "mqtt publish test/cheerlightsrgbblue,0"', 'broadcast "mqtt publish test/cheerlights,yellow"', 'broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:45:06
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbred,255"
+loop timE: 0.0416378974915
+
+    datatime 2017-02-28 12:45:06
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbgreen,255"
+loop timE: 0.0896849632263
+
+    datatime----mqtt published win8.local test/cheerlightsrgbred 255
+ 2017-02-28 12:45:06
+    dataIteM: broadcast "mqtt publish test/cheerlightsrgbblue,0"
+----mqtt published win8.local test/cheerlightsrgbgreen 255
+loop timE: 0.178577899933
+
+    datatime 2017-02-28 12:45:06
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow"
+----mqtt published win8.local test/cheerlightsrgbblue 0
+loop timE: 0.217782020569
+
+    datatime 2017-02-28 12:45:06
+    dataIteM: broadcast "mqtt publish test/cheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/cheerlights yellow
+loop timE: 0.253662824631
+----mqtt published mosquitto.org test/cheerlights yellow
+('datalen: %s', 60)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow"']
+
+    datatime 2017-02-28 12:45:07
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow"
+loop timE: 0.0265691280365
+('datalen: %s', 74)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"']
+
+    datatime 2017-02-28 12:45:07
+    dataIteM: broadcast "mqtt publish test/colouredcheerlights,yellow,mosquitto.org"
+----mqtt published win8.local test/colouredcheerlights yellow
+loop timE: 0.0296680927277
+----mqtt published mosquitto.org test/colouredcheerlights yellow
+('datalen: %s', 55)
+
+STARTING OUTSIDE LOOP
+dataList to be processed ['broadcast "get cheerlights"', 'broadcast "get time"']
+
+    datatime 2017-02-28 12:45:07
+    dataIteM: broadcast "get cheerlights"
+loop timE: 0.993541002274
+
+    datatime 2017-02-28

@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.019'  # 26Feb17 setdigital added to picnzero
+Version = 'v8.2.022'  # 26Feb17 modify neopixels on piconzero uh restored
 import threading
 import socket
 import time
@@ -121,11 +121,11 @@ except:
     pass
 
 try:
-    import piconzero as pz
+    import sgh_piconzero as pz
     pz.init()
     print "importing piconzero"
 except:
-    print "Warning: PiConZero NOT imported - enable i2c in raspi-config advanced"
+    print "Warning: sgh_PiConZero NOT imported - enable i2c in raspi-config advanced"
     pass
 
 try:
@@ -136,7 +136,7 @@ except:
     pass
 
 try:
-    import sgh_unicornhat as UHt
+    import sgh_unicornhat as UH
 except:
     print "Warning: UnicornHAT NOT imported - probaly not installed"
     pass
@@ -1749,25 +1749,34 @@ class ScratchListener(threading.Thread):
                 SH.low_light = True
             else:
                 SH.low_light = False
+        elif "piconzero" in ADDON:
+            pz.setBrightness(int(level * 255.0))
+            pz.updatePixels()
         else:
             UH.brightness(level)
 
     def getNeoPixel(self, x):
-        if "piconzero" in ADDON:
-            pz.setOutputConfig(5, 3)
-            R, G, B = SH.get_pixel(x, y)
+        if "sensehat" in ADDON:
+            R, G, B = SH.get_pixel(x)
             return [R, G, B]
+        elif "piconzero" in ADDON:
+            R, G, B = pz.getPixel(x)
+            return [R, G, B]            
         else:
             R, G, B, = UH.get_neopixel(x)
             return [R, G, B]
 
     def neoBright(self, level):
         print "level set to ", level
+        print "AD:", ADDON
         if "sensehat" in ADDON:
             if level < 1:
                 SH.low_light = True
             else:
                 SH.low_light = False
+        elif "piconzero" in ADDON:
+            pz.setBrightness(int(level * 255.0))
+            pz.updatePixels()                
         else:
             UH.brightness(level)
 
@@ -1875,7 +1884,13 @@ class ScratchListener(threading.Thread):
             elif self.bFindValue("pixels"):
                 pixelProcessed = False
                 for ledcolour in self.tcolours:
-                    if self.bFindValue("pixels", ledcolour):
+                    if self.bFind("pixels" + ledcolour):
+                        self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(ledcolour)
+                        for index in range(0, self.matrixUse):
+                            self.setNeoPixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        self.neoShow()
+                        pixelProcessed = True                 
+                    elif self.bFindValue("pixels", ledcolour):
                         try:
                             start, end = self.value.split(",")
                             start = int(start)
@@ -1888,7 +1903,7 @@ class ScratchListener(threading.Thread):
                                                  self.matrixBlue)
                             self.neoShow()
                             pixelProcessed = True
-                        except:
+                        except:       
                             pass
 
                 if self.bFindValue("pixels", "invert"):
@@ -2917,18 +2932,7 @@ class ScratchListener(threading.Thread):
                             # self.varDict[sensor_name] = sensor_value
                             # print "varDict:" , self.varDict
 
-                    if self.vFindValue("bright"):
-                        sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
-                        PiGlow_Brightness = sghGC.ledDim
-                        bcast_str = 'sensor-update "%s" %d' % ('bright', sghGC.ledDim)
-                        # print 'sending: %s' % bcast_str
-                        msgQueue.put((5, bcast_str))
-                        try:
-                            UH.brightness(max(0, min(1, float(float(sghGC.ledDim) / 100))))
-                            self.neoShow()
-                        except:
-                            pass
-                            # print sghGC.ledDim
+
 
                     if self.vFindValue("turnspeedadj"):
                         self.turnSpeedAdj = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -3638,6 +3642,19 @@ class ScratchListener(threading.Thread):
 
                 # Listen for Variable changes
                 if 'sensor-update' in self.dataraw:
+                    if self.vFindValue("bright"):
+                        sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
+                        PiGlow_Brightness = sghGC.ledDim
+                        bcast_str = 'sensor-update "%s" %d' % ('bright', sghGC.ledDim)
+                        # print 'sending: %s' % bcast_str
+                        msgQueue.put((5, bcast_str))
+                        try:
+                            self.neoBright(max(0, min(1, float(float(sghGC.ledDim) / 100))))
+                            self.neoShow()
+                        except:
+                            pass
+                            # print sghGC.ledDim                
+                
                     if "pitt" in ADDON:
                         if self.vFindValue("output"):
                             if self.valueIsNumeric:
