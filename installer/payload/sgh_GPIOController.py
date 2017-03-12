@@ -145,7 +145,12 @@ class GPIOController :
         if self.piRevision > 2:
             self.validPins =  [3,           5,       7, 8,   10,11,12,13,   15,16,   18,19,   21,22,23,24,   26,      29,   31,32,33,   35,36,37,38,   40]
             self.gpioLookup = [99,99,99, 2,99, 3,99, 4,14,99,15,17,18,27,99,22,23,99,24,10,99, 9,25,11, 8,99, 7,99,99, 5,99, 6,12,13,99,19,16,26,20,99,21]
-            
+
+        self.revgpioLookup = [99] *41    
+        for index, item in enumerate(self.gpioLookup):
+            if item != 99:
+                self.revgpioLookup[item] = index
+        #print self.revgpioLookup        
         #self.ULTRA_IN_USE = [False] * self.PINS
         #self.ultraTotalInUse = 0
         #self.ultraSleep = 1.0

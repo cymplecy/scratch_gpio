@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.022'  # 26Feb17 modify neopixels on piconzero uh restored
+Version = 'v8.2.025'  # 12Mar17 piconzero off by one bug
 import threading
 import socket
 import time
@@ -82,7 +82,7 @@ try:
     import spidev
     # print "spidev imported OK"
 except:
-    print "Not imported "
+    print "spidev Not imported "
     pass
 
 try:
@@ -293,8 +293,10 @@ def on_message(client, userdata, msg):
     #print
     print "....", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "Topic: ", msg.topic + ' Message: ' + str(msg.payload), " rcvd"
     msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
-    time.sleep(0.1)
-    #msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))
+    time.sleep(0.2)    
+    msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))    
+
+
 
 
 class MyError(Exception):
@@ -614,8 +616,8 @@ class ScratchSender(threading.Thread):
 
     # Function to read SPI data from MCP3008 chip
     # Channel must be an integer 0-7
-    def ReadChannel(self, channel):
-        global spi
+    def ReadChannel(self, channel,spi):
+        #global spi0,spi1
         # print spi
         try:
             adc = spi.xfer2([1, (8 + channel) << 4, 0])
@@ -623,11 +625,8 @@ class ScratchSender(threading.Thread):
             # print "channel ok", channel
             return data
         except:
-            print "spi exception - one of these is normal"
-            spi = spidev.SpiDev()
-            spi.open(0, 0)
-            return 0
-
+            pass
+            
     def run(self):
         print "ScratchSender run started"
         global firstRun, ADDON, compass, wii, socketB
@@ -644,7 +643,7 @@ class ScratchSender(threading.Thread):
         lastTimeSinceMCPAnalogRead = time.time()
         self.sleepTime = 0.1
         tick = 0
-        lastADC = [256, 256, 256, 256, 256, 256, 256, 256]
+        lastADC = [256] * 17
         lastpiAndBash = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 
         joyx, joyy, accelx, accely, accelz, button = [0, 0, 0, 0, 0, 0]
@@ -763,7 +762,7 @@ class ScratchSender(threading.Thread):
                 if (time.time() - lastTimeSinceMCPAnalogRead) > 0.5:
                     bcast_str = ""
                     for channel in range(0, 8):
-                        adc = (self.ReadChannel(channel) + (2 * lastADC[channel])) / 3
+                        adc = (self.ReadChannel(channel,spi0) + (2 * lastADC[channel])) / 3
                         if adc != lastADC[channel]:  # (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
                             sensor_name = 'adc' + str(channel)
                             bcast_str += '"' + sensor_name + '" ' + str(adc) + " "
@@ -775,7 +774,27 @@ class ScratchSender(threading.Thread):
                     msgQueue.put((5, "sensor-update " + bcast_str))
 
                     lastTimeSinceMCPAnalogRead = time.time()
-
+                    
+            if  "bbbanalog" in ADDON:
+                if (time.time() - lastTimeSinceMCPAnalogRead) > 0.5:
+                    bcast_str = ""
+                    for channel in range(0, 8):
+                        adc = (self.ReadChannel(channel,spi0))# + (2 * lastADC[channel])) / 3
+                        if adc != lastADC[channel]:  # (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
+                            sensor_name = 'a' + str(channel)
+                            bcast_str += '"' + sensor_name + '" ' + str(adc) + " "
+                        lastADC[channel] = adc
+                    for channel in range(0, 8):
+                        adc = (self.ReadChannel(channel,spi1))# + (2 * lastADC[channel + 8])) / 3
+                        if adc != lastADC[channel + 8]:  # (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
+                            sensor_name = 'b' + str(channel)
+                            bcast_str += '"' + sensor_name + '" ' + str(adc) + " "
+                        lastADC[channel + 8] = adc
+                    msgQueue.put((5, "sensor-update " + bcast_str))                    
+                    
+                    lastTimeSinceMCPAnalogRead = time.time()            
+            
+            
             if "pipiano" in ADDON:
 
                 with lock:
@@ -3588,6 +3607,21 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(pin, 0)
                                 anyAddOns = True
 
+                        if "bbbstepper" in ADDON:
+                            for pin in [22, 18, 15, 16, 13, 11, 12, 7, 36, 35, 38, 37, 33, 31, 32, 29]:
+                                sghGC.pinUse[pin] = sghGC.POUTPUT
+                            sghGC.setPinMode()   
+                            for pin in [22, 18, 15, 16, 13, 11, 12, 7, 36, 35, 38, 37, 33, 31, 32, 29]:
+                                sghGC.pinUpdate(pin, 0)
+                            anyAddOns = True               
+                        if "bbbdcmotor" in ADDON:
+                            for gpin in [4,18,17,27,19,20,21,26]:
+                                sghGC.pinUse[sghGC.revgpioLookup[gpin]] = sghGC.POUTPUT
+                            sghGC.setPinMode()   
+                            for gpin in [4,18,17,27,19,20,21,26]:
+                                sghGC.pinUpdate(sghGC.revgpioLookup[gpin], 0)
+                            anyAddOns = True       
+                                
                         for pin in sghGC.validPins:
                             if (sghGC.pinUse[pin] in [sghGC.PINPUT, sghGC.PINPUTNONE, sghGC.PINPUTDOWN]):
                                 sghGC.pinTriggerLastState[pin] = sghGC.pinRead(pin)
@@ -4509,10 +4543,10 @@ class ScratchListener(threading.Thread):
 
                     elif "piconzero" in ADDON:
                         if self.vFindValue("motora"):
-                            svalue = min(128, max(-128, int(self.valueNumeric * 1.28))) if self.valueIsNumeric else 0
+                            svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
                             pz.setMotor(1, svalue)
                         if self.vFindValue("motorb"):
-                            svalue = min(128, max(-128, int(self.valueNumeric * 1.28))) if self.valueIsNumeric else 0
+                            svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
                             pz.setMotor(0, svalue)
                         for loop in range(0, 6):
                             if self.vFindValue("servo" + str(loop)):
@@ -4534,9 +4568,25 @@ class ScratchListener(threading.Thread):
                                 pz.setOutputConfig(loop, 1)
                                 pz.setOutput(loop, svalue)
 
-
-
-
+                    elif "bbbstepper" in ADDON:
+                        stepperList = [['step1', [22, 18, 15, 16]], ['step0', [13, 11, 12, 7]], ['step3', [36, 35, 38, 37]], ['step2', [33, 31, 32, 29 ]]]                                       
+                        for listLoop in range(0, 4):
+                            if self.vFindValue(stepperList[listLoop][0]):
+                                logging.debug("Stepper found %s", stepperList[listLoop][0])
+                                if self.valueIsNumeric:
+                                    self.stepperUpdate(stepperList[listLoop][1], self.valueNumeric)
+                                else:
+                                    self.stepperUpdate(stepperList[listLoop][1], 0)   
+                                    
+                    elif "bbbdcmotor" in ADDON:
+                        motorList = [['m1', 4,18], ['m2', 17,27], ['m3', 19,20], ['m4', 21,26]] # gpio pin numbering
+                        logging.debug("ADDON:%s", ADDON)
+                        for listLoop in range(0, 4):
+                            #print listLoop
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(sghGC.revgpioLookup[motorList[listLoop][1]], sghGC.revgpioLookup[motorList[listLoop][2]], svalue)
 
                     else:  # normal variable processing with no add on board
 
@@ -7308,6 +7358,23 @@ try:
 except:
     print ("Warning:MQTT not installed")
     pass
+
+spi0 = None
+spi1 = None    
+try:
+    spi0 = spidev.SpiDev()
+    spi0.open(0,0)
+    print "spi0 enabled"
+except:
+    print "spi0 not enabled"
+
+try:
+    spi1 = spidev.SpiDev()
+    spi1.open(0,1)
+    print "spi1 enabled"
+except:
+    print "spi1 not enabled"    
+
 
 if __name__ == '__main__':
     SCRIPTPATH = os.path.split(os.path.realpath(__file__))[0]

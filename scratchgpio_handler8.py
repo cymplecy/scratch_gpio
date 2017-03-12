@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.024'  # 04Mar17 mqtt broadcast tried back again
+Version = 'v8.2.025'  # 12Mar17 piconzero off by one bug
 import threading
 import socket
 import time
@@ -4543,10 +4543,10 @@ class ScratchListener(threading.Thread):
 
                     elif "piconzero" in ADDON:
                         if self.vFindValue("motora"):
-                            svalue = min(128, max(-128, int(self.valueNumeric * 1.28))) if self.valueIsNumeric else 0
+                            svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
                             pz.setMotor(1, svalue)
                         if self.vFindValue("motorb"):
-                            svalue = min(128, max(-128, int(self.valueNumeric * 1.28))) if self.valueIsNumeric else 0
+                            svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
                             pz.setMotor(0, svalue)
                         for loop in range(0, 6):
                             if self.vFindValue("servo" + str(loop)):
