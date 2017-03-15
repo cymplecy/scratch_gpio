@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.025'  # 12Mar17 piconzero off by one bug
+Version = 'v8.2.026'  # 15Mar17 positionc d updates before merge from kwindows
 import threading
 import socket
 import time
@@ -5911,8 +5911,8 @@ class ScratchListener(threading.Thread):
 
                                 # end of normal pin checking
 
-                    stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]]]
-                    for listLoop in range(0, 2):
+                    stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
+                    for listLoop in range(0, 4):
                         # print ("loop" , listLoop)
                         if self.bFindValue(stepperList[listLoop][0]):
                             if self.valueIsNumeric:
