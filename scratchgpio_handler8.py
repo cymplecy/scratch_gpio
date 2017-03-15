@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.026'  # 15Mar17 positionc d updates before merge from kwindows
+Version = 'v8.2.027'  # 15Mar17 fix after merge from kwindow to merge pixels# and positionc
 import threading
 import socket
 import time
@@ -1924,6 +1924,23 @@ class ScratchListener(threading.Thread):
                             pixelProcessed = True
                         except:       
                             pass
+
+                if self.bFindValue("pixels#"):
+                    try:
+                        c = (self.value + "000000")[0:6]
+                        #print "full", c
+                        r = int(c[0:2], 16)
+                        g = int(c[2:4], 16)
+                        #print "b",c[4:]
+                        b = int(c[4:], 16)
+                        self.matrixRed, self.matrixGreen, self.matrixBlue = r, g, b
+                        for loop in range(0, self.matrixUse):
+                            self.setNeoPixel(loop, self.matrixRed, self.matrixGreen,
+                                             self.matrixBlue)
+                        self.neoShow()
+                        pixelProcessed = True
+                    except:
+                        pass                            
 
                 if self.bFindValue("pixels", "invert"):
                     try:
