@@ -1506,13 +1506,13 @@ class ScratchListener(threading.Thread):
             # print ("pin",pins, "set to", value)
         except:
             try:
-                print ("Stopping PWM")
+                print ("try Stopping PWM on stepper pin just in case its running")
                 sghGC.pinRef[pins[0]].stop()
 
             except:
                 pass
             for item in pins:
-                print "pin", item
+                print "make sure pin", item , "is set to 0"
                 sghGC.pinUpdate(item, 0)
             stepperInUse = True
             sghGC.pinRef[pins[0]] = None
@@ -1526,8 +1526,8 @@ class ScratchListener(threading.Thread):
 
 
             print "stepper started on ", pins
-            # print 'pin' , pins , ' changed to Stepper'
-            # print ("pins",pins, "set to", value)
+            print 'pin' , pins , ' changed to Stepper'
+            print ("stepper reference ",sghGC.pinRef[pins[0]])
         sghGC.pinUse[pins[0]] = sghGC.POUTPUT
 
     def encoderCount(self, pin):
@@ -5933,28 +5933,39 @@ class ScratchListener(threading.Thread):
                         # print ("loop" , listLoop)
                         if self.bFindValue(stepperList[listLoop][0]):
                             if self.valueIsNumeric:
+                                mainPin = stepperList[listLoop][1][0]
+                                print "main stepper pin", mainPin
+                                print "stepper ref" , sghGC.pinRef[mainPin]
+                                sensor_name = 'stepper' + stepperList[listLoop][0][-1:]
+                                bcast_str = 'sensor-update "%s" %s' % (sensor_name, "moving")
+                                # print 'sending: %s' % bcast_str
+                                msgQueue.put((5, bcast_str))
                                 if self.valueNumeric > 0:
-                                    try:
+                                    if sghGC.pinRef[mainPin] != None:
+                                        print "waiting"
                                         time.sleep(0.2)
-                                        print "sleeping" ,sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]]
-                                        while sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]] != 0:
+                                        while sghGC.pinRef[mainPin].stepInMotion[mainPin] != 0:
+                                            print "sleeping" ,sghGC.pinRef[mainPin].stepInMotion[mainPin]                                        
                                             time.sleep(0.1)
                                         print "awake"
-                                    except:
-                                        pass
+
                                     self.stepperUpdate(stepperList[listLoop][1], 100, self.valueNumeric)
                                 elif self.valueNumeric < 0:
-                                    try:
+                                    if sghGC.pinRef[mainPin] != None:
+                                        print "waiting"
                                         time.sleep(0.2)
-                                        print "sleeping" ,sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]]
-                                        while sghGC.pinRef[stepperList[listLoop][1][0]].finishedMoving[stepperList[listLoop][1][0]] != 0:
+                                        while sghGC.pinRef[mainPin].stepInMotion[mainPin] != 0:
+                                            print "sleeping" ,sghGC.pinRef[mainPin].stepInMotion[mainPin]                                        
                                             time.sleep(0.1)
                                         print "awake"
-                                    except:
-                                        pass
                                     self.stepperUpdate(stepperList[listLoop][1], -100, abs(self.valueNumeric))
                             else:
                                 self.stepperUpdate(stepperList[listLoop][1], 0)
+                            
+                            sensor_name = 'stepper' + stepperList[listLoop][0][-1:]
+                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, "stopped")
+                            # print 'sending: %s' % bcast_str
+                            msgQueue.put((5, bcast_str))                                
 
 
                     if self.bFindValue('pinpattern'):
