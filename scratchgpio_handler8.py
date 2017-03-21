@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.027'  # 15Mar17 fix after merge from kwindow to merge pixels# and positionc
+Version = 'v8.2.100'  # 21Mar17 initial support for stepper version of me arm
 import threading
 import socket
 import time
@@ -63,6 +63,13 @@ try:
 except:
     print "meArm  NOT imported "
     pass
+    
+#try:
+import sgh_stepperArm
+#    print "sgh_stepperArm imported OK"
+#except:
+#    print "sgh_stepperArm  NOT imported "
+#    pass    
 
 try:
     from sgh_MCP23008 import sgh_MCP23008
@@ -2689,6 +2696,7 @@ class ScratchListener(threading.Thread):
         meHorizontal = 0
         meDistance = 100
         meVertical = 50
+        self.stepperArm = None        
         pnblcd = None
         cheerList = None
 
@@ -3528,6 +3536,20 @@ class ScratchListener(threading.Thread):
 
                                 print "MeArm setup"
                                 anyAddOns = True
+                                
+                        if "stepperarm" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                for pin in [19,23]:
+                                    sghGC.pinUse[pin] = sghGC.PINPUT
+                                # sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
+                                sghGC.setPinMode()
+                                #if pcaPWM is not None:
+                                self.stepperArm = sgh_stepperArm.meArm()
+                                self.stepperArm.begin()
+
+                                print "stepperArm setup"
+                                anyAddOns = True                                
 
                         if "flotilla" in ADDON:
                             print "flotilla", ADDON
@@ -7047,7 +7069,65 @@ class ScratchListener(threading.Thread):
                         except:
                             print "MQTT subscribe failed"
                             pass
-
+                            
+                            
+                    if self.bFindValue("steparmcalib"):
+                        bcast_str = 'sensor-update "%s" %s' % ("steppercalibrated", "false")
+                        msgQueue.put((5, bcast_str))    
+                        stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
+                        self.stepperUpdate(stepperList[0][1], 100, 10)
+                        time.sleep(2)
+                        while sghGC.pinRead(19) == 1:
+                            self.stepperUpdate(stepperList[0][1], -100, 6)
+                            time.sleep(1)
+                        self.stepperUpdate(stepperList[0][1], 100, 10)
+                        time.sleep(2)                
+                        while sghGC.pinRead(19) == 1:
+                            self.stepperUpdate(stepperList[0][1], -100, 1)
+                            time.sleep(0.5)
+                        self.stepperUpdate(stepperList[0][1], 100, 13)
+                        time.sleep(2)      
+                        self.stepperUpdate(stepperList[1][1], 100, 10)
+                        time.sleep(2)
+                        while sghGC.pinRead(23) == 1:
+                            self.stepperUpdate(stepperList[1][1], -100, 6)
+                            time.sleep(1)
+                        self.stepperUpdate(stepperList[1][1], 100, 10)
+                        time.sleep(2)                
+                        while sghGC.pinRead(23) == 1:
+                            self.stepperUpdate(stepperList[1][1], -100, 1)
+                            time.sleep(0.5)
+                        self.stepperUpdate(stepperList[1][1], 100, 45)
+                        time.sleep(3)                             
+                        bcast_str = 'sensor-update "%s" %s' % ("steppercalibrated", "true")
+                        msgQueue.put((5, bcast_str))   
+                        
+                        sghGC.stepperAPos = 0
+                        sghGC.stepperBPos = 0
+                        sghGC.stepperCPos = 0
+                        
+                    if self.bFindValue("steparmmove"):
+                        stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
+                        params = self.value.split(",")
+                        print "isReachable(self, x, y, z):" , self.stepperArm.isReachable(int(float(params[0])),int(float(params[1])),int(float(params[2])))
+                        self.stepperArm.goDirectlyTo(int(float(params[0])),int(float(params[1])),int(float(params[2]))) 
+                        print "self.stepperArm.ShoulderPos" , self.stepperArm.ShoulderPos
+                        stepBDelta = self.stepperArm.ShoulderPos - sghGC.stepperBPos
+                        print "stepBDelta" , stepBDelta
+                        if stepBDelta >= 0:
+                            self.stepperUpdate(stepperList[1][1], 100, stepBDelta)
+                        else:
+                            self.stepperUpdate(stepperList[1][1], -100, abs(stepBDelta))                            
+                        sghGC.stepperBPos = self.stepperArm.ShoulderPos
+                        
+                        print "self.stepperArm.ElbowPos" , self.stepperArm.ElbowPos
+                        stepADelta = self.stepperArm.ElbowPos - sghGC.stepperAPos
+                        print "stepADelta" , stepADelta
+                        if stepADelta >= 0:
+                            self.stepperUpdate(stepperList[0][1], 100, stepADelta)
+                        else:
+                            self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
+                        sghGC.stepperAPos = self.stepperArm.ElbowPos
 
                     # end of broadcast check
 
