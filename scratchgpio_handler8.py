@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.100'  # 21Mar17 initial support for stepper version of me arm
+Version = 'v8.2.101experi'  # 21Mar17 bring mearm code inside from module
 import threading
 import socket
 import time
@@ -43,6 +43,7 @@ import Queue
 from sgh_cheerlights import CheerLights
 import urllib2
 from sgh_GetJSONFromURL import GetJSONFromURL
+import kinematics
 
 getjsonfromurl = GetJSONFromURL()
 
@@ -65,7 +66,7 @@ except:
     pass
     
 #try:
-import sgh_stepperArm
+#import sgh_stepperArm
 #    print "sgh_stepperArm imported OK"
 #except:
 #    print "sgh_stepperArm  NOT imported "
@@ -429,6 +430,112 @@ class ListenB(threading.Thread):
                 # if not data:
         print "exiting SocketB run"
 
+        
+class stepperArm():
+    def __init__(self, sweepMinBase = -128, sweepMaxBase = 128, angleMinBase = -math.pi / 2.0 , angleMaxBase = math.pi / 2.0,
+    			 sweepMinShoulder = 64, sweepMaxShoulder = -64, angleMinShoulder = math.pi / 4.0, angleMaxShoulder = 3 * math.pi / 4.0,
+    			 sweepMinElbow = 0, sweepMaxElbow = 128, angleMinElbow = 0, angleMaxElbow = -2 * math.pi / 4.0,
+    			 sweepMinGripper = 75, sweepMaxGripper = 115, angleMinGripper = math.pi / 2.0, angleMaxGripper = 0):
+        """Constructor for meArm - can use as default arm=meArm(), or supply calibration data for servos."""
+        self.servoInfo = {}
+        self.servoInfo["base"] = self.setupServo(sweepMinBase, sweepMaxBase, angleMinBase, angleMaxBase)
+        self.servoInfo["shoulder"] = self.setupServo(sweepMinShoulder, sweepMaxShoulder, angleMinShoulder, angleMaxShoulder)
+        self.servoInfo["elbow"] = self.setupServo(sweepMinElbow, sweepMaxElbow, angleMinElbow, angleMaxElbow)
+        self.servoInfo["gripper"] = self.setupServo(sweepMinGripper, sweepMaxGripper, angleMinGripper, angleMaxGripper)
+        print "servoinfo" , self.servoInfo
+        self.radBase = 0.0
+        self.radShoulder = math.pi / 2.0
+        self.radElbow = 0.0
+        self.BasePos = 0
+        self.ShoulderPos = 0
+        self.ElbowPos = 0
+        
+    # Adafruit servo driver has four 'blocks' of four servo connectors, 0, 1, 2 or 3.
+    def begin(self, block = 0, address = 0x40):
+        """Call begin() before any other meArm calls.  Optional parameters to select a different block of servo connectors or different I2C address."""
+        self.pwm = 0#PWM(address) # Address of Adafruit PWM servo driver
+        self.base = block * 4
+        self.shoulder = block * 4 + 1
+        self.elbow = block * 4 + 2
+        self.gripper = block * 4 + 3
+        #self.pwm.setPWMFreq(60)
+        self.openGripper()
+        self.goDirectlyTo(0, 148, 80)
+        
+    def setupServo(self, n_min, n_max, a_min, a_max):
+        """Calculate servo calibration record to place in self.servoInfo"""
+        rec = {}
+        n_range = (n_max - n_min)
+        a_range = (a_max - a_min)
+        if a_range == 0: return
+        gain = n_range / a_range
+        zero = n_min - gain * a_min
+        rec["gain"] = gain
+        rec["zero"] = zero
+        rec["min"] = n_min
+        rec["max"] = n_max
+        return rec
+    
+    def angle2pwm(self, servo, angle):
+        """Work out pulse length to use to achieve a given requested angle taking into account stored calibration data"""
+        ret = int((self.servoInfo[servo]["zero"] + self.servoInfo[servo]["gain"] * angle) / 1.0 )
+        print "servo",servo,angle
+        return ret
+        
+    def goDirectlyTo(self, x, y, z):
+        """Set servo angles so as to place the gripper at a given Cartesian point as quickly as possible, without caring what path it takes to get there"""
+        angles = [0,0,0]
+        if kinematics.solve(x, y, z, angles):
+            print "angles", angles
+            print "degs", [int(x * 180.0) / math.pi for x in angles] 
+
+            self.radBase = angles[0]
+            self.radShoulder = angles[1] 
+            self.radElbow = angles[2]
+            self.BasePos = self.angle2pwm("base", self.radBase)
+            self.ShoulderPos = self.angle2pwm("shoulder", self.radShoulder)
+            self.ElbowPos = self.angle2pwm("elbow", self.radElbow)
+
+            self.x = x
+            self.y = y
+            self.z = z
+            print "goto %s" % ([x,y,z])
+            
+    def gotoPoint(self, x, y, z):
+        """Travel in a straight line from current position to a requested position"""
+        x0 = self.x
+        y0 = self.y
+        z0 = self.z
+        dist = kinematics.distance(x0, y0, z0, x, y, z)
+        step = 10
+        i = 0
+        while i < dist:
+            self.goDirectlyTo(x0 + (x - x0) * i / dist, y0 + (y - y0) * i / dist, z0 + (z - z0) * i / dist)
+            time.sleep(0.05)
+            i += step
+        self.goDirectlyTo(x, y, z)
+        time.sleep(0.05)
+        
+    def openGripper(self):
+        """Open the gripper, dropping whatever is being carried"""
+        #self.pwm.setPWM(self.gripper, 0, self.angle2pwm("gripper", math.pi/4.0))
+        time.sleep(0.3)
+        
+    def closeGripper(self):
+        """Close the gripper, grabbing onto anything that might be there"""
+        #self.pwm.setPWM(self.gripper, 0, self.angle2pwm("gripper", -math.pi/4.0))
+        time.sleep(0.3)
+    
+    def isReachable(self, x, y, z):
+        """Returns True if the point is (theoretically) reachable by the gripper"""
+        radBase = 0
+        radShoulder = 0
+        radElbow = 0
+        return kinematics.solve(x, y, z, [radBase, radShoulder, radElbow])
+    
+    def getPos(self):
+        """Returns the current position of the gripper"""
+        return [self.x, self.y, self.z]        
 
 class ScratchSender(threading.Thread):
     def __init__(self, socket):
@@ -3545,7 +3652,7 @@ class ScratchListener(threading.Thread):
                                 # sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 sghGC.setPinMode()
                                 #if pcaPWM is not None:
-                                self.stepperArm = sgh_stepperArm.meArm()
+                                self.stepperArm = stepperArm()
                                 self.stepperArm.begin()
 
                                 print "stepperArm setup"
@@ -7128,6 +7235,65 @@ class ScratchListener(threading.Thread):
                         else:
                             self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
                         sghGC.stepperAPos = self.stepperArm.ElbowPos
+    
+
+                        print "self.stepperArm.BasePos" , self.stepperArm.BasePos
+                        stepCDelta = self.stepperArm.BasePos - sghGC.stepperCPos
+                        print "stepCDelta" , stepCDelta
+                        if stepCDelta >= 0:
+                            self.stepperUpdate(stepperList[2][1], 100, stepCDelta)
+                        else:
+                            self.stepperUpdate(stepperList[2][1], -100, abs(stepCDelta))                            
+                        sghGC.stepperCPos = self.stepperArm.BasePos
+                        print "currPos" , self.stepperArm.getPos()                            
+                        
+                    if self.bFindValue("steparmup"):
+                        stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
+                        #print "isReachable(self, x, y, z):" , self.stepperArm.isReachable(int(float(params[0])),int(float(params[1])),int(float(params[2])))
+                        currPos = self.stepperArm.getPos()
+                        self.stepperArm.goDirectlyTo(int(float(currPos[0])),int(float(currPos[1])), int(self.valueNumeric + float(currPos[2]))) 
+                        print "self.stepperArm.ShoulderPos" , self.stepperArm.ShoulderPos
+                        stepBDelta = self.stepperArm.ShoulderPos - sghGC.stepperBPos
+                        print "stepBDelta" , stepBDelta
+                        if stepBDelta >= 0:
+                            self.stepperUpdate(stepperList[1][1], 100, stepBDelta)
+                        else:
+                            self.stepperUpdate(stepperList[1][1], -100, abs(stepBDelta))                            
+                        sghGC.stepperBPos = self.stepperArm.ShoulderPos
+                        
+                        print "self.stepperArm.ElbowPos" , self.stepperArm.ElbowPos
+                        stepADelta = self.stepperArm.ElbowPos - sghGC.stepperAPos
+                        print "stepADelta" , stepADelta
+                        if stepADelta >= 0:
+                            self.stepperUpdate(stepperList[0][1], 100, stepADelta)
+                        else:
+                            self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
+                        sghGC.stepperAPos = self.stepperArm.ElbowPos      
+                        print "currPos" , self.stepperArm.getPos()    
+                        
+                    if self.bFindValue("steparmdown"):
+                        stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
+                        #print "isReachable(self, x, y, z):" , self.stepperArm.isReachable(int(float(params[0])),int(float(params[1])),int(float(params[2])))
+                        currPos = self.stepperArm.getPos()
+                        self.stepperArm.goDirectlyTo(int(float(currPos[0])),int(float(currPos[1])), int(float(currPos[2]) - self.valueNumeric)) 
+                        print "self.stepperArm.ShoulderPos" , self.stepperArm.ShoulderPos
+                        stepBDelta = self.stepperArm.ShoulderPos - sghGC.stepperBPos
+                        print "stepBDelta" , stepBDelta
+                        if stepBDelta >= 0:
+                            self.stepperUpdate(stepperList[1][1], 100, stepBDelta)
+                        else:
+                            self.stepperUpdate(stepperList[1][1], -100, abs(stepBDelta))                            
+                        sghGC.stepperBPos = self.stepperArm.ShoulderPos
+                        
+                        print "self.stepperArm.ElbowPos" , self.stepperArm.ElbowPos
+                        stepADelta = self.stepperArm.ElbowPos - sghGC.stepperAPos
+                        print "stepADelta" , stepADelta
+                        if stepADelta >= 0:
+                            self.stepperUpdate(stepperList[0][1], 100, stepADelta)
+                        else:
+                            self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
+                        sghGC.stepperAPos = self.stepperArm.ElbowPos   
+                        print "currPos" , self.stepperArm.getPos()                        
 
                     # end of broadcast check
 
