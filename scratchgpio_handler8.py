@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.101experi'  # 03Apr17 minor tweak
+Version = 'v8.2.103'  # 23Apr17 newopixels shift rotate mods
 import threading
 import socket
 import time
@@ -2059,49 +2059,151 @@ class ScratchListener(threading.Thread):
                         self.neoShow()
                         pixelProcessed = True
                     except:
-                        pass                            
+                        pass              
+                        
+                if self.bFindValue("pixels","invert"):
+                    #print "value", self.value
+                    start = 1
+                    end = self.matrixUse
+                    try:
+                        start, end = self.value.split(",")
+                        start = int(start)
+                        if end[0] == "+":
+                            end = start + int(end[1:])
+                        end = int(end)
+                    except:
+                        start = 1
+                        end = self.matrixUse
+                        pass
+                    #print "start,end",start, end                        
+                    #lastr,lastg,lastb = self.getNeoPixel(end - 1)
+                    #print "matrixuse", self.matrixUse
+                    #print "last",lastr,lastg,lastb
+                    for index in range(start - 1, end):
+                        gnp = self.getNeoPixel(index)
+                        #print "before", gnp
+                        gnpi = map(lambda a: (255 - a), gnp)
+                        #print "after", gnpi
+                        r, g, b = gnpi
+                        # print "rgb", r,g,b
+                        self.setNeoPixel(index, r, g, b)
+                    #self.setNeoPixel(start - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
+                    
+                if self.bFindValue("pixels","shift"):
+                    #print "value", self.value
+                    start = 1
+                    end = self.matrixUse
+                    try:
+                        start, end = self.value.split(",")
+                        start = int(start)
+                        if end[0] == "+":
+                            end = start + int(end[1:])
+                        end = int(end)
+                    except:
+                        start = 1
+                        end = self.matrixUse
+                        pass
+                    #print "start,end",start, end                        
+                    #lastr,lastg,lastb = self.getNeoPixel(end - 1)
+                    #print "matrixuse", self.matrixUse
+                    #print "last",lastr,lastg,lastb
+                    for index in range(end - 1, start - 1, - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index - 1)
+                        #print "oldpixel", index - 1, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                        #self.neoShow()
+                        #time.sleep(5)
+                    #self.setNeoPixel(start - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
 
-                if self.bFindValue("pixels", "invert"):
+                if self.bFindValue("pixels","shiftdown"):
+                    #print "value", self.value
+                    start = 1
+                    end = self.matrixUse
                     try:
                         start, end = self.value.split(",")
                         start = int(start)
                         if end[0] == "+":
                             end = start + int(end[1:])
                         end = int(end)
-                        for loop in range(start, end + 1):
-                            gnp = self.getNeoPixel(loop)
-                            print "before", gnp
-                            gnpi = map(lambda a: (255 - a), gnp)
-                            print "after", gnpi
-                            r, g, b = gnpi
-                            # print "rgb", r,g,b
-                            self.setNeoPixel(loop, r, g, b)
-                        self.neoShow()
-                        pixelProcessed = True
                     except:
+                        start = 1
+                        end = self.matrixUse
                         pass
+                    #print "start,end",start, end                 
+                    #lastr,lastg,lastb = self.getNeoPixel(start - 1)
+                    #print "matrixuse", self.matrixUse
+                    #print "last",lastr,lastg,lastb
+                    for index in range(start - 1, end - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index + 1)
+                        #print "oldpixel", index + 1, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                        #self.neoShow()
+                        #time.sleep(5)
+                    #self.setNeoPixel(end - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
                     
-                if self.bFindValue("pixels", "rotate"):
+                if self.bFindValue("pixels","rotate"):
+                    print "value", self.value
+                    start = 1
+                    end = self.matrixUse
                     try:
                         start, end = self.value.split(",")
                         start = int(start)
                         if end[0] == "+":
                             end = start + int(end[1:])
                         end = int(end)
-                        print "start,end",start, end
-                        lr, lg, lb = self.getNeoPixel(start-1)
-                        print "start",lr,lg,lb
-                        for loop in range(start-1, end-1):
-                            oldr, oldg, oldb = self.getNeoPixel(loop + 1)
-                            print "loop",oldr,oldg,oldb
-                            # print "oldpixel" , oldpixel
-                            self.setNeoPixel(loop, oldr, oldg, oldb)
-                        self.setNeoPixel(end-1, lr, lg, lb)                        
-                        self.neoShow()
-                        pixelProcessed = True 
                     except:
+                        start = 1
+                        end = self.matrixUse
                         pass
+                    print "start,end",start, end                        
+                    lastr,lastg,lastb = self.getNeoPixel(end - 1)
+                    print "matrixuse", self.matrixUse
+                    print "last",lastr,lastg,lastb
+                    for index in range(end - 1, start - 1, - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index - 1)
+                        print "oldpixel", index - 1, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                        #self.neoShow()
+                        #time.sleep(5)
+                    self.setNeoPixel(start - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
+
+                if self.bFindValue("pixels","rotatedown"):
+                    print "value", self.value
+                    start = 1
+                    end = self.matrixUse
+                    try:
+                        start, end = self.value.split(",")
+                        start = int(start)
+                        if end[0] == "+":
+                            end = start + int(end[1:])
+                        end = int(end)
+                    except:
+                        start = 1
+                        end = self.matrixUse
+                        pass
+                    print "start,end",start, end                 
+                    lastr,lastg,lastb = self.getNeoPixel(start - 1)
+                    print "matrixuse", self.matrixUse
+                    print "last",lastr,lastg,lastb
+                    for index in range(start - 1, end - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index + 1)
+                        print "oldpixel", index + 1, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                        #self.neoShow()
+                        #time.sleep(5)
+                    self.setNeoPixel(end - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
                     
+                                  
 
             elif self.bFind("pixel"):
                 # print
@@ -2221,8 +2323,12 @@ class ScratchListener(threading.Thread):
                         oldr, oldg, oldb = self.getNeoPixel(index - 1)
                         print "oldpixel", index, oldr, oldg, oldb
                         self.setNeoPixel(index, oldr, oldg, oldb)
-                    # UH.set_neopixel(1, 0, 0, 0)
-                    self.neoShow()
+                else:
+                    for index in range(0,self.matrixUse - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index + 1)
+                        print "oldpixel", index, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                self.neoShow()
 
 
             elif self.bFind("sweep"):
@@ -5894,6 +6000,9 @@ class ScratchListener(threading.Thread):
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
                         "sensehat" in ADDON):  # Matrix or neopixels connected
                         self.neoProcessing(ADDON, UH)
+                        bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
+                        # print 'sending: %s' % bcast_str
+                        msgQueue.put((5, bcast_str))                        
 
                     elif "piandbash" in ADDON:
                         if self.bFindOnOff('all'):

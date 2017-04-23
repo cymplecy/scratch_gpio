@@ -43,8 +43,8 @@ class sghStepper(threading.Thread):
         self.steps_start = self.steps
         self.paused = False
         self.pause_start_time = dt.datetime.now()
-        self.finishedMoving = [-1] * 41
         self.accError = 0
+        self.stepInMotion = [-1] * 41     
 
     def start(self):
         self.thread = threading.Thread(None, self.run, None, (), {})
@@ -56,15 +56,15 @@ class sghStepper(threading.Thread):
         while self.terminated == False:
         # Just wait
             time.sleep(0.01)
-        print "Stepper stopped"
+        #print "Stepper stopped"
 
     def changeSpeed(self, stepperSpeed,steps):
         self.stepperSpeed = int(stepperSpeed)
         self.steps = int(steps)
-        print "steps",self.steps
+        #print "steps",self.steps
         self.accError = self.accError + math.copysign((steps - self.steps) , stepperSpeed)
-        print "acc erro", self.accError
-        print "acc error int", int(self.accError)
+        #print "acc erro", self.accError
+        #print "acc error int", int(self.accError)
         if stepperSpeed < 0:
             if self.accError < 0:
                 self.steps = self.steps + abs(int(self.accError))
@@ -73,8 +73,8 @@ class sghStepper(threading.Thread):
             if self.accError > 0:
                 self.steps = self.steps + abs(int(self.accError))
                 self.accError = self.accError - int(self.accError)                   
-        print "new steps", self.steps
-        print "acc erro", self.accError
+        #print "new steps", self.steps
+        #print "acc erro", self.accError
         self.steps_start = self.steps
         self.slow_start = self.steps - int(min(64,max(1,int(float(self.steps)*0.8))))
         if self.steps > (self.BigNum / 2):
@@ -156,12 +156,11 @@ class sghStepper(threading.Thread):
     def run(self):
         #time.sleep(2) # just wait till board likely to be up and running
         self.pause_start_time = dt.datetime.now()
-        self.finishedMoving[self.pins[0]] = -1
         while self.toTerminate == False:
             #print self.pins[0],self.pins[1],self.pins[2],self.pins[3]
 
             if (self.steps > 0):
-                self.finishedMoving[self.pins[0]] = 1
+                self.stepInMotion[self.pins[0]] = 1
                 #print "changed to 1.  Steps:",self.steps
                 self.steps = self.steps - 1
                 self.local_stepper_value=self.stepperSpeed # get stepper value in case its changed during this thread
@@ -185,8 +184,8 @@ class sghStepper(threading.Thread):
                     self.paused = False
                     #print PIN_NUM[self.pins[0]],self.pause_start_time
                 else:
-                    if self.finishedMoving[self.pins[0]] > 0:
-                        self.finishedMoving[self.pins[0]] = self.finishedMoving[self.pins[0]] - 1
+                    if self.stepInMotion[self.pins[0]] > 0:
+                        self.stepInMotion[self.pins[0]] = self.stepInMotion[self.pins[0]] - 1
                         #print "1 taken off 1st"
                     if ((dt.datetime.now() - self.pause_start_time).seconds > 10) and (self.paused == False):
                         self.pause()
@@ -197,8 +196,8 @@ class sghStepper(threading.Thread):
                             #print PIN_NUM[self.pins[0]], "inner" ,(dt.datetime.now() - self.pause_start_time).seconds
                     time.sleep(0.1) # sleep if stepper value is zero
             else:
-                if self.finishedMoving[self.pins[0]] > 0:
-                    self.finishedMoving[self.pins[0]] = self.finishedMoving[self.pins[0]] - 1
+                if self.stepInMotion[self.pins[0]] > 0:
+                    self.stepInMotion[self.pins[0]] = self.stepInMotion[self.pins[0]] - 1
                     #print "1 taken off 2nd"
                 if ((dt.datetime.now() - self.pause_start_time).seconds > 10) and (self.paused == False):
                     self.pause()
@@ -209,8 +208,9 @@ class sghStepper(threading.Thread):
                         #print PIN_NUM[self.pins[0]], "outer" ,(dt.datetime.now() - self.pause_start_time).seconds
                 time.sleep(0.1) # sleep if stepper value is zero
             #print "asm", anyStepsMade
-            #if self.finishedMoving[self.pins[0]] == 0:
-                #print ("self.finishedMoving on pin " + str(self.pins[0])) , ":" , 0
+            #if self.stepInMotion[self.pins[0]] == 0:
+            #    print ("self.finishedMoving on pin " + str(self.pins[0])) , ":" , 0
+                #self.stepInMotion[self.pins[0]] = -1 # Only do it once per move
         self.terminated = True
     ####### end of Stepper Class
 
