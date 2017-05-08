@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.100'  # 21Mar17 initial support for stepper version of me arm
+Version = 'v8.2.100pi2go001'  # 8May17 bug fix leds in pi2go
 import threading
 import socket
 import time
@@ -5582,11 +5582,11 @@ class ScratchListener(threading.Thread):
                         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                                       'invert', 'random']
 
-                        if tcolours is None:  # only define dictionary on first pass
-                            tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
-                                        'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
-                                        'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
-                                        'invert': (0, 0, 0)}
+
+                        tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+                                    'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
+                                    'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
+                                    'invert': (0, 0, 0)}
 
                         self.matrixUse = 4
 
