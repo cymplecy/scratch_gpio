@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.100pi2go002'  # 8May17 bug fix leds in pi2go
+Version = 'v8.2.100pi2go003'  #11May17 bug fix leds in pi2go
 import threading
 import socket
 import time
