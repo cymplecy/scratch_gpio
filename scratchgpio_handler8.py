@@ -4800,11 +4800,16 @@ class ScratchListener(threading.Thread):
 
                     elif "piconzero" in ADDON:
                         if self.vFindValue("motora"):
+                            
                             svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
+                            #print "motora",svalue
                             pz.setMotor(1, svalue)
+                            #time.sleep(5)
                         if self.vFindValue("motorb"):
                             svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
+                            #print "motorb",svalue
                             pz.setMotor(0, svalue)
+                            #time.sleep(5)
                         for loop in range(0, 6):
                             if self.vFindValue("servo" + str(loop)):
                                 svalue = min(180, max(-0, int(self.valueNumeric))) if self.valueIsNumeric else 0
