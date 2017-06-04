@@ -11,13 +11,18 @@ class CheerLights():
 
     # retrieve and load the JSON data into a JSON object
     def getJSON(self, url):
-        jsonFeed = urllib2.urlopen(self.urlRoot + url)
-        feedData = jsonFeed.read()
-        # print feedData
-        jsonFeed.close()
-        data = json.loads(feedData)
-        # data = feedData
-        return data
+        try:
+            jsonFeed = urllib2.urlopen(self.urlRoot + url,timeout = 3)
+            feedData = jsonFeed.read()
+            # print feedData
+            jsonFeed.close()
+            data = json.loads(feedData)
+            # data = feedData
+            return data
+        except:
+            print(" ")
+            print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ ")
+            print("Error of somesort in getJSON for cheerlights")
 
     # read the last entry_id
     def getEntryID(self, feed):

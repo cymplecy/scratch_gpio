@@ -56,15 +56,15 @@ class sghStepper(threading.Thread):
         while self.terminated == False:
         # Just wait
             time.sleep(0.01)
-        print "Stepper stopped"
+        #print "Stepper stopped"
 
     def changeSpeed(self, stepperSpeed,steps):
         self.stepperSpeed = int(stepperSpeed)
         self.steps = int(steps)
-        print "steps",self.steps
+        #print "steps",self.steps
         self.accError = self.accError + math.copysign((steps - self.steps) , stepperSpeed)
-        print "acc erro", self.accError
-        print "acc error int", int(self.accError)
+        #print "acc erro", self.accError
+        #print "acc error int", int(self.accError)
         if stepperSpeed < 0:
             if self.accError < 0:
                 self.steps = self.steps + abs(int(self.accError))
@@ -73,8 +73,8 @@ class sghStepper(threading.Thread):
             if self.accError > 0:
                 self.steps = self.steps + abs(int(self.accError))
                 self.accError = self.accError - int(self.accError)                   
-        print "new steps", self.steps
-        print "acc erro", self.accError
+        #print "new steps", self.steps
+        #print "acc erro", self.accError
         self.steps_start = self.steps
         self.slow_start = self.steps - int(min(64,max(1,int(float(self.steps)*0.8))))
         if self.steps > (self.BigNum / 2):
@@ -186,7 +186,7 @@ class sghStepper(threading.Thread):
                 else:
                     if self.stepInMotion[self.pins[0]] > 0:
                         self.stepInMotion[self.pins[0]] = self.stepInMotion[self.pins[0]] - 1
-                        print "1 taken off 1st"
+                        #print "1 taken off 1st"
                     if ((dt.datetime.now() - self.pause_start_time).seconds > 10) and (self.paused == False):
                         self.pause()
                         #print PIN_NUM[self.pins[0]], "paused inner"
@@ -198,7 +198,7 @@ class sghStepper(threading.Thread):
             else:
                 if self.stepInMotion[self.pins[0]] > 0:
                     self.stepInMotion[self.pins[0]] = self.stepInMotion[self.pins[0]] - 1
-                    print "1 taken off 2nd"
+                    #print "1 taken off 2nd"
                 if ((dt.datetime.now() - self.pause_start_time).seconds > 10) and (self.paused == False):
                     self.pause()
                     #print PIN_NUM[self.pins[0]], "paused outer"

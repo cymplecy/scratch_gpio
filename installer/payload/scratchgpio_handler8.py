@@ -17,11 +17,9 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-<<<<<<< HEAD
-Version = 'v8.2.100pi2go001'  # 8May17 bug fix leds in pi2go
-=======
-Version = 'v8.2.100pi2go004'  #12May17 Increase colours
->>>>>>> v8pi2go
+
+Version = 'v8.2.105.4Jun17'  # Ultrasonic tweaking and mqtt qos set to 0
+
 import threading
 import socket
 import time
@@ -47,6 +45,7 @@ import Queue
 from sgh_cheerlights import CheerLights
 import urllib2
 from sgh_GetJSONFromURL import GetJSONFromURL
+import kinematics
 
 getjsonfromurl = GetJSONFromURL()
 
@@ -69,7 +68,7 @@ except:
     pass
     
 #try:
-import sgh_stepperArm
+#import sgh_stepperArm
 #    print "sgh_stepperArm imported OK"
 #except:
 #    print "sgh_stepperArm  NOT imported "
@@ -433,6 +432,117 @@ class ListenB(threading.Thread):
                 # if not data:
         print "exiting SocketB run"
 
+        
+class stepperArm():
+    def __init__(self, sweepMinBase = -128, sweepMaxBase = 128, angleMinBase = -math.pi / 2.0 , angleMaxBase = math.pi / 2.0,
+    			 sweepMinShoulder = 64, sweepMaxShoulder = -64, angleMinShoulder = math.pi / 4.0, angleMaxShoulder = 3 * math.pi / 4.0,
+    			 sweepMinElbow = 0, sweepMaxElbow = 128, angleMinElbow = 0, angleMaxElbow = - 2.0 * math.pi / 4.0,
+    			 sweepMinGripper = 75, sweepMaxGripper = 115, angleMinGripper = math.pi / 2.0, angleMaxGripper = 0):
+        """Constructor for meArm - can use as default arm=meArm(), or supply calibration data for servos."""
+        self.servoInfo = {}
+        self.servoInfo["base"] = self.setupServo(sweepMinBase, sweepMaxBase, angleMinBase, angleMaxBase)
+        self.servoInfo["shoulder"] = self.setupServo(sweepMinShoulder, sweepMaxShoulder, angleMinShoulder, angleMaxShoulder)
+        self.servoInfo["elbow"] = self.setupServo(sweepMinElbow, sweepMaxElbow, angleMinElbow, angleMaxElbow)
+        self.servoInfo["gripper"] = self.setupServo(sweepMinGripper, sweepMaxGripper, angleMinGripper, angleMaxGripper)
+        print "servoinfo" , self.servoInfo
+        self.radBase = 0.0
+        self.radShoulder = math.pi / 2.0
+        self.radElbow = 0.0
+        self.BasePos = 0
+        self.ShoulderPos = 0
+        self.ElbowPos = 0
+        self.deltaBase = 0
+        self.deltaShoulder = 0
+        self.deltaElbow = 0
+        self.slackShoulder = 0
+        self.slackElbow = 0
+        
+    # Adafruit servo driver has four 'blocks' of four servo connectors, 0, 1, 2 or 3.
+    def begin(self, block = 0, address = 0x40):
+        """Call begin() before any other meArm calls.  Optional parameters to select a different block of servo connectors or different I2C address."""
+        self.pwm = 0#PWM(address) # Address of Adafruit PWM servo driver
+        self.base = block * 4
+        self.shoulder = block * 4 + 1
+        self.elbow = block * 4 + 2
+        self.gripper = block * 4 + 3
+        #self.pwm.setPWMFreq(60)
+        self.openGripper()
+        self.goDirectlyTo(0, 148, 80)
+        
+    def setupServo(self, n_min, n_max, a_min, a_max):
+        """Calculate servo calibration record to place in self.servoInfo"""
+        rec = {}
+        n_range = (n_max - n_min)
+        a_range = (a_max - a_min)
+        if a_range == 0: return
+        gain = n_range / a_range
+        zero = n_min - gain * a_min
+        rec["gain"] = gain
+        rec["zero"] = zero
+        rec["min"] = n_min
+        rec["max"] = n_max
+        return rec
+    
+    def angle2pwm(self, servo, angle):
+        """Work out pulse length to use to achieve a given requested angle taking into account stored calibration data"""
+        ret = int((self.servoInfo[servo]["zero"] + self.servoInfo[servo]["gain"] * angle) / 1.0 )
+        print "servo",servo,angle * 180.0 / math.pi ,ret
+        return ret
+        
+    def goDirectlyTo(self, x, y, z):
+        """Set servo angles so as to place the gripper at a given Cartesian point as quickly as possible, without caring what path it takes to get there"""
+        angles = [0,0,0]
+        if kinematics.solve(x, y, z, angles):
+            print "angles", angles
+            print "degs", [int(x * 180.0) / math.pi for x in angles] 
+
+            self.radBase = angles[0]
+            self.radShoulder = angles[1] 
+            self.radElbow = angles[2]
+            self.BasePos = self.angle2pwm("base", self.radBase)
+            self.ShoulderPos = self.angle2pwm("shoulder", self.radShoulder)
+            self.ElbowPos = self.angle2pwm("elbow", self.radElbow)
+
+            self.x = x
+            self.y = y
+            self.z = z
+            print "goto %s" % ([x,y,z])
+            
+    def gotoPoint(self, x, y, z):
+        """Travel in a straight line from current position to a requested position"""
+        x0 = self.x
+        y0 = self.y
+        z0 = self.z
+        dist = kinematics.distance(x0, y0, z0, x, y, z)
+        step = 10
+        i = 0
+        while i < dist:
+            self.goDirectlyTo(x0 + (x - x0) * i / dist, y0 + (y - y0) * i / dist, z0 + (z - z0) * i / dist)
+            time.sleep(0.05)
+            i += step
+        self.goDirectlyTo(x, y, z)
+        time.sleep(0.05)
+        
+    def openGripper(self):
+        """Open the gripper, dropping whatever is being carried"""
+        #self.pwm.setPWM(self.gripper, 0, self.angle2pwm("gripper", math.pi/4.0))
+        time.sleep(0.3)
+        
+    def closeGripper(self):
+        """Close the gripper, grabbing onto anything that might be there"""
+        #self.pwm.setPWM(self.gripper, 0, self.angle2pwm("gripper", -math.pi/4.0))
+        time.sleep(0.3)
+    
+    def isReachable(self, x, y, z):
+        """Returns True if the point is (theoretically) reachable by the gripper"""
+        radBase = 0
+        radShoulder = 0
+        radElbow = 0
+        return kinematics.solve(x, y, z, [radBase, radShoulder, radElbow])
+    
+    def getPos(self):
+        """Returns the current position of the gripper"""
+        return [self.x, self.y, self.z]        
 
 class ScratchSender(threading.Thread):
     def __init__(self, socket):
@@ -1682,13 +1792,16 @@ class ScratchListener(threading.Thread):
             except:
                 pass
         else:
-            print "Attemping to start ultra on pin:", pinTrig
-            print sghGC.pinUltraRef[pinTrig]
-            if True:  # if sghGC.pinUltraRef[pinTrig] is None:  NEEDS INVESTIGATING
-                sghGC.pinUse[pinTrig] = sghGC.PSONAR
-                sghGC.pinUltraRef[pinTrig] = ultra(pinTrig, pinEcho, self.scratch_socket)
-                sghGC.pinUltraRef[pinTrig].start()
-                print 'Ultra started pinging on', str(pinTrig)
+            if sghGC.pinUltraRef[pinTrig] is None:
+                print "Attemping to start ultra on pin:", pinTrig
+                print sghGC.pinUltraRef[pinTrig]
+                if True:  # if sghGC.pinUltraRef[pinTrig] is None:  NEEDS INVESTIGATING
+                    sghGC.pinUse[pinTrig] = sghGC.PSONAR
+                    sghGC.pinUltraRef[pinTrig] = ultra(pinTrig, pinEcho, self.scratch_socket)
+                    sghGC.pinUltraRef[pinTrig].start()
+                    print 'Ultra started pinging on', str(pinTrig)
+            else:
+                print "Ultra already in use on pin:", pinTrig
 
     def sendSocket2(self, sensor_name, sensor_value):
         try:
@@ -1951,49 +2064,151 @@ class ScratchListener(threading.Thread):
                         self.neoShow()
                         pixelProcessed = True
                     except:
-                        pass                            
+                        pass              
+                        
+                if self.bFindValue("pixels","invert"):
+                    #print "value", self.value
+                    start = 1
+                    end = self.matrixUse
+                    try:
+                        start, end = self.value.split(",")
+                        start = int(start)
+                        if end[0] == "+":
+                            end = start + int(end[1:])
+                        end = int(end)
+                    except:
+                        start = 1
+                        end = self.matrixUse
+                        pass
+                    #print "start,end",start, end                        
+                    #lastr,lastg,lastb = self.getNeoPixel(end - 1)
+                    #print "matrixuse", self.matrixUse
+                    #print "last",lastr,lastg,lastb
+                    for index in range(start - 1, end):
+                        gnp = self.getNeoPixel(index)
+                        #print "before", gnp
+                        gnpi = map(lambda a: (255 - a), gnp)
+                        #print "after", gnpi
+                        r, g, b = gnpi
+                        # print "rgb", r,g,b
+                        self.setNeoPixel(index, r, g, b)
+                    #self.setNeoPixel(start - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
+                    
+                if self.bFindValue("pixels","shift"):
+                    #print "value", self.value
+                    start = 1
+                    end = self.matrixUse
+                    try:
+                        start, end = self.value.split(",")
+                        start = int(start)
+                        if end[0] == "+":
+                            end = start + int(end[1:])
+                        end = int(end)
+                    except:
+                        start = 1
+                        end = self.matrixUse
+                        pass
+                    #print "start,end",start, end                        
+                    #lastr,lastg,lastb = self.getNeoPixel(end - 1)
+                    #print "matrixuse", self.matrixUse
+                    #print "last",lastr,lastg,lastb
+                    for index in range(end - 1, start - 1, - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index - 1)
+                        #print "oldpixel", index - 1, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                        #self.neoShow()
+                        #time.sleep(5)
+                    #self.setNeoPixel(start - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
 
-                if self.bFindValue("pixels", "invert"):
+                if self.bFindValue("pixels","shiftdown"):
+                    #print "value", self.value
+                    start = 1
+                    end = self.matrixUse
                     try:
                         start, end = self.value.split(",")
                         start = int(start)
                         if end[0] == "+":
                             end = start + int(end[1:])
                         end = int(end)
-                        for loop in range(start, end + 1):
-                            gnp = self.getNeoPixel(loop)
-                            print "before", gnp
-                            gnpi = map(lambda a: (255 - a), gnp)
-                            print "after", gnpi
-                            r, g, b = gnpi
-                            # print "rgb", r,g,b
-                            self.setNeoPixel(loop, r, g, b)
-                        self.neoShow()
-                        pixelProcessed = True
                     except:
+                        start = 1
+                        end = self.matrixUse
                         pass
+                    #print "start,end",start, end                 
+                    #lastr,lastg,lastb = self.getNeoPixel(start - 1)
+                    #print "matrixuse", self.matrixUse
+                    #print "last",lastr,lastg,lastb
+                    for index in range(start - 1, end - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index + 1)
+                        #print "oldpixel", index + 1, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                        #self.neoShow()
+                        #time.sleep(5)
+                    #self.setNeoPixel(end - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
                     
-                if self.bFindValue("pixels", "rotate"):
+                if self.bFindValue("pixels","rotate"):
+                    print "value", self.value
+                    start = 1
+                    end = self.matrixUse
                     try:
                         start, end = self.value.split(",")
                         start = int(start)
                         if end[0] == "+":
                             end = start + int(end[1:])
                         end = int(end)
-                        print "start,end",start, end
-                        lr, lg, lb = self.getNeoPixel(start-1)
-                        print "start",lr,lg,lb
-                        for loop in range(start-1, end-1):
-                            oldr, oldg, oldb = self.getNeoPixel(loop + 1)
-                            print "loop",oldr,oldg,oldb
-                            # print "oldpixel" , oldpixel
-                            self.setNeoPixel(loop, oldr, oldg, oldb)
-                        self.setNeoPixel(end-1, lr, lg, lb)                        
-                        self.neoShow()
-                        pixelProcessed = True 
                     except:
+                        start = 1
+                        end = self.matrixUse
                         pass
+                    print "start,end",start, end                        
+                    lastr,lastg,lastb = self.getNeoPixel(end - 1)
+                    print "matrixuse", self.matrixUse
+                    print "last",lastr,lastg,lastb
+                    for index in range(end - 1, start - 1, - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index - 1)
+                        print "oldpixel", index - 1, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                        #self.neoShow()
+                        #time.sleep(5)
+                    self.setNeoPixel(start - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
+
+                if self.bFindValue("pixels","rotatedown"):
+                    print "value", self.value
+                    start = 1
+                    end = self.matrixUse
+                    try:
+                        start, end = self.value.split(",")
+                        start = int(start)
+                        if end[0] == "+":
+                            end = start + int(end[1:])
+                        end = int(end)
+                    except:
+                        start = 1
+                        end = self.matrixUse
+                        pass
+                    print "start,end",start, end                 
+                    lastr,lastg,lastb = self.getNeoPixel(start - 1)
+                    print "matrixuse", self.matrixUse
+                    print "last",lastr,lastg,lastb
+                    for index in range(start - 1, end - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index + 1)
+                        print "oldpixel", index + 1, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                        #self.neoShow()
+                        #time.sleep(5)
+                    self.setNeoPixel(end - 1 , lastr, lastg, lastb)
+                    self.neoShow()
+                    pixelProcessed = True 
                     
+                                  
 
             elif self.bFind("pixel"):
                 # print
@@ -2113,8 +2328,12 @@ class ScratchListener(threading.Thread):
                         oldr, oldg, oldb = self.getNeoPixel(index - 1)
                         print "oldpixel", index, oldr, oldg, oldb
                         self.setNeoPixel(index, oldr, oldg, oldb)
-                    # UH.set_neopixel(1, 0, 0, 0)
-                    self.neoShow()
+                else:
+                    for index in range(0,self.matrixUse - 1):
+                        oldr, oldg, oldb = self.getNeoPixel(index + 1)
+                        print "oldpixel", index, oldr, oldg, oldb
+                        self.setNeoPixel(index, oldr, oldg, oldb)
+                self.neoShow()
 
 
             elif self.bFind("sweep"):
@@ -2745,7 +2964,7 @@ class ScratchListener(threading.Thread):
                 #BUFFER_SIZE = 512  # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(
                     BUFFER_SIZE)  # get the data from the socket plus any data not yet processed
-                print ("datalen: %s", len(data))
+                #print ("datalen: %s", len(data))
                 if len(data) > int(0.8 * float(BUFFER_SIZE)):
                     BUFFER_SIZE = int(BUFFER_SIZE * 1.5)
                     print ("BUFFER_SIZE increased to:", BUFFER_SIZE )
@@ -2872,16 +3091,16 @@ class ScratchListener(threading.Thread):
                 dataList = newList
                 # print "new dataList" ,dataList
 
-            print
-            print "STARTING OUTSIDE LOOP"
+            #print
+            #print "STARTING OUTSIDE LOOP"
             print "dataList to be processed", dataList
             #if "\\x" in dataList:
             #    print "purging"
             #    dataList = []
             for dataItem in dataList:
-                print 
-                print "    datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-                print "    dataIteM:",dataItem
+                #print 
+                #print "    datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                #print "    dataIteM:",dataItem
                 if len(dataItem) == 0:
                     print ("BREAKING OUT OF FOR LOOP AS EMPTY ITEM FOUND")
                     break
@@ -3549,7 +3768,7 @@ class ScratchListener(threading.Thread):
                                 # sghGC.INVERT = True # GPIO pull down each led so need to invert 0 to 1 and vice versa
                                 sghGC.setPinMode()
                                 #if pcaPWM is not None:
-                                self.stepperArm = sgh_stepperArm.meArm()
+                                self.stepperArm = stepperArm()
                                 self.stepperArm.begin()
 
                                 print "stepperArm setup"
@@ -4586,11 +4805,16 @@ class ScratchListener(threading.Thread):
 
                     elif "piconzero" in ADDON:
                         if self.vFindValue("motora"):
+                            
                             svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
+                            #print "motora",svalue
                             pz.setMotor(1, svalue)
+                            #time.sleep(5)
                         if self.vFindValue("motorb"):
                             svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
+                            #print "motorb",svalue
                             pz.setMotor(0, svalue)
+                            #time.sleep(5)
                         for loop in range(0, 6):
                             if self.vFindValue("servo" + str(loop)):
                                 svalue = min(180, max(-0, int(self.valueNumeric))) if self.valueIsNumeric else 0
@@ -4831,7 +5055,15 @@ class ScratchListener(threading.Thread):
                             ColourTracker.limits[5] = int(self.valueNumeric)
 
                     if self.vFindValue('ultradelay'):
-                        sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
+                        possUltraDelay = self.valueNumeric if self.valueIsNumeric else 1
+                        if possUltraDelay > 0:
+                            sghGC.ultraFreq = possUltraDelay
+                            
+                    if self.vFindValue('ultrasamples'):
+                        possUltraSamples = int(self.valueNumeric) if self.valueIsNumeric else 1
+                        if possUltraSamples > 0:
+                            sghGC.ultraSamples = possUltraSamples                            
+
 
                     if ((piglow is not None) and ("piglow" not in ADDON)):
                         # do PiGlow stuff but make sure PiGlow physically detected
@@ -5586,16 +5818,7 @@ class ScratchListener(threading.Thread):
                                 return 0
 
                         lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
-<<<<<<< HEAD
-                        ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
-                                      'invert', 'random']
 
-
-                        tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
-                                    'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
-                                    'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
-                                    'invert': (0, 0, 0)}
-=======
                         # ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                                       # 'invert', 'random']
 
@@ -5618,7 +5841,7 @@ class ScratchListener(threading.Thread):
                         ledcolours = {'red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'orange', 'skyblue', 'purple','yellowgreen',
                                         'pink', 'brightgreen','brown', 'aqua', 'grey','grey2', 'black', 'white', 'indigo', 'cream', 'violet',
                                      'lightgreen', 'amber', 'lightblue','off', 'on','invert','random'}                                     
->>>>>>> v8pi2go
+
 
                         self.matrixUse = 4
 
@@ -5814,6 +6037,9 @@ class ScratchListener(threading.Thread):
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
                         "sensehat" in ADDON):  # Matrix or neopixels connected
                         self.neoProcessing(ADDON, UH)
+                        bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
+                        # print 'sending: %s' % bcast_str
+                        msgQueue.put((5, bcast_str))                        
 
                     elif "piandbash" in ADDON:
                         if self.bFindOnOff('all'):
@@ -6897,7 +7123,13 @@ class ScratchListener(threading.Thread):
                         msgQueue.put((5, bcast_str))
 
                     if self.bFindValue('ultradelay'):
-                        sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
+                        possUltraDelay = self.valueNumeric if self.valueIsNumeric else 1
+
+                        if possUltraDelay > 0:
+                            sghGC.ultraFreq = possUltraDelay
+
+                            
+                        
 
                     if self.bFindValue("getir"):
                         # print "ir found"
@@ -7117,7 +7349,7 @@ class ScratchListener(threading.Thread):
                         while sghGC.pinRead(19) == 1:
                             self.stepperUpdate(stepperList[0][1], -100, 1)
                             time.sleep(0.5)
-                        self.stepperUpdate(stepperList[0][1], 100, 13)
+                        self.stepperUpdate(stepperList[0][1], 100, 18) #final tweak to align shoulder
                         time.sleep(2)      
                         self.stepperUpdate(stepperList[1][1], 100, 10)
                         time.sleep(2)
@@ -7129,7 +7361,7 @@ class ScratchListener(threading.Thread):
                         while sghGC.pinRead(23) == 1:
                             self.stepperUpdate(stepperList[1][1], -100, 1)
                             time.sleep(0.5)
-                        self.stepperUpdate(stepperList[1][1], 100, 45)
+                        self.stepperUpdate(stepperList[1][1], 100, 43)
                         time.sleep(3)                             
                         bcast_str = 'sensor-update "%s" %s' % ("steppercalibrated", "true")
                         msgQueue.put((5, bcast_str))   
@@ -7137,12 +7369,62 @@ class ScratchListener(threading.Thread):
                         sghGC.stepperAPos = 0
                         sghGC.stepperBPos = 0
                         sghGC.stepperCPos = 0
+                        self.stepperArm.slackShoulder = -10
+                        self.stepperArm.slackElbow = -6
                         
                     if self.bFindValue("steparmmove"):
                         stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
                         params = self.value.split(",")
                         print "isReachable(self, x, y, z):" , self.stepperArm.isReachable(int(float(params[0])),int(float(params[1])),int(float(params[2])))
                         self.stepperArm.goDirectlyTo(int(float(params[0])),int(float(params[1])),int(float(params[2]))) 
+                        
+                        print "self.stepperArm.ShoulderPos" , self.stepperArm.ShoulderPos
+                        self.stepperArm.deltaShoulder = self.stepperArm.ShoulderPos - sghGC.stepperBPos
+                        print "deltaShoulder" , self.stepperArm.deltaShoulder
+
+                        if self.stepperArm.deltaShoulder >= 0:
+                            self.stepperUpdate(stepperList[1][1], 100, self.stepperArm.deltaShoulder)
+                        else:
+                            self.stepperUpdate(stepperList[1][1], -100, abs(self.stepperArm.deltaShoulder))                            
+                        sghGC.stepperBPos = self.stepperArm.ShoulderPos
+                        
+                        print "self.stepperArm.ElbowPos" , self.stepperArm.ElbowPos
+                        self.stepperArm.deltaElbow = self.stepperArm.ElbowPos - sghGC.stepperAPos
+                        print "deltaElbow" , self.stepperArm.deltaElbow
+                        if self.stepperArm.deltaElbow >= 0:
+                            self.stepperUpdate(stepperList[0][1], 100, self.stepperArm.deltaElbow)
+                        else:
+                            self.stepperUpdate(stepperList[0][1], -100, abs(self.stepperArm.deltaElbow))                            
+                        sghGC.stepperAPos = self.stepperArm.ElbowPos
+                        time.sleep(2)
+                        if self.stepperArm.ShoulderPos > 10:
+                            if self.stepperArm.slackShoulder > 0:
+                                self.stepperArm.slackShoulder = -10
+                                self.stepperUpdate(stepperList[1][1], -100, abs(self.stepperArm.slackShoulder))
+                        if self.stepperArm.ShoulderPos < -10:
+                            if self.stepperArm.slackShoulder < 0:
+                                self.stepperArm.slackShoulder = 10
+                                self.stepperUpdate(stepperList[1][1], 100, abs(self.stepperArm.slackShoulder)) 
+                        print "self.stepperArm.slackShoulder",self.stepperArm.slackShoulder
+                                
+    
+
+                        print "self.stepperArm.BasePos" , self.stepperArm.BasePos
+                        self.stepperArm.deltaBase = self.stepperArm.BasePos - sghGC.stepperCPos
+                        print "deltaElbow" , self.stepperArm.deltaBase
+                        if self.stepperArm.deltaBase >= 0:
+                            self.stepperUpdate(stepperList[2][1], 100, self.stepperArm.deltaBase)
+                        else:
+                            self.stepperUpdate(stepperList[2][1], -100, abs(self.stepperArm.deltaBase))                            
+                        sghGC.stepperCPos = self.stepperArm.BasePos
+                        
+                        print "currPos" , self.stepperArm.getPos()                            
+                        
+                    if self.bFindValue("steparmup"):
+                        stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
+                        #print "isReachable(self, x, y, z):" , self.stepperArm.isReachable(int(float(params[0])),int(float(params[1])),int(float(params[2])))
+                        currPos = self.stepperArm.getPos()
+                        self.stepperArm.goDirectlyTo(int(float(currPos[0])),int(float(currPos[1])), int(self.valueNumeric + float(currPos[2]))) 
                         print "self.stepperArm.ShoulderPos" , self.stepperArm.ShoulderPos
                         stepBDelta = self.stepperArm.ShoulderPos - sghGC.stepperBPos
                         print "stepBDelta" , stepBDelta
@@ -7159,7 +7441,32 @@ class ScratchListener(threading.Thread):
                             self.stepperUpdate(stepperList[0][1], 100, stepADelta)
                         else:
                             self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
-                        sghGC.stepperAPos = self.stepperArm.ElbowPos
+                        sghGC.stepperAPos = self.stepperArm.ElbowPos      
+                        print "currPos" , self.stepperArm.getPos()    
+                        
+                    if self.bFindValue("steparmdown"):
+                        stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
+                        #print "isReachable(self, x, y, z):" , self.stepperArm.isReachable(int(float(params[0])),int(float(params[1])),int(float(params[2])))
+                        currPos = self.stepperArm.getPos()
+                        self.stepperArm.goDirectlyTo(int(float(currPos[0])),int(float(currPos[1])), int(float(currPos[2]) - self.valueNumeric)) 
+                        print "self.stepperArm.ShoulderPos" , self.stepperArm.ShoulderPos
+                        stepBDelta = self.stepperArm.ShoulderPos - sghGC.stepperBPos
+                        print "stepBDelta" , stepBDelta
+                        if stepBDelta >= 0:
+                            self.stepperUpdate(stepperList[1][1], 100, stepBDelta)
+                        else:
+                            self.stepperUpdate(stepperList[1][1], -100, abs(stepBDelta))                            
+                        sghGC.stepperBPos = self.stepperArm.ShoulderPos
+                        
+                        print "self.stepperArm.ElbowPos" , self.stepperArm.ElbowPos
+                        stepADelta = self.stepperArm.ElbowPos - sghGC.stepperAPos
+                        print "stepADelta" , stepADelta
+                        if stepADelta >= 0:
+                            self.stepperUpdate(stepperList[0][1], 100, stepADelta)
+                        else:
+                            self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
+                        sghGC.stepperAPos = self.stepperArm.ElbowPos   
+                        print "currPos" , self.stepperArm.getPos()                        
 
                     # end of broadcast check
 
@@ -7197,7 +7504,8 @@ class ScratchListener(threading.Thread):
 
               
 
-                print "loop timE:",time.time() - listenLoopTime
+            print "total loop timE:",time.time() - listenLoopTime
+            print
 
         print "Listener Stopped"
         # else:
@@ -7240,10 +7548,10 @@ class SendMsgsToScratch(threading.Thread):
                 # print "params$$$"
                 try:
                     if len(params) == 2:
-                        publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
+                        publish.single(params[0], payload=params[1], qos=0, hostname=sghGC.mqttBroker,retain=True)
                         print "----mqtt published", sghGC.mqttBroker, params[0], params[1]
                     elif len(params) == 3:
-                        publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
+                        publish.single(params[0], payload=params[1], qos=0, hostname=params[2],retain=True)
                         print "----mqtt published", params[2], params[0], params[1]
                 except:
                     # print

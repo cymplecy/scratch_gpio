@@ -45,6 +45,7 @@ def setMotor (motor, value):
     if (motor>=0 and motor<=1 and value>=-128 and value<128):
         for i in range(RETRIES):
             try:
+                print "pico4tronixversion",motor,value
                 bus.write_byte_data (pzaddr, motor, value)
                 break
             except:
