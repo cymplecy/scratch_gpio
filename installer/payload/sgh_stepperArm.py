@@ -1,7 +1,11 @@
 # meArm.py - York Hack Space May 2014
 # A motion control library for Phenoptix meArm using Adafruit 16-channel PWM servo driver
 
+<<<<<<< HEAD
 from Adafruit_PWM_Servo_Driver import PWM
+=======
+from sgh_Adafruit_PWM_Servo_Driver import PWM
+>>>>>>> v8pi2go
 import kinematics
 import time
 from math import pi

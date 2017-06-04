@@ -17,7 +17,11 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
+<<<<<<< HEAD
 Version = 'v8.2.100pi2go001'  # 8May17 bug fix leds in pi2go
+=======
+Version = 'v8.2.100pi2go004'  #12May17 Increase colours
+>>>>>>> v8pi2go
 import threading
 import socket
 import time
@@ -5111,6 +5115,9 @@ class ScratchListener(threading.Thread):
                         sghGC.pinUse[22] = sghGC.POUTPUT
                         sghGC.pinUse[7] = sghGC.POUTPUT
                         sghGC.setPinMode()
+                        
+                    if self.bFind('photo'):
+                        RasPiCamera.take_photo()
 
                     if "ladder" in ADDON:  # Gordon's Ladder Board
                         # do ladderboard stuff
@@ -5579,6 +5586,7 @@ class ScratchListener(threading.Thread):
                                 return 0
 
                         lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', '0', '1', 'z']
+<<<<<<< HEAD
                         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                                       'invert', 'random']
 
@@ -5587,6 +5595,30 @@ class ScratchListener(threading.Thread):
                                     'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
                                     'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
                                     'invert': (0, 0, 0)}
+=======
+                        # ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
+                                      # 'invert', 'random']
+
+
+                        # tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+                                    # 'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
+                                    # 'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
+                                    # 'invert': (0, 0, 0)}
+                        tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+                                     'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
+                                     'orange': (255, 128, 0), 'skyblue': (0, 127, 255), 'purple': (128, 0, 128),
+                                     'yellowgreen': (127, 255, 127), 'pink': (255, 192, 203), 'brightgreen': (1, 255, 0),
+                                     'brown': (165, 42, 42), 'aqua': (90, 213, 213), 'grey': (128, 128, 128),
+                                     'grey2': (127, 127, 127), 'black': (0, 0, 0),
+                                     'white': (255, 255, 255),
+                                     'indigo': (0, 0, 128), 'cream': (255, 255, 127), 'violet': (128, 0, 255),
+                                     'lightgreen': (127, 255, 0), 'amber': (255, 127, 0), 'lightblue': (0, 128, 255),
+                                     'off': (0, 0, 0), 'on': (255, 255, 255), 'invert': (0, 0, 0)}
+                                     
+                        ledcolours = {'red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'orange', 'skyblue', 'purple','yellowgreen',
+                                        'pink', 'brightgreen','brown', 'aqua', 'grey','grey2', 'black', 'white', 'indigo', 'cream', 'violet',
+                                     'lightgreen', 'amber', 'lightblue','off', 'on','invert','random'}                                     
+>>>>>>> v8pi2go
 
                         self.matrixUse = 4
 
@@ -5602,7 +5634,7 @@ class ScratchListener(threading.Thread):
                             print "sweep"
                             for index in range(0, self.matrixUse):
                                 self.matrixRed, self.matrixGreen, self.matrixBlue = tcolours.get(
-                                    ledcolours[random.randint(0, 6)], (0, 0, 0))
+                                    ledcolours[random.randint(0, 23)], (0, 0, 0))
                                 set_neopixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
                                 time.sleep(0.05)
 
@@ -6565,8 +6597,8 @@ class ScratchListener(threading.Thread):
                             print "error from PiDisp"
                             pass
 
-                    if self.bFind('photo'):
-                        RasPiCamera.take_photo()
+                    # if self.bFind('photo'):
+                        # RasPiCamera.take_photo()
 
                         # if self.bFindValue('displayphoto'):
                         # os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (600,100)
