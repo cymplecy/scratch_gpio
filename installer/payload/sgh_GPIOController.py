@@ -78,6 +78,7 @@ class GPIOController :
         self.senderLoopDelay = 0.2
         self.mFreq = 10
         self.ultraFreq = 1
+        self.ultraSamples = 5      
         self.pFreq = 200
        
        
@@ -587,12 +588,13 @@ class GPIOController :
         GPIO.setup(pin,GPIO.OUT)
         ti = time.time()
         # setup a list to hold 3 values and then do 3 distance calcs and store them
-        #print 'sonar started'
-        distlist = [0.0,0.0,0.0]
+        #print 'sonar started' 
+        distlist = [0] * self.ultraSamples
         distance = 0
         ts=time.time()
+
         try:
-            for k in range(3):
+            for k in range(self.ultraSamples):
                 #print "sonar pulse" , k
                 GPIO.output(pin, 0)
                 time.sleep(0.05)#set pin low for 50ms as per spec
@@ -604,29 +606,37 @@ class GPIOController :
                 #PIN_USE[i] = PINPUT don't bother telling system
 
                 t1=t0
-                # This while loop waits for input pin (7) to be low but with a 0.04sec timeout
+                # This while loop waits for input pin (7) to be low but with a timeout
                 while ((GPIO.input(pin)==0) and ((t1-t0) < 0.02)):
                     #time.sleep(0.00001)
                     t1=time.time()
                 t1=time.time()
-                #print 'low' , (t1-t0).microseconds
+                #print 'low' , (t1-t0) * 1000
                 t2=t1
                 #  This while loops waits for input pin to go high to indicate pulse detection
-                #  with 0.04 sec timeout
+                #  with  timeout
+                #tcount = 0
                 while ((GPIO.input(pin)==1) and ((t2-t1) < 0.02)):
-                    #time.sleep(0.00001)
+                    #time.sleep(0.000005)
                     t2=time.time()
+                    #tcount += 1
                 t2=time.time()
+                #print "tcount",tcount
                 #print 'high' , (t2-t1).microseconds
                 t3=(t2-t1)  # t2 contains time taken for pulse to return
-                #print "total time " , t3
-                distance=t3*343/2*100  # calc distance in cm
-                distlist[k]=distance
+                #print "time of pulse flight " , t3 * 1000
+                # 20cm (40 in total ~~ 1.2 milliseconds)
+                #distance = t3 * 17150  # calc distance in cm t3 * 343 / 2 * 100
+                distlist[k]=int(t3 * 17150)
                 #print distance
                 GPIO.setup(pin,GPIO.OUT)
-            tf = time.time() - ts
-            distance = sorted(distlist)[1] # sort the list and pick middle value as best distance
+            #tf = time.time() - ts
+            #print ("Proctime:",tf)
+            #print ("Dist:",sorted(distlist))
+            distance = sorted(distlist)[int(self.ultraSamples / 2)] # sort the list and pick middle value as best distance
+
         except:
+            print ("ultra fail")
             pass
         
         #print "total time " , tf

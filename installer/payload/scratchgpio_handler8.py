@@ -17,7 +17,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
-Version = 'v8.2.103'  # 23Apr17 newopixels shift rotate mods
+Version = 'v8.2.105.4Jun17'  # Ultrasonic tweaking and mqtt qos set to 0
 import threading
 import socket
 import time
@@ -1790,13 +1790,16 @@ class ScratchListener(threading.Thread):
             except:
                 pass
         else:
-            print "Attemping to start ultra on pin:", pinTrig
-            print sghGC.pinUltraRef[pinTrig]
-            if True:  # if sghGC.pinUltraRef[pinTrig] is None:  NEEDS INVESTIGATING
-                sghGC.pinUse[pinTrig] = sghGC.PSONAR
-                sghGC.pinUltraRef[pinTrig] = ultra(pinTrig, pinEcho, self.scratch_socket)
-                sghGC.pinUltraRef[pinTrig].start()
-                print 'Ultra started pinging on', str(pinTrig)
+            if sghGC.pinUltraRef[pinTrig] is None:
+                print "Attemping to start ultra on pin:", pinTrig
+                print sghGC.pinUltraRef[pinTrig]
+                if True:  # if sghGC.pinUltraRef[pinTrig] is None:  NEEDS INVESTIGATING
+                    sghGC.pinUse[pinTrig] = sghGC.PSONAR
+                    sghGC.pinUltraRef[pinTrig] = ultra(pinTrig, pinEcho, self.scratch_socket)
+                    sghGC.pinUltraRef[pinTrig].start()
+                    print 'Ultra started pinging on', str(pinTrig)
+            else:
+                print "Ultra already in use on pin:", pinTrig
 
     def sendSocket2(self, sensor_name, sensor_value):
         try:
@@ -2959,7 +2962,7 @@ class ScratchListener(threading.Thread):
                 #BUFFER_SIZE = 512  # This size will accomdate normal Scratch Control 'droid app sensor updates
                 data = dataPrevious + self.scratch_socket.recv(
                     BUFFER_SIZE)  # get the data from the socket plus any data not yet processed
-                print ("datalen: %s", len(data))
+                #print ("datalen: %s", len(data))
                 if len(data) > int(0.8 * float(BUFFER_SIZE)):
                     BUFFER_SIZE = int(BUFFER_SIZE * 1.5)
                     print ("BUFFER_SIZE increased to:", BUFFER_SIZE )
@@ -3086,16 +3089,16 @@ class ScratchListener(threading.Thread):
                 dataList = newList
                 # print "new dataList" ,dataList
 
-            print
-            print "STARTING OUTSIDE LOOP"
+            #print
+            #print "STARTING OUTSIDE LOOP"
             print "dataList to be processed", dataList
             #if "\\x" in dataList:
             #    print "purging"
             #    dataList = []
             for dataItem in dataList:
-                print 
-                print "    datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-                print "    dataIteM:",dataItem
+                #print 
+                #print "    datatime" , time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                #print "    dataIteM:",dataItem
                 if len(dataItem) == 0:
                     print ("BREAKING OUT OF FOR LOOP AS EMPTY ITEM FOUND")
                     break
@@ -4800,11 +4803,16 @@ class ScratchListener(threading.Thread):
 
                     elif "piconzero" in ADDON:
                         if self.vFindValue("motora"):
+                            
                             svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
+                            #print "motora",svalue
                             pz.setMotor(1, svalue)
+                            #time.sleep(5)
                         if self.vFindValue("motorb"):
                             svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
+                            #print "motorb",svalue
                             pz.setMotor(0, svalue)
+                            #time.sleep(5)
                         for loop in range(0, 6):
                             if self.vFindValue("servo" + str(loop)):
                                 svalue = min(180, max(-0, int(self.valueNumeric))) if self.valueIsNumeric else 0
@@ -5045,7 +5053,15 @@ class ScratchListener(threading.Thread):
                             ColourTracker.limits[5] = int(self.valueNumeric)
 
                     if self.vFindValue('ultradelay'):
-                        sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
+                        possUltraDelay = self.valueNumeric if self.valueIsNumeric else 1
+                        if possUltraDelay > 0:
+                            sghGC.ultraFreq = possUltraDelay
+                            
+                    if self.vFindValue('ultrasamples'):
+                        possUltraSamples = int(self.valueNumeric) if self.valueIsNumeric else 1
+                        if possUltraSamples > 0:
+                            sghGC.ultraSamples = possUltraSamples                            
+
 
                     if ((piglow is not None) and ("piglow" not in ADDON)):
                         # do PiGlow stuff but make sure PiGlow physically detected
@@ -7086,7 +7102,13 @@ class ScratchListener(threading.Thread):
                         msgQueue.put((5, bcast_str))
 
                     if self.bFindValue('ultradelay'):
-                        sghGC.ultraFreq = self.valueNumeric if self.valueIsNumeric else 1
+                        possUltraDelay = self.valueNumeric if self.valueIsNumeric else 1
+
+                        if possUltraDelay > 0:
+                            sghGC.ultraFreq = possUltraDelay
+
+                            
+                        
 
                     if self.bFindValue("getir"):
                         # print "ir found"
@@ -7461,7 +7483,8 @@ class ScratchListener(threading.Thread):
 
               
 
-                print "loop timE:",time.time() - listenLoopTime
+            print "total loop timE:",time.time() - listenLoopTime
+            print
 
         print "Listener Stopped"
         # else:
@@ -7504,10 +7527,10 @@ class SendMsgsToScratch(threading.Thread):
                 # print "params$$$"
                 try:
                     if len(params) == 2:
-                        publish.single(params[0], payload=params[1], qos=2, hostname=sghGC.mqttBroker,retain=True)
+                        publish.single(params[0], payload=params[1], qos=0, hostname=sghGC.mqttBroker,retain=True)
                         print "----mqtt published", sghGC.mqttBroker, params[0], params[1]
                     elif len(params) == 3:
-                        publish.single(params[0], payload=params[1], qos=2, hostname=params[2],retain=True)
+                        publish.single(params[0], payload=params[1], qos=0, hostname=params[2],retain=True)
                         print "----mqtt published", params[2], params[0], params[1]
                 except:
                     # print
