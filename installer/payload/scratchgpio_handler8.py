@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.105.4Jun17'  # Ultrasonic tweaking and mqtt qos set to 0
+Version = 'v8.2.106.7Jun17'  # Ultrasonic tweaking to 7 samples default and 1 function in sgh_GPIOContoller
 
 import threading
 import socket
@@ -335,16 +335,13 @@ class ultra(threading.Thread):
     def run(self):
         while not self.stopped():
             startTime = time.time()
-            if self.pinEcho == 0:
-                distance = sghGC.pinSonar(self.pinTrig)  # do a ping
-                sensor_name = 'ultra' + str(self.pinTrig)
-                if "pi2go" in ADDON:
-                    sensor_name = 'ultra'
-                if "piconzero" in ADDON:
-                    sensor_name = 'ultra'
-            else:
-                distance = sghGC.pinSonar2(self.pinTrig, self.pinEcho)
-                sensor_name = 'ultra' + str(self.pinEcho)
+            distance = sghGC.pinSonar2(self.pinTrig,self.pinEcho)  # do a ping
+            sensor_name = 'ultra' + str(self.pinTrig)
+            if "pi2go" in ADDON:
+                sensor_name = 'ultra'
+            if "piconzero" in ADDON:
+                sensor_name = 'ultra'
+
             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
             # print 'sending: %s' % bcast_str
             msgQueue.put(((5, bcast_str)))
@@ -3520,7 +3517,7 @@ class ScratchListener(threading.Thread):
                                 except:
                                     pass
 
-                                self.startUltra(8, 0, self.OnOrOff)
+                                self.startUltra(8, 8, self.OnOrOff)
 
                                 # sghGC.pinEventEnabled = 0
                             # sghGC.startServod([12,10]) # servos testing motorpitx
@@ -3559,7 +3556,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.motorUpdate(19, 21, 0)
                                     sghGC.motorUpdate(26, 24, 0)
 
-                                    self.startUltra(8, 0, self.OnOrOff)
+                                    self.startUltra(8, 8, self.OnOrOff)
 
                                 print "pi2golite setup"
                                 if "encoders" in ADDON:
@@ -3592,7 +3589,7 @@ class ScratchListener(threading.Thread):
                                         print "SOFT ERROR - PWM not set for pi2go"
                                         pass
 
-                                    self.startUltra(8, 0, self.OnOrOff)
+                                    self.startUltra(8, 8, self.OnOrOff)
 
                                     # sghGC.pinEventEnabled = 0
                                 # sghGC.startServod([12,10]) # servos testing motorpitx
@@ -3613,7 +3610,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(19, 21, 0)
                                 sghGC.motorUpdate(26, 24, 0)
 
-                                self.startUltra(23, 0, self.OnOrOff)
+                                self.startUltra(23, 23, self.OnOrOff)
                             if "agobo2" in ADDON:
                                 ADDON = "agobo neopixels"
                                 print "agobo2 setup"
@@ -3695,7 +3692,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(24, 26, 0)
                                 # sghGC.pinEventEnabled = 0
 
-                                self.startUltra(8, 0, self.OnOrOff)
+                                self.startUltra(8, 8, self.OnOrOff)
 
                                 print "Pizazz setup"
                                 anyAddOns = True
@@ -5361,7 +5358,7 @@ class ScratchListener(threading.Thread):
                         self.bCheckAll()
                         self.bListCheck([15, 11, 13, 7], ["output1", "output2", "input1", "input2"])
                         if ('sonar1') in dataraw:
-                            distance = sghGC.pinSonar(13)
+                            distance = sghGC.pinSonar2(13,13)
                             # print'Distance:',distance,'cm'
                             sensor_name = 'sonar' + str(13)
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
@@ -5369,7 +5366,7 @@ class ScratchListener(threading.Thread):
                             msgQueue.put((5, bcast_str))
 
                         if ('sonar2') in dataraw:
-                            distance = sghGC.pinSonar(7)
+                            distance = sghGC.pinSonar2(7,7)
                             # print'Distance:',distance,'cm'
                             sensor_name = 'sonar' + str(7)
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
@@ -5378,11 +5375,11 @@ class ScratchListener(threading.Thread):
 
                         if self.bFind('ultra1'):
                             print 'start pinging on', str(13)
-                            self.startUltra(13, 0, self.OnOrOff)
+                            self.startUltra(13,13, self.OnOrOff)
 
                         if self.bFind('ultra2'):
                             print 'start pinging on', str(7)
-                            self.startUltra(7, 0, self.OnOrOff)
+                            self.startUltra(7,7, self.OnOrOff)
 
                     elif ((piglow is not None) and ("piglow" in ADDON)):
                         # print "processing piglow variables"
@@ -5465,7 +5462,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(pin, self.OnOrOff)
 
                             if self.bFind('sonar' + str(pin)):
-                                distance = sghGC.pinSonar(pin)
+                                distance = sghGC.pinSonar2(pin,pin)
                                 # print'Distance:',distance,'cm'
                                 sensor_name = 'sonar' + str(pin)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
@@ -5474,7 +5471,7 @@ class ScratchListener(threading.Thread):
 
                             # Start using ultrasonic sensor on a pin
                             if self.bFind('ultra' + str(pin)):
-                                self.startUltra(pin, 0, self.OnOrOff)
+                                self.startUltra(pin, pin, self.OnOrOff)
 
                         motorList = [['turnr', 21, 26, 7], ['turnl', 19, 24, 11]]
                         if "piroconb" in ADDON:
@@ -5524,7 +5521,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(pin, self.OnOrOff)
 
                             if self.bFind('sonar' + str(pin)):
-                                distance = sghGC.pinSonar(pin)
+                                distance = sghGC.pinSonar2(pin,pin)
                                 # print'Distance:',distance,'cm'
                                 sensor_name = 'sonar' + str(pin)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
@@ -5533,7 +5530,7 @@ class ScratchListener(threading.Thread):
 
                             # Start using ultrasonic sensor on a pin
                             if self.bFind('ultra' + str(pin)):
-                                self.startUltra(pin, 0, self.OnOrOff)
+                                self.startUltra(pin, pin, self.OnOrOff)
 
                     elif "piringo" in ADDON:  # piringo
                         # do piringo stuff
@@ -5670,7 +5667,7 @@ class ScratchListener(threading.Thread):
 
                                     # Start using ultrasonic sensor on a pin
                         if self.bFindOnOff('ultra'):
-                            self.startUltra(8, 0, self.OnOrOff)
+                            self.startUltra(8, 8, self.OnOrOff)
 
 
 
@@ -5798,7 +5795,7 @@ class ScratchListener(threading.Thread):
 
                                     # Start using ultrasonic sensor on a pin
                         if self.bFindOnOff('ultra'):
-                            self.startUltra(8, 0, self.OnOrOff)
+                            self.startUltra(8, 8, self.OnOrOff)
                         if "startlightinfo" in dataraw:
                             sghGC.lightInfo = True
 
@@ -5998,7 +5995,7 @@ class ScratchListener(threading.Thread):
                         self.bListCheck([22, 18, 11, 7], ["led1", "led2", "led3", "led4"])  # Check for LEDs
 
                         if self.bFind('sonar'):
-                            distance = sghGC.pinSonar(8)
+                            distance = sghGC.pinSonar2(8,8)
                             # print'Distance:',distance,'cm'
                             sensor_name = 'sonar'
                             bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
@@ -6007,7 +6004,7 @@ class ScratchListener(threading.Thread):
 
                         # Start using ultrasonic sensor on a pin
                         if self.bFindOnOff('ultra'):
-                            self.startUltra(8, 0, self.OnOrOff)
+                            self.startUltra(8, 8, self.OnOrOff)
 
                     elif "simpie" in ADDON:
                         # do BerryClip stuff
@@ -6104,7 +6101,7 @@ class ScratchListener(threading.Thread):
                         self.neoProcessing(ADDON)
 
                         if self.bFind('ultra'):
-                            self.startUltra(38, 0, self.OnOrOff)
+                            self.startUltra(38, 38, self.OnOrOff)
 
                         if self.bFindValue("motora"):
                             svalue = min(128, max(-128, int(self.valueNumeric * 1.28))) if self.valueIsNumeric else 0
@@ -6185,7 +6182,7 @@ class ScratchListener(threading.Thread):
                                     sghGC.pinUpdate(pin, 0, type="pwmmotor")
 
                             if self.bFind('sonar' + str(pin)):
-                                distance = sghGC.pinSonar(pin)
+                                distance = sghGC.pinSonar(pin,pin)
                                 # print'Distance:',distance,'cm'
                                 sensor_name = 'sonar' + str(pin)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
@@ -6203,7 +6200,7 @@ class ScratchListener(threading.Thread):
                                 # Start using ultrasonic sensor on a pin
                             if self.bFindValue('ultra' + str(pin), " "):
                                 print 'start pinging on', str(pin)
-                                self.startUltra(pin, 0, self.OnOrOff)
+                                self.startUltra(pin, pin, self.OnOrOff)
 
 
                                 # end of normal pin checking

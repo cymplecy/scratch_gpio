@@ -78,7 +78,7 @@ class GPIOController :
         self.senderLoopDelay = 0.2
         self.mFreq = 10
         self.ultraFreq = 1
-        self.ultraSamples = 5      
+        self.ultraSamples = 7      
         self.pFreq = 200
        
        
@@ -597,9 +597,9 @@ class GPIOController :
             for k in range(self.ultraSamples):
                 #print "sonar pulse" , k
                 GPIO.output(pin, 0)
-                time.sleep(0.05)#set pin low for 50ms as per spec
+                time.sleep(0.06)#set pin low for 60ms as per spec sheet to allow for old pulses not finished
                 GPIO.output(pin, 1)    # Send Pulse high
-                time.sleep(0.00001)     #  wait
+                time.sleep(0.00002)     #  wait
                 GPIO.output(pin, 0)  #  bring it back low - pulse over.
                 t0=time.time() # remember current time
                 GPIO.setup(pin,GPIO.IN)
@@ -633,6 +633,7 @@ class GPIOController :
             #tf = time.time() - ts
             #print ("Proctime:",tf)
             #print ("Dist:",sorted(distlist))
+            #print "mid: ", self.ultraSamples / 2
             distance = sorted(distlist)[int(self.ultraSamples / 2)] # sort the list and pick middle value as best distance
 
         except:
@@ -679,44 +680,59 @@ class GPIOController :
         self.pinUse[trig] = self.PSONAR
         self.pinUse[echo] = self.PSONAR        
         GPIO.setup(trig,GPIO.OUT)
-        GPIO.setup(echo,GPIO.OUT)        
         ti = time.time()
         # setup a list to hold 3 values and then do 3 distance calcs and store them
-        #print 'sonar started'
-        distlist = [0.0,0.0,0.0,0.0,0.0]
+        #print 'sonar started' 
+        distlist = [0] * self.ultraSamples
+        distance = 0
         ts=time.time()
-        for k in range(5):
-            #print "sonar pulse" , k
-            GPIO.output(trig, 1)    # Send Pulse high
-            time.sleep(0.00001)     #  wait
-            GPIO.output(trig, 0)  #  bring it back low - pulse over.
-            t0=time.time() # remember current time
-            GPIO.setup(echo,GPIO.IN)
-            #PIN_USE[i] = PINPUT don't bother telling system
-            
-            t1=t0
-            # This while loop waits for input pin (7) to be low but with a 0.04sec timeout 
-            while ((GPIO.input(echo)==0) and ((t1-t0) < 0.02)):
-                #time.sleep(0.00001)
+
+        try:
+            for k in range(self.ultraSamples):
+                #print "sonar pulse" , k
+                GPIO.output(trig, 0)
+                time.sleep(0.06)#set pin low for 60ms as per spec sheet to allow for old pulses not finished
+                GPIO.output(trig, 1)    # Send Pulse high
+                time.sleep(0.00002)     #  wait
+                GPIO.output(trig, 0)  #  bring it back low - pulse over.
+                t0=time.time() # remember current time
+                GPIO.setup(echo,GPIO.IN)
+                #PIN_USE[i] = PINPUT don't bother telling system
+
+                t1=t0
+                # This while loop waits for input pin (7) to be low but with a timeout
+                while ((GPIO.input(echo)==0) and ((t1-t0) < 0.02)):
+                    #time.sleep(0.00001)
+                    t1=time.time()
                 t1=time.time()
-            t1=time.time()
-            #print 'low' , (t1-t0).microseconds
-            t2=t1
-            #  This while loops waits for input pin to go high to indicate pulse detection
-            #  with 0.04 sec timeout
-            while ((GPIO.input(echo)==1) and ((t2-t1) < 0.02)):
-                #time.sleep(0.00001)
+                #print 'low' , (t1-t0) * 1000
+                t2=t1
+                #  This while loops waits for input pin to go high to indicate pulse detection
+                #  with  timeout
+                #tcount = 0
+                while ((GPIO.input(echo)==1) and ((t2-t1) < 0.02)):
+                    #time.sleep(0.000005)
+                    t2=time.time()
+                    #tcount += 1
                 t2=time.time()
-            t2=time.time()
-            #print 'high' , (t2-t1).microseconds
-            t3=(t2-t1)  # t2 contains time taken for pulse to return
-            #print "total time " , t3
-            distance=t3*343/2*100  # calc distance in cm
-            distlist[k]=distance
-            #print distance
-            GPIO.setup(echo,GPIO.OUT)
-        tf = time.time() - ts
-        distance = sorted(distlist)[1] # sort the list and pick middle value as best distance
+                #print "tcount",tcount
+                #print 'high' , (t2-t1).microseconds
+                t3=(t2-t1)  # t2 contains time taken for pulse to return
+                #print "time of pulse flight " , t3 * 1000
+                # 20cm (40 in total ~~ 1.2 milliseconds)
+                #distance = t3 * 17150  # calc distance in cm t3 * 343 / 2 * 100
+                distlist[k]=int(t3 * 17150)
+                #print distance
+                GPIO.setup(trig,GPIO.OUT)
+            #tf = time.time() - ts
+            #print ("Proctime:",tf)
+            #print ("Dist:",sorted(distlist))
+            #print "mid: ", self.ultraSamples / 2
+            distance = sorted(distlist)[int(self.ultraSamples / 2)] # sort the list and pick middle value as best distance
+
+        except:
+            print ("ultra fail")
+            pass
         
         #print "total time " , tf
         #for k in range(5):
@@ -724,11 +740,15 @@ class GPIOController :
         #print "pulse time" , distance*58
         #print "total time in microsecs" , (tf-ti).microseconds                    
         # only update Scratch values if distance is < 500cm
+        
         if (distance > 280):
             distance = 299
         if (distance < 2):
             distance = 1
-
+        #distance = "x:" +str(int(distlist[0])) + "*" + str(int(distlist[1])) +"*" + str(int(distlist[2])) +"*" + str(int(distlist[3])) +"*" + str(int(distlist[4]))
+        #distance = "fred"
+        return int(distance)
+        
         return distance        
         
     def pinRead(self, pin):
