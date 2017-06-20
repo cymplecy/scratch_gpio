@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.106.7Jun17'  # Ultrasonic tweaking to 7 samples default and 1 function in sgh_GPIOContoller
+Version = 'v8.2.108.209Jun17'  # Minor mods for tracker and add in mqtt retain flag
 
 import threading
 import socket
@@ -301,9 +301,9 @@ def on_connect(client, userdata, rc):
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     #print
-    print "....", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "Topic: ", msg.topic + ' Message: ' + str(msg.payload), " rcvd"
+    #print "....", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "Topic: ", msg.topic + ' Message: ' + str(msg.payload), " rcvd"
     msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
-    time.sleep(0.2)    
+    #time.sleep(0.2)    
     msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))    
 
 
@@ -4806,12 +4806,14 @@ class ScratchListener(threading.Thread):
                             svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
                             #print "motora",svalue
                             pz.setMotor(1, svalue)
-                            #time.sleep(5)
+                            
+                          
                         if self.vFindValue("motorb"):
                             svalue = min(127, max(-128, int(self.valueNumeric * 1.3))) if self.valueIsNumeric else 0
                             #print "motorb",svalue
                             pz.setMotor(0, svalue)
-                            #time.sleep(5)
+                          
+                            
                         for loop in range(0, 6):
                             if self.vFindValue("servo" + str(loop)):
                                 svalue = min(180, max(-0, int(self.valueNumeric))) if self.valueIsNumeric else 0
@@ -5157,7 +5159,14 @@ class ScratchListener(threading.Thread):
                             sghGC.mqttListener = True
                         except:
                             print "MQTT broker request failed"
-                            pass                        
+                            pass       
+                            
+                    if self.vFindValue("mqttretainflag"):
+                        if self.value == "true":
+                            sghGC.mqttRetainFlag = True
+                        else:
+                            sghGC.mqttRetainFlag = False                        
+                       
 
                 ### Check for Broadcast type messages being received
                 # print "loggin level",debugLogging
@@ -6109,6 +6118,11 @@ class ScratchListener(threading.Thread):
                         if self.bFindValue("motorb"):
                             svalue = min(128, max(-128, int(self.valueNumeric * 1.28))) if self.valueIsNumeric else 0
                             pz.setMotor(0, svalue)
+                                  
+                        if self.bFind("motorsoff"):
+                            pz.setMotor(0, 0)
+                            pz.setMotor(1, 0)  
+                            
                         for loop in range(0, 6):
                             if self.bFindValue("servo" + str(loop) + ","):
                                 svalue = min(180, max(-0, int(self.valueNumeric))) if self.valueIsNumeric else 0
@@ -7542,13 +7556,13 @@ class SendMsgsToScratch(threading.Thread):
                 break
             if priority == 11:
                 params = cmd.split(',')
-                # print "params$$$"
+                #print "params$$$",params
                 try:
                     if len(params) == 2:
-                        publish.single(params[0], payload=params[1], qos=0, hostname=sghGC.mqttBroker,retain=True)
+                        publish.single(params[0], payload=params[1], qos=0, hostname=sghGC.mqttBroker,retain=sghGC.mqttRetainFlag)
                         print "----mqtt published", sghGC.mqttBroker, params[0], params[1]
                     elif len(params) == 3:
-                        publish.single(params[0], payload=params[1], qos=0, hostname=params[2],retain=True)
+                        publish.single(params[0], payload=params[1], qos=0, hostname=params[2],retain=sghGC.mqttRetainFlag)
                         print "----mqtt published", params[2], params[0], params[1]
                 except:
                     # print
