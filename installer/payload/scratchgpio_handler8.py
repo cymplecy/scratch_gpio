@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.108.209Jun17'  # Minor mods for tracker and add in mqtt retain flag
+Version = 'v8.2.110.209Jun17'  # fix regression of allon/off introduced by mis-indetning code in piconzero 
 
 import threading
 import socket
@@ -324,6 +324,7 @@ class ultra(threading.Thread):
         self._stop = threading.Event()
         self.pinTrig = pinTrig
         self.pinEcho = pinEcho
+        print "ultra enabled" ,pinTrig,pinEcho
 
     def stop(self):
         self._stop.set()
@@ -1401,6 +1402,7 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pinList[loop], 0, type="pwm")
 
     def bFindValue(self, searchStr, searchSuffix=''):
+        # print "$$$" + self.dataraw + "$$$"
         # logging.debug("Searching for:%s",searchStr )
         # return the value of the charachters following the searchstr as float if possible
         # If not then try to return string
@@ -5809,9 +5811,12 @@ class ScratchListener(threading.Thread):
                             sghGC.lightInfo = True
 
                         def set_neopixel(led, red, green, blue):
-                            pcaPWM.setPWM((led * 3) + 2, 0, min(4095, max((((red) * 4096) / 255), 0)))
-                            pcaPWM.setPWM((led * 3) + 1, 0, min(4095, max((((green) * 4096) / 255), 0)))
-                            pcaPWM.setPWM((led * 3), 0, min(4095, max((((blue) * 4096) / 255), 0)))
+                            try:
+                                pcaPWM.setPWM((led * 3) + 2, 0, min(4095, max((((red) * 4096) / 255), 0)))
+                                pcaPWM.setPWM((led * 3) + 1, 0, min(4095, max((((green) * 4096) / 255), 0)))
+                                pcaPWM.setPWM((led * 3), 0, min(4095, max((((blue) * 4096) / 255), 0)))
+                            except:
+                                pass
 
                         def pi2go_mapName(name):
                             # print name
@@ -6108,6 +6113,15 @@ class ScratchListener(threading.Thread):
                     elif "piconzero" in ADDON:
                         print "broadcast piconzero processing"
                         self.neoProcessing(ADDON)
+                        if self.bFind("alloff"):
+                            pz.setMotor(1, 0)
+                            pz.setMotor(0, 0)
+                            for loop in range(0, 6):
+                                #print  pz.getOutputConfig(loop)
+                                pz.setOutputConfig(loop, 0)
+                                pz.setOutput(loop, 0)
+                            for pin in [7,11,12,13,15]:
+                                sghGC.pinUpdate(pin, 0)                         
 
                         if self.bFind('ultra'):
                             self.startUltra(38, 38, self.OnOrOff)
@@ -6159,15 +6173,7 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue("setdigital" + str(pin)):
                                 pz.setInputConfig(pin,0)
                     
-                    if self.bFind("alloff"):
-                        pz.setMotor(1, 0)
-                        pz.setMotor(0, 0)
-                        for loop in range(0, 6):
-                            #print  pz.getOutputConfig(loop)
-                            pz.setOutputConfig(loop, 0)
-                            pz.setOutput(loop, 0)
-                        for pin in [7,11,12,13,15]:
-                            sghGC.pinUpdate(pin, 0)                        
+                       
 
 
                     else:  # Plain GPIO Broadcast processing
@@ -6212,7 +6218,7 @@ class ScratchListener(threading.Thread):
                                 msgQueue.put((5, bcast_str))
 
                                 # Start using ultrasonic sensor on a pin
-                            if self.bFindValue('ultra' + str(pin), " "):
+                            if self.bFindValue('ultra' + str(pin) + " "): #altered to fix bug with ultra8 not being recognised but not tested on things like ultra32 yet
                                 print 'start pinging on', str(pin)
                                 self.startUltra(pin, pin, self.OnOrOff)
 
@@ -6307,7 +6313,7 @@ class ScratchListener(threading.Thread):
                         # print "processing piglow variables"
 
                         if self.bFindOnOff('all'):
-                            # print "found allon/off"
+                            print "found allon/off"
                             for i in range(1, 19):
                                 # print i
                                 PiGlow_Values[i - 1] = PiGlow_Brightness * self.OnOrOff
