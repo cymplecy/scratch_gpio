@@ -321,6 +321,7 @@ class ultra(threading.Thread):
         self._stop = threading.Event()
         self.pinTrig = pinTrig
         self.pinEcho = pinEcho
+        print "ultra enabled" ,pinTrig,pinEcho
 
     def stop(self):
         self._stop.set()
@@ -1290,6 +1291,7 @@ class ScratchListener(threading.Thread):
                     sghGC.pinUpdate(pinList[loop], 0, type="pwm")
 
     def bFindValue(self, searchStr, searchSuffix=''):
+        # print "$$$" + self.dataraw + "$$$"
         # logging.debug("Searching for:%s",searchStr )
         # return the value of the charachters following the searchstr as float if possible
         # If not then try to return string
@@ -5567,9 +5569,12 @@ class ScratchListener(threading.Thread):
                             sghGC.lightInfo = True
 
                         def set_neopixel(led, red, green, blue):
-                            pcaPWM.setPWM((led * 3) + 2, 0, min(4095, max((((red) * 4096) / 255), 0)))
-                            pcaPWM.setPWM((led * 3) + 1, 0, min(4095, max((((green) * 4096) / 255), 0)))
-                            pcaPWM.setPWM((led * 3), 0, min(4095, max((((blue) * 4096) / 255), 0)))
+                            try:
+                                pcaPWM.setPWM((led * 3) + 2, 0, min(4095, max((((red) * 4096) / 255), 0)))
+                                pcaPWM.setPWM((led * 3) + 1, 0, min(4095, max((((green) * 4096) / 255), 0)))
+                                pcaPWM.setPWM((led * 3), 0, min(4095, max((((blue) * 4096) / 255), 0)))
+                            except:
+                                pass
 
                         def pi2go_mapName(name):
                             # print name
@@ -5960,7 +5965,7 @@ class ScratchListener(threading.Thread):
                                 msgQueue.put((5, bcast_str))
 
                                 # Start using ultrasonic sensor on a pin
-                            if self.bFindValue('ultra' + str(pin), " "):
+                            if self.bFindValue('ultra' + str(pin) + " "): #altered to fix bug with ultra8 not being recognised but not tested on things like ultra32 yet
                                 print 'start pinging on', str(pin)
                                 self.startUltra(pin, 0, self.OnOrOff)
 
