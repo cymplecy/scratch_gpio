@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.108.209Jun17'  # Minor mods for tracker and add in mqtt retain flag
+Version = 'v8.2.109.209Jun17'  # incs minor pi2go mods pre switching to using v8dev branch
 
 import threading
 import socket
