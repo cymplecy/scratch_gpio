@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.110.209Jun17'  # fix regression of allon/off introduced by mis-indetning code in piconzero 
+Version = 'v8.2.111.209Jun17'  # bug fix ultra flag not set during program exit/changeover 
 
 import threading
 import socket
@@ -7645,6 +7645,7 @@ def cleanup_threads(threads):
                 sghGC.pinUltraRef[pin].stop()
                 sghGC.pinUse[pin] == sghGC.PUNUSED
                 print "Sonar stopped on pin:", pin
+                sghGC.pinUltraRef[pin] = None
         except:
             pass
 
