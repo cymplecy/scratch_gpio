@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.109.209Jun17'  # incs minor pi2go mods pre switching to using v8dev branch
+Version = 'v8.2.110.209Jun17'  # fix regression of allon/off introduced by mis-indetning code in piconzero 
 
 import threading
 import socket
@@ -6113,6 +6113,15 @@ class ScratchListener(threading.Thread):
                     elif "piconzero" in ADDON:
                         print "broadcast piconzero processing"
                         self.neoProcessing(ADDON)
+                        if self.bFind("alloff"):
+                            pz.setMotor(1, 0)
+                            pz.setMotor(0, 0)
+                            for loop in range(0, 6):
+                                #print  pz.getOutputConfig(loop)
+                                pz.setOutputConfig(loop, 0)
+                                pz.setOutput(loop, 0)
+                            for pin in [7,11,12,13,15]:
+                                sghGC.pinUpdate(pin, 0)                         
 
                         if self.bFind('ultra'):
                             self.startUltra(38, 38, self.OnOrOff)
@@ -6164,15 +6173,7 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue("setdigital" + str(pin)):
                                 pz.setInputConfig(pin,0)
                     
-                    if self.bFind("alloff"):
-                        pz.setMotor(1, 0)
-                        pz.setMotor(0, 0)
-                        for loop in range(0, 6):
-                            #print  pz.getOutputConfig(loop)
-                            pz.setOutputConfig(loop, 0)
-                            pz.setOutput(loop, 0)
-                        for pin in [7,11,12,13,15]:
-                            sghGC.pinUpdate(pin, 0)                        
+                       
 
 
                     else:  # Plain GPIO Broadcast processing
@@ -6312,7 +6313,7 @@ class ScratchListener(threading.Thread):
                         # print "processing piglow variables"
 
                         if self.bFindOnOff('all'):
-                            # print "found allon/off"
+                            print "found allon/off"
                             for i in range(1, 19):
                                 # print i
                                 PiGlow_Values[i - 1] = PiGlow_Brightness * self.OnOrOff
