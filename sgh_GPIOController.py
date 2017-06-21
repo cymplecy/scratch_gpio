@@ -130,7 +130,11 @@ class GPIOController :
         self.mqttClient = None
         self.mqttTopic = None
         self.mqttRetainFlag = True
+        self.mqttFullTopic = False
 
+        self.trackerParams = None
+        self.sensorDict = {}
+        self.motorDiff = 0 # not used yet
         
         self.pinMapName = [None] * self.numOfPins  
         self.stepperAPos = 0
@@ -546,7 +550,7 @@ class GPIOController :
             pass
             
     def motorUpdate(self, Pin1, Pin2, value):
-        #print "motUpdate called" , Pin1, Pin2,value 
+        print "motUpdate called" , Pin1, Pin2,value 
         #self.mFreq = max(11,abs(value/2))
         #print "mFreq= " , self.mFreq
         PinPWM = Pin1

@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.111.209Jun17'  # bug fix ultra flag not set during program exit/changeover 
+Version = 'v8.2.200.21Jun17'  # start adding in robot moves using tracker
 
 import threading
 import socket
@@ -153,7 +153,7 @@ except:
 
 sghCT = None  # reserve for captouch
 
-
+    
 class Compass:
     __scales = {
         0.88: [0, 0.73],
@@ -302,9 +302,14 @@ def on_connect(client, userdata, rc):
 def on_message(client, userdata, msg):
     #print
     #print "....", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "Topic: ", msg.topic + ' Message: ' + str(msg.payload), " rcvd"
-    msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
+    if sghGC.mqttFullTopic is False:
+        topicList = str(msg.topic).split("/")
+    else:
+        topicList = [str(msg.topic)]
+    #print topicList
+    msgQueue.put((5, 'sensor-update "' + topicList[-1] + '" "' + str(msg.payload) + '"'))
     #time.sleep(0.2)    
-    msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))    
+    msgQueue.put((5, 'broadcast "' + topicList[-1] + '"'))    
 
 
 
@@ -1298,6 +1303,24 @@ class ScratchListener(threading.Thread):
                          'indigo': (0, 0, 128), 'cream': (255, 255, 127), 'violet': (128, 0, 255),
                          'lightgreen': (127, 255, 0), 'amber': (255, 127, 0), 'lightblue': (0, 128, 255)}
         self.invtcolours = {v: k for k, v in self.tcolours.items()}
+        
+    def regReturnValue(self,mainString,subString):
+        return re.search(subString + "(.*)", mainString).group(1)
+        69*
+    def trackerDecode(self,trackCommand):
+        regValue = self.regReturnValue(trackCommand,"forward")
+        if len(regValue) > 0:
+            self.robotMove(int(float(regValue)),int(float(regValue)))
+
+    def robotMove(self,motorl,motorr):
+        if 'agobo' in ADDON:
+            motorList = [ ['motora', 26, 24, 0, False],['motorb', 19, 21, 0, False]]
+            # logging.debug("ADDON:%s", ADDON)
+            # svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+            print motorl,motorr
+            sghGC.motorUpdate(motorList[0][1], motorList[0][2], motorl)      
+            sghGC.motorUpdate(motorList[1][1], motorList[1][2], motorr)  
+
 
     def meArmGotoPoint(self, meHorizontal, meDistance, meVertical):
         self.arm.gotoPoint(int(max(-50, min(50, meHorizontal))), int(max(70, min(150, meDistance))),
@@ -3618,6 +3641,8 @@ class ScratchListener(threading.Thread):
                                 print "agobo2 setup"
                             else:
                                 print "Agobo setup"
+                            sghGC.motorDiff = 0
+                            sghGC.trackingParams = {"mleft" : "motora", "mright" : "motorb" }
                             anyAddOns = True
 
                         if "happi" in ADDON:
@@ -5167,7 +5192,13 @@ class ScratchListener(threading.Thread):
                         if self.value == "true":
                             sghGC.mqttRetainFlag = True
                         else:
-                            sghGC.mqttRetainFlag = False                        
+                            sghGC.mqttRetainFlag = False          
+                    
+                    if self.vFindValue("mqttfulltopic"):
+                        if self.value == "true":
+                            sghGC.mqttFullTopic = True
+                        else:
+                            sghGC.mqttFullTopic = False  
                        
 
                 ### Check for Broadcast type messages being received
@@ -6109,6 +6140,9 @@ class ScratchListener(threading.Thread):
                             sghGC.pinUpdate(15, self.OnOrOff)
                         if self.bFindOnOff('rightled'):
                             sghGC.pinUpdate(13, self.OnOrOff)
+                            
+                        if self.bFindValue('tracker'):
+                            self.trackerDecode(self.value)
 
                     elif "piconzero" in ADDON:
                         print "broadcast piconzero processing"
@@ -7554,6 +7588,7 @@ class SendMsgsToScratch(threading.Thread):
         while not self.stopped():
             # print self.msgQueue.get()
             priority, cmd = self.msgQueue.get()
+            #print "cmd:",cmd
             if cmd == "STOPSENDING":
                 print "STOPSENDING msg retreived from queue"
                 self.stop()
@@ -7586,6 +7621,16 @@ class SendMsgsToScratch(threading.Thread):
                 except:
                     print "failed to send this message to Scratch", cmd
                     pass
+                    
+                cmds = cmd.split(' ')
+                if cmds[0] == 'sensor-update':
+                    cmdkey = cmds[1][1:-1]
+                    cmdvalue = cmds[2][1:-1]
+                    if cmdkey in sghGC.sensorDict:
+                        sghGC.sensorDict[cmdkey] = cmdvalue
+                    else:
+                        sghGC.sensorDict[cmdkey] = cmdvalue
+                    #print sghGC.sensorDict
 
         print "SendMsgsToScratch stopped"
 
@@ -7871,6 +7916,8 @@ while True:
         print "external called processes killed"
         cleanup_threads((listener, sender))
         print "Thread cleanup done after disconnect"
+        sghGC.sensorDict = {}
+        print "sensorDict reset"
         INVERT = False
         sghGC.resetPinMode()
         print ("Pin Reset Done")
