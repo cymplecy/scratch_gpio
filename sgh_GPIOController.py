@@ -133,8 +133,9 @@ class GPIOController :
         self.mqttFullTopic = False
 
         self.trackerParams = None
+        self.trackerSpeed = 20
         self.sensorDict = {}
-        self.motorDiff = 0 # not used yet
+        self.motorDiff = 1.0
         
         self.pinMapName = [None] * self.numOfPins  
         self.stepperAPos = 0

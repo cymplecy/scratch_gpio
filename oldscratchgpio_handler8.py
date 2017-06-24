@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.201.24Jun17'  # saved state while switching to Scratch2 stuff
+Version = 'v8.2.200.21Jun17'  # start adding in robot moves using tracker
 
 import threading
 import socket
@@ -1312,54 +1312,56 @@ class ScratchListener(threading.Thread):
     def trackerDecode(self,trackCommand):
         msgQueue.put((1, 'sensor-update "' + 'commandfinished' + '" "' + 'false' + '"'))
         robotSpeed = sghGC.trackerSpeed
-        robotSpeedL = int(robotSpeed * sghGC.motorDiff)
-        robotSpeedR = robotSpeed
         regValue = self.regReturnValue(trackCommand,"forward")
         if isNumeric(regValue):
-            regNumericValue = int(float(regValue))
             robotStartDir = int(((float(sghGC.sensorDict.get('robot_direction'))) / 90.0)+ 0.5) * 90
             print "initial dir:",robotStartDir
-            rDirection = int(float(sghGC.sensorDict.get('robot_direction')))
-            while abs(angleDiff(rDirection, robotStartDir)) > 0:            
-                if ((angleDiff(rDirection, robotStartDir)) > 0) :
-                    self.robotMove(-1 * robotSpeedL,robotSpeedR)
-                elif ((angleDiff(rDirection, robotStartDir)) < 0) :
-                    self.robotMove(robotSpeedL,-1 * robotSpeedR)
-                time.sleep(0.3)          
-                rDirection = int(float(sghGC.sensorDict.get('robot_direction')))
-            self.robotMove(0,0)
-            time.sleep(5)            
             
-            if (robotStartDir == 270):
-                xstart = int(float(sghGC.sensorDict.get('robot_x')))
-                ystart = int(float(sghGC.sensorDict.get('robot_y')))
-                robotDelta = 0
-                self.robotMove(robotSpeedL,robotSpeedR)
-                rDirection = robotStartDir
-                while (robotDelta < regNumericValue):
-                    robotDelta = math.hypot(int(float(sghGC.sensorDict.get('robot_x'))) - xstart,int(float(sghGC.sensorDict.get('robot_y'))) - ystart)
-                    print "rd", robotDelta
-                    if ((int(float(sghGC.sensorDict.get('robot_y'))) - ystart) > 0) :
-                        self.robotMove(int(robotSpeedL / 2),robotSpeedR)
-                    elif ((int(float(sghGC.sensorDict.get('robot_y'))) - ystart) < 0) :
-                        self.robotMove(robotSpeedL,int(robotSpeedR / 2))
-                    else:
-                        self.robotMove(robotSpeedL,robotSpeedR)
-                    time.sleep(0.3)
-                    rDirection = int(float(sghGC.sensorDict.get('robot_direction')))
-                self.robotMove(0,0)
-                print "finised move "    
-                
             rDirection = int(float(sghGC.sensorDict.get('robot_direction')))
-            while abs(angleDiff(rDirection, robotStartDir)) > 0:            
-                if ((angleDiff(rDirection, robotStartDir)) > 0) :
+            while abs(angleDiff(rDirection, robotStartDir)) > 1:            
+                if ((angleDiff(rDirection, robotStartDir)) > 1) :
                     self.robotMove(-1 * robotSpeed,robotSpeed)
-                elif ((angleDiff(rDirection, robotStartDir)) < 0) :
+                elif ((angleDiff(rDirection, robotStartDir)) < -1) :
                     self.robotMove(robotSpeed,-1 * robotSpeed)
                 time.sleep(0.3)          
                 rDirection = int(float(sghGC.sensorDict.get('robot_direction')))
-            self.robotMove(0,0)                
-         
+            self.robotMove(0,0)
+            time.sleep(5)
+            
+            print "moving forward"
+            regValue = int(float(regValue))
+            xstart = int(float(sghGC.sensorDict.get('robot_x')))
+            ystart = int(float(sghGC.sensorDict.get('robot_y')))
+            robotDelta = 0
+            robotStartDir = int(float(sghGC.sensorDict.get('robot_direction')))
+            self.robotMove(robotSpeed,robotSpeed)
+            rDirection = robotStartDir
+            while (robotDelta < regValue):
+                robotDelta = math.hypot(int(float(sghGC.sensorDict.get('robot_x'))) - xstart,int(float(sghGC.sensorDict.get('robot_y'))) - ystart)
+                if ((angleDiff(rDirection, robotStartDir)) > 1) :
+                    self.robotMove(0,robotSpeed)
+                elif ((angleDiff(rDirection, robotStartDir)) < 1) :
+                    self.robotMove(robotSpeed,0)
+                else:
+                    self.robotMove(robotSpeed,robotSpeed)
+                time.sleep(0.3)
+                rDirection = int(float(sghGC.sensorDict.get('robot_direction')))
+            self.robotMove(0,0)
+            print "finised move "
+            
+            print
+            print "re-aligning after move"
+            
+            rDirection = int(float(sghGC.sensorDict.get('robot_direction')))
+            while abs(angleDiff(rDirection, robotStartDir)) > 1:            
+                if ((angleDiff(rDirection, robotStartDir)) > 1) :
+                    self.robotMove(-1 * robotSpeed,robotSpeed)
+                elif ((angleDiff(rDirection, robotStartDir)) < 1) :
+                    self.robotMove(robotSpeed,-1 * robotSpeed)
+                time.sleep(0.3)          
+                rDirection = int(float(sghGC.sensorDict.get('robot_direction')))
+            self.robotMove(0,0) 
+            
         regValue = self.regReturnValue(trackCommand,"right")
         if isNumeric(regValue):
             regValue = int(float(regValue))
@@ -5268,10 +5270,7 @@ class ScratchListener(threading.Thread):
                             sghGC.mqttFullTopic = False  
                             
                     if self.vFindValue("trackerspeed"):
-                        sghGC.trackerSpeed = int(self.valueNumeric) if self.valueIsNumeric else 0        
-
-                    if self.vFindValue("motordiff"):
-                        sghGC.motorDiff = (self.valueNumeric / 50.0) if self.valueIsNumeric else 0                         
+                        sghGC.trackerSpeed = int(self.valueNumeric) if self.valueIsNumeric else 0                             
                        
 
                 ### Check for Broadcast type messages being received
