@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.111.209Jun17'  # bug fix ultra flag not set during program exit/changeover 
+Version = 'v8.2.112.26Jun17.kwindow'  # sgh_servod fix for Pi3 + pixels colour added for unicornhat
 
 import threading
 import socket
@@ -2391,11 +2391,22 @@ class ScratchListener(threading.Thread):
                         self.matrixSetPixel(x, y, self.matrixRed, self.matrixGreen, self.matrixBlue)
                 self.neoShow()
 
-            if self.bFind("pixelsoff"):
+            elif self.bFind("pixelsoff"):
                 for y in range(0, 8):
                     for x in range(0, 8):
                         self.matrixSetPixel(x, y, 0, 0, 0)
                 self.neoShow()
+            elif self.bFindValue("pixels"):
+                pixelProcessed = False
+                for ledcolour in self.tcolours:
+                    if self.bFind("pixels" + ledcolour):
+                        self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(ledcolour)
+                        for y in range(0, 8):
+                            for x in range(0, 8):
+                                self.matrixSetPixel(x, y, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        self.neoShow()
+                        pixelProcessed = True                 
+            
 
             if self.bFindValue("sweep"):
                 print "sweep"
