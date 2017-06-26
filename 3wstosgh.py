@@ -9,97 +9,106 @@ import time
 
 def rcv_from_sgh():
     global s,c,server
+    dataPrevious = ""
     while True:
         print "listening for data from sgh"
         # time.sleep(1)
-        dataB = "test data" #c.recv(8192)
-        if dataB != "":
-            #dataB = dataB.translate(None, '"')
-            print "Data receive on SocketB", dataB
-            server.sendMsg(dataB)
-            time.sleep(2)
-            #dataBsplit = dataB[4:].split('<###')
-            #print "split", dataBsplit
-            #print "data pairs"
-            #for loop in dataBsplit:
-            #    if loop == "stopthread":
-            #        self.scratch_socketB.close()
-            #        break
-            #    item = loop.split('##>')
-            #    if len(item) > 1:
-            #        bcast_str = 'sensor-update "%s" %s' % (item[0], item[1])
-            #        print 'sending: %s' % bcast_str
-            #        msgQueue.put(((5, bcast_str)))
+        data = dataPrevious + c.recv(8192)
+        if data != "":
+            print "Data received from sgh", data
+            #print ("datalen: %s", len(data))
+
+            if len(data) > 0:  # Connection still valid so process the data received
+
+                dataIn = data
+
+                datawithCAPS = data
+                # dataOut = ""
+                dataList = []  # used to hold series of broadcasts or sensor updates
+                dataPrefix = ""  # data to be re-added onto front of incoming data
+                while len(dataIn) > 0:  # loop thru data
+                    if len(dataIn) < 4:  # If whole length not received then break out of loop
+                        # print "<4 chrs received"
+                        dataPrevious = dataIn  # store data and tag it onto next data read
+                        break
+                    sizeInfo = dataIn[0:4]
+                    size = struct.unpack(">L", sizeInfo)[0]  # get size of Scratch msg
+                    # print "size:", size
+                    if size > 0:
+                        # print dataIn[4:size + 4]
+                        dataMsg = dataIn[4:size + 4].lower()  # turn msg into lower case
+
+                        if len(dataMsg) < size:  # if msg recieved is too small
+                            # print "half msg found"
+                            # print size, len(dataMsg)
+                            dataPrevious = dataIn  # store data and tag it onto next data read
+                            break
+                        #print "msg:",dataMsg
+                        dataList.append(dataMsg)
+                        # if len(dataMsg) == size:  # if msg recieved is correct
+                        #     if "alloff" in dataMsg:
+                        #         allSplit = dataMsg.find("alloff")
+                        #         logging.debug("not sure why this code is here Whole message:%s", dataIn)
+                        #
+                        # dataPrevious = ""  # no data needs tagging to next read
+                        # if ("alloff" in dataMsg) or ("allon" in dataMsg):
+                        #     dataList.append(dataMsg)
+                        # else:
+                        #     if dataMsg[0:2] == "br":  # removed redundant "broadcast" and "sensor-update" txt
+                        #         if dataPrefix == "br":
+                        #             dataList[-1] = dataList[-1] + " " + dataMsg[10:]
+                        #         else:
+                        #             dataList.append(dataMsg)
+                        #             dataPrefix = "br"
+                        #     else:
+                        #         if dataPrefix == "se":
+                        #             dataList[-1] += dataMsg[13:]  # changr from 10 to 13
+                        #         else:
+                        #             dataList.append(dataMsg)
+                        #             dataPrefix = "se"
+
+                        dataIn = dataIn[size + 4:]  # cut data down that's been processed
+
+                        # print "previous:", dataPrevious
+            print "datalist:",dataList
+            for msg in dataList:
+                msgsplit = msg.split('"')
+                server.send_message_to_all(msgsplit[1] + ':' + msgsplit[2][1:])
         else:
-            time.sleep(0.5)
+            time.sleep(0.1)
+            
             #connB, addrB = self.scratch_socketB.accept()
             # reply = 'OK...' + data
             # if not data:
 
 
 
-from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
+# Called for every client connecting (after handshake)
+def new_client(client, server):
+    print("New client connected and was given id %d" % client['id'])
+    server.send_message_to_all("Hey all, a new client has joined us")
 
-class SimpleEcho(WebSocket):
-    global s,c
 
-    def sendMsg(self,msg):
-        print msg
-        
-        
-    def handleMessage(self):
-        # echo message back to client
-        #self.sendMessage(self.data)
-        print "msg rcvd from Scratch2", self.data
-        dataOut = self.data
+# Called for every client disconnecting
+def client_left(client, server):
+    print("Client(%d) disconnected" % client['id'])
 
-        n = len(dataOut)
-        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
-            chr(n & 0xFF))
-        c.send(b + dataOut)
-        print "Data sent to sgh", dataOut
-        self.sendMessage(dataOut)
-        #time.sleep(2)
-        #c.close()
-        #s.close()        
 
-    #def sendMessage(self,msg):
-    #    self.sendMessage(msg)
+# Called when a client sends a message
+def message_received(client, server, message):
+    if len(message) > 200:
+        message = message[:200]+'..'
+    print("Client(%d) said: %s" % (client['id'], message))
+    dataOut = message
 
-    def handleConnected(self):
-        print(self.address, 'ws connected')
-        while True:
-            print "listening for data from sgh"
-            # time.sleep(1)
-            dataB = "test data" #c.recv(8192)
-            if dataB != "":
-                #dataB = dataB.translate(None, '"')
-                print "Data receive on SocketB", dataB
-                self.sendMessage(dataB)
-                time.sleep(2)
-                #dataBsplit = dataB[4:].split('<###')
-                #print "split", dataBsplit
-                #print "data pairs"
-                #for loop in dataBsplit:
-                #    if loop == "stopthread":
-                #        self.scratch_socketB.close()
-                #        break
-                #    item = loop.split('##>')
-                #    if len(item) > 1:
-                #        bcast_str = 'sensor-update "%s" %s' % (item[0], item[1])
-                #        print 'sending: %s' % bcast_str
-                #        msgQueue.put(((5, bcast_str)))
-            else:
-                time.sleep(0.5)
-                #connB, addrB = self.scratch_socketB.accept()
-                # reply = 'OK...' + data
-                # if not data:
+    n = len(dataOut)
+    b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+        chr(n & 0xFF))
+    c.send(b + dataOut)
+    print "Data sent to sgh", dataOut
+
+
        
-
-    def handleClose(self):
-        print(self.address, 'ws closed')
-
-
 
 # For Scratch 3 handle long as int 
 if sys.version > '3':
@@ -361,7 +370,7 @@ class Scratch(object):
         errors.
         """
         return self._parse(self._recv())
-        
+
        
         
 s = socket.socket() #Create a socket object
@@ -379,8 +388,20 @@ print "Got connection from ScratchGPIOHandler", addr
 
 
 
-server = SimpleWebSocketServer('', 8000, SimpleEcho)
-#d = threading.Thread(name='rcv_from_sgh', target=rcv_from_sgh)
-#d.setDaemon(True)
-#d.start()
-server.serveforever()        
+
+
+       
+
+from websocket_server import WebsocketServer
+
+scr= Scratch()
+
+PORT=8000
+server = WebsocketServer(PORT)
+server.set_fn_new_client(new_client)
+server.set_fn_client_left(client_left)
+server.set_fn_message_received(message_received)
+d = threading.Thread(name='rcv_from_sgh', target=rcv_from_sgh)
+d.setDaemon(True)
+d.start()
+server.run_forever()

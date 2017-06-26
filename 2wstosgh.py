@@ -6,18 +6,18 @@ import sys
 
 import threading
 import time
+from websocket import create_connection
 
 def rcv_from_sgh():
-    global s,c,server
+    global s,c,ws
     while True:
         print "listening for data from sgh"
         # time.sleep(1)
-        dataB = "test data" #c.recv(8192)
+        dataB = c.recv(8192)
         if dataB != "":
             #dataB = dataB.translate(None, '"')
             print "Data receive on SocketB", dataB
-            server.sendMsg(dataB)
-            time.sleep(2)
+            ws.send(dataB)
             #dataBsplit = dataB[4:].split('<###')
             #print "split", dataBsplit
             #print "data pairs"
@@ -36,6 +36,24 @@ def rcv_from_sgh():
             # reply = 'OK...' + data
             # if not data:
 
+def tx_to_sgh():
+    global s,c,ws
+    while True:
+        print "listening for data from Scratch2"
+        # time.sleep(1)
+        result =  ws.recv()
+        if result != "":
+            #dataB = dataB.translate(None, '"')
+            print "Data received from Scratch2", result
+            dataOut = result
+
+            n = len(dataOut)
+            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+                chr(n & 0xFF))
+            c.send(b + dataOut)
+            print "Data sent to sgh", dataOut
+        else:
+            time.sleep(0.5)
 
 
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
@@ -43,9 +61,6 @@ from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 class SimpleEcho(WebSocket):
     global s,c
 
-    def sendMsg(self,msg):
-        print msg
-        
         
     def handleMessage(self):
         # echo message back to client
@@ -68,32 +83,6 @@ class SimpleEcho(WebSocket):
 
     def handleConnected(self):
         print(self.address, 'ws connected')
-        while True:
-            print "listening for data from sgh"
-            # time.sleep(1)
-            dataB = "test data" #c.recv(8192)
-            if dataB != "":
-                #dataB = dataB.translate(None, '"')
-                print "Data receive on SocketB", dataB
-                self.sendMessage(dataB)
-                time.sleep(2)
-                #dataBsplit = dataB[4:].split('<###')
-                #print "split", dataBsplit
-                #print "data pairs"
-                #for loop in dataBsplit:
-                #    if loop == "stopthread":
-                #        self.scratch_socketB.close()
-                #        break
-                #    item = loop.split('##>')
-                #    if len(item) > 1:
-                #        bcast_str = 'sensor-update "%s" %s' % (item[0], item[1])
-                #        print 'sending: %s' % bcast_str
-                #        msgQueue.put(((5, bcast_str)))
-            else:
-                time.sleep(0.5)
-                #connB, addrB = self.scratch_socketB.accept()
-                # reply = 'OK...' + data
-                # if not data:
        
 
     def handleClose(self):
@@ -375,12 +364,23 @@ print "wstosgh listening to scratchGPIO_handler"
 c,addr = s.accept() #Establish a connection with the client
 print "Got connection from ScratchGPIOHandler", addr
 
+while True:
+    try:
+        print "trying to connect to Scratch2"
+        ws = create_connection("ws://localhost:8000")
+        break
+    except:
+        time.sleep(1)
+        
+d = threading.Thread(name='rcv_from_sgh', target=rcv_from_sgh)
+d.setDaemon(True)
+d.start()
+
+e = threading.Thread(name='tx_to_sgh', target=tx_to_sgh)
+e.setDaemon(True)
+e.start()
 
 
-
-
-server = SimpleWebSocketServer('', 8000, SimpleEcho)
-#d = threading.Thread(name='rcv_from_sgh', target=rcv_from_sgh)
-#d.setDaemon(True)
-#d.start()
-server.serveforever()        
+while True:
+    time.sleep(1)
+    
