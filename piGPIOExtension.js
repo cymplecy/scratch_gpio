@@ -4,6 +4,7 @@ new (function() {
     var websocket
     var sensorSplit 
     var sensorDict = {}
+    var pinLookup = {'3' : '2', '5' : '3', '7' : '4', '8' : '14', '10' : '15' , '11' : '17', '12' : '18', '13' : '27','15' : '22', '16' : '23', '18' : '24', '19' : '10', '21' : '9', '22' : '25', '23': '11', '24' : '8', '26' : '7', '27' : '0' , '28' : '1', '29' : '5', '31' : '6', '32' : '12', '33' : '13', '35' : '19', '36' : '16', '37' : '26', '38' : '20', '40' : '21'}
 
     function doConnect() 
     {
@@ -133,6 +134,20 @@ ext.set_pin = function (pin,val)
     {
         sendMessage('broadcast "pin' + pin + val +'"');
     };     
+ext.get_pin = function (pin) 
+    {
+        if (pin === '' || pin < 0 || pin > 27) return;
+
+		// check the pin is exported
+		if (!fs.existsSync("/sys/class/gpio/gpio" + pin)) 
+			fs.writeFileSync("/sys/class/gpio/export", pin);
+
+		// read the pin value
+		var data = fs.readFileSync ("/sys/class/gpio/gpio" + pin + "/value", 'utf8');
+
+		if (data.slice(0,1) == "1") return true;
+		else return false;
+    };    
 ext.set_pixel = function (x,y,val) 
     {
         sendMessage('broadcast "pixel' + x + ',' + y + val +'"');
@@ -163,7 +178,7 @@ ext.get_cheerlightsSensor = function ()
     var descriptor = {
         blocks: [
            [' ', 'set pin %m.pin_numbers to %m.pin_outputs', 'set_pin', '11', 'On'],
-            ['b', 'pin %n is high?', 'get_gpio', ''],   
+            ['b', 'pin %n is high?', 'get_pin', ''],   
             [' ', 'broadcast %s', 'send_broadcast', ' '],
             [' ', 'broadcast %s %s %s %s %s', 'send_joinedBroadcast', ' ', ' ', ' ', ' ', ' '],
             [' ', 'set %s to %s', 'send_variable', '', ''],
