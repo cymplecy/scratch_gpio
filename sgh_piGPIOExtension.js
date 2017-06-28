@@ -1,3 +1,5 @@
+// Modified piGPIOExtension.js
+// Ver 1.28Jun17 
 new (function() {
     var ext = this;
     var fs = require('fs');
@@ -46,7 +48,7 @@ new (function() {
     function doDisconnect() {
       websocket.close();
      }
-    //fs.createReadStream('/usr/lib/scratch2/swExtension.js').pipe(fs.createWriteStream('/usr/lib/scratch2/scratch_extensions/piGPIOExtension.js'));
+    
     doConnect();
 
     // Cleanup function when the extension is unloaded
@@ -117,19 +119,21 @@ new (function() {
 ext.send_broadcast = function (bmsg) 
     {
         sendMessage('broadcast "' + bmsg + '"');
-
     };
-ext.send_joinedBroadcast = function (bmsg1, bmsg2, bmsg3, bmsg4 = '', bmsg5 = '') 
+
+ext.send_joinedBroadcast = function (bmsg1, bmsg2, bmsg3, bmsg4, bmsg5) 
     {
         sendMessage('broadcast "' + bmsg1  + bmsg2  + bmsg3  + bmsg4  + bmsg5 + '"');
-
     };    
     
 ext.send_variable = function (sgh_var,val) 
     {
         sendMessage('sensor-update "' + sgh_var + '" ' + val);
-
     };    
+ext.send_variable2 = function (sgh_var,val) 
+    {
+        sendMessage('sensor-update "' + sgh_var + '" ' + val);
+    };        
 ext.set_pin = function (pin,val) 
     {
         sendMessage('broadcast "pin' + pin + val +'"');
@@ -159,6 +163,12 @@ ext.get_pin = function (ppin)
         }
 
     };    
+    
+ext.set_motor = function (pin,val) 
+    {
+        sendMessage('sensor-update "motor' + pin + '" ' + val);
+    }; 
+     
 ext.set_pixel = function (x,y,val) 
     {
         sendMessage('broadcast "pixel' + x + ',' + y + val +'"');
@@ -171,11 +181,9 @@ ext.get_cheerlights = function (val)
     {
         sendMessage('broadcast "get cheerlights"');
     };     
-    
-
 ext.get_sensorMsg = function (sensorName) 
     {
-    return sensorDict[sensorName];
+    return sensorDict[sensorName.toLowerCase()];
     };    
 ext.get_cheerlightsSensor = function () 
     {
@@ -188,8 +196,15 @@ ext.get_cheerlightsSensor = function ()
     // Block and block menu descriptions
     var descriptor = {
         blocks: [
-           [' ', 'set pin %m.pin_numbers to %m.pin_outputs', 'set_pin', '11', 'On'],
+           [' ', 'pin %m.pin_numbers %m.pin_outputs', 'set_pin', '11', 'On'],
             ['r', 'pin %m.pin_numbers sensor value', 'get_pin', '7'],   
+            [' ', 'broadcast %s', 'send_broadcast', ' '],
+            [' ', 'set %s to %s', 'send_variable', '', ''],
+            ['r', '%s sensor value', 'get_sensorMsg', ''],
+            [' ', 'broadcast %s %s %s %s %s', 'send_joinedBroadcast', ' ', ' ', ' ', ' ', ' '],            
+            ['b', 'gpio %n is high?', 'get_gpio', ''],
+            [' ', 'set gpio %n to %m.outputs', 'set_gpio', '', 'output high'],            
+
           
  
         ],
