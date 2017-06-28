@@ -3935,13 +3935,14 @@ class ScratchListener(threading.Thread):
                         for pin in sghGC.validPins:
                             # print "checking pin" ,pin
                             if self.bFindValue('config' + str(pin)):
-                                # print "setting pin" ,pin
+                                print "setting pin" ,pin,self.value
                                 if self.value == "in":
                                     sghGC.pinUse[pin] = sghGC.PINPUT
                                 if self.value == "inpulldown":
                                     sghGC.pinUse[pin] = sghGC.PINPUTDOWN
                                 if self.value == "inpullnone":
                                     sghGC.pinUse[pin] = sghGC.PINPUTNONE
+                                print "pin use", sghGC.pinUse[pin]
 
                         sghGC.setPinMode()
                         ### Check for AddOn boards being declared

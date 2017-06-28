@@ -119,7 +119,7 @@ ext.send_broadcast = function (bmsg)
         sendMessage('broadcast "' + bmsg + '"');
 
     };
-ext.send_joinedBroadcast = function (bmsg1,bmsg2,bmsg3,bmsg4,bmsg5) 
+ext.send_joinedBroadcast = function (bmsg1, bmsg2, bmsg3, bmsg4 = '', bmsg5 = '') 
     {
         sendMessage('broadcast "' + bmsg1  + bmsg2  + bmsg3  + bmsg4  + bmsg5 + '"');
 
@@ -134,19 +134,30 @@ ext.set_pin = function (pin,val)
     {
         sendMessage('broadcast "pin' + pin + val +'"');
     };     
-ext.get_pin = function (pin) 
+ext.get_pin = function (ppin) 
     {
-        if (pin === '' || pin < 0 || pin > 27) return;
+        //console.log('get_pin:' + ppin)
+        if (!(("pin" + ppin) in sensorDict)) {
+            sendMessage('broadcast "config' + ppin + 'in"');
+            //console.log('configin sent for ' + ppin)
+            pin = pinLookup[ppin];
 
-		// check the pin is exported
-		if (!fs.existsSync("/sys/class/gpio/gpio" + pin)) 
-			fs.writeFileSync("/sys/class/gpio/export", pin);
+            if (pin === '' || pin < 0 || pin > 27) return;
 
-		// read the pin value
-		var data = fs.readFileSync ("/sys/class/gpio/gpio" + pin + "/value", 'utf8');
+            // check the pin is exported
+            if (!fs.existsSync("/sys/class/gpio/gpio" + pin)) 
+                fs.writeFileSync("/sys/class/gpio/export", pin);
 
-		if (data.slice(0,1) == "1") return true;
-		else return false;
+            // read the pin value
+            var data = fs.readFileSync ("/sys/class/gpio/gpio" + pin + "/value", 'utf8');
+
+            if (data.slice(0,1) == "1") return "1";
+            else return "0";
+            
+        } else {
+            return sensorDict[("pin" + ppin)];
+        }
+
     };    
 ext.set_pixel = function (x,y,val) 
     {
@@ -178,18 +189,8 @@ ext.get_cheerlightsSensor = function ()
     var descriptor = {
         blocks: [
            [' ', 'set pin %m.pin_numbers to %m.pin_outputs', 'set_pin', '11', 'On'],
-            ['b', 'pin %n is high?', 'get_pin', ''],   
-            [' ', 'broadcast %s', 'send_broadcast', ' '],
-            [' ', 'broadcast %s %s %s %s %s', 'send_joinedBroadcast', ' ', ' ', ' ', ' ', ' '],
-            [' ', 'set %s to %s', 'send_variable', '', ''],
-            [' ', 'set %m.sgh_variables to %s', 'send_variable', '', '0'],            
-            [' ', 'set pixel x:%s y:%s to %s', 'set_pixel', '0', '0', 'red'],   
-            [' ', 'set all pixels to %s', 'set_pixels', 'red'], 
-            [' ', 'get cheerlight colour', 'get_cheerlights'], 
-            [' ', 'set gpio %n to %m.outputs', 'set_gpio', '', 'output high'],
-            ['b', 'gpio %n is high?', 'get_gpio', ''],
-            ['r', '%s sensor value', 'get_sensorMsg', ''],
-            ['r', 'cheerlight colour', 'get_cheerlightsSensor'],            
+            ['r', 'pin %m.pin_numbers sensor value', 'get_pin', '7'],   
+          
  
         ],
         menus: {

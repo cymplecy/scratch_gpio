@@ -82,7 +82,7 @@ cp kinematics.py $RDIR/scratchgpio${SGHVER}
 cp piconzero.py $RDIR/scratchgpio${SGHVER}
 cp wstosgh.py $RDIR/scratchgpio${SGHVER}
 cp websocket_server.py $RDIR/scratchgpio${SGHVER}
-cp piGPIOExtension.js $RDIR/scratchgpio${SGHVER}
+cp sgh_piGPIOExtension.js $RDIR/scratchgpio${SGHVER}
 
 cp sgh_*.py $RDIR/scratchgpio${SGHVER}
 
@@ -167,7 +167,7 @@ echo "sudo pkill -f wstosgh" >> $RDIR/scratchgpio${SGHVER}/scratch2gpio${SGHVER}
 echo "scratch2 &" >> $RDIR/scratchgpio${SGHVER}/scratch2gpio${SGHVER}plus.sh
 echo "cd $RDIR/scratchgpio"$SGHVER >> $RDIR/scratchgpio${SGHVER}/scratch2gpio${SGHVER}plus.sh
 echo "sudo rm /usr/lib/scratch2/scratch_extensions/piGPIOExtension.js" >> $RDIR/scratchgpio${SGHVER}/scratch2gpio${SGHVER}plus.sh
-echo "sudo cp $RDIR/scratchgpio"$SGHVER"/piGPIOExtension.js /usr/lib/scratch2/scratch_extensions/piGPIOExtension.js" >> $RDIR/scratchgpio${SGHVER}/scratch2gpio${SGHVER}plus.sh
+echo "sudo cp $RDIR/scratchgpio"$SGHVER"/sgh_piGPIOExtension.js /usr/lib/scratch2/scratch_extensions/piGPIOExtension.js" >> $RDIR/scratchgpio${SGHVER}/scratch2gpio${SGHVER}plus.sh
 echo "sudo python scratchgpio_handler8.py &" >> $RDIR/scratchgpio${SGHVER}/scratch2gpio${SGHVER}plus.sh
 echo "python wstosgh.py &" >> $RDIR/scratchgpio${SGHVER}/scratch2gpio${SGHVER}plus.sh
 
@@ -224,6 +224,7 @@ chown -R $USERID:$GROUPID  $HDIR/Desktop/ScratchGPIO\ Extras/oldscratchgpio${SGH
 
 
 
+
 #Create a new file for old scratchgpioXplus.sh
 echo "#!/bin/bash" > $RDIR/scratchgpio${SGHVER}/oldscratchgpio${SGHVER}plus.sh
 echo "#Version 0.2 - add in & to allow simulatenous running of handler and Scratch" >> $RDIR/scratchgpio${SGHVER}/oldscratchgpio${SGHVER}plus.sh
@@ -253,6 +254,8 @@ echo "MimeType=application/x-scratch-project" >>  $HDIR/Desktop/ScratchGPIO\ Ext
 chown -R $USERID:$GROUPID  $HDIR/Desktop/ScratchGPIO\ Extras/oldscratchgpio${SGHVER}plus.desktop
 
 cp blink11.py $HDIR
+
+
 
 
 
