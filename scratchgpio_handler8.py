@@ -18,8 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.112.26Jun17.kwindow'  # sgh_servod fix for Pi3 + pixels colour added for unicornhat
-
+Version = 'v8.2.114.28Jun17.kwindow'  # BlueDot support started to be added
 import threading
 import socket
 import time
@@ -46,6 +45,18 @@ from sgh_cheerlights import CheerLights
 import urllib2
 from sgh_GetJSONFromURL import GetJSONFromURL
 import kinematics
+from dot import BlueDot
+from signal import pause
+
+def bd_pressed():
+    print("Hello World")
+    #msgQueue.put((5, 'broadcast "BlueDotPressed"'))  
+    msgQueue.put((5, 'sensor-update "BlueDot"' + ' pressed'))  
+    time.sleep(0.2)
+    msgQueue.put((5, 'sensor-update "BlueDot"' + ' null'))      
+
+bd = BlueDot()
+bd.when_pressed = bd_pressed
 
 getjsonfromurl = GetJSONFromURL()
 
@@ -700,7 +711,7 @@ class ScratchSender(threading.Thread):
 
         if ("fishdish" in ADDON):
             sensor_name = "switch"
-            sensorValue = ("on", "off")[value == 1]
+            sensorValue = ("on", "off")[value == 0]
 
         if ("traffichat" in ADDON):
             sensor_name = "switch"
