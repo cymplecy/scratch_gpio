@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.114.28Jun17.kwindow'  # BlueDot support started to be added
+Version = 'v8.2.115.29Jun17.kwindow'  # installer in orig now kills wstosgh
 import threading
 import socket
 import time
