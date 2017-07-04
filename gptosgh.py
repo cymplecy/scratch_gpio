@@ -7,6 +7,7 @@ import threading
 import time
 from websocket_server import WebsocketServer
 
+
 def rcv_from_sgh():
     global s,c,server
     dataPrevious = ""
@@ -74,6 +75,13 @@ def message_received(client, server, message):
     if len(message) > 200:
         message = message[:200]+'..'
     print("Client(%d) said: %s" % (client['id'], message))
+    dataOut = message
+
+    n = len(dataOut)
+    b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+        chr(n & 0xFF))
+    c.send(b + dataOut)
+    print "Data sent to sgh", dataOut
 
 
        
@@ -82,13 +90,51 @@ def message_received(client, server, message):
 if sys.version > '3':
     long = int
 
+
+
       
         
+s = socket.socket() #Create a socket object
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+#host = socket.gethostname() #Get the local machine name
+port = 42001 # Reserve a port for your service
+s.bind(('127.0.0.1',port)) #Bind to the port
 
-PORT=1025
-server = WebsocketServer(PORT)
-server.set_fn_new_client(new_client)
-server.set_fn_client_left(client_left)
-server.set_fn_message_received(message_received)
+s.listen(5) #Wait for the client connection
+print "wstosgh listening to scratchGPIO_handler"
+c,addr = s.accept() #Establish a connection with the client
+print "Got connection from ScratchGPIOHandler", addr
 
-server.run_forever()
+UDP_IP = "192.168.0.18"
+UDP_PORT = 1025
+
+s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s2.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s2.bind(('127.0.0.1', 2002))
+s2.listen(1)
+
+while True:
+    c2,addr2 = s2.accept()
+    rcvdata = c2.recv(512)
+    print "rcv from GP:",rcvdata
+    splitdata = rcvdata.split("'")
+    print splitdata
+    if splitdata[1] == "broadcast":
+        dataOut = 'broadcast "' + splitdata[3] + '"'
+        n = len(dataOut)
+        b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (
+            chr(n & 0xFF))
+        c.send(b + dataOut)
+        print "Data sent to sgh", dataOut   
+    c2.close()
+
+        
+#PORT=8000
+#server = WebsocketServer(PORT)
+#server.set_fn_new_client(new_client)
+#server.set_fn_client_left(client_left)
+#server.set_fn_message_received(message_received)
+#d = threading.Thread(name='rcv_from_sgh', target=rcv_from_sgh)
+#d.setDaemon(True)
+#d.start()
+#server.run_forever()

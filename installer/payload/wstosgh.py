@@ -7,6 +7,7 @@ import threading
 import time
 from websocket_server import WebsocketServer
 
+
 def rcv_from_sgh():
     global s,c,server
     dataPrevious = ""
@@ -50,8 +51,12 @@ def rcv_from_sgh():
                         # print "previous:", dataPrevious
             print "datalist:",dataList
             for msg in dataList:
-                msgsplit = msg.split('"')
-                server.send_message_to_all(msgsplit[1] + ':' + msgsplit[2][1:])
+                print "msg:",msg[0:13]
+                if msg[0:13] == 'sensor-update':
+                    msgsplit = msg[14:].replace('"','').split(' ')
+                    #print "split",msgsplit
+                    for loop in range(int(len(msgsplit) / 2)):
+                        server.send_message_to_all(msgsplit[loop * 2] + ':' + msgsplit[(loop * 2) + 1])
         else:
             time.sleep(0.1)
 
@@ -88,6 +93,8 @@ def message_received(client, server, message):
 # For Scratch 3 handle long as int 
 if sys.version > '3':
     long = int
+
+
 
       
         

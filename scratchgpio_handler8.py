@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.115.29Jun17.kwindow'  # installer in orig now kills wstosgh
+Version = 'v8.2.116.4Jul17.kwindow'  # update sensehat handling
 import threading
 import socket
 import time
@@ -68,7 +68,6 @@ except:
     pass
 # ui = UInput()
 sense = None
-SH = None
 socketB = None
 
 try:
@@ -158,9 +157,18 @@ except:
 
 try:
     import sgh_unicornhat as UH
+    print "importing unicornhat/neopixel support"
 except:
     print "Warning: UnicornHAT NOT imported - probaly not installed"
     pass
+    
+try:
+    from sense_hat import SenseHat
+    SH = SenseHat()
+    print "importing SenseHAT"
+except:
+    print "Warning: sense hat not imported"
+    pass    
 
 sghCT = None  # reserve for captouch
 
@@ -1261,6 +1269,24 @@ class ScratchSender(threading.Thread):
                         sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
                     if sensor_str != "":
                         msgQueue.put((0, "sensor-update " + sensor_str))
+                        
+            if "sensehat" in ADDON:
+                if tick % 5 == 0:
+                    sensor_str = ""
+                    sensor_str += '"%s" %s ' % ("temp", '%.1f' % SH.get_temperature())        
+                    sensor_str += '"%s" %s ' % ("humidity",  '%.1f' % SH.get_humidity())   
+                    sensor_str += '"%s" %s ' % ("pressure",  '%.1f' % SH.get_pressure())
+                    sensorList = SH.get_accelerometer_raw()
+                    sensor_str += '"%s" %s ' % ("accelX",  '%.2f' % sensorList["x"])       
+                    sensor_str += '"%s" %s ' % ("accelY",  '%.2f' % sensorList["y"])    
+                    sensor_str += '"%s" %s ' % ("accelZ",  '%.2f' % sensorList["z"])
+                    sensorList = SH.get_gyroscope_raw()
+                    sensor_str += '"%s" %s ' % ("gyroX",  '%.2f' % sensorList["x"])       
+                    sensor_str += '"%s" %s ' % ("gyroY",  '%.2f' % sensorList["y"])    
+                    sensor_str += '"%s" %s ' % ("gyroZ",  '%.2f' % sensorList["z"])
+                    sensor_str += '"%s" %s ' % ("compass",  '%.1f' % SH.get_compass())                  
+                    if sensor_str != "":
+                        msgQueue.put((0, "sensor-update " + sensor_str))                        
 
         print "Sender Stopped"
 
@@ -1891,9 +1917,9 @@ class ScratchListener(threading.Thread):
         elif "sensehat" not in ADDON:
             UH.show()
 
-    def matrixWrite(self, text, R, G, B):
+    def matrixWrite(self, text,capstxt, R, G, B):
         if "sensehat" in ADDON:
-            SH.show_message(self.value, text_colour=(R, G, B))
+            SH.show_message(self.rtnCAPS(self.value,capstxt), text_colour=(R, G, B))
 
     def matrixBright(self, level):
         # print "level", level
@@ -1933,7 +1959,8 @@ class ScratchListener(threading.Thread):
         else:
             UH.brightness(level)
 
-    def neoProcessing(self, ADDON, UH=None):
+    def neoProcessing(self, ADDON, UH=None,SH=None):
+        global datawithCAPS
         # print
         # print "neostart"
         listenLoopTime = time.time()
@@ -1944,9 +1971,9 @@ class ScratchListener(threading.Thread):
         if "playhat" in ADDON:
             ADDON = ADDON + " neopixels9"
 
-        if "sensehat" in ADDON:
-            from sense_hat import SenseHat
-            SH = SenseHat()
+#        if "sensehat" in ADDON:
+#            from sense_hat import SenseHat
+#            SH = SenseHat()
 
         if ("neopixels" in ADDON):
             self.matrixUse = int(rtnNumeric(ADDON[9 + ADDON.index('neopixels'):], 64))
@@ -2020,7 +2047,7 @@ class ScratchListener(threading.Thread):
             #print "rgb", self.matrixRed, self.matrixGreen, self.matrixBlue
             # print self.tcolours
             
-
+        ###################### Pixel strips
         if ("neopixels" in ADDON) or ("piconzero" in ADDON):
             #print "processing neopixels",self.dataraw
 
@@ -2386,7 +2413,7 @@ class ScratchListener(threading.Thread):
                 self.neoShow()
                 self.matrixBright(sghGC.ledDim / 100.0)
 
-
+        ############### Matrices
         elif ("unicorn" in ADDON or "sensehat" in ADDON):
             ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                           'invert', 'random']
@@ -2437,7 +2464,7 @@ class ScratchListener(threading.Thread):
                         time.sleep(0.05)  # delay during sweep
 
             if self.bFindValue("write"):
-                self.matrixWrite(self.value, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                self.matrixWrite(self.value,datawithCAPS, self.matrixRed, self.matrixGreen, self.matrixBlue)
 
             if self.bFindValue("originx"):
                 self.originX = min(max(int(self.valueNumeric), 0), 7) if self.valueIsNumeric else 0
@@ -2452,8 +2479,9 @@ class ScratchListener(threading.Thread):
                 for ym in range(0, self.matrixRangemax):
                     for xm in range(0, self.matrixRangemax):
                         for ledcolour in ledcolours:
-                            if (self.bFindValue("pixel", ledcolour) and (
-                                        self.value == (str(xm) + "," + str(ym)))):
+                            if (self.bFindValue("pixel", ledcolour) and ((
+                                        self.value == (str(xm) + "," + str(ym))) or (
+                                        self.value == (str(xm) + "," + str(ym) + ",")))):
                                 # print "1st catch,xm,ym", xm, ym
                                 self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                                     ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
@@ -2489,8 +2517,8 @@ class ScratchListener(threading.Thread):
                     if ("xxxxxxx" + fullvalue)[-7] == "#":
                         for ym in range(0, self.matrixRangemax):
                             for xm in range(0, self.matrixRangemax):
-                                if (self.bFindValue("pixel", fullvalue[-7:]) and (
-                                            self.value == (str(xm) + "," + str(ym)))):
+                                if (self.bFindValue("pixel", fullvalue[-7:]) and ((
+                                            self.value == (str(xm) + "," + str(ym))) or (self.value == (str(xm) + "," + str(ym) + ",")))):
                                     # print "led,self.value",led,self.value
                                     try:
                                         c = (fullvalue[-7:] + "00000000")[0:7]
@@ -2513,7 +2541,7 @@ class ScratchListener(threading.Thread):
                     for ym in range(0, self.matrixRangemax):
                         for xm in range(0, self.matrixRangemax):
                             if self.bFindValue("pixel" + str(xm) + "," + str(ym)):
-                                ledcolour = self.value
+                                ledcolour = self.value.replace(",","") # just inc case extra , added
                                 self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                                     ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
                                 if ledcolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
@@ -2911,6 +2939,24 @@ class ScratchListener(threading.Thread):
         # self.dataraw = origdataraw
 
         ADDON = oldADDON  # restore after possible parthat use
+        
+    def rtnCAPS(self,txt,capstxt):
+        #print "caps:",capstxt
+        oldpos = []
+        nospaces = ""
+        for loop in range(len(capstxt)):
+            if capstxt[loop] != " ":
+                oldpos.append(loop)
+                nospaces += capstxt[loop]
+        #print "oldpos:",oldpos
+        #print "nospaces:",nospaces
+        matchpos = nospaces.lower().find(txt)
+        if matchpos > -1:
+            origpos = oldpos[matchpos]
+            endpos = origpos + capstxt[origpos:].find('"') 
+            return capstxt[origpos:endpos]   
+        else:
+            return txt
 
         # print
         # print "neoend", time.time() - listenLoopTime
@@ -2920,7 +2966,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host, killList, socketB, UH
+            meVertical, meHorizontal, meDistance, host, killList, socketB, UH, datawithCAPS, SH
 
         # firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -6070,7 +6116,7 @@ class ScratchListener(threading.Thread):
 
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
                         "sensehat" in ADDON):  # Matrix or neopixels connected
-                        self.neoProcessing(ADDON, UH)
+                        self.neoProcessing(ADDON, UH,SH)
                         bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
                         # print 'sending: %s' % bcast_str
                         msgQueue.put((5, bcast_str))                        
@@ -6716,6 +6762,10 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                         msgQueue.put((5, bcast_str))
 
+                    if self.bFindValue("ledscrollstring"):
+                        #print datawithCAPS
+                        SH.show_message(self.rtnCAPS(self.value,datawithCAPS))
+                        
                     if self.bFind("gethumidity"):  # find temp address
                         humidty = ""
                         if "sensehat" in ADDON:
@@ -7709,6 +7759,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print "pi Revision", sghGC.getPiRevision()
 
 ADDON = ""
+datawithCAPS = ""
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)  # default DEBUG - quiwr = INFO
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
