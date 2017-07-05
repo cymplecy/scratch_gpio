@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.116.4Jul17.kwindow'  # update sensehat handling
+Version = 'v8.2.117.5Jul17.kwindow'  # update sensehat handling with bluedot bug fixed
 import threading
 import socket
 import time
@@ -55,8 +55,14 @@ def bd_pressed():
     time.sleep(0.2)
     msgQueue.put((5, 'sensor-update "BlueDot"' + ' null'))      
 
-bd = BlueDot()
-bd.when_pressed = bd_pressed
+bd = None
+try:
+    bd = BlueDot()
+    bd.when_pressed = bd_pressed
+    print "Bluedot enabled"
+except:
+    print "No Bluetooh found"
+    pass
 
 getjsonfromurl = GetJSONFromURL()
 
@@ -1886,6 +1892,8 @@ class ScratchListener(threading.Thread):
                 float(self.tcolours[textColour][2]))
         elif textColour == "random":
             self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours[random.choice(self.tcolours.keys())]
+            while (self.matrixRed + self.matrixGreen + self.matrixBlue) == 0:
+                self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours[random.choice(self.tcolours.keys())]   
         elif textColour == "invert":
             self.matrixRed, self.matrixGreen, self.matrixBlue = (255 - self.matrixRed), (255 - self.matrixGreen), ( 255 - self.matrixBlue)
         elif textColour == "off":
@@ -6117,9 +6125,9 @@ class ScratchListener(threading.Thread):
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
                         "sensehat" in ADDON):  # Matrix or neopixels connected
                         self.neoProcessing(ADDON, UH,SH)
-                        bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
+                        #bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
                         # print 'sending: %s' % bcast_str
-                        msgQueue.put((5, bcast_str))                        
+                        #msgQueue.put((5, bcast_str))                        
 
                     elif "piandbash" in ADDON:
                         if self.bFindOnOff('all'):
