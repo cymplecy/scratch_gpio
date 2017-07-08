@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.117.5Jul17.kwindow'  # update sensehat handling with bluedot bug fixed
+Version = 'v8.2.118.8Jul17.kwindow'  # fixed bug if UnicornHAT not installed - thanks to Sarah Lacaze :)
 import threading
 import socket
 import time
@@ -160,14 +160,14 @@ try:
 except:
     print "Warning: MQTT Paho NOT imported - run sudo pip install paho-mqtt"
     pass
-
+UH = None
 try:
     import sgh_unicornhat as UH
     print "importing unicornhat/neopixel support"
 except:
     print "Warning: UnicornHAT NOT imported - probaly not installed"
     pass
-    
+SH = None
 try:
     from sense_hat import SenseHat
     SH = SenseHat()
