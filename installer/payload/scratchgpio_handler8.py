@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.118.8Jul17.kwindow'  # fixed bug if UnicornHAT not installed - thanks to Sarah Lacaze :)
+Version = 'v8.2.120.17Jul17.kwindow'  # bug fix off/black in matrices :)
 import threading
 import socket
 import time
@@ -2423,13 +2423,12 @@ class ScratchListener(threading.Thread):
 
         ############### Matrices
         elif ("unicorn" in ADDON or "sensehat" in ADDON):
-            ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
+            ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on', 'black',
                           'invert', 'random']
 
-            if self.tcolours is None:  # only define dictionary on first pass
-                self.tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+            self.tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
                                  'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
-                                 'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
+                                 'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255), 'black': (0,0, 0), 
                                  'invert': (0, 0, 0)}
             if self.bFind("pixelson"):
                 for y in range(0, 8):
@@ -2462,7 +2461,7 @@ class ScratchListener(threading.Thread):
                         self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                             ledcolours[random.randint(0, 6)], (0, 0, 0))
                         if self.value in ledcolours:
-                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(self.value, (0, 0, 0))
+                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(self.value, (64,64,64))
                         for yy in range(0, self.matrixLimit):
                             for xx in range(0, self.matrixLimit):
                                 self.matrixSetPixel((xm * self.matrixMult) + xx,
@@ -2484,15 +2483,21 @@ class ScratchListener(threading.Thread):
                 # print "pixel"
                 pixelProcessed = False
                 # Check for pixel x,y,colour
+                # print self.tcolours
+                #for ledcolour in ledcolours:
+                #    if (self.bFindValue("pixel", ledcolour)):
+                #        print "ledfound:",ledcolour
                 for ym in range(0, self.matrixRangemax):
                     for xm in range(0, self.matrixRangemax):
                         for ledcolour in ledcolours:
                             if (self.bFindValue("pixel", ledcolour) and ((
                                         self.value == (str(xm) + "," + str(ym))) or (
                                         self.value == (str(xm) + "," + str(ym) + ",")))):
-                                # print "1st catch,xm,ym", xm, ym
+                                #print "1st catch,xm,ym", xm, ym,ledcolour
                                 self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
-                                    ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                                    ledcolour, (64, 64, 64))
+                                    
+                                #print "rgb:",self.matrixRed, self.matrixGreen, self.matrixBlue
                                 if ledcolour == 'random':
                                     self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                                         ledcolours[random.randint(0, 6)], (64, 64, 64))
@@ -2544,25 +2549,6 @@ class ScratchListener(threading.Thread):
                                     except:
                                         pass
 
-                if not pixelProcessed:
-                    # Check for pixel x,y,colour
-                    for ym in range(0, self.matrixRangemax):
-                        for xm in range(0, self.matrixRangemax):
-                            if self.bFindValue("pixel" + str(xm) + "," + str(ym)):
-                                ledcolour = self.value.replace(",","") # just inc case extra , added
-                                self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
-                                    ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                                if ledcolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
-                                    ledcolours[random.randint(0, 6)], (32, 32, 32))
-                                # print "3rd catch xm,ym ", xm, ym
-                                for yy in range(0, self.matrixLimit):
-                                    for xx in range(0, self.matrixLimit):
-                                        self.matrixSetPixel((xm * self.matrixMult) + xx,
-                                                       7 - ((ym * self.matrixMult) + yy),
-                                                       self.matrixRed, self.matrixGreen,
-                                                       self.matrixBlue)
-                                self.neoShow()
-                                pixelProcessed = True
 
                 if not pixelProcessed:
                     # Check for pixel number (assume colour = on)
@@ -6007,7 +5993,7 @@ class ScratchListener(threading.Thread):
                                 for led in range(0, self.matrixUse):
                                     # print "led",led
                                     for ledcolour in ledcolours:
-                                        # print "ledcolor",ledcolour
+                                        # print "ledcolour",ledcolour
                                         if (self.bFindValue("led", ledcolour)):
                                             # print "found pixel,ledcolour", ledcolour
                                             # print "value", self.value
