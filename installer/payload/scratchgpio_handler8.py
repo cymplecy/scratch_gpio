@@ -18,7 +18,10 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.120.17Jul17.kwindow'  # bug fix off/black in matrices :)
+Version = 'v8.2.122.26Jul17.kwindow'  # add in clevercard reader
+
+
+
 import threading
 import socket
 import time
@@ -48,6 +51,8 @@ import kinematics
 from dot import BlueDot
 from signal import pause
 
+
+
 def bd_pressed():
     print("Hello World")
     #msgQueue.put((5, 'broadcast "BlueDotPressed"'))  
@@ -63,6 +68,13 @@ try:
 except:
     print "No Bluetooh found"
     pass
+
+reader = None
+try:
+    import SimpleMFRC522
+    reader = SimpleMFRC522.SimpleMFRC522()
+except:
+    print "reader not imported"
 
 getjsonfromurl = GetJSONFromURL()
 
@@ -92,60 +104,67 @@ except:
 
 try:
     from sgh_MCP23008 import sgh_MCP23008
-    # print "MCP23008 imported OK"
+    print "MCP23008 imported OK"
 except:
     print "MCP23008  NOT imported"
     pass
 
 try:
     from sgh_MCP230xx import Adafruit_MCP230XX
-    # print "sgh_MCP230xx imported OK"
+    print "sgh_MCP230xx imported OK"
 except:
     print "sgh_MCP230xx  NOT imported "
     pass
 
-try:
-    import spidev
+
+
+#try:
+#    import spidev
     # print "spidev imported OK"
-except:
-    print "spidev Not imported "
-    pass
+#except:
+#    print "spidev Not imported "
+#    pass
 
 try:
     from sgh_Adafruit_PWM_Servo_Driver import PWM
-    # print "PWM/Servo imported OK"
+    print "PWM/Servo imported OK"
 except:
     print "PWM/Servo NOT imported "
     pass
 
 try:
     from sgh_PCF8591P import sgh_PCF8591P
-    # print "ADC/DAC imported OK"
+    print "ADC/DAC imported OK"
 except:
     print "ADC/DAC NOT imported "
     pass
 
+
+
 try:
     from sgh_Adafruit_8x8 import sgh_EightByEight
     from sgh_Adafruit_8x8 import ColorEightByEight
-    # print "8x8 imported OK"
+    print "8x8 imported OK"
 except:
     print "8x8 NOT imported"
     pass
 
 try:
     from nunchuck import nunchuck
-    # print "nunchuck imported"
+    print "nunchuck imported"
 except:
     print "nunchuck not imported - check I2c is setup"
 
 try:
     import mcpi.minecraft as minecraft
-    # print "Minecraft imported OK"
+    print "Minecraft imported OK"
 except:
     print "Minecraft NOT imported OK"
     pass
 
+
+    
+    
 try:
     import sgh_piconzero as pz
     pz.init()
@@ -160,13 +179,29 @@ try:
 except:
     print "Warning: MQTT Paho NOT imported - run sudo pip install paho-mqtt"
     pass
-UH = None
+        
+   
+gpg = None
 try:
-    import sgh_unicornhat as UH
-    print "importing unicornhat/neopixel support"
+    import gopigo3 as GoPiGo3
+    gpg = GoPiGo3.GoPiGo3()    
+    print "importing GoPiGo3"
 except:
-    print "Warning: UnicornHAT NOT imported - probaly not installed"
+    print "GoPiGo3 not imported"
     pass
+    
+UH = None
+if gpg is None:
+    try:
+        import sgh_unicornhat as UH
+        print "importing unicornhat/neopixel support"
+    except:
+        print "Warning: UnicornHAT NOT imported - probaly not installed"
+        pass
+#except:
+#print "Warning: GoPiGO3 not imported"
+#pass   
+    
 SH = None
 try:
     from sense_hat import SenseHat
@@ -174,7 +209,9 @@ try:
     print "importing SenseHAT"
 except:
     print "Warning: sense hat not imported"
-    pass    
+    pass  
+    
+  
 
 sghCT = None  # reserve for captouch
 
@@ -814,11 +851,12 @@ class ScratchSender(threading.Thread):
             # print "how many millisecs since last loop", (loopTime * 1000)
             if loopTime < self.sleepTime:
                 sleepdelay = self.sleepTime - loopTime
-                # print "add in sleep of milliesec:",(sleepdelay) * 1000
+                #print "add in sleep of milliesec:",(sleepdelay) * 1000
                 time.sleep(sleepdelay)  # be kind to cpu  :)
-                tick += 1
-                if tick == sys.maxint:
-                    tick = 0
+            tick += 1
+            #print "tick count",time.time(),tick
+            if tick == sys.maxint:
+                tick = 0
             lastTimeSinceLastSleep = time.time()
 
             # print "before lock"
@@ -1292,7 +1330,33 @@ class ScratchSender(threading.Thread):
                     sensor_str += '"%s" %s ' % ("gyroZ",  '%.2f' % sensorList["z"])
                     sensor_str += '"%s" %s ' % ("compass",  '%.1f' % SH.get_compass())                  
                     if sensor_str != "":
-                        msgQueue.put((0, "sensor-update " + sensor_str))                        
+                        msgQueue.put((0, "sensor-update " + sensor_str))
+                        
+            if "clevercard" in ADDON:
+                if reader is not None:
+                    if tick % 10 == 0:   
+                        cardid,cardtext = reader.read_no_block()
+                        
+                        if cardid:
+                            print "cardid",cardid
+                            sensor_str = '"%s" %s ' % ("tag_near",  "true")
+                            sensor_str += '"%s" %s ' % ("tag_number",  cardid)
+                            if cardtext:
+                                if ord(cardtext[0]) != 0: #1st byte is zero if empty
+                                    print len(cardtext),"card:",cardtext,":card"
+                                    print '"' + cardtext + '"'
+                                    sensor_str += '"%s" %s ' % ("tag_text",  ('"' + cardtext.strip() + '"')) 
+                                else:
+                                    sensor_str += '"%s" %s ' % ("tag_text",  '""')
+                        else:
+                            sensor_str = '"%s" %s ' % ("tag_near",  "false")
+                        
+                        msgQueue.put((0, "sensor-update " + sensor_str))
+                            
+                        
+
+
+                    
 
         print "Sender Stopped"
 
@@ -2960,7 +3024,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host, killList, socketB, UH, datawithCAPS, SH
+            meVertical, meHorizontal, meDistance, host, killList, socketB, UH, datawithCAPS, SH, reader
 
         # firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -4918,6 +4982,8 @@ class ScratchListener(threading.Thread):
                                 svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
                                 sghGC.motorUpdate(sghGC.revgpioLookup[motorList[listLoop][1]], sghGC.revgpioLookup[motorList[listLoop][2]], svalue)
+                                
+
 
                     else:  # normal variable processing with no add on board
 
@@ -6223,21 +6289,34 @@ class ScratchListener(threading.Thread):
                             if self.bFindOnOff("g" + ("00" + str(sghGC.gpioLookup[pin]))[-2:]):
                                 sghGC.pinUpdate(pin, self.OnOrOff)
                                 
-                    if self.bFind("setanalog"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("setanalog" + str(pin)):
-                                pz.setInputConfig(pin,1)
-                    if self.bFind("settemp"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("settemp" + str(pin)):
-                                pz.setInputConfig(pin,2)      
-                    if self.bFind("setdigital"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("setdigital" + str(pin)):
-                                pz.setInputConfig(pin,0)
+                        if self.bFind("setanalog"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("setanalog" + str(pin)):
+                                    pz.setInputConfig(pin,1)
+                        if self.bFind("settemp"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("settemp" + str(pin)):
+                                    pz.setInputConfig(pin,2)      
+                        if self.bFind("setdigital"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("setdigital" + str(pin)):
+                                    pz.setInputConfig(pin,0)
                     
                        
-
+                    elif "gopigo3" in ADDON:   
+                        print "gopigo3 found"
+                        if self.bFindValue("ledl"):
+                            svalue = min(255, max(0, int(self.valueNumeric))) if self.valueIsNumeric else 0         
+                            if svalue == 255:
+                                gpg.set_led(gpg.LED_BLINKER_LEFT,255)
+                            else:
+                                gpg.set_led(gpg.LED_BLINKER_LEFT,0)                                
+                        if self.bFindValue("ledr"):
+                            svalue = min(255, max(0, int(self.valueNumeric))) if self.valueIsNumeric else 0         
+                            if svalue == 255:
+                                gpg.set_led(gpg.LED_BLINKER_RIGHT,255)
+                            else:
+                                gpg.set_led(gpg.LED_BLINKER_RIGHT,0)                                
 
                     else:  # Plain GPIO Broadcast processing
 
@@ -7417,8 +7496,7 @@ class ScratchListener(threading.Thread):
                         except:
                             print "MQTT subscribe failed"
                             pass
-                            
-                            
+                                                      
                     if self.bFindValue("steparmcalib"):
                         bcast_str = 'sensor-update "%s" %s' % ("steppercalibrated", "false")
                         msgQueue.put((5, bcast_str))    
@@ -7551,6 +7629,12 @@ class ScratchListener(threading.Thread):
                             self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
                         sghGC.stepperAPos = self.stepperArm.ElbowPos   
                         print "currPos" , self.stepperArm.getPos()                        
+                    if self.bFindValue("writecard"):  
+                        if reader is not None:
+                            #print
+                            #print "val:",self.value
+                            cardid,cardtext = reader.write(self.rtnCAPS(self.value,datawithCAPS))
+                            print cardid,cardtext
 
                     # end of broadcast check
 
@@ -8012,6 +8096,12 @@ while True:
             print "uhclean done"
         except:
             pass
+        try:
+            gpg.reset_all() 
+            print "gpg reset"
+            # we want the gopigo3 to stop if gopigo3Scratch.py crashes
+        except:
+            pass            
         sys.exit()
         print "CleanUp complete"
 
