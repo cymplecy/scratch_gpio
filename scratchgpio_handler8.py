@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.122.26Jul17.kwindow'  # add in clevercard reader
+Version = 'v8.2.122.29Aug17.kwindow'  # disable clevercard due to RPi.GPIO issue
 
 
 
@@ -70,11 +70,11 @@ except:
     pass
 
 reader = None
-try:
-    import SimpleMFRC522
-    reader = SimpleMFRC522.SimpleMFRC522()
-except:
-    print "reader not imported"
+#try:
+#    import SimpleMFRC522
+#    reader = SimpleMFRC522.SimpleMFRC522()
+#except:
+#    print "reader not imported"
 
 getjsonfromurl = GetJSONFromURL()
 
