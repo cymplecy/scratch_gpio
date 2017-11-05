@@ -3753,7 +3753,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(35, 37, 0)
                                 sghGC.motorUpdate(36, 40, 0)
 
-                                #self.startUltra(23, 23, self.OnOrOff)
+                                self.startUltra(7, 7, self.OnOrOff)
                             print "PiChomp setup"
                             anyAddOns = True                            
 
