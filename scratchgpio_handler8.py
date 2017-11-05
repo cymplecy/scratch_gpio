@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.122.29Aug17.kwindow'  # disable clevercard due to RPi.GPIO issue
+Version = 'v8.2.123.05Nov17.kwindow'  # add in pichomp
 
 
 
@@ -3745,6 +3745,17 @@ class ScratchListener(threading.Thread):
                             else:
                                 print "Agobo setup"
                             anyAddOns = True
+                            
+                        if "pichomp" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.setPinMode()
+                                sghGC.motorUpdate(35, 37, 0)
+                                sghGC.motorUpdate(36, 40, 0)
+
+                                #self.startUltra(23, 23, self.OnOrOff)
+                            print "PiChomp setup"
+                            anyAddOns = True                            
 
                         if "happi" in ADDON:
                             with lock:
@@ -4795,6 +4806,20 @@ class ScratchListener(threading.Thread):
 
 
                                 ######### End of agobo variable handling
+                    elif "pichomp" in ADDON:
+
+                        # check for motor variable commands
+                        motorList = [['motorb', 37, 35, 0, False], ['motora', 40, 36, 0, False]]
+                        # logging.debug("ADDON:%s", ADDON)
+
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+
+
+                                ######### End of agobo variable handling                                
                     elif "piringo" in ADDON:
                         # do piringo stuff
 
