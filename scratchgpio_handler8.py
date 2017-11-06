@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.123.05Nov17.kwindow'  # add in pichomp
+Version = 'v8.2.123.06Nov17.kwindow'  # ultra added and motors swapped pichomp
 
 
 
@@ -4809,7 +4809,7 @@ class ScratchListener(threading.Thread):
                     elif "pichomp" in ADDON:
 
                         # check for motor variable commands
-                        motorList = [['motorb', 37, 35, 0, False], ['motora', 40, 36, 0, False]]
+                        motorList = [['motora', 37, 35, 0, False], ['motorb', 40, 36, 0, False]]
                         # logging.debug("ADDON:%s", ADDON)
 
                         for listLoop in range(0, 2):
