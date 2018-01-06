@@ -524,22 +524,23 @@ class GPIOController :
 
                 elif (self.pinUse[pin] == self.PPWM): # pin was set as pwm
                     #print "pinUpdate p,v,t,pwmref: ",pin,value,type,self.pinRef[pin]
-                    try:
-                        #print "pinUpdate p,v,t,pwmref: ",pin,value,type,self.pinRef[pin]
-                        #print ("Stopping previous instance on pin",pin)
-                        #print "pinref on pin" ,pin , "is" ,self.pinRef[pin]
-                        self.pinRef[pin].stop()
-                        #print ("previous instance on pin",pin ,"stopped")
-                        self.pinRef[pin] = None
-                    except:
-                        pass
-                    self.pinUse[pin] = self.POUTPUT # switch it to output
+                    self.pinRef[pin].ChangeDutyCycle(max(0,min(100,abs(value)))) # just update PWM value
+                    # try:
+                        # #print "pinUpdate p,v,t,pwmref: ",pin,value,type,self.pinRef[pin]
+                        # #print ("Stopping previous instance on pin",pin)
+                        # #print "pinref on pin" ,pin , "is" ,self.pinRef[pin]
+                        # self.pinRef[pin].stop()
+                        # #print ("previous instance on pin",pin ,"stopped")
+                        # self.pinRef[pin] = None
+                    # except:
+                        # pass
+                    # self.pinUse[pin] = self.POUTPUT # switch it to output
 
-                    GPIO.setup(pin,GPIO.OUT)
-                    #print "switched to output"
-                    GPIO.output(pin, int(value)) # set output to 1 to 0
+                    # GPIO.setup(pin,GPIO.OUT)
+                    # #print "switched to output"
+                    # GPIO.output(pin, int(value)) # set output to 1 to 0
                     
-                    #print 'pin' , pin , ' was PWM now set to ' , value                       
+                    # #print 'pin' , pin , ' was PWM now set to ' , value                       
         except ValueError:
             print "mistake made in trying to update an invalid pin"
             print pin,value,type
