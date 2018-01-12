@@ -7294,7 +7294,7 @@ class ScratchListener(threading.Thread):
                         # os.system(.value)
                         # subprocess.check_call(runList)
                         try:
-                            killList = "sudo pkill -f " + runList[1]
+                            killList = "pkill -f " + runList[1]
                             subprocess.call(killList, shell=True)
                             print ("Trying to kill", killList)
                         except:
@@ -7312,7 +7312,7 @@ class ScratchListener(threading.Thread):
                         # os.system(.value)
                         # subprocess.check_call(runList)
                         # try:
-                        # killList = "sudo pkill -f " + runList[1]
+                        # killList = "pkill -f " + runList[1]
                         # subprocess.call(killList, shell=True)
                         # print ("Trying to kill" , killList)
                         # except:
