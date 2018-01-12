@@ -97,11 +97,10 @@ echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "cd $RDIR/scratchgpio"$SGHVER >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "python scratchgpio_handler8.py 127.0.0.1 standard &" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" &" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-
-chmod +x $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-#chown -R $USERID:$GROUPID $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "## Give the new gpio handler five seconds to get started fully."  >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "sleep 5"  >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "## The double ampersand and all that follows it pkills the user's scratchgpio_handler after Scratch exits." >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "scratch --document \"$HDIR/Documents/Scratch Projects/rsc.sb\" && pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 #Create new desktop icon
 echo "[Desktop Entry]" > $HDIR/Desktop/scratchgpio${SGHVER}.desktop
