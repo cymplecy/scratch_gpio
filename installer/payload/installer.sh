@@ -58,7 +58,8 @@ rm -rf $RDIR/scratchgpio${SGHVER}
 
 mkdir -p $RDIR/scratchgpio${SGHVER}
 mkdir -p $RDIR/scratchgpio${SGHVER}/mcpi
-mkdir -p $RDIR/scratchgpio${SGHVER}/defaultproject
+mkdir -p $HDIR
+mkdir -p $ICONS
 
 #chown -R $RUSERID:$RGROUPID $HDIR/scratchgpio${SGHVER}
 
