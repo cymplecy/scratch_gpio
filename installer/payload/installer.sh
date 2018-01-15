@@ -121,7 +121,7 @@ echo "python scratchgpio_handler8.py 127.0.0.1 standard &" >> $RDIR/scratchgpio$
 echo "## Give the new gpio handler five seconds to get started fully."  >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "sleep 5"  >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "## The double ampersand and all that follows it pkills the user's scratchgpio_handler after Scratch exits." >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "scratch --document \"\$HOME/Documents/Scratch Projects/rsc.sb\" && pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "scratch --document \"\$HOME/Documents/Scratch Projects/pibrella.sb\" && pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 chmod +x $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 #Create new desktop icon
