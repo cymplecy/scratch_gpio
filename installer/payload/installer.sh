@@ -88,31 +88,31 @@ echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch
 echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
-echo "if [ ! -f \"~/Documents/Scratch Projects/rsc.sb\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "if [ ! -f \"\$HOME/Documents/Scratch Projects/rsc.sb\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   if [ ! -d \"~/Documents\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   if [ ! -d \"\$HOME/Documents\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "     then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "       mkdir \"~/Documents\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "       chmod 0755 \"~/Documents\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "       mkdir \"\$HOME/Documents\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "       chmod 0755 \"\$HOME/Documents\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "   fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   if [ ! -d \"~/Documents/Scratch Projects\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   if [ ! -d \"\$HOME/Documents/Scratch Projects\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "     then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "       mkdir \"~/Documents/Scratch Projects\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "       chmod 0755 \"~/Documents/Scratch Projects\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "       mkdir \"\$HOME/Documents/Scratch Projects\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "       chmod 0755 \"\$HOME/Documents/Scratch Projects\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "   fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   cp -r $HDIR/* \"~/Documents/Scratch Projects\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   chmod 0755 \"~/Documents/Scratch Projects/*\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   cp -r $HDIR/* \"\$HOME/Documents/Scratch Projects\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   chmod 0755 \"\$HOME/Documents/Scratch Projects/*\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
-echo "if [ ! -f \"~/Desktop/scratchgpio${SGHVER}.desktop\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "if [ ! -f \"\$HOME/Desktop/scratchgpio${SGHVER}.desktop\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   if [ ! -d \"~/Desktop\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   if [ ! -d \"\$HOME/Desktop\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "     then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "       mkdir \"~/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "       chmod 0755 \"~/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "       mkdir \"\$HOME/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "       chmod 0755 \"\$HOME/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "   fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   cp -r $ICONS/scratchgpio${SGHVER}.desktop \"~/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   chmod 0755 \"~/Desktop/scratchgpio${SGHVER}.desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   cp -r $ICONS/scratchgpio${SGHVER}.desktop \"\$HOME/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   chmod 0755 \"\$HOME/Desktop/scratchgpio${SGHVER}.desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 echo "pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
@@ -121,7 +121,7 @@ echo "python scratchgpio_handler8.py 127.0.0.1 standard &" >> $RDIR/scratchgpio$
 echo "## Give the new gpio handler five seconds to get started fully."  >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "sleep 5"  >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "## The double ampersand and all that follows it pkills the user's scratchgpio_handler after Scratch exits." >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "scratch --document \"~/Documents/Scratch Projects/rsc.sb\" && pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "scratch --document \"\$HOME/Documents/Scratch Projects/rsc.sb\" && pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 chmod +x $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 #Create new desktop icon
