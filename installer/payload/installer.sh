@@ -29,7 +29,7 @@ echo "Debug Info"
 echo "Running Installer"
 RDIR="/opt"
 HDIR="$RDIR/scratchgpio${SGHVER}/defaultproject"
-ICONS="$RDIR/scratchgpio${SGHVER}/icons"
+ICONS="/usr/share/applications"
 RUSERID="root"
 RGROUPID="root"
 
@@ -59,7 +59,6 @@ rm -rf $RDIR/scratchgpio${SGHVER}
 mkdir -p $RDIR/scratchgpio${SGHVER}
 mkdir -p $RDIR/scratchgpio${SGHVER}/mcpi
 mkdir -p $HDIR
-mkdir -p $ICONS
 
 #chown -R $RUSERID:$RGROUPID $HDIR/scratchgpio${SGHVER}
 
@@ -104,17 +103,6 @@ echo "   cp -r $HDIR/* \"\$HOME/Documents/Scratch Projects\"" >> $RDIR/scratchgp
 echo "   chmod 0755 \"\$HOME/Documents/Scratch Projects/*\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
-echo "if [ ! -f \"\$HOME/Desktop/scratchgpio${SGHVER}.desktop\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   if [ ! -d \"\$HOME/Desktop\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "     then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "       mkdir \"\$HOME/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "       chmod 0755 \"\$HOME/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   cp -r $ICONS/scratchgpio${SGHVER}.desktop \"\$HOME/Desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "   chmod 0755 \"\$HOME/Desktop/scratchgpio${SGHVER}.desktop\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-echo "fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
-
 echo "pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "cd $RDIR/scratchgpio"$SGHVER >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "python scratchgpio_handler8.py 127.0.0.1 standard &" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
@@ -134,7 +122,7 @@ echo "Icon=scratch" >> $ICONS/scratchgpio${SGHVER}.desktop
 echo "Terminal=false" >> $ICONS/scratchgpio${SGHVER}.desktop
 echo "Name=ScratchGPIO "$SGHVER >> $ICONS/scratchgpio${SGHVER}.desktop
 echo "Comment= Programming system and content development tool" >> $ICONS/scratchgpio${SGHVER}.desktop
-echo "Categories=Application;Education;Development;" >> $ICONS/scratchgpio${SGHVER}.desktop
+echo "Categories=Application;Education;Development;ComputerScience;" >> $ICONS/scratchgpio${SGHVER}.desktop
 echo "MimeType=application/x-scratch-project" >> $ICONS/scratchgpio${SGHVER}.desktop
 
 chown $USERID:$GROUPID $ICONS/scratchgpio${SGHVER}.desktop
