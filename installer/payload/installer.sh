@@ -87,7 +87,7 @@ echo "#Version 0.3 - change sp launches rsc.sb from \"/home/pi/Documents/Scratch
 echo "#Version 0.4 - 20Mar13 meltwater - change to use provided name for home" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "#Version 1.0 - 29Oct13 sw - change to cd into simplesi_scratch_handler to run servods OK" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
-echo "if [ ! -f \"\$HOME/Documents/Scratch Projects/rsc.sb\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "if [ ! -f \"\$HOME/Documents/Scratch Projects/pibrella.sb\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "   if [ ! -d \"\$HOME/Documents\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "     then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
@@ -102,6 +102,8 @@ echo "   fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "   cp -r $HDIR/* \"\$HOME/Documents/Scratch Projects\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "   chmod 0755 \"\$HOME/Documents/Scratch Projects/*\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+
+echo "groups | grep gpio || (echo \"Oh no! You aren't in the gpio group. Scratch GPIO won't work.\" && exit 1)" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 echo "pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "cd $RDIR/scratchgpio"$SGHVER >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
@@ -221,8 +223,7 @@ chown $USERID:$GROUPID $ICONS/scratchgpio${SGHVER}.desktop
 # chown -R $USERID:$GROUPID  $HDIR/Desktop/ScratchGPIO\ Extras/oldscratchgpio${SGHVER}plus.desktop
 
 cp blink11.py $HDIR
-cp rsc.sb $HDIR
-cp GPIOexample.sb $HDIR
-cp blink11.sb $HDIR
+cp *.sb $HDIR
+
 echo ""
 echo "Finished."
