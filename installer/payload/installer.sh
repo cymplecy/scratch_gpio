@@ -103,7 +103,13 @@ echo "   cp -r $HDIR/* \"\$HOME/Documents/Scratch Projects\"" >> $RDIR/scratchgp
 echo "   chmod 0755 \"\$HOME/Documents/Scratch Projects/*\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "fi" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
-echo "groups | grep gpio || (echo \"Oh no! You aren't in the gpio group. Scratch GPIO won't work.\" && exit 1)" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "groups | grep gpio" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "if [ $? == \"1\" ]" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "then" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   echo \"Oh no! You aren't in the gpio group. Scratch GPIO won't work.\"" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   read -p \"Press any key to dismiss this message...\" -n1 -s" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "   exit 1" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "else" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 echo "pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "cd $RDIR/scratchgpio"$SGHVER >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
@@ -112,6 +118,8 @@ echo "## Give the new gpio handler five seconds to get started fully."  >> $RDIR
 echo "sleep 5"  >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "## The double ampersand and all that follows it pkills the user's scratchgpio_handler after Scratch exits." >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 echo "scratch --document \"\$HOME/Documents/Scratch Projects/pibrella.sb\" && pkill -f scratchgpio_handler" >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+echo "fi"  >> $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
+
 chmod +x $RDIR/scratchgpio${SGHVER}/scratchgpio${SGHVER}.sh
 
 #Create new desktop icon
