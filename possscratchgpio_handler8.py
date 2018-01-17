@@ -6585,7 +6585,7 @@ class ScratchListener(threading.Thread):
                         print runList
                         #os.system(.value)
                         #subprocess.check_call(runList)
-                        killList = "sudo pkill -f " + runList[1]
+                        killList = "pkill -f " + runList[1]
                         subprocess.call(killList, shell=True)
                         print ("Trying to kill" , killList)
                         subprocess.Popen(self.value, shell=True)

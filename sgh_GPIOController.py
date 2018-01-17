@@ -783,7 +783,7 @@ class GPIOController :
     def startServod(self, pins):
         print (" ")
         print ("Starting servod")
-        os.system("sudo pkill -f servod")
+        os.system("pkill -f servod")
         time.sleep(0.1)
         print "any running servod killed"
         for pin in pins:
@@ -811,7 +811,7 @@ class GPIOController :
             print ("echo " + str(self.servodPins.index(pin)) + "=" + str(self.pinServoValue[pin]) + " > /dev/servoblaster")
 
     def stopServod(self):
-        os.system("sudo pkill -f servod")
+        os.system("pkill -f servod")
         
     def findDS180(self):
         print ("Starting DS180")
