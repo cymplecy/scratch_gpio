@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.111.209Jun17'  # bug fix ultra flag not set during program exit/changeover 
+Version = 'v8.2.2.21Mar18Plinth'  # bux fix cheerlights to not return white if error
 
 import threading
 import socket
@@ -7191,21 +7191,22 @@ class ScratchListener(threading.Thread):
                                 cheerList = cheerlights.get_colours()
                             except:
                                 print "cheerlight error"
-                                cheerList = ['white']
+                                cheerList = ['error']
                                 pass
                         # print cheerList
-                        cheerColour = cheerList[lookupColour - 1]
+                        cheerColour = cheerList[0] #  only return last colour lookupColour - 1]
 
                         #print "new colour", cheerColour
-                        bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
-                        msgQueue.put((5, bcast_str))
-                        # print "timE:" , time.time() - cheertime
-                        # if self.carryOnInUse == True:
-                            # bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
-                            # msgQueue.put((1, bcast_str))
-                            # print "carryon true"
-                            # time.sleep(2)
-                            # # print "data valid", time.time()
+                        if cheerColour != "error":
+                            bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
+                            msgQueue.put((5, bcast_str))
+                            # print "timE:" , time.time() - cheertime
+                            # if self.carryOnInUse == True:
+                                # bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
+                                # msgQueue.put((1, bcast_str))
+                                # print "carryon true"
+                                # time.sleep(2)
+                                # # print "data valid", time.time()
 
                     if self.bFindValue("getweather"):
                         params = self.value.split(',')
