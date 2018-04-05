@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.2.21Mar18Plinth'  # bux fix cheerlights to not return white if error
+Version = 'v8.2.3.22Apr18Plinth'  # change mqttTopic to be a list
 
 import threading
 import socket
@@ -292,7 +292,8 @@ def on_connect(client, userdata, rc):
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     try:
-        client.subscribe(sghGC.mqttTopic)
+        for topic in sghGC.mqttTopic:
+            client.subscribe(topic)
     except:
         print "WARNING NOT ERROR subscribe inside connect failed"
         pass
@@ -7343,11 +7344,11 @@ class ScratchListener(threading.Thread):
                             # pass
 
                     if self.bFindValue("mqttsubscribe"):
-                        print "inside subscribe"
+                        print "Attempt to subscribe to topic"
                         try:                        
-                            sghGC.mqttTopic = self.value
-                            sghGC.mqttClient.subscribe(sghGC.mqttTopic)
-                            print "mqttsubscriber started"
+                            sghGC.mqttTopic.append(self.value)
+                            sghGC.mqttClient.subscribe(sghGC.mqttTopic[-1])
+                            print "mqttsubscriber started for: ", sghGC.mqttTopic[-1]
                         except:
                             print "MQTT subscribe failed"
                             pass
@@ -7886,7 +7887,7 @@ while True:
     if (cycle_trace == 'start'):
         ADDON = ""
         INVERT = False
-        sghGC.mqttTopic = None
+        sghGC.mqttTopic = []
         # open the socket
         print 'Starting to connect...',
         the_socket = create_socket(host, PORT)
