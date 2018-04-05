@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.3.22Apr18Plinth'  # change mqttTopic to be a list
+Version = 'v8.2.6.5Apr18pi3bplus'  # update sgh_unicornhat
 
 import threading
 import socket
