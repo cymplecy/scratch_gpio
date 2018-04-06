@@ -233,7 +233,8 @@ def brightness(b=0.2):
     this unless you know what you're doing.
     UnicornHAT draws too much current above 50%."""
 
-    brightness = int(b*128.0)
+#    brightness = int(b*128.0)
+    brightness = int(b*255.0)
 
     if brightness < 30:
         print("Warning: Low brightness chosen, your UnicornHAT might not light up!")

@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.6.5Apr18pi3bplus'  # update sgh_unicornhat
+Version = 'v8.2.6.6Apr18pi3bplus'  # restore max brightness to full in sgh_unicornhat
 
 import threading
 import socket
