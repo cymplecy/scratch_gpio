@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.111.209Jun17'  # bug fix ultra flag not set during program exit/changeover 
+Version = 'v8.2.6.6Apr18pi3bplus'  # restore max brightness to full in sgh_unicornhat
 
 import threading
 import socket
@@ -292,7 +292,8 @@ def on_connect(client, userdata, rc):
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
     try:
-        client.subscribe(sghGC.mqttTopic)
+        for topic in sghGC.mqttTopic:
+            client.subscribe(topic)
     except:
         print "WARNING NOT ERROR subscribe inside connect failed"
         pass
@@ -7191,21 +7192,22 @@ class ScratchListener(threading.Thread):
                                 cheerList = cheerlights.get_colours()
                             except:
                                 print "cheerlight error"
-                                cheerList = ['white']
+                                cheerList = ['error']
                                 pass
                         # print cheerList
-                        cheerColour = cheerList[lookupColour - 1]
+                        cheerColour = cheerList[0] #  only return last colour lookupColour - 1]
 
                         #print "new colour", cheerColour
-                        bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
-                        msgQueue.put((5, bcast_str))
-                        # print "timE:" , time.time() - cheertime
-                        # if self.carryOnInUse == True:
-                            # bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
-                            # msgQueue.put((1, bcast_str))
-                            # print "carryon true"
-                            # time.sleep(2)
-                            # # print "data valid", time.time()
+                        if cheerColour != "error":
+                            bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
+                            msgQueue.put((5, bcast_str))
+                            # print "timE:" , time.time() - cheertime
+                            # if self.carryOnInUse == True:
+                                # bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
+                                # msgQueue.put((1, bcast_str))
+                                # print "carryon true"
+                                # time.sleep(2)
+                                # # print "data valid", time.time()
 
                     if self.bFindValue("getweather"):
                         params = self.value.split(',')
@@ -7342,11 +7344,11 @@ class ScratchListener(threading.Thread):
                             # pass
 
                     if self.bFindValue("mqttsubscribe"):
-                        print "inside subscribe"
+                        print "Attempt to subscribe to topic"
                         try:                        
-                            sghGC.mqttTopic = self.value
-                            sghGC.mqttClient.subscribe(sghGC.mqttTopic)
-                            print "mqttsubscriber started"
+                            sghGC.mqttTopic.append(self.value)
+                            sghGC.mqttClient.subscribe(sghGC.mqttTopic[-1])
+                            print "mqttsubscriber started for: ", sghGC.mqttTopic[-1]
                         except:
                             print "MQTT subscribe failed"
                             pass
@@ -7885,7 +7887,7 @@ while True:
     if (cycle_trace == 'start'):
         ADDON = ""
         INVERT = False
-        sghGC.mqttTopic = None
+        sghGC.mqttTopic = []
         # open the socket
         print 'Starting to connect...',
         the_socket = create_socket(host, PORT)
