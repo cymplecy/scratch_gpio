@@ -13,6 +13,7 @@
 #Version 18Dec13 Change for ScratchGPIO5
 #Version 4Aug14 - change for ScratchGPIO5
 #Version 17Sep15 debug creating old scratchgpio icons
+#Version 14Apr18 add in dht11
 
 SGHVER=$(<SGHVER.txt)
 f_exit(){
@@ -79,6 +80,8 @@ cp nunchuck.py $RDIR/scratchgpio${SGHVER}
 cp meArm.py $RDIR/scratchgpio${SGHVER}
 cp kinematics.py $RDIR/scratchgpio${SGHVER}
 cp piconzero.py $RDIR/scratchgpio${SGHVER}
+cp dht11.py $RDIR/scratchgpio${SGHVER}
+
 cp sgh_*.py $RDIR/scratchgpio${SGHVER}
 
 cp ./mcpi/* $RDIR/scratchgpio${SGHVER}/mcpi

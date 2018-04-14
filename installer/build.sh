@@ -12,7 +12,7 @@ cp $HOME/sghdev/scratch_gpio/killsgh.sh $HOME/sghdev/scratch_gpio/installer/payl
 cp $HOME/sghdev/scratch_gpio/nunchuck.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/meArm.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/kinematics.py $HOME/sghdev/scratch_gpio/installer/payload
-
+cp $HOME/sghdev/scratch_gpio/dht11.py $HOME/sghdev/scratch_gpio/installer/payload
 
 cp $HOME/sghdev/scratch_gpio/sgh_*.py $HOME/sghdev/scratch_gpio/installer/payload
 
