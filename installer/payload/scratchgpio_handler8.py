@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.6.6Apr18pi3bplus'  # restore max brightness to full in sgh_unicornhat
+Version = 'v8.2.7.14Apr18.s13mar18'  # Add dht using pigpio
 
 import threading
 import socket
@@ -46,6 +46,10 @@ from sgh_cheerlights import CheerLights
 import urllib2
 from sgh_GetJSONFromURL import GetJSONFromURL
 import kinematics
+import pigpio
+import dht11
+sgh_pigpio = None
+
 
 getjsonfromurl = GetJSONFromURL()
 
@@ -2899,7 +2903,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host, killList, socketB, UH
+            meVertical, meHorizontal, meDistance, host, killList, socketB, UH, sgh_pigpio
 
         # firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -7353,6 +7357,19 @@ class ScratchListener(threading.Thread):
                             print "MQTT subscribe failed"
                             pass
                             
+                    if self.bFindValue("getdht11"):
+                        if sgh_pigpio is None:
+                            sgh_pigpio = pigpio.pi()
+                        pin = int(self.valueNumeric) if self.valueIsNumeric else 11
+                        gpiopin = sghGC.gpioLookup[pin]
+                        sensor = dht11.DHT11(sgh_pigpio, gpiopin)
+                        dummy = sensor.read()
+                        bcast_str = 'sensor-update "%s" %s' % ("temperature", sensor.temperature)
+                        # print 'sending: %s' % bcast_str
+                        msgQueue.put(((5, bcast_str)))
+                        bcast_str = 'sensor-update "%s" %s' % ("humidity", sensor.humidity)
+                        # print 'sending: %s' % bcast_str
+                        msgQueue.put(((5, bcast_str)))
                             
                     if self.bFindValue("steparmcalib"):
                         bcast_str = 'sensor-update "%s" %s' % ("steppercalibrated", "false")
