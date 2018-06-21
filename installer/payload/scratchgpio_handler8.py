@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.7.14Apr18.s13mar18'  # Add dht using pigpio
+Version = 'v8.2.8.21Jun18'  # Add re-compiled sgh_servod
 
 import threading
 import socket
