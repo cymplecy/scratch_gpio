@@ -5,6 +5,7 @@ from rpi_ws281x import __version__ as __rpi_ws281x__, PixelStrip, Color
 __version__ = '2.2.3'
 #modified Simon Walters to work with linear strips as well
 #5Apr18 
+#14Jul18 - add code to negate gamma correction
 
 # LED strip configuration:
 LED_COUNT      = 256      # Number of LED pixels.
@@ -31,6 +32,9 @@ LED_GAMMA = [
 162,163,165,167,169,170,172,174,176,178,179,181,183,185,187,189,
 191,193,194,196,198,200,202,204,206,208,210,212,214,216,218,220,
 222,224,227,229,231,233,235,237,239,241,244,246,248,250,252,255]
+#negate standard gamma correction
+for loop in range(255):
+	LED_GAMMA[loop] = loop
 
 COLORS = {
     'red':(255,0,0),
