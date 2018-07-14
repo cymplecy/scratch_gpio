@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.8.21Jun18'  # Add re-compiled sgh_servod
+Version = 'v8_14Jul18'  # disable gamma in sgh_unicornhat.py
 
 import threading
 import socket
