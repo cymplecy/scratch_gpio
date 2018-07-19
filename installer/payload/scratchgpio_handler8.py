@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_14Jul18'  # disable gamma in sgh_unicornhat.py
+Version = 'v8_14Jul18'  # start cubebit mods
 
 import threading
 import socket
@@ -277,7 +277,7 @@ def removeNonAscii(s):
     return "".join(i for i in s if ord(i) < 128)
 
 
-def getValue(searchString, dataString):
+def getThisNeedsCheckingValue(searchString, dataString):
     outputall_pos = dataString.find((searchString + ' '))
     sensor_value = dataString[(outputall_pos + 1 + len(searchString)):].split()
     return sensor_value[0]
@@ -1298,12 +1298,17 @@ class ScratchListener(threading.Thread):
                          'orange': (255, 128, 0), 'skyblue': (0, 127, 255), 'purple': (128, 0, 128),
                          'yellowgreen': (127, 255, 127), 'pink': (255, 192, 203), 'brightgreen': (1, 255, 0),
                          'brown': (165, 42, 42), 'aqua': (90, 213, 213), 'grey': (128, 128, 128),
-                         'grey2': (127, 127, 127), 'black': (0, 0, 0),
+                         'grey2': (127, 127, 127), 'off': (0, 0, 0),
                          'white': (255, 255, 255),
                          'indigo': (0, 0, 128), 'cream': (255, 255, 127), 'violet': (128, 0, 255),
-                         'lightgreen': (127, 255, 0), 'amber': (255, 127, 0), 'lightblue': (0, 128, 255)}
+                         'lightgreen': (127, 255, 0), 'amber': (255, 127, 0), 'lightblue': (0, 128, 255), 'random': (129, 129, 129)}
         self.invtcolours = {v: k for k, v in self.tcolours.items()}
-
+        self.cubebit = [0,1,2,3,7,6,5,4,8,9,10,11,15,14,13,12,28,27,20,19,29,26,21,18,30,25,22,17,31,24,23,16,32,33,34,35,39,38,37,36,40,41,42,43,47,46,45,44,60,59,52,51,61,58,53,50,62,57,54,49,63,56,55,48]
+        self.cubeX = 0
+        self.cubeY = 0
+        self.cubeZ = 0
+        self.cubeSize = 4
+        
     def meArmGotoPoint(self, meHorizontal, meDistance, meVertical):
         self.arm.gotoPoint(int(max(-50, min(50, meHorizontal))), int(max(70, min(150, meDistance))),
                            int(max(0, min(60, meVertical))))
@@ -1316,8 +1321,8 @@ class ScratchListener(threading.Thread):
         # self.scratch_socket.send(b + cmd)
 
     def getValue(self, searchString):
-        outputall_pos = self.dataraw.find((searchString + ' '))
-        sensor_value = self.dataraw[(outputall_pos + 1 + len(searchString)):].split()
+        outputall_pos = self.dataraw.find((' ' + searchString + ' '))
+        sensor_value = self.dataraw[(outputall_pos + 2 + len(searchString)):].split()
         try:
             return sensor_value[0]
         except IndexError:
@@ -1476,7 +1481,6 @@ class ScratchListener(threading.Thread):
         self.valueIsNumeric = False
         self.OnOrOff = None
         if self.vFind(searchStr):
-
             self.value = self.getValue(searchStr)
             if str(self.value) in ["high", "on", "1"]:
                 self.valueNumeric = 1
@@ -1489,7 +1493,7 @@ class ScratchListener(threading.Thread):
             return False
 
     def vFindValue(self, searchStr):
-        # print "searching for ", searchStr
+        #print "searching for ", searchStr
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
@@ -1846,14 +1850,15 @@ class ScratchListener(threading.Thread):
             pz.setOutputConfig(5, 3)
             pz.setPixel(x, R, G, B, False)
         else:
+            #print "uh:",x,R,G,B
             UH.set_neopixel(x, R, G, B)
 
     def findRGB(self, textColour):
-        if textColour in self.tcolours:
+        if textColour == "random":
+            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours[random.choice(self.tcolours.keys())]
+        elif textColour in self.tcolours:
             return int(float(self.tcolours[textColour][0])), int(float(self.tcolours[textColour][1])), int(
                 float(self.tcolours[textColour][2]))
-        elif textColour == "random":
-            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours[random.choice(self.tcolours.keys())]
         elif textColour == "invert":
             self.matrixRed, self.matrixGreen, self.matrixBlue = (255 - self.matrixRed), (255 - self.matrixGreen), ( 255 - self.matrixBlue)
         elif textColour == "off":
@@ -1876,6 +1881,25 @@ class ScratchListener(threading.Thread):
         else:
             R ,G, B = UH.get_pixel(x, y)
             return [R, G, B]
+
+    def cubeSetPixel(self, x, y, z, R, G, B):
+        #print "xyz ", x , y ,z 
+        if "cubebit" in ADDON:
+            #lookupxyz = min((self.matrixUse - 1), max(0,(x + (y*self.cubeSize) + (z * self.cubeSize * self.cubeSize))))
+            lookupxyz = (x + (y*self.cubeSize) + (z * self.cubeSize * self.cubeSize))
+            #print "loookupxyz" ,lookupxyz
+            self.setNeoPixel(self.cubebit[lookupxyz], R,G,B)
+
+    def cubeGetPixel(self, x, y, z):
+        RGB = [0,0,0]
+        #print "xyz ", x , y ,z 
+        if "cubebit" in ADDON:
+            #lookupxyz = min((self.matrixUse - 1), max(0,(x + (y*self.cubeSize) + (z * self.cubeSize * self.cubeSize))))
+            lookupxyz = (x + (y*self.cubeSize) + (z * self.cubeSize * self.cubeSize))
+            #print "loookupxyz" ,lookupxyz
+            RGB = self.getNeoPixel(self.cubebit[lookupxyz])
+        return RGB
+
 
     def neoShow(self):
         # print "show called"
@@ -1931,7 +1955,7 @@ class ScratchListener(threading.Thread):
         # print
         # print "neostart"
         listenLoopTime = time.time()
-        # print "inside neoprocsssing"
+        #print "inside neoprocsssing"
         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                       'invert', 'random']
         oldADDON = ADDON
@@ -1946,6 +1970,7 @@ class ScratchListener(threading.Thread):
             self.matrixUse = int(rtnNumeric(ADDON[9 + ADDON.index('neopixels'):], 64))
         if ("piconzero" in ADDON):
             self.matrixUse = 64
+
             
         if self.bFindValue("matrixuse"):
             # print "mu" , self.value
@@ -2850,7 +2875,391 @@ class ScratchListener(threading.Thread):
                         matrixSetPixel(i % 8, 7 - (i // 8), pixel[(j * 3) + 2], pixel[(j * 3) + 1],
                                        pixel[(j * 3) + 0])
                     self.neoShow()
+        
+        elif ("cubebit" in ADDON):
+            #print "cubebit processing"
+            #ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
+            #              'invert', 'random']
 
+            # if self.tcolours is None:  # only define dictionary on first pass
+                # self.tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+                                 # 'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
+                                 # 'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
+                                 # 'invert': (0, 0, 0)}
+            if self.bFindValue("pixels"):
+                for ledcolour in self.tcolours:
+                    if (self.value == ledcolour):
+                        #print "1st catch cubebit"
+                        self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(ledcolour)
+                        for z in range(0,self.cubeSize):
+                            for y in range(0, self.cubeSize):
+                                for x in range(0, self.cubeSize):
+                                    #print "xyz",x,y,z
+                                    self.cubeSetPixel(x,y,z, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        self.neoShow()
+
+            elif self.bFindValue("sweep"):
+                print "cusweep"
+                for zm in range (0,self.cubeSize):
+                    for ym in range(0,self.cubeSize):
+                        for xm in range(0,self.cubeSize):
+                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB("random")
+                            self.cubeSetPixel(xm,ym,zm,self.matrixRed, self.matrixGreen, self.matrixBlue)
+                            self.neoShow()
+                            #time.sleep(0.05)  # delay during sweep
+
+            # if self.bFindValue("write"):
+                # self.matrixWrite(self.value, self.matrixRed, self.matrixGreen, self.matrixBlue)
+
+            # if self.bFindValue("originx"):
+                # self.originX = min(max(int(self.valueNumeric), 0), 7) if self.valueIsNumeric else 0
+            # if self.bFindValue("originy"):
+                # self.originY = min(max(int(self.valueNumeric), 0), 7) if self.valueIsNumeric else 0
+
+            #print "checking"
+            elif self.bFindValue("pixel"):
+                #print "pixelxyz checking"
+                pixelProcessed = False
+                # Check for pixel x,y,colour
+                for ledcolour in self.tcolours:
+                    if (self.value == ledcolour):
+                        #print "1st catch cubebit"
+                        self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(ledcolour)
+                        self.cubeSetPixel(self.cubeX,self.cubeY,self.cubeZ,self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        self.neoShow()
+                        pixelProcessed = True
+
+                if not pixelProcessed:
+                    #print "failed 1st xyz checking" 
+                    # Check for pixel x,y,#aabbcc
+                    #print "#", self.value[-7:]
+                    fullvalue = self.value
+                    #print fullvalue
+                    if ("xxxxxxx" + fullvalue)[-7] == "#":
+                        try:
+                            c = (fullvalue[-7:] + "00000000")[0:7]
+                            # print "full", c
+                            r = int(c[1:3], 16)
+                            g = int(c[3:5], 16)
+                            b = int(c[5:], 16)
+                            self.cubeSetPixel(self.cubeX,self.cubeY,self.cubeZ, r, g, b)
+                            self.neoShow()
+                            pixelProcessed = True
+                        except:
+                            pass
+
+            if self.bFind("getpixel"):
+                for ym in range(0, self.matrixRangemax):
+                    for xm in range(0, self.matrixRangemax):
+                        if self.bFindValue("getpixel" + str(xm) + "," + str(ym)):
+                            gnp = matrixGetPixel(xm * self.matrixMult, 7 - (ym * self.matrixMult))
+                            # print "getpixel led,xm,ymgnp",led,xm,ym,gnp
+                            r, g, b = gnp
+                            bcolourname = "#" + ("000000" + (str(
+                                hex(b + (g * 256) + (r * 256 * 256))))[2:])[-6:]
+                            bcolour = str(r).zfill(3) + str(g).zfill(3) + str(b).zfill(3)
+                            # ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','invert','random']
+                            # bcolourname = "black"
+                            try:
+                                bcolourname = ledcolours[
+                                    ["255000000", "000255000", "000000255", "000255255",
+                                     "255000255", "255255000", "255255255"].index(bcolour)]
+                            except ValueError:
+                                pass
+                            # print "col lookup", bcolourname
+                            sensor_name = 'colour'
+                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolourname)
+                            # print 'sending: %s' % bcast_str
+                            msgQueue.put((5, bcast_str))
+
+                for led in range(0, self.matrixUse):
+                    if (self.bFindValue("getpixel") and self.value == str(led)):
+                        ym = int(int(led) / self.matrixRangemax)
+                        xm = led % self.matrixRangemax
+                        gnp = matrixGetPixel(xm * self.matrixMult, 7 - (ym * self.matrixMult))
+                        # print "getpixel led,xm,ymgnp",led,xm,ym,gnp
+                        r, g, b = gnp
+                        bcolourname = "#" + ("000000" + (str(hex(b + (g * 256) + (r * 256 * 256))))[
+                                                        2:])[-6:]
+                        bcolour = str(r).zfill(3) + str(g).zfill(3) + str(b).zfill(3)
+                        # ledcolours = ['red','green','blue','cyan','magenta','yellow','white','off','on','invert','random']
+                        # bcolourname = "black"
+                        try:
+                            bcolourname = ledcolours[
+                                ["255000000", "000255000", "000000255", "000255255", "255000255",
+                                 "255255000", "255255255"].index(bcolour)]
+                        except ValueError:
+                            pass
+                        # print "col lookup", bcolourname
+                        sensor_name = 'colour'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolourname)
+                        # print 'sending: %s' % bcast_str
+                        msgQueue.put((5, bcast_str))
+
+            if self.bFind("invert"):
+                for ym in range(0, self.matrixRangemax):
+                    for xm in range(0, self.matrixRangemax):
+                        oldr, oldg, oldb = matrixGetPixel(xm, ym)
+                        # print "oldpixel" , oldpixel
+                        self.matrixSetPixel(xm, ym, 255 - oldr, 255 - oldg, 255 - oldb)
+                self.neoShow()
+
+            if self.bFind("moveleft"):
+                for y in range(0, self.matrixRangemax):
+                    for x in range(0, self.matrixRangemax - 1):
+                        oldr, oldg, oldb = matrixGetPixel(x + 1, y)
+                        # print "oldpixel" , oldpixel
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(7, y, 0, 0, 0)
+                self.neoShow()
+
+            if self.bFind("moveright"):
+                for y in range(0, self.matrixRangemax):
+                    for x in range(self.matrixRangemax - 1, 0, -1):
+                        # print "y,x",y,x
+                        oldr, oldg, oldb = self.matrixGetPixel(x - 1, y)
+                        # print "oldpixel" , oldpixel
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(0, y, 0, 0, 0)
+                self.neoShow()
+
+            if self.bFind("moveup"):
+                for x in range(0, self.matrixRangemax):
+                    for y in range(0, self.matrixRangemax - 1):
+                        oldr, oldg, oldb = self.matrixGetPixel(x, y + 1)
+                        # print "oldpixel" , oldpixel
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(x, 7, 0, 0, 0)
+                self.neoShow()
+
+            if self.bFind("movedown"):
+                for x in range(0, self.matrixRangemax):
+                    for y in range(self.matrixRangemax - 1, 0, -1):
+                        # print "y,x",y,x
+                        oldr, oldg, oldb = self.matrixGetPixel(x, y - 1)
+                        # print "oldpixel" , oldpixel
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(x, 0, 0, 0, 0)
+                self.neoShow()
+
+            rowList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+            for i in range(0, 8):
+                if self.bFindValue('row' + rowList[i]):
+                    bit_pattern = (self.value + "xxxxxxxx")[0:8]
+                    # print 'bit_pattern %s' % bit_pattern
+                    for j in range(0, 8):
+                        ym = i
+                        xm = j
+                        bp = bit_pattern[j]
+                        if bp in lettercolours:
+                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
+                                ledcolours[lettercolours.index(bp)],
+                                (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                            matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                                           self.matrixBlue)
+                    self.neoShow()
+
+            for i in range(0, 8):
+                if self.bFindValue('row' + str(i + 1)):
+                    bit_pattern = (self.value + "xxxxxxxx")[0:8]
+                    # print 'bit_pattern %s' % bit_pattern
+                    for j in range(0, 8):
+                        ym = i
+                        xm = j
+                        bp = bit_pattern[j]
+                        if bp in lettercolours:
+                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
+                                ledcolours[lettercolours.index(bp)],
+                                (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                            matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                                           self.matrixBlue)
+                    self.neoShow()
+
+            colList = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+            for i in range(0, 8):
+                if self.bFindValue('col' + colList[i]):
+                    # print self.value
+                    bit_pattern = (self.value + "xxxxxxxx")[0:8]
+                    for j in range(0, 8):
+                        ym = j
+                        xm = i
+                        bp = bit_pattern[j]
+                        if bp in lettercolours:
+                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
+                                ledcolours[lettercolours.index(bp)],
+                                (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                            matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                                           self.matrixBlue)
+                    self.neoShow()
+
+            for i in range(0, 8):
+                if self.bFindValue('col' + str(i + 1)):
+                    # print self.tcolours
+                    # print self.matrixRed,self.matrixGreen,self.matrixBlue
+                    # print self.value
+                    bit_pattern = (self.value + "xxxxxxxx")[0:8]
+                    for j in range(0, 8):
+                        ym = j
+                        xm = i
+                        bp = bit_pattern[j]
+                        if bp in lettercolours:
+                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
+                                ledcolours[lettercolours.index(bp)],
+                                (self.matrixRed, self.matrixGreen, self.matrixBlue))
+
+                            matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                                           self.matrixBlue)
+                    self.neoShow()
+
+            if self.bFindValue('loadimage'):
+                try:
+                    sb = subprocess.Popen(
+                        ['convert', '-scale', '8x8!', '+matte', self.value, 'sghimage.bmp']).wait()
+                except:
+                    pass
+                # time.sleep(1)
+                # When reading a binary file, always add a 'b' to the file open mode
+                with open('sghimage.bmp', 'rb') as f:
+                    # with open(self.value + '.bmp', 'rb') as f:
+                    # BMP files store their width and height statring at byte 18 (12h), so seek
+                    # to that position
+                    f.seek(10)
+
+                    # The width and height are 4 bytes each, so read 8 bytes to get both of them
+                    bytes = f.read(4)
+
+                    # Here, we decode the byte array from the last step. The width and height
+                    # are each unsigned, little endian, 4 byte integers, so they have the format
+                    # code '<II'. See http://docs.python.org/3/library/struct.html for more info
+                    bmpdata = int(struct.unpack('<I', bytes)[0])
+                    # print bmpdata
+
+                    # Print the width and height of the image
+                    print('Data starts at:  ' + str(bmpdata))
+                    f.seek(bmpdata)
+
+                    bytes = f.read(192)  # move to start of pixel data
+                    pixel = struct.unpack('192B', bytes)  # get 64 pixels * 3 for BGR
+                    # print "pixel",pixel
+                    for i in range(0, 64):
+                        matrixSetPixel(i % 8, 7 - (i // 8), pixel[(i * 3) + 2], pixel[(i * 3) + 1],
+                                       pixel[(i * 3) + 0])
+
+                    self.neoShow()
+
+            if self.bFindValue('saveimage'):
+                # try:
+                # sb = subprocess.Popen(['convert', '-scale', '8x8!', '+matte', self.value , 'sghimage.bmp']).wait()
+                # except:
+                # pass
+                # time.sleep(1)
+                # When reading a binary file, always add a 'b' to the file open mode
+                with open('sghimage.bmp', 'wb') as f:
+                    header = [0x42, 0x4D, 0xF6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x36,
+                              0x00, 0x00, 0x00, 0x28, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00,
+                              0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x18, 0x00, 0x00, 0x00, 0x00,
+                              0x00, 0x00, 0x00, 0x00, 0x00, 0x13, 0x0B, 0x00, 0x00, 0x13, 0x0B,
+                              0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+                    for i in header:
+                        f.write(chr(i))
+                    for i in range(0, 64):
+                        r, g, b = self.getNeoPixel(i % 8, 7 - (i // 8))
+                        # print "rgb",r,g,b
+                        f.write(chr(b))
+                        f.write(chr(g))
+                        f.write(chr(r))
+                sb = subprocess.Popen(['cp', 'sghimage.bmp', self.value + '.bmp']).wait()
+
+            if self.bFindValue('load2image'):
+                try:
+                    sb = subprocess.Popen(['convert', '-scale', '16x16!', '+matte', self.value,
+                                           'sghimage.bmp']).wait()
+                except:
+                    pass
+                # time.sleep(1)
+                # When reading a binary file, always add a 'b' to the file open mode
+                with open('sghimage.bmp', 'rb') as f:
+                    # with open(self.value + '.bmp', 'rb') as f:
+                    # BMP files store their width and height statring at byte 18 (12h), so seek
+                    # to that position
+                    f.seek(10)
+
+                    # The width and height are 4 bytes each, so read 8 bytes to get both of them
+                    bytes = f.read(4)
+
+                    # Here, we decode the byte array from the last step. The width and height
+                    # are each unsigned, little endian, 4 byte integers, so they have the format
+                    # code '<II'. See http://docs.python.org/3/library/struct.html for more info
+                    bmpdata = int(struct.unpack('<I', bytes)[0])
+
+                    # Print the width and height of the image
+                    print('Data starts at:  ' + str(bmpdata))
+                    f.seek(bmpdata)
+
+                    bytes = f.read(768)  # move to start of pixel data
+                    pixel = struct.unpack('768B', bytes)  # get 64 pixels * 3 for BGR
+                    # print "pixel",pixel
+
+                    j = -18
+                    for i in range(0, 64):
+                        if i % 8 == 0:
+                            j += 18
+                        else:
+                            j += 2
+                        # print "i,j",i,j
+                        matrixSetPixel(i % 8, 7 - (i // 8), pixel[(j * 3) + 2], pixel[(j * 3) + 1],
+                                       pixel[(j * 3) + 0])
+                    self.neoShow()
+                    
+            if self.bFind("plane"):
+                #print "plane checking"
+                for ledcolour in self.tcolours:
+                    if self.bFindValue("plane", ledcolour):
+                        #print "1st catch plane"
+                        self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(ledcolour)
+                        # print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
+                        print "plane xyz",self.cubeX,self.cubeY,self.cubeZ
+                        if (self.value == 'yz') or (self.value == 'side'):
+                            for y in range(self.cubeSize):
+                                for z in range(self.cubeSize):
+                                    self.cubeSetPixel(self.cubeX,y,z,self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        if (self.value == 'xz') or (self.value == 'front'):
+                            for z in range(self.cubeSize):
+                                for x in range(self.cubeSize):
+                                    self.cubeSetPixel(x,self.cubeY,z,self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        if (self.value == 'xy') or (self.value == 'bottom') or (self.value == 'horizontal'):
+                            for y in range(self.cubeSize):
+                                for x in range(self.cubeSize):
+                                    self.cubeSetPixel(x,y,self.cubeZ,self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        self.neoShow()
+
+            if self.bFind("line"):
+                #print "line checking"
+                for ledcolour in self.tcolours:
+                    if self.bFindValue("line", ledcolour):
+                        #print "1st catch plane"
+                        self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(ledcolour)
+                        # print "pixel",self.matrixRed,self.matrixGreen,self.matrixBlue
+                        #print "line" ,self.value
+                        if (self.value[0:3] == 'xy'):
+                            for y in range(self.cubeSize):
+                               self.cubeSetPixel(self.cubeX,y,self.cubeZ,self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        if (self.value[0:3] == 'xz'):
+                            for z in range(self.cubeSize):
+                               self.cubeSetPixel(self.cubeX,self.cubeY,z,self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        if (self.value[0:3] == 'yz'):
+                            for x in range(self.cubeSize):
+                               self.cubeSetPixel(x,self.cubeY,self.cubeZ,self.matrixRed, self.matrixGreen, self.matrixBlue)                               
+                        self.neoShow()
+                        
+            if self.bFind("underwoodmode"):
+                if self.cubeSize == 4:
+                    #re-map matrix lookup if Y is considered to be up/down and Z is front/back
+                    self.cubebit = [0,1,2,3,28,27,20,19,32,33,34,35,60,59,52,51,7,6,5,4,29,26,21,18,39,38,37,36,61,58,53,50,8,9,10,11,30,25,22,17,40,41,42,43,62,57,54,49,15,14,13,12,31,24,23,16,47,46,45,44,63,56,55,48]
+                
+
+        #print "ADDON", ADDON
+                    
         if self.bFindValue("bright"):
             sghGC.ledDim = int(self.valueNumeric) if self.valueIsNumeric else 20
             try:
@@ -2896,7 +3305,7 @@ class ScratchListener(threading.Thread):
         ADDON = oldADDON  # restore after possible parthat use
 
         # print
-        # print "neoend", time.time() - listenLoopTime
+        #print "neoend", time.time() - listenLoopTime
 
     # noinspection PyPep8Naming
     def run(self):
@@ -3229,6 +3638,18 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue("addon"):
                         setupValue = self.value
                         pinsoraddon = "addon"
+                        if ("cubebit" in ADDON):
+                            self.cubebit = [0,1,2,3,7,6,5,4,8,9,10,11,15,14,13,12,28,27,20,19,29,26,21,18,30,25,22,17,31,24,23,16,32,33,34,35,39,38,37,36,40,41,42,43,47,46,45,44,60,59,52,51,61,58,53,50,62,57,54,49,63,56,55,48]
+                            self.cubeSize = 4
+                            self.matrixUse = 64
+                        if ("cubebit3" in ADDON):
+                            self.cubebit = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]
+                            self.cubeSize = 3
+                            self.matrixUse = 27
+                        if ("cubebit5" in ADDON):
+                            self.cubebit = [0] * 125
+                            self.cubeSize = 5
+                            self.matrixUse = 125
 
                     if pinsoraddon is not None:
                         ADDON = setupValue
@@ -4038,14 +4459,25 @@ class ScratchListener(threading.Thread):
                             #    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                             #    svalue= min(255,max(svalue,0))
                             #    PiGlow_Brightness = svalue
+                    if ("cubebit" in ADDON):
+                        if self.vFindValue("x"):
+                            self.cubeX = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            self.cubeX = min((self.cubeSize - 1), max(self.cubeX, 0))
+                        if self.vFindValue("y"):
+                            print "y",self.valueNumeric 
+                            self.cubeY = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            self.cubeY = min((self.cubeSize - 1), max(self.cubeY, 0))
+                        if self.vFindValue("z"):
+                            self.cubeZ = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            self.cubeZ = min((self.cubeSize - 1), max(self.cubeZ, 0))
+                    else:
+                        if self.vFindValue("x"):
+                            self.matrixX = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            self.matrixX = min(7, max(self.matrixX, 0))
 
-                    if self.vFindValue("x"):
-                        self.matrixX = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        self.matrixX = min(7, max(self.matrixX, 0))
-
-                    if self.vFindValue("y"):
-                        self.matrixY = int(self.valueNumeric) if self.valueIsNumeric else 0
-                        self.matrixY = min(7, max(self.matrixY, 0))
+                        if self.vFindValue("y"):
+                            self.matrixY = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            self.matrixY = min(7, max(self.matrixY, 0))
 
                     if self.vFindValue("matrixuse"):
                         self.matrixUse = int(self.valueNumeric) if self.value in ['64', '16', '9', '4'] else 64
@@ -4962,7 +5394,7 @@ class ScratchListener(threading.Thread):
                     if (checkStr + ' ') in dataraw:
                         # print "MotorA Received"
                         # print "stepper status" , stepperInUse[STEPPERA]
-                        tempValue = getValue(checkStr, dataraw)
+                        tempValue = getThisNeedsCheckingValue(checkStr, dataraw)
                         if isNumeric(tempValue):
                             step_delay = int(float(tempValue))
                             print 'step delay changed to', step_delay
@@ -6051,7 +6483,7 @@ class ScratchListener(threading.Thread):
 
 
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
-                        "sensehat" in ADDON):  # Matrix or neopixels connected
+                        "sensehat" in ADDON)  or ("cubebit" in ADDON):  # Matrix or neopixels connected
                         self.neoProcessing(ADDON, UH)
                         bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
                         # print 'sending: %s' % bcast_str
