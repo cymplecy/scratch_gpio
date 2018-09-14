@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.8.21Jun18'  # Add re-compiled sgh_servod
+Version = 'v8.2.8pitop14Sep18'  # PiTop version swapping pin 32 for Pin 12
 
 import threading
 import socket
@@ -2935,7 +2935,7 @@ class ScratchListener(threading.Thread):
                 sghGC.pinUse[3] = sghGC.PUNUSED
                 sghGC.pinUse[5] = sghGC.PUNUSED
                 sghGC.pinUse[11] = sghGC.POUTPUT
-                sghGC.pinUse[12] = sghGC.POUTPUT
+                sghGC.pinUse[32] = sghGC.POUTPUT
                 sghGC.pinUse[13] = sghGC.POUTPUT
                 sghGC.pinUse[15] = sghGC.POUTPUT
                 sghGC.pinUse[16] = sghGC.POUTPUT
@@ -4909,7 +4909,7 @@ class ScratchListener(threading.Thread):
                                             turn[stepperList[listLoop][1][0]] = 0
                                             pass
                         else:
-                            motorList = [['motora', 11], ['motorb', 12]]
+                            motorList = [['motora', 11], ['motorb', 32]]
                             for listLoop in range(0, 2):
                                 if self.vFindValue(motorList[listLoop][0]):
                                     if self.valueIsNumeric:
