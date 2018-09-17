@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.2.8.21Jun18'  # Add re-compiled sgh_servod
+Version = 'v8.2.9.17Sep18'  # restart pi2go2 with p2g2green
 
 import threading
 import socket
@@ -343,6 +343,8 @@ class ultra(threading.Thread):
             startTime = time.time()
             distance = sghGC.pinSonar2(self.pinTrig,self.pinEcho)  # do a ping
             sensor_name = 'ultra' + str(self.pinTrig)
+            if "p2g2green" in ADDON:
+                sensor_name = 'ultra'
             if "pi2go" in ADDON:
                 sensor_name = 'ultra'
             if "piconzero" in ADDON:
@@ -651,6 +653,16 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass
             sensorValue = ("on", "off")[value == 1]
+        elif "p2g2green" in ADDON:
+            #print "p2g2green section"
+            try:
+                sensor_name = ["left", "right", "lineleft", "lineright", "switch"][([7, 11, 12, 13, 10].index(pin))]
+            except:
+                print "p2g2green input out of range"
+                sensor_name = "pin" + str(pin)
+                print sensor_name
+                pass
+            sensorValue = ("on", "off")[value == 1]            
         elif "pi2go" in ADDON:
             # print pin
             try:
@@ -3531,7 +3543,42 @@ class ScratchListener(threading.Thread):
 
                             print "p2g3 setup"
                             anyAddOns = True
+                            
+                        if "p2g2green" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                # sghGC.pinUse[19] = sghGC.POUTPUT #MotorA
+                                # sghGC.pinUse[21] = sghGC.POUTPUT #MotorA
+                                # sghGC.pinUse[26] = sghGC.POUTPUT #MotorB
+                                # sghGC.pinUse[24] = sghGC.POUTPUT #MotorB
+                                sghGC.pinUse[7] = sghGC.PINPUT  # FL
+                                sghGC.pinUse[11] = sghGC.PINPUT  # FR
+                                sghGC.pinUse[12] = sghGC.PINPUT  # LL
+                                sghGC.pinUse[13] = sghGC.PINPUT  # LR
+                                sghGC.pinUse[10] = sghGC.PINPUT  # switch
 
+                                # sghGC.pinUse[18] = sghGC.PINPUT
+                                # sghGC.pinUse[22] = sghGC.PINPUT
+
+                                sghGC.setPinMode()
+                                sghGC.motorUpdate(37, 35, 0)
+                                sghGC.motorUpdate(40, 36, 0)
+
+                                # try:
+                                    # for i in range(0, 12):  # go thru PowerPWM on PCA Board
+                                        # pcaPWM.setPWM(i, 0, 0)
+                                # except:
+                                    # print "SOFT ERROR - PWM not set for pi2go"
+                                    # pass
+
+                                self.startUltra(38, 38, self.OnOrOff)
+
+                                # sghGC.pinEventEnabled = 0
+                            # sghGC.startServod([12,10]) # servos testing motorpitx
+
+                            print "p2g2green setup"
+                            anyAddOns = True                                
+                                
                         if "pi2go" in ADDON:
                             if "pi2golite" in ADDON:
                                 print "pi2golite found in", ADDON
@@ -3569,6 +3616,8 @@ class ScratchListener(threading.Thread):
                                 if "encoders" in ADDON:
                                     print "with encoders"
                                 anyAddOns = True
+                                
+                            
                             elif "pi2go" in ADDON:
                                 with lock:
                                     sghGC.resetPinMode()
@@ -4595,6 +4644,12 @@ class ScratchListener(threading.Thread):
 
 
                             ######### End of Pi2gplite Variable handling
+                    elif "p2g2green" in ADDON:
+                        # do PiRoCon stuff
+                        # logging.debug("Processing variables for Pi2Go")
+
+                        # check for motor variable commands
+                        motorList = [['motorb', 37, 35, 0, False], ['motora', 40, 36, 0, False]]                            
                     elif "pi2go" in ADDON:
                         # do PiRoCon stuff
                         # logging.debug("Processing variables for Pi2Go")
@@ -5776,6 +5831,96 @@ class ScratchListener(threading.Thread):
                             moveMotorBThread = threading.Thread(target=self.moveMotor,
                                                                 args=[motorList[1], -svalue, motorList[1][3]])
                             moveMotorBThread.start()
+                            
+                    elif "p2g2green" in ADDON:  #
+                        # do p2g2green
+                        #self.bCheckAll(False, [15, 16])
+                        #self.bListCheck([15, 16], ["frontleds", "backleds"])
+
+                        # motorList = [['turnl', 26, 24, 12], ['turnr', 19, 21, 13]]
+
+                        moveFound = False
+
+                        # if self.bFindValue("movea"):
+                            # while sghGC.encoderInUse > 0:
+                                # time.sleep(0.1)
+                            # sghGC.encoderInUse = 1
+
+                            # msgQueue.put((5, 'sensor-update "motors" "turning"'))  # set turning sensor to turning
+                            # time.sleep(0.2)
+                            # moveFound = True
+                            # print " "
+                            # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            # # svalue = int(float(svalue * 4) / 10.0)
+                            # print "movea", svalue
+                            # sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
+                            # print "direction", sghGC.countDirection[motorList[0][3]]
+                            # sghGC.pinLastState[motorList[0][3]] = -1  # sghGC.pinRead(motorList[0][3])
+                            # print "encoder state before turning starts", motorList[0][3], sghGC.pinLastState[
+                                # motorList[0][3]]
+                            # moveMotorAThread = threading.Thread(target=self.moveMotor,
+                                                                # args=[motorList[0], svalue, motorList[0][3]])
+                            # moveMotorAThread.start()
+
+                        # if self.bFindValue("moveb"):
+                            # while sghGC.encoderInUse > 0:
+                                # time.sleep(0.1)
+                            # sghGC.encoderInUse = 1
+
+                            # msgQueue.put((5, 'sensor-update "motors" "turning"'))  # set turning sensor to turning
+                            # time.sleep(0.2)
+                            # moveFound = True
+                            # print " "
+                            # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            # # svalue = int(float(svalue * 4) / 10.0)
+                            # print "movea", svalue
+                            # sghGC.countDirection[motorList[1][3]] = -1 if svalue < 0 else 1
+                            # print "direction", sghGC.countDirection[motorList[1][3]]
+                            # sghGC.pinLastState[motorList[1][3]] = -1  # sghGC.pinRead(motorList[0][3])
+                            # print "encoder state before turning starts", motorList[1][3], sghGC.pinLastState[
+                                # motorList[1][3]]
+                            # moveMotorBThread = threading.Thread(target=self.moveMotor,
+                                                                # args=[motorList[1], svalue, motorList[1][3]])
+                            # moveMotorBThread.start()
+
+                        # if self.bFindValue("move") and moveFound == False:
+                            # while sghGC.encoderInUse > 0:
+                                # time.sleep(0.1)
+                            # sghGC.encoderInUse = 2
+                            # msgQueue.put((5, 'sensor-update "motors" "turning"'))  # set turning sensor to turning
+                            # time.sleep(0.2)
+                            # print " "
+                            # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            # # svalue = int(float(svalue * 4) / 10.0)
+                            # print "move ", svalue
+                            # sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
+                            # sghGC.countDirection[motorList[1][3]] = -1 if svalue < 0 else 1
+                            # print "sghdir", sghGC.countDirection[motorList[0][3]]
+                            # moveMotorAThread = threading.Thread(target=self.moveMotor,
+                                                                # args=[motorList[0], svalue, motorList[0][3]])
+                            # moveMotorAThread.start()
+                            # moveMotorBThread = threading.Thread(target=self.moveMotor,
+                                                                # args=[motorList[1], svalue, motorList[1][3]])
+                            # moveMotorBThread.start()
+
+                        # if self.bFindValue("turn"):
+                            # while sghGC.encoderInUse > 0:
+                                # time.sleep(0.1)
+                            # sghGC.encoderInUse = 2
+                            # msgQueue.put((5, 'sensor-update "motors" "turning"'))  # set turning sensor to turning
+                            # time.sleep(0.2)
+                            # print " "
+                            # svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            # # svalue = int(float(svalue) / 22.5)
+                            # print "turn ", svalue
+                            # sghGC.countDirection[motorList[0][3]] = -1 if svalue < 0 else 1
+                            # sghGC.countDirection[motorList[1][3]] = 1 if svalue < 0 else -1
+                            # moveMotorAThread = threading.Thread(target=self.moveMotor,
+                                                                # args=[motorList[0], svalue, motorList[0][3]])
+                            # moveMotorAThread.start()
+                            # moveMotorBThread = threading.Thread(target=self.moveMotor,
+                                                                # args=[motorList[1], -svalue, motorList[1][3]])
+                            # moveMotorBThread.start()
 
 
                     elif "pi2go" in ADDON:
