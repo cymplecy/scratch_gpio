@@ -4649,7 +4649,14 @@ class ScratchListener(threading.Thread):
                         # logging.debug("Processing variables for Pi2Go")
 
                         # check for motor variable commands
-                        motorList = [['motorb', 37, 35, 0, False], ['motora', 40, 36, 0, False]]                            
+                        motorList = [['motorb', 37, 35, 0, False], ['motora', 40, 36, 0, False]]
+                        
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+                                
                     elif "pi2go" in ADDON:
                         # do PiRoCon stuff
                         # logging.debug("Processing variables for Pi2Go")
