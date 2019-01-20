@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_14Jul18'  # disable gamma in sgh_unicornhat.py
+Version = 'v8_18Jan19'  # bug fix matrix use for unicornhat 
 
 import threading
 import socket
@@ -2546,7 +2546,7 @@ class ScratchListener(threading.Thread):
                                     for xx in range(0, self.matrixLimit):
                                         # print "led no" ,led
                                         if (ledcolour != "invert"):
-                                            matrixSetPixel((xm * self.matrixMult) + xx,
+                                            self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                            7 - ((ym * self.matrixMult) + yy),
                                                            self.matrixRed, self.matrixGreen,
                                                            self.matrixBlue)
@@ -2558,7 +2558,7 @@ class ScratchListener(threading.Thread):
                                             # print "after", gnpi
                                             r, g, b = gnpi
                                             # print "rgb", r,g,b
-                                            matrixSetPixel((xm * self.matrixMult) + xx,
+                                            self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                            7 - ((ym * self.matrixMult) + yy), r, g, b)
                                 self.neoShow()
                                 pixelProcessed = True
@@ -2581,7 +2581,7 @@ class ScratchListener(threading.Thread):
                                     b = int(c[5:], 16)
                                     for yy in range(0, self.matrixLimit):
                                         for xx in range(0, self.matrixLimit):
-                                            matrixSetPixel((xm * self.matrixMult) + xx,
+                                            self.matrixSetPixel((xm * self.matrixMult) + xx,
                                                            7 - ((ym * self.matrixMult) + yy), r, g, b)
                                     self.neoShow()
                                     pixelProcessed = True
@@ -2695,7 +2695,7 @@ class ScratchListener(threading.Thread):
                             self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                                 ledcolours[lettercolours.index(bp)],
                                 (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                            matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                            self.matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                            self.matrixBlue)
                     self.neoShow()
 
@@ -2711,7 +2711,7 @@ class ScratchListener(threading.Thread):
                             self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                                 ledcolours[lettercolours.index(bp)],
                                 (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                            matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                            self.matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                            self.matrixBlue)
                     self.neoShow()
 
@@ -2728,7 +2728,7 @@ class ScratchListener(threading.Thread):
                             self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                                 ledcolours[lettercolours.index(bp)],
                                 (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                            matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                            self.matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                            self.matrixBlue)
                     self.neoShow()
 
@@ -2747,7 +2747,7 @@ class ScratchListener(threading.Thread):
                                 ledcolours[lettercolours.index(bp)],
                                 (self.matrixRed, self.matrixGreen, self.matrixBlue))
 
-                            matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
+                            self.matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                            self.matrixBlue)
                     self.neoShow()
 
@@ -2782,7 +2782,7 @@ class ScratchListener(threading.Thread):
                     pixel = struct.unpack('192B', bytes)  # get 64 pixels * 3 for BGR
                     # print "pixel",pixel
                     for i in range(0, 64):
-                        matrixSetPixel(i % 8, 7 - (i // 8), pixel[(i * 3) + 2], pixel[(i * 3) + 1],
+                        self.matrixSetPixel(i % 8, 7 - (i // 8), pixel[(i * 3) + 2], pixel[(i * 3) + 1],
                                        pixel[(i * 3) + 0])
 
                     self.neoShow()
@@ -2847,7 +2847,7 @@ class ScratchListener(threading.Thread):
                         else:
                             j += 2
                         # print "i,j",i,j
-                        matrixSetPixel(i % 8, 7 - (i // 8), pixel[(j * 3) + 2], pixel[(j * 3) + 1],
+                        self.matrixSetPixel(i % 8, 7 - (i // 8), pixel[(j * 3) + 2], pixel[(j * 3) + 1],
                                        pixel[(j * 3) + 0])
                     self.neoShow()
 
@@ -2876,7 +2876,7 @@ class ScratchListener(threading.Thread):
                     self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                         ledcolours[lettercolours.index(bp)],
                         (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                    matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    self.matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen, self.matrixBlue)
             self.neoShow()
 
 
@@ -2888,7 +2888,7 @@ class ScratchListener(threading.Thread):
                          matrixGetPixel(index)])
                     # print "old" , oldr,oldg,oldb
                     # print "oldpixel" , oldpixel
-                    matrixSetPixel(index, oldr, oldg, oldb)
+                    self.matrixSetPixel(index, oldr, oldg, oldb)
                 self.neoShow()
 
         # self.dataraw = origdataraw
