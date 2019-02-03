@@ -85,6 +85,8 @@ cp dht11.py $RDIR/scratchgpio${SGHVER}
 cp sgh_*.py $RDIR/scratchgpio${SGHVER}
 
 cp ./mcpi/* $RDIR/scratchgpio${SGHVER}/mcpi
+cp S3GPIOServer.py $RDIR/scratchgpio${SGHVER}
+cp ca.* $RDIR/scratchgpio${SGHVER}
 
 #chown -R $USERID:$GROUPID $RDIR/scratchgpio${SGHVER}
 chmod +x sgh_servod

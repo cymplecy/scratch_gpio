@@ -77,13 +77,7 @@ class S(BaseHTTPRequestHandler):
             result = sMessage[1][int(start)-1:int(end)]
             if swapped:
                 result = result[::-1]
-
             print "result", result
-            #if int(start) < 1:
-            #    result = ""
-            #
-            #if int(start) > int(end):
-            #    result = ""
             response = {"result":result}
             self.wfile.write(json.dumps(response))
             
@@ -96,7 +90,7 @@ class S(BaseHTTPRequestHandler):
             result = mainString.find(subString)
             response = {"result":(int(result) + 1)}
             self.wfile.write(json.dumps(response))
-            
+
         else:
             response = {"result":"no result found"}
             self.wfile.write(json.dumps(response))

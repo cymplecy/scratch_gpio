@@ -15,6 +15,8 @@ cp $HOME/sghdev/scratch_gpio/kinematics.py $HOME/sghdev/scratch_gpio/installer/p
 cp $HOME/sghdev/scratch_gpio/dht11.py $HOME/sghdev/scratch_gpio/installer/payload
 
 cp $HOME/sghdev/scratch_gpio/sgh_*.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/S3GPIOServer.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/ca.* $HOME/sghdev/scratch_gpio/installer/payload
 
 rm -rf $HOME/sghdev/scratch_gpio/installer/payload/mcpi
 mkdir -p $HOME/sghdev/scratch_gpio/installer/payload/mcpi
