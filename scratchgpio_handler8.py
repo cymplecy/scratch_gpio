@@ -46,10 +46,33 @@ from sgh_cheerlights import CheerLights
 import urllib2
 from sgh_GetJSONFromURL import GetJSONFromURL
 import kinematics
-import pigpio
-import dht11
-sgh_pigpio = None
+from dot import BlueDot
+from signal import pause
 
+
+
+def bd_pressed():
+    print("Hello World")
+    #msgQueue.put((5, 'broadcast "BlueDotPressed"'))  
+    msgQueue.put((5, 'sensor-update "BlueDot"' + ' pressed'))  
+    time.sleep(0.2)
+    msgQueue.put((5, 'sensor-update "BlueDot"' + ' null'))      
+
+bd = None
+try:
+    bd = BlueDot()
+    bd.when_pressed = bd_pressed
+    print "Bluedot enabled"
+except:
+    print "No Bluetooh found"
+    pass
+
+reader = None
+#try:
+#    import SimpleMFRC522
+#    reader = SimpleMFRC522.SimpleMFRC522()
+#except:
+#    print "reader not imported"
 
 getjsonfromurl = GetJSONFromURL()
 
@@ -148,12 +171,39 @@ try:
 except:
     print "Warning: MQTT Paho NOT imported - run sudo pip install paho-mqtt"
     pass
-
+        
+   
+gpg = None
 try:
-    import sgh_unicornhat as UH
+    import gopigo3 as GoPiGo3
+    gpg = GoPiGo3.GoPiGo3()    
+    print "importing GoPiGo3"
 except:
-    print "Warning: UnicornHAT NOT imported - probaly not installed"
+    print "GoPiGo3 not imported"
     pass
+    
+UH = None
+if gpg is None:
+    try:
+        import sgh_unicornhat as UH
+        print "importing unicornhat/neopixel support"
+    except:
+        print "Warning: UnicornHAT NOT imported - probaly not installed"
+        pass
+#except:
+#print "Warning: GoPiGO3 not imported"
+#pass   
+    
+SH = None
+try:
+    from sense_hat import SenseHat
+    SH = SenseHat()
+    print "importing SenseHAT"
+except:
+    print "Warning: sense hat not imported"
+    pass  
+    
+  
 
 sghCT = None  # reserve for captouch
 
@@ -705,7 +755,7 @@ class ScratchSender(threading.Thread):
 
         if ("fishdish" in ADDON):
             sensor_name = "switch"
-            sensorValue = ("on", "off")[value == 1]
+            sensorValue = ("on", "off")[value == 0]
 
         if ("traffichat" in ADDON):
             sensor_name = "switch"
@@ -794,11 +844,12 @@ class ScratchSender(threading.Thread):
             # print "how many millisecs since last loop", (loopTime * 1000)
             if loopTime < self.sleepTime:
                 sleepdelay = self.sleepTime - loopTime
-                # print "add in sleep of milliesec:",(sleepdelay) * 1000
+                #print "add in sleep of milliesec:",(sleepdelay) * 1000
                 time.sleep(sleepdelay)  # be kind to cpu  :)
-                tick += 1
-                if tick == sys.maxint:
-                    tick = 0
+            tick += 1
+            #print "tick count",time.time(),tick
+            if tick == sys.maxint:
+                tick = 0
             lastTimeSinceLastSleep = time.time()
 
             # print "before lock"
@@ -1255,6 +1306,50 @@ class ScratchSender(threading.Thread):
                         sensor_str += '"%s" %s ' % (sensor_name, sensor_value)
                     if sensor_str != "":
                         msgQueue.put((0, "sensor-update " + sensor_str))
+                        
+            if "sensehat" in ADDON:
+                if tick % 5 == 0:
+                    sensor_str = ""
+                    sensor_str += '"%s" %s ' % ("temp", '%.1f' % SH.get_temperature())        
+                    sensor_str += '"%s" %s ' % ("humidity",  '%.1f' % SH.get_humidity())   
+                    sensor_str += '"%s" %s ' % ("pressure",  '%.1f' % SH.get_pressure())
+                    sensorList = SH.get_accelerometer_raw()
+                    sensor_str += '"%s" %s ' % ("accelX",  '%.2f' % sensorList["x"])       
+                    sensor_str += '"%s" %s ' % ("accelY",  '%.2f' % sensorList["y"])    
+                    sensor_str += '"%s" %s ' % ("accelZ",  '%.2f' % sensorList["z"])
+                    sensorList = SH.get_gyroscope_raw()
+                    sensor_str += '"%s" %s ' % ("gyroX",  '%.2f' % sensorList["x"])       
+                    sensor_str += '"%s" %s ' % ("gyroY",  '%.2f' % sensorList["y"])    
+                    sensor_str += '"%s" %s ' % ("gyroZ",  '%.2f' % sensorList["z"])
+                    sensor_str += '"%s" %s ' % ("compass",  '%.1f' % SH.get_compass())                  
+                    if sensor_str != "":
+                        msgQueue.put((0, "sensor-update " + sensor_str))
+                        
+            if "clevercard" in ADDON:
+                if reader is not None:
+                    if tick % 10 == 0:   
+                        cardid,cardtext = reader.read_no_block()
+                        
+                        if cardid:
+                            print "cardid",cardid
+                            sensor_str = '"%s" %s ' % ("tag_near",  "true")
+                            sensor_str += '"%s" %s ' % ("tag_number",  cardid)
+                            if cardtext:
+                                if ord(cardtext[0]) != 0: #1st byte is zero if empty
+                                    print len(cardtext),"card:",cardtext,":card"
+                                    print '"' + cardtext + '"'
+                                    sensor_str += '"%s" %s ' % ("tag_text",  ('"' + cardtext.strip() + '"')) 
+                                else:
+                                    sensor_str += '"%s" %s ' % ("tag_text",  '""')
+                        else:
+                            sensor_str = '"%s" %s ' % ("tag_near",  "false")
+                        
+                        msgQueue.put((0, "sensor-update " + sensor_str))
+                            
+                        
+
+
+                    
 
         print "Sender Stopped"
 
@@ -1854,6 +1949,8 @@ class ScratchListener(threading.Thread):
                 float(self.tcolours[textColour][2]))
         elif textColour == "random":
             self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours[random.choice(self.tcolours.keys())]
+            while (self.matrixRed + self.matrixGreen + self.matrixBlue) == 0:
+                self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours[random.choice(self.tcolours.keys())]   
         elif textColour == "invert":
             self.matrixRed, self.matrixGreen, self.matrixBlue = (255 - self.matrixRed), (255 - self.matrixGreen), ( 255 - self.matrixBlue)
         elif textColour == "off":
@@ -1885,9 +1982,9 @@ class ScratchListener(threading.Thread):
         elif "sensehat" not in ADDON:
             UH.show()
 
-    def matrixWrite(self, text, R, G, B):
+    def matrixWrite(self, text,capstxt, R, G, B):
         if "sensehat" in ADDON:
-            SH.show_message(self.value, text_colour=(R, G, B))
+            SH.show_message(self.rtnCAPS(self.value,capstxt), text_colour=(R, G, B))
 
     def matrixBright(self, level):
         # print "level", level
@@ -1927,7 +2024,8 @@ class ScratchListener(threading.Thread):
         else:
             UH.brightness(level)
 
-    def neoProcessing(self, ADDON, UH=None):
+    def neoProcessing(self, ADDON, UH=None,SH=None):
+        global datawithCAPS
         # print
         # print "neostart"
         listenLoopTime = time.time()
@@ -1938,9 +2036,9 @@ class ScratchListener(threading.Thread):
         if "playhat" in ADDON:
             ADDON = ADDON + " neopixels9"
 
-        if "sensehat" in ADDON:
-            from sense_hat import SenseHat
-            SH = SenseHat()
+#        if "sensehat" in ADDON:
+#            from sense_hat import SenseHat
+#            SH = SenseHat()
 
         if ("neopixels" in ADDON):
             self.matrixUse = int(rtnNumeric(ADDON[9 + ADDON.index('neopixels'):], 64))
@@ -2014,7 +2112,7 @@ class ScratchListener(threading.Thread):
             #print "rgb", self.matrixRed, self.matrixGreen, self.matrixBlue
             # print self.tcolours
             
-
+        ###################### Pixel strips
         if ("neopixels" in ADDON) or ("piconzero" in ADDON):
             #print "processing neopixels",self.dataraw
 
@@ -2380,15 +2478,14 @@ class ScratchListener(threading.Thread):
                 self.neoShow()
                 self.matrixBright(sghGC.ledDim / 100.0)
 
-
+        ############### Matrices
         elif ("unicorn" in ADDON or "sensehat" in ADDON):
-            ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
+            ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on', 'black',
                           'invert', 'random']
 
-            if self.tcolours is None:  # only define dictionary on first pass
-                self.tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
+            self.tcolours = {'red': (255, 0, 0), 'green': (0, 255, 0), 'blue': (0, 0, 255),
                                  'cyan': (0, 255, 255), 'magenta': (255, 0, 255), 'yellow': (255, 255, 0),
-                                 'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255),
+                                 'white': (255, 255, 255), 'off': (0, 0, 0), 'on': (255, 255, 255), 'black': (0,0, 0), 
                                  'invert': (0, 0, 0)}
             if self.bFind("pixelson"):
                 for y in range(0, 8):
@@ -2396,11 +2493,22 @@ class ScratchListener(threading.Thread):
                         self.matrixSetPixel(x, y, self.matrixRed, self.matrixGreen, self.matrixBlue)
                 self.neoShow()
 
-            if self.bFind("pixelsoff"):
+            elif self.bFind("pixelsoff"):
                 for y in range(0, 8):
                     for x in range(0, 8):
                         self.matrixSetPixel(x, y, 0, 0, 0)
                 self.neoShow()
+            elif self.bFindValue("pixels"):
+                pixelProcessed = False
+                for ledcolour in self.tcolours:
+                    if self.bFind("pixels" + ledcolour):
+                        self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(ledcolour)
+                        for y in range(0, 8):
+                            for x in range(0, 8):
+                                self.matrixSetPixel(x, y, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        self.neoShow()
+                        pixelProcessed = True                 
+            
 
             if self.bFindValue("sweep"):
                 print "sweep"
@@ -2410,7 +2518,7 @@ class ScratchListener(threading.Thread):
                         self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                             ledcolours[random.randint(0, 6)], (0, 0, 0))
                         if self.value in ledcolours:
-                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(self.value, (0, 0, 0))
+                            self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(self.value, (64,64,64))
                         for yy in range(0, self.matrixLimit):
                             for xx in range(0, self.matrixLimit):
                                 self.matrixSetPixel((xm * self.matrixMult) + xx,
@@ -2420,7 +2528,7 @@ class ScratchListener(threading.Thread):
                         time.sleep(0.05)  # delay during sweep
 
             if self.bFindValue("write"):
-                self.matrixWrite(self.value, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                self.matrixWrite(self.value,datawithCAPS, self.matrixRed, self.matrixGreen, self.matrixBlue)
 
             if self.bFindValue("originx"):
                 self.originX = min(max(int(self.valueNumeric), 0), 7) if self.valueIsNumeric else 0
@@ -2432,14 +2540,21 @@ class ScratchListener(threading.Thread):
                 # print "pixel"
                 pixelProcessed = False
                 # Check for pixel x,y,colour
+                # print self.tcolours
+                #for ledcolour in ledcolours:
+                #    if (self.bFindValue("pixel", ledcolour)):
+                #        print "ledfound:",ledcolour
                 for ym in range(0, self.matrixRangemax):
                     for xm in range(0, self.matrixRangemax):
                         for ledcolour in ledcolours:
-                            if (self.bFindValue("pixel", ledcolour) and (
-                                        self.value == (str(xm) + "," + str(ym)))):
-                                # print "1st catch,xm,ym", xm, ym
+                            if (self.bFindValue("pixel", ledcolour) and ((
+                                        self.value == (str(xm) + "," + str(ym))) or (
+                                        self.value == (str(xm) + "," + str(ym) + ",")))):
+                                #print "1st catch,xm,ym", xm, ym,ledcolour
                                 self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
-                                    ledcolour, (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                                    ledcolour, (64, 64, 64))
+                                    
+                                #print "rgb:",self.matrixRed, self.matrixGreen, self.matrixBlue
                                 if ledcolour == 'random':
                                     self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                                         ledcolours[random.randint(0, 6)], (64, 64, 64))
@@ -2472,8 +2587,8 @@ class ScratchListener(threading.Thread):
                     if ("xxxxxxx" + fullvalue)[-7] == "#":
                         for ym in range(0, self.matrixRangemax):
                             for xm in range(0, self.matrixRangemax):
-                                if (self.bFindValue("pixel", fullvalue[-7:]) and (
-                                            self.value == (str(xm) + "," + str(ym)))):
+                                if (self.bFindValue("pixel", fullvalue[-7:]) and ((
+                                            self.value == (str(xm) + "," + str(ym))) or (self.value == (str(xm) + "," + str(ym) + ",")))):
                                     # print "led,self.value",led,self.value
                                     try:
                                         c = (fullvalue[-7:] + "00000000")[0:7]
@@ -2894,6 +3009,24 @@ class ScratchListener(threading.Thread):
         # self.dataraw = origdataraw
 
         ADDON = oldADDON  # restore after possible parthat use
+        
+    def rtnCAPS(self,txt,capstxt):
+        #print "caps:",capstxt
+        oldpos = []
+        nospaces = ""
+        for loop in range(len(capstxt)):
+            if capstxt[loop] != " ":
+                oldpos.append(loop)
+                nospaces += capstxt[loop]
+        #print "oldpos:",oldpos
+        #print "nospaces:",nospaces
+        matchpos = nospaces.lower().find(txt)
+        if matchpos > -1:
+            origpos = oldpos[matchpos]
+            endpos = origpos + capstxt[origpos:].find('"') 
+            return capstxt[origpos:endpos]   
+        else:
+            return txt
 
         # print
         # print "neoend", time.time() - listenLoopTime
@@ -6052,10 +6185,10 @@ class ScratchListener(threading.Thread):
 
                     elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
                         "sensehat" in ADDON):  # Matrix or neopixels connected
-                        self.neoProcessing(ADDON, UH)
-                        bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
+                        self.neoProcessing(ADDON, UH,SH)
+                        #bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
                         # print 'sending: %s' % bcast_str
-                        msgQueue.put((5, bcast_str))                        
+                        #msgQueue.put((5, bcast_str))                        
 
                     elif "piandbash" in ADDON:
                         if self.bFindOnOff('all'):
@@ -6179,7 +6312,20 @@ class ScratchListener(threading.Thread):
                                 pz.setInputConfig(pin,0)
                     
                        
-
+                    elif "gopigo3" in ADDON:   
+                        print "gopigo3 found"
+                        if self.bFindValue("ledl"):
+                            svalue = min(255, max(0, int(self.valueNumeric))) if self.valueIsNumeric else 0         
+                            if svalue == 255:
+                                gpg.set_led(gpg.LED_BLINKER_LEFT,255)
+                            else:
+                                gpg.set_led(gpg.LED_BLINKER_LEFT,0)                                
+                        if self.bFindValue("ledr"):
+                            svalue = min(255, max(0, int(self.valueNumeric))) if self.valueIsNumeric else 0         
+                            if svalue == 255:
+                                gpg.set_led(gpg.LED_BLINKER_RIGHT,255)
+                            else:
+                                gpg.set_led(gpg.LED_BLINKER_RIGHT,0)                                
 
                     else:  # Plain GPIO Broadcast processing
 
@@ -6698,6 +6844,10 @@ class ScratchListener(threading.Thread):
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(temperature))
                         msgQueue.put((5, bcast_str))
 
+                    if self.bFindValue("ledscrollstring"):
+                        #print datawithCAPS
+                        SH.show_message(self.rtnCAPS(self.value,datawithCAPS))
+                        
                     if self.bFind("gethumidity"):  # find temp address
                         humidty = ""
                         if "sensehat" in ADDON:
@@ -7196,22 +7346,21 @@ class ScratchListener(threading.Thread):
                                 cheerList = cheerlights.get_colours()
                             except:
                                 print "cheerlight error"
-                                cheerList = ['error']
+                                cheerList = ['white']
                                 pass
                         # print cheerList
-                        cheerColour = cheerList[0] #  only return last colour lookupColour - 1]
+                        cheerColour = cheerList[lookupColour - 1]
 
                         #print "new colour", cheerColour
-                        if cheerColour != "error":
-                            bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
-                            msgQueue.put((5, bcast_str))
-                            # print "timE:" , time.time() - cheertime
-                            # if self.carryOnInUse == True:
-                                # bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
-                                # msgQueue.put((1, bcast_str))
-                                # print "carryon true"
-                                # time.sleep(2)
-                                # # print "data valid", time.time()
+                        bcast_str = 'sensor-update "%s" %s' % ("cheerlights", cheerColour)
+                        msgQueue.put((5, bcast_str))
+                        # print "timE:" , time.time() - cheertime
+                        # if self.carryOnInUse == True:
+                            # bcast_str = 'sensor-update "%s" %s' % ("carryon", "true")
+                            # msgQueue.put((1, bcast_str))
+                            # print "carryon true"
+                            # time.sleep(2)
+                            # # print "data valid", time.time()
 
                     if self.bFindValue("getweather"):
                         params = self.value.split(',')
@@ -7503,6 +7652,12 @@ class ScratchListener(threading.Thread):
                             self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
                         sghGC.stepperAPos = self.stepperArm.ElbowPos   
                         print "currPos" , self.stepperArm.getPos()                        
+                    if self.bFindValue("writecard"):  
+                        if reader is not None:
+                            #print
+                            #print "val:",self.value
+                            cardid,cardtext = reader.write(self.rtnCAPS(self.value,datawithCAPS))
+                            print cardid,cardtext
 
                     # end of broadcast check
 
@@ -7705,6 +7860,7 @@ sghGC = sgh_GPIOController.GPIOController(True)
 print "pi Revision", sghGC.getPiRevision()
 
 ADDON = ""
+datawithCAPS = ""
 logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)  # default DEBUG - quiwr = INFO
 
 logging.basicConfig(format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -7963,6 +8119,12 @@ while True:
             print "uhclean done"
         except:
             pass
+        try:
+            gpg.reset_all() 
+            print "gpg reset"
+            # we want the gopigo3 to stop if gopigo3Scratch.py crashes
+        except:
+            pass            
         sys.exit()
         print "CleanUp complete"
 
