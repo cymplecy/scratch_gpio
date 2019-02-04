@@ -130,7 +130,7 @@ class S(BaseHTTPRequestHandler):
         else:
             #print "SENSORDICT:" + str(sensorDict)
             #Deal with equivalent of Scratch 1.4 sensor updates
-            message = message[5:]
+            message = message[5:].replace(' ','').lower()
             if message in sensorDict:
                 response = '{"result":"' + sensorDict[message] +'"}'
                 print "Response to Scratch:" + response
