@@ -13,8 +13,19 @@ cp $HOME/sghdev/scratch_gpio/nunchuck.py $HOME/sghdev/scratch_gpio/installer/pay
 cp $HOME/sghdev/scratch_gpio/meArm.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/kinematics.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/dht11.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/wstosgh.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/websocket_server.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/sgh_piGPIOExtension.js $HOME/sghdev/scratch_gpio/installer/payload
+
+cp $HOME/sghdev/scratch_gpio/dot.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/btcomm.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/app.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/mock.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/threads.py $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/utils.py $HOME/sghdev/scratch_gpio/installer/payload
 
 cp $HOME/sghdev/scratch_gpio/sgh_*.py $HOME/sghdev/scratch_gpio/installer/payload
+
 cp $HOME/sghdev/scratch_gpio/S3GPIOServer.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/ca.* $HOME/sghdev/scratch_gpio/installer/payload
 

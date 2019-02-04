@@ -82,6 +82,17 @@ cp kinematics.py $RDIR/scratchgpio${SGHVER}
 cp piconzero.py $RDIR/scratchgpio${SGHVER}
 cp dht11.py $RDIR/scratchgpio${SGHVER}
 
+cp wstosgh.py $RDIR/scratchgpio${SGHVER}
+cp websocket_server.py $RDIR/scratchgpio${SGHVER}
+cp sgh_piGPIOExtension.js $RDIR/scratchgpio${SGHVER}
+
+cp dot.py $RDIR/scratchgpio${SGHVER}
+cp btcomm.py $RDIR/scratchgpio${SGHVER}
+cp app.py $RDIR/scratchgpio${SGHVER}
+cp mock.py $RDIR/scratchgpio${SGHVER}
+cp threads.py $RDIR/scratchgpio${SGHVER}
+cp utils.py $RDIR/scratchgpio${SGHVER}
+
 cp sgh_*.py $RDIR/scratchgpio${SGHVER}
 
 cp ./mcpi/* $RDIR/scratchgpio${SGHVER}/mcpi
