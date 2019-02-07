@@ -8,7 +8,7 @@ sudo pkill -f S3GPIOServer
 cd /opt/scratchgpio8
 sudo python scratchgpio_handler8.py &
 sudo python S3GPIOServer.py &
-chromium-browser --start-maximized --load-extension=S3GPIOExtension https://scratch.mit.edu/projects/285105924
+chromium-browser --start-maximized --load-extension=S3GPIOExtension https://scratch.mit.edu/projects/285105924 "https://localhost/translate?language=fr&text=[Test]"
 sudo pkill -f scratchgpio_handler
 #sudo pkill -f S3GPIOServer
 
