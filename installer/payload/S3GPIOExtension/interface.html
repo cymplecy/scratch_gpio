@@ -1,0 +1,28 @@
+<html>
+	<head>
+		<link rel="stylesheet" type="text/css" href="interface.css">
+		<title>S3GPIO</title>
+	</head>
+	<body>
+		<h4>S3GPIO lets you control lights, motors, sensors, switches and HATs connected to the GPIO pins on a Raspberry Pi from Scratch3 via ScratchGPIO.</h4>
+		<p>
+            <input name="enable-box" id="enable-box" type="checkbox" />
+            <label for="enable-box">Enable S3GPIO</label>
+        </p>
+        <p>
+            <table>
+                <tr>
+                    <td><label for="host-ip">Host:</label></td>
+                    <td><input name="host-ip" id="host-ip" type="text" value="localhost" /></td>
+                </tr>
+                <tr id="reset-row">
+                    <td colspan="2"><button id="reset-ip">Reset to Default</button></td>
+                </tr>
+            </table>
+        </p>
+        <p>
+            Chrome extension by <a href="#" id="fergusondavid6-link">David Ferguson</a>
+        </p>
+		<script src="interface.js"></script>
+	</body>
+</html>

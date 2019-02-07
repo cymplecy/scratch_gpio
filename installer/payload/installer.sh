@@ -69,6 +69,7 @@ rm -rf $RDIR/scratchgpio${SGHVER}
 
 mkdir -p $RDIR/scratchgpio${SGHVER}
 mkdir -p $RDIR/scratchgpio${SGHVER}/mcpi
+mkdir -p $RDIR/scratchgpio${SGHVER}/S3GPIOExtension
 
 #chown -R $RUSERID:$RGROUPID $HDIR/scratchgpio${SGHVER}
 
@@ -98,6 +99,14 @@ cp sgh_*.py $RDIR/scratchgpio${SGHVER}
 cp ./mcpi/* $RDIR/scratchgpio${SGHVER}/mcpi
 cp S3GPIOServer.py $RDIR/scratchgpio${SGHVER}
 cp ca.* $RDIR/scratchgpio${SGHVER}
+
+cp ./S3GPIOExtension/* $RDIR/scratchgpio${SGHVER}/S3GPIOExtension
+chmod 777 $RDIR/scratchgpio${SGHVER}/S3GPIOExtension/*
+#Different approach to other orig ScratchGPIO icons
+cp s3gpiobeta1.sh $RDIR/scratchgpio${SGHVER}
+chmod +x $RDIR/scratchgpio${SGHVER}/s3gpiobeta1.sh
+cp S3GPIOBeta1.desktop $HDIR/Desktop
+
 
 #chown -R $USERID:$GROUPID $RDIR/scratchgpio${SGHVER}
 chmod +x sgh_servod

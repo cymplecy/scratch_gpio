@@ -1,0 +1,21 @@
+body {
+    width: 250px;
+    padding: 6px;
+}
+
+input {
+    margin-right:3px;
+}
+
+table {
+    font-size: 12px;
+    width: 100%;
+}
+
+#host-ip {
+    width: 100%;
+}
+
+#reset-row {
+    text-align: right;
+}
