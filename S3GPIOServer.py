@@ -18,9 +18,9 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-# Last Modified
-# 30Jan19 11:55
+
 # Tidied up a lot
+Version = "RC1_01Mar2019"
 
 #import BaseHTTPServer, SimpleHTTPServer
 import ssl
@@ -36,7 +36,23 @@ import struct
 import threading
 import urllib
 
-sensorDict = {}
+sensorDict = {"s3gpioversion":Version}
+
+def broadcast_to_sgh(dataOut):
+    #dataOut = 'broadcast "'  + command + '"'
+    n = len(dataOut)
+    b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
+    sghConnection.send(b + dataOut)
+    print "Data sent to sgh", dataOut
+    
+def isJSON(data):
+    try:
+        json.loads(data)
+        return True
+    except ValueError as error:
+        print("invalid json: %s" % error)
+        return False
+
 
 def rcv_from_sgh():
     global sghSocket,sghConnection,server,sensorDict
@@ -101,48 +117,93 @@ class S(BaseHTTPRequestHandler):
         print "GET: ", self.path
         if self.path == "/favicon.ico":
             return
-        splitData = urllib.unquote(self.path).split('&text=[')
+        splitData = urllib.unquote(self.path).split('&text=',1)
         print "split: " , splitData
-        message = splitData[1]
-        if message[-1] == "]":
-            message = message[:-1]
-        
-        print "MESSAGE: ", message
-        dataOut = 'broadcast "'  + message + '"'
-        #print "len:", len(splitData)
-        # Deal with equivalent of Scratch 1.4 variable changing for AddOn and Motors etc
-        
-        if message[0:4] == "set:":
-            message = message[4:]
-            sMessage = message.split(':')
-            if len(sMessage) > 1:
-                dataOut = 'sensor-update "' + sMessage[0] +'" "' + sMessage[1] + '"'
-            else:
-                dataOut = 'sensor-update "' + message + '"'
-            
-        if message[0:5] != "read:":
-            n = len(dataOut)
-            b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
-            sghConnection.send(b + dataOut)
-            print "Data sent to sgh", dataOut
-            response = {"result":"Command processed"}
-            self.wfile.write(json.dumps(response))
+        message = ""
+        if len(splitData) > 1:
+            message = splitData[1]
         else:
-            #print "SENSORDICT:" + str(sensorDict)
-            #Deal with equivalent of Scratch 1.4 sensor updates
-            message = message[5:].replace(' ','').lower()
-            if message in sensorDict:
-                response = '{"result":"' + sensorDict[message] +'"}'
-                print "Response to Scratch:" + response
-                self.wfile.write(response)
-            elif message == "all":
-                response = '{"result":"' + str(sensorDict) +'"}'
-                print "Response to Scratch:" + response
-                self.wfile.write(response)
+            response = {"result":"invalid request made"}
+            self.wfile.write(json.dumps(response))
+            return
+        
+        print "isJSON", isJSON(message)
+        messageKey = None
+        messageValue = None
+        if isJSON(message):
+            jsonMessage = json.loads(message)
+            print "jdict", jsonMessage
+            messageKey = jsonMessage.keys()[0].lower().replace(" ","")
+            messageValue= jsonMessage[messageKey]
+            print "messageKey", messageKey
+            print "messageValue", messageValue
+        else:
+            print "doing own parsing"
+            if len(message) > 0:
+                if (message[0] == "[") and (message[-1] == "]"):
+                    message = message[1:-1]
+                elif (message[0] == "[") and (message[-1] <> "]"):
+                    message = message[1:]
+                split1 = message.split(":",1)
+                print "split1: ", split1
+                if len(split1) == 2:
+                    messageKey = split1[0].lower().replace(" ","")
+                    messageValue = split1[1]
+                    print "messageKey", messageKey
+                    print "messageValue", messageValue
+
+        if messageKey != None:
+            sghMessage = None
+            if messageKey == "s3gpiocommand":
+                sghMessage = 'broadcast "'  + messageValue + '"'
+                broadcast_to_sgh(sghMessage)
+                response = {"result":"Command processed"}
+                self.wfile.write(json.dumps(response))
+                return
+            elif messageKey == "s3gpioset":
+                sMessage = messageValue.split(':',1)
+                if len(sMessage) > 1:
+                    sghMessage = 'sensor-update "' + sMessage[0] +'" "' + sMessage[1] + '"'
+                else:
+                    sghMessage = 'sensor-update "' + message + '"'
+                broadcast_to_sgh(sghMessage)
+                response = {"result":"Command processed"}
+                self.wfile.write(json.dumps(response))
+                return
+            elif messageKey == "s3gpioread":
+                print "SENSORDICT:" + str(sensorDict)
+                messageValue = messageValue.lower().replace(" ","")
+                if messageValue in sensorDict:
+                    response = '{"result":"' + sensorDict[messageValue] +'"}'
+                    print "Response to Scratch:" + response
+                    self.wfile.write(response)
+                    return
+                elif messageValue == "all":
+                    response = '{"result":"' + str(sensorDict) +'"}'
+                    print "Response to Scratch:" + response
+                    self.wfile.write(response)
+                    return
+                else:
+                    response = '{"result":"' + 'read value not recognised' +'"}'
+                    print "Response to Scratch:" + response
+                    self.wfile.write(response)
+                    return
+            #Add in extra processing code here to handle other mesageKeys
+            #elif messageKey == "xxxxxxx"
+            #    response = '{"result":"' + 'your return value' +'"}'
+            #    print "Response to Scratch:" + response
+            #    self.wfile.write(response)
+            #    return
             else:
-                response = '{"result":"' + 'error' +'"}'
+                response = '{"result":"' + 'command not recognised' +'"}'
                 print "Response to Scratch:" + response
                 self.wfile.write(response)
+                return
+        else:
+            response = '{"result":"' + 'no value received' +'"}'
+            print "Response to Scratch:" + response
+            self.wfile.write(response)
+            return
 
 
 
@@ -151,8 +212,7 @@ class S(BaseHTTPRequestHandler):
         self._set_headers()
         parsed_path = urlparse.urlparse(self.path)
         request_id = parsed_path.path
-        #response = subprocess.check_output(["python", request_id])
-        #self.wfile.write(json.dumps(response))
+
 
     def do_HEAD(self):
         self._set_headers()
@@ -161,11 +221,11 @@ class S(BaseHTTPRequestHandler):
         self.sendResponse(200)
         self.processRequest()
 
-def run(server_class=HTTPServer, handler_class=S, port=443):
+def run(server_class=HTTPServer, handler_class=S, port=80):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    httpd.socket = ssl.wrap_socket (httpd.socket, certfile='./ca.pem', server_side=True)
-    print 'Starting https webserver...'
+    #httpd.socket = ssl.wrap_socket (httpd.socket, certfile='./ca.pem', server_side=True)
+    print 'Starting webserver...'
     httpd.serve_forever()
 
 #Setup communication to scratchgpio_handler
@@ -178,6 +238,11 @@ sghSocket.listen(5) #Wait for the client connection
 print "trying to listen to scratchGPIO_handler"
 sghConnection,addr = sghSocket.accept() #Establish a connection with the client
 print "Got connection from ScratchGPIOHandler", addr
+
+#pre-seed some sensor values
+broadcast_to_sgh('broadcast "get ip"')
+broadcast_to_sgh('broadcast "version"')
+
 
 #Start thread to listen to data coming from scratchgpio_handler
 listen_to_sgh = threading.Thread(name='rcv_from_sgh', target=rcv_from_sgh)

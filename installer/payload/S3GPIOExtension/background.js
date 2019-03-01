@@ -18,13 +18,13 @@ chrome.webRequest.onBeforeRequest.addListener(function (details) {
     var text = (new URLSearchParams(url)).get("text")
     var language = (new URLSearchParams(url)).get("language")
 
-    if (enabled && text.startsWith('[')) {
+    if (enabled && (text.startsWith('[') || text.startsWith('{') || text.startsWith('%'))) {
         // proxy this request to a url of our choosing
         var ip = localStorage.getItem('ip')
         text = encodeURIComponent(text)
         language = encodeURIComponent(language)
         return {
-            redirectUrl: 'https://' + ip + '/translate?language=' + language + '&text=' + text
+            redirectUrl: 'http://' + ip + '/translate?language=' + language + '&text=' + text
         }
     }
         // do nothing (ie. continue the request) if [ isn't the first char

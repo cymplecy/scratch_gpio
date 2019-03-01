@@ -19,11 +19,7 @@ document.getElementById('host-ip').addEventListener('change', function () {
     localStorage.setItem('ip', document.getElementById('host-ip').value)
 })
 
-// when you click links, open link in new tab (as links don't work normally)
-document.getElementById('simplesi-link').addEventListener('click', function () {
-    var url = 'http://twitter.com/cymplecy'
-    chrome.tabs.create({url})
-})
+
 document.getElementById('fergusondavid6-link').addEventListener('click', function () {
     var url = 'https://github.com/davidferguson'
     chrome.tabs.create({url})

@@ -29,8 +29,7 @@ cp $HOME/sghdev/scratch_gpio/sgh_*.py $HOME/sghdev/scratch_gpio/installer/payloa
 
 cp $HOME/sghdev/scratch_gpio/S3GPIOServer.py $HOME/sghdev/scratch_gpio/installer/payload
 cp $HOME/sghdev/scratch_gpio/ca.* $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/S3GPIOBeta1.desktop $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/s3gpiobeta1.sh $HOME/sghdev/scratch_gpio/installer/payload
+
 
 rm -rf $HOME/sghdev/scratch_gpio/installer/payload/mcpi
 mkdir -p $HOME/sghdev/scratch_gpio/installer/payload/mcpi
@@ -39,6 +38,9 @@ cp $HOME/sghdev/scratch_gpio/mcpi/* $HOME/sghdev/scratch_gpio/installer/payload/
 rm -rf $HOME/sghdev/scratch_gpio/installer/payload/S3GPIOExtension
 mkdir -p $HOME/sghdev/scratch_gpio/installer/payload/S3GPIOExtension
 cp $HOME/sghdev/scratch_gpio/S3GPIOExtension/* $HOME/sghdev/scratch_gpio/installer/payload/S3GPIOExtension
+
+cp $HOME/sghdev/scratch_gpio/S3GPIORC1.desktop $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/s3gpiorc1.sh $HOME/sghdev/scratch_gpio/installer/payload
 
 cd $HOME/sghdev/scratch_gpio/installer/payload
 tar -cf ../payload.tar ./* #tar all the payload files
