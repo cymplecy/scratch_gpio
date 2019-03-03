@@ -103,9 +103,9 @@ cp ca.* $RDIR/scratchgpio${SGHVER}
 cp ./S3GPIOExtension/* $RDIR/scratchgpio${SGHVER}/S3GPIOExtension
 chmod 777 $RDIR/scratchgpio${SGHVER}/S3GPIOExtension/*
 #Different approach to other orig ScratchGPIO icons
-cp s3gpiorc1.sh $RDIR/scratchgpio${SGHVER}
+cp s3gpio.sh $RDIR/scratchgpio${SGHVER}
 chmod +x $RDIR/scratchgpio${SGHVER}/s3gpiorc1.sh
-cp S3GPIORC1.desktop $HDIR/Desktop
+cp S3GPIO.desktop $HDIR/Desktop
 
 
 #chown -R $USERID:$GROUPID $RDIR/scratchgpio${SGHVER}

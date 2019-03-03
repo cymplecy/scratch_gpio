@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_18Jan19'  # bug fix matrix use for unicornhat 
+Version = 'v8_3Mar19'  # set stepper to default to half-step
 
 import threading
 import socket
@@ -1715,9 +1715,9 @@ class ScratchListener(threading.Thread):
     def stopped(self):
         return self._stop.isSet()
 
-    def stepperUpdate(self, pins, value, steps=2123456789, stepDelay=0.003):
+    def stepperUpdate(self, pins, value, steps=2123456789, stepDelay=0.0013):
     # Try and update stepper - if fail assume 1st time called and setup stepper and start
-        print "pin" , pins , "speed" , value, "steps", steps
+        print "pin" , pins , "speed" , value, "steps", steps, stepDelay
         # print "Stepper type", sgh_Stepper.sghStepper, "this one", type(sghGC.pinRef[pins[0]])
         try:
             #print "StepperFinishedMoving Normal", sghGC.pinRef[pins[0]].finishedMoving[pins[0]]
@@ -3059,6 +3059,7 @@ class ScratchListener(threading.Thread):
         self.stepperArm = None        
         pnblcd = None
         cheerList = None
+        step_delay = 1.0013
 
         if not GPIOPlus:
             with lock:
@@ -7274,19 +7275,19 @@ class ScratchListener(threading.Thread):
                     if '1coil' in dataraw:
                         print "1coil broadcast"
                         stepType = 0
-                        print "step mode", stepMode[stepType]
+                        #print "step mode", stepMode[stepType]
                         step_delay = 0.0025
 
                     if '2coil' in dataraw:
                         print "2coil broadcast"
                         stepType = 1
-                        print "step mode", stepMode[stepType]
+                        #print "step mode", stepMode[stepType]
                         step_delay = 0.0025
 
                     if 'halfstep' in dataraw:
                         print "halfstep broadcast"
                         stepType = 2
-                        print "step mode", stepMode[stepType]
+                        #print "step mode", stepMode[stepType]
                         step_delay = 0.0013
 
                     if "version" in dataraw:

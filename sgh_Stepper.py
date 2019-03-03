@@ -16,7 +16,7 @@
 #along with this program; if not, write to the Free Software
 #Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-Version =  '0.1.1' # 15Feb17
+Version =  '2Mar19'#stepper default changed to halfstep
 
 import time
 import threading
@@ -27,9 +27,10 @@ import math
 
 #----------------------------- STEPPER CONTROL --------------
 class sghStepper(threading.Thread):
-    def __init__(self,sghGC,pins,step_delay=0.003,lstepMode = "2coil"):
+    def __init__(self,sghGC,pins,step_delay=0.0013,lstepMode = "halfstep"):
         self.BigNum = 2123456789
         self.step_delay = step_delay
+        print ("step delay",step_delay)
         self.lstepMode = lstepMode
         self.sghGC = sghGC
         self.stepperSpeed = 0 #stepp speed dset to 0 when thread created

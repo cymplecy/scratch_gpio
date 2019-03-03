@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Version=1.0
+Type=Application
+Exec=/opt/scratchgpio8/s3gpio.sh
+Icon=/opt/scratchgpio8/S3GPIOExtension/16x16.png
+Terminal=false
+Name=S3GPIO
+Comment=Programming system and content development tool
+Categories=Application;Education;Development;
+MimeType=application/x-scratch-project
+Name[en_GB]=S3GPIO

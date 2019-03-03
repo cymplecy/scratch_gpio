@@ -39,8 +39,8 @@ rm -rf $HOME/sghdev/scratch_gpio/installer/payload/S3GPIOExtension
 mkdir -p $HOME/sghdev/scratch_gpio/installer/payload/S3GPIOExtension
 cp $HOME/sghdev/scratch_gpio/S3GPIOExtension/* $HOME/sghdev/scratch_gpio/installer/payload/S3GPIOExtension
 
-cp $HOME/sghdev/scratch_gpio/S3GPIORC1.desktop $HOME/sghdev/scratch_gpio/installer/payload
-cp $HOME/sghdev/scratch_gpio/s3gpiorc1.sh $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/S3GPIO.desktop $HOME/sghdev/scratch_gpio/installer/payload
+cp $HOME/sghdev/scratch_gpio/s3gpio.sh $HOME/sghdev/scratch_gpio/installer/payload
 
 cd $HOME/sghdev/scratch_gpio/installer/payload
 tar -cf ../payload.tar ./* #tar all the payload files
