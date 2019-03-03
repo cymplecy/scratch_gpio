@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_3Mar19'  # set stepper to default to half-step
+Version = 'v8_3Mar19a'  # ultra updated for 2 pin use
 
 import threading
 import socket
@@ -6373,6 +6373,11 @@ class ScratchListener(threading.Thread):
                             if self.bFindValue('ultra' + str(pin) + " "): #altered to fix bug with ultra8 not being recognised but not tested on things like ultra32 yet
                                 print 'start pinging on', str(pin)
                                 self.startUltra(pin, pin, self.OnOrOff)
+                            elif self.bFindValue('ultra' + str(pin) + ","): #altered to fix bug with ultra8 not being recognised but not tested on things like ultra32 yet
+                                ultraEcho = int(self.value)
+                                print ("echopin:",ultraEcho)
+                                print ('start pinging on', str(pin) , " listen for echo on:",ultraEcho)
+                                self.startUltra(pin, ultraEcho, self.OnOrOff)
 
 
                                 # end of normal pin checking
