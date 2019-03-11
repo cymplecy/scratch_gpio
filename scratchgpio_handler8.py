@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_3Mar19a'  # ultra updated for 2 pin use
+Version = 'v8_3Mar19a'  # ultra further updated for 2 pin use to return two sensor values
 
 import threading
 import socket
@@ -397,12 +397,17 @@ class ultra(threading.Thread):
                 sensor_name = 'ultra'
             if "piconzero" in ADDON:
                 sensor_name = 'ultra'
-
             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
             # print 'sending: %s' % bcast_str
             msgQueue.put(((5, bcast_str)))
+            # send echo as well as trig pin update
+            if (self.pinTrig != self.pinEcho):
+                #print("two pin ultra")
+                sensor_name = 'ultra' + str(self.pinEcho)
+                bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
+                msgQueue.put(((5, bcast_str)))
             timeTaken = time.time() - startTime
-            # print "time taken:",timeTaken
+            #print "time taken:",timeTaken
             if timeTaken < sghGC.ultraFreq:
                 time.sleep(sghGC.ultraFreq - timeTaken)
         print "ultra run ended for pin:", self.pinTrig

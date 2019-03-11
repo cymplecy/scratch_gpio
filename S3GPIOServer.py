@@ -20,7 +20,7 @@
 
 
 # Tidied up a lot
-Version = "RC1_01Mar2019"
+Version = "1.0.1_11Mar2019" #Added in direct read of sensordict
 
 #import BaseHTTPServer, SimpleHTTPServer
 import ssl
@@ -126,7 +126,7 @@ class S(BaseHTTPRequestHandler):
             response = {"result":"invalid request made"}
             self.wfile.write(json.dumps(response))
             return
-        
+
         print "isJSON", isJSON(message)
         messageKey = None
         messageValue = None
@@ -151,6 +151,10 @@ class S(BaseHTTPRequestHandler):
                     messageValue = split1[1]
                     print "messageKey", messageKey
                     print "messageValue", messageValue
+                elif len(split1) == 1:
+                    print("no : in message")
+                    messageKey = "s3gpioread"
+                    messageValue = message.lower().replace(" ","")
 
         if messageKey != None:
             sghMessage = None
