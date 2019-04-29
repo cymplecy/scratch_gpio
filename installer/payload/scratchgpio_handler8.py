@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_3Mar19a'  # ultra further updated for 2 pin use to return two sensor values
+Version = 'v8_29Apr19'  # Add in PiBug support
 
 import threading
 import socket
@@ -397,6 +397,8 @@ class ultra(threading.Thread):
                 sensor_name = 'ultra'
             if "piconzero" in ADDON:
                 sensor_name = 'ultra'
+            if "pibug" in ADDON:
+                sensor_name = 'ultra'
             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
             # print 'sending: %s' % bcast_str
             msgQueue.put(((5, bcast_str)))
@@ -757,6 +759,16 @@ class ScratchSender(threading.Thread):
         elif "explorer" in ADDON:
             sensor_name = ["input1", "input2", "input3", "input4"][([16, 15, 18, 22].index(pin))]
             sensorValue = ("0", "1")[value == 1]
+        elif "pibug" in ADDON:
+            # print pin
+            try:
+                sensor_name = ["lineleft", "lineright", "switch"][([7, 13, 33].index(pin))]
+            except:
+                print "pibug input out of range"
+                sensor_name = "pin" + str(pin)
+                print sensor_name
+                pass
+            sensorValue = ("on", "off")[value == 1]            
 
         if ("fishdish" in ADDON):
             sensor_name = "switch"
@@ -2325,9 +2337,14 @@ class ScratchListener(threading.Thread):
 
                 #print "selfdata:", self.dataraw, "len:", len(self.dataraw)
                 #print "regex:", re.findall('pixel([0-9]+)',self.dataraw)# ([A-Za-z]+)', self.dataraw)
-                regresult = re.findall('pixel([0-9]+)', self.dataraw) # ([A-Za-z]+)', self.dataraw)
+                regresult = re.findall('pixel([0-9]+)', self.dataraw)# ([A-Za-z]+)', self.dataraw)
                 #print "reghex:", re.findall('/(0x)?[0-9a-f]+/i',self.dataraw)
-                
+                try:
+                    if int(regresult[0]) < 1:
+                        regresult = ['1']
+                except:
+                    regresult = ['1']
+                print ("regresult:" + str(regresult[0]))                    
                 if self.bFindValue("pixel", "invert"):
                     try:
                         gnp = self.getNeoPixel(int(self.valueNumeric - 1))
@@ -3842,6 +3859,18 @@ class ScratchListener(threading.Thread):
 
                                 print "Pizazz setup"
                                 anyAddOns = True
+                        if "pibug" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.pinUse[7] = sghGC.PINPUT  # LFLeft
+                                sghGC.pinUse[13] = sghGC.PINPUT  # LFRight
+                                sghGC.setPinMode()
+                                sghGC.motorUpdate(35, 37, 0)
+                                sghGC.motorUpdate(36, 40, 0)
+                                self.startUltra(38, 38, self.OnOrOff)
+
+                                print "PiBug setup"
+                                anyAddOns = True                                
                         if "simpie" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -4908,6 +4937,16 @@ class ScratchListener(threading.Thread):
                         motorList = [['motorr', 19, 21, 0], ['motorl', 24, 26, 0]]
                         # motorList = [['motora', 21, 19, 0, False], ['motorb', 26, 24, 0, False]]
                         # logging.debug("ADDON:%s", ADDON)
+
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+
+                    elif "pibug" in ADDON:
+                        logging.debug("Processing variables for PiBug") 
+                        motorList = [['motorl', 35, 37, 0], ['motorr', 36, 40, 0]]
 
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
