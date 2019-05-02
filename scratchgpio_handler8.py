@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_29Apr19'  # Add in PiBug support
+Version = 'v8_29Apr19'  # Add in Scooter support
 
 import threading
 import socket
@@ -399,6 +399,8 @@ class ultra(threading.Thread):
                 sensor_name = 'ultra'
             if "pibug" in ADDON:
                 sensor_name = 'ultra'
+            if "scooter" in ADDON:
+                sensor_name = 'ultra'                
             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
             # print 'sending: %s' % bcast_str
             msgQueue.put(((5, bcast_str)))
@@ -769,6 +771,18 @@ class ScratchSender(threading.Thread):
                 print sensor_name
                 pass
             sensorValue = ("on", "off")[value == 1]            
+        elif "scooter" in ADDON:
+            # print pin
+            try:
+                sensor_name = ["lineleft", "lineright", "switch"][([13, 16, 33].index(pin))]
+            except:
+                print "scooter input out of range"
+                sensor_name = "pin" + str(pin)
+                print sensor_name
+                pass
+            sensorValue = ("on", "off")[value == 1]
+            if sensor_name == "switch":
+                sensorValue = ("off", "on")[value == 1]
 
         if ("fishdish" in ADDON):
             sensor_name = "switch"
@@ -2052,6 +2066,8 @@ class ScratchListener(threading.Thread):
         oldADDON = ADDON
         if "playhat" in ADDON:
             ADDON = ADDON + " neopixels9"
+        if "scooter" in ADDON:
+            ADDON = ADDON + " neopixels4"
 
 #        if "sensehat" in ADDON:
 #            from sense_hat import SenseHat
@@ -3864,12 +3880,26 @@ class ScratchListener(threading.Thread):
                                 sghGC.resetPinMode()
                                 sghGC.pinUse[7] = sghGC.PINPUT  # LFLeft
                                 sghGC.pinUse[13] = sghGC.PINPUT  # LFRight
+                                sghGC.pinUse[33] = sghGC.PINPUT  # switch
                                 sghGC.setPinMode()
                                 sghGC.motorUpdate(35, 37, 0)
-                                sghGC.motorUpdate(36, 40, 0)
+                                sghGC.motorUpdate(36, 40, 0) 
                                 self.startUltra(38, 38, self.OnOrOff)
 
                                 print "PiBug setup"
+                                anyAddOns = True
+                        if "scooter" in ADDON:
+                            with lock:
+                                sghGC.resetPinMode()
+                                sghGC.pinUse[13] = sghGC.PINPUT  # LFLeft
+                                sghGC.pinUse[16] = sghGC.PINPUT  # LFRight
+                                sghGC.pinUse[33] = sghGC.PINPUTDOWN  # switch
+                                sghGC.setPinMode()
+                                sghGC.motorUpdate(35, 37, 0)
+                                sghGC.motorUpdate(40, 36, 0)
+                                self.startUltra(38, 38, self.OnOrOff)
+
+                                print "scooter setup"
                                 anyAddOns = True                                
                         if "simpie" in ADDON:
                             with lock:
@@ -4947,6 +4977,16 @@ class ScratchListener(threading.Thread):
                     elif "pibug" in ADDON:
                         logging.debug("Processing variables for PiBug") 
                         motorList = [['motorl', 35, 37, 0], ['motorr', 36, 40, 0]]
+
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+
+                    elif "scooter" in ADDON:
+                        logging.debug("Processing variables for PiBug") 
+                        motorList = [['motorl', 35, 37, 0], ['motorr', 40, 36, 0]]
 
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
