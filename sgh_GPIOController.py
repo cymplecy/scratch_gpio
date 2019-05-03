@@ -556,7 +556,17 @@ class GPIOController :
             self.pinUpdate(PinPWM,0)
             self.pinUpdate(PinC,0)
             return
+        # print
+        # print "motorupdate:",value,Pin1,self.pinValue[Pin1],Pin2,self.pinValue[Pin2]
+        # print
         
+        #Add in delay when switch from forward to back to minimise current spike
+        oldValue = self.pinValue[Pin1] + self.pinValue[Pin2]
+        if ((value > 0) and (oldValue < 0)) or ((value < 0) and (oldValue > 0)):
+            self.pinUpdate(PinPWM,0)
+            self.pinUpdate(PinC,0)
+            time.sleep(0.2)
+            
         if value < 0:
             temp = Pin1 #swap which pin is pwm'd
             PinPWM = PinC
@@ -565,8 +575,8 @@ class GPIOController :
         self.pinUpdate(PinPWM,value,type="pwmmotor")
         self.pinUpdate(PinC,0)
             
-        self.pinValue[PinPWM] = value
-        self.pinValue[PinC] = 0
+        #self.pinValue[PinPWM] = value
+        #self.pinValue[PinC] = 0
 
         
         

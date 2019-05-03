@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_3May19'  # Fix Scooter neopixel support
+Version = 'v8_3May19'  # Add delay if motor switching direction
 
 import threading
 import socket
@@ -360,6 +360,16 @@ def on_message(client, userdata, msg):
     msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
     #time.sleep(0.2)    
     msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))    
+    
+def motorUpdate(pin1,pin2,value):
+    print "here"
+    #Add in delay when switch from forward to back to minimise current spike
+    oldValue = sghGC.pinValue[pin1] + sghGC.pinValue[pin2]
+    if (value > 0) and (oldValue < 0):
+        sghGC.pinUpdate(pin1,0)
+        sghGC.pinUpdate(pin2,0)
+        time.sleep(2)
+    sghGC.motorUpdate(pin1,pin2,value)
 
 
 
@@ -4983,6 +4993,7 @@ class ScratchListener(threading.Thread):
                         logging.debug("Processing variables for PiBug") 
                         motorList = [['motorl', 35, 37, 0], ['motorr', 36, 40, 0]]
 
+
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
@@ -4992,7 +5003,6 @@ class ScratchListener(threading.Thread):
                     elif "scooter" in ADDON:
                         logging.debug("Processing variables for scooter") 
                         motorList = [['motorl', 35, 37, 0], ['motorr', 40, 36, 0]]
-
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
