@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_29Apr19'  # Add in Scooter support
+Version = 'v8_3May19'  # Fix Scooter neopixel support
 
 import threading
 import socket
@@ -2055,27 +2055,32 @@ class ScratchListener(threading.Thread):
         else:
             UH.brightness(level)
 
-    def neoProcessing(self, ADDON, UH=None,SH=None):
+    def neoProcessing(self, localADDON, UH=None,SH=None):
         global datawithCAPS
         # print
         # print "neostart"
         listenLoopTime = time.time()
-        # print "inside neoprocsssing"
+        print "inside neoprocsssing"
         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                       'invert', 'random']
-        oldADDON = ADDON
-        if "playhat" in ADDON:
-            ADDON = ADDON + " neopixels9"
-        if "scooter" in ADDON:
-            ADDON = ADDON + " neopixels4"
+        #oldADDON = localADDON
+        if "playhat" in localADDON:
+            localADDON = localADDON + " neopixels9"
 
-#        if "sensehat" in ADDON:
+        if "scooter" in localADDON:
+            localADDON = localADDON + " neopixels4"
+            
+        # print
+        # print ("localADDON:" + localADDON )
+        # print            
+
+#        if "sensehat" in localADDON:
 #            from sense_hat import SenseHat
 #            SH = SenseHat()
 
-        if ("neopixels" in ADDON):
-            self.matrixUse = int(rtnNumeric(ADDON[9 + ADDON.index('neopixels'):], 64))
-        if ("piconzero" in ADDON):
+        if ("neopixels" in localADDON):
+            self.matrixUse = int(rtnNumeric(localADDON[9 + localADDON.index('neopixels'):], 64))
+        if ("piconzero" in localADDON):
             self.matrixUse = 64
             
         if self.bFindValue("matrixuse"):
@@ -2146,7 +2151,7 @@ class ScratchListener(threading.Thread):
             # print self.tcolours
             
         ###################### Pixel strips
-        if ("neopixels" in ADDON) or ("piconzero" in ADDON):
+        if ("neopixels" in localADDON) or ("piconzero" in localADDON):
             #print "processing neopixels",self.dataraw
 
             if self.bFind("pixelson"):
@@ -2517,7 +2522,7 @@ class ScratchListener(threading.Thread):
                 self.matrixBright(sghGC.ledDim / 100.0)
 
         ############### Matrices
-        elif ("unicorn" in ADDON or "sensehat" in ADDON):
+        elif ("unicorn" in localADDON or "sensehat" in localADDON):
             ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on', 'black',
                           'invert', 'random']
 
@@ -3046,7 +3051,7 @@ class ScratchListener(threading.Thread):
 
         # self.dataraw = origdataraw
 
-        ADDON = oldADDON  # restore after possible parthat use
+        #ADDON = oldADDON  # restore after possible parthat use
         
     def rtnCAPS(self,txt,capstxt):
         #print "caps:",capstxt
@@ -4985,7 +4990,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
 
                     elif "scooter" in ADDON:
-                        logging.debug("Processing variables for PiBug") 
+                        logging.debug("Processing variables for scooter") 
                         motorList = [['motorl', 35, 37, 0], ['motorr', 40, 36, 0]]
 
                         for listLoop in range(0, 2):
@@ -6267,9 +6272,23 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUpdate(pin, self.OnOrOff)
                         self.bListCheck([11, 13, 15], ["red", "green", "blue"])  # Check for LEDs
 
-
-                    elif ("unicorn") in ADDON or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
-                        "sensehat" in ADDON):  # Matrix or neopixels connected
+                    # elif (True):
+                        # print
+                        # print "HERE!!!!!"
+                        # print
+                    # else:
+                        # print
+                        # print "HERE instead!!!!!"
+                        # print
+                    # if (False):
+                        # print "WTH"
+                    elif ("unicorn" in ADDON) or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
+                        "sensehat" in ADDON) or ("scooter" in ADDON):  # Matrix or neopixels connected
+                        
+                        # print ("")
+                        # print ("scoooter found")
+                        # print ("ADDON::" +ADDON)
+                        # print ("")
                         self.neoProcessing(ADDON, UH,SH)
                         #bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
                         # print 'sending: %s' % bcast_str
