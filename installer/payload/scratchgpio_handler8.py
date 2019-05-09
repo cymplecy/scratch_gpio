@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_3May19'  # Add delay if motor switching direction
+Version = 'v8_9May19'  # Tweak PiBug and add delay to broadcast topic message when dequeing messages to allow sensor update to get thru
 
 import threading
 import socket
@@ -357,9 +357,9 @@ def on_connect(client, userdata, rc):
 def on_message(client, userdata, msg):
     #print
     #print "....", time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), "Topic: ", msg.topic + ' Message: ' + str(msg.payload), " rcvd"
-    msgQueue.put((5, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
+    msgQueue.put((1, 'sensor-update "' + str(msg.topic) + '" "' + str(msg.payload) + '"'))
     #time.sleep(0.2)    
-    msgQueue.put((5, 'broadcast "' + str(msg.topic) + '"'))    
+    msgQueue.put((12, 'broadcast "' + str(msg.topic) + '"'))
     
 def motorUpdate(pin1,pin2,value):
     print "here"
@@ -780,7 +780,9 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 print sensor_name
                 pass
-            sensorValue = ("on", "off")[value == 1]            
+            sensorValue = ("on", "off")[value == 1]
+            if sensor_name == "switch":
+                sensorValue = ("off", "on")[value == 1]
         elif "scooter" in ADDON:
             # print pin
             try:
@@ -3895,7 +3897,7 @@ class ScratchListener(threading.Thread):
                                 sghGC.resetPinMode()
                                 sghGC.pinUse[7] = sghGC.PINPUT  # LFLeft
                                 sghGC.pinUse[13] = sghGC.PINPUT  # LFRight
-                                sghGC.pinUse[33] = sghGC.PINPUT  # switch
+                                sghGC.pinUse[33] = sghGC.PINPUTDOWN  # switch
                                 sghGC.setPinMode()
                                 sghGC.motorUpdate(35, 37, 0)
                                 sghGC.motorUpdate(36, 40, 0) 
@@ -7847,13 +7849,16 @@ class SendMsgsToScratch(threading.Thread):
         while not self.stopped():
             # print self.msgQueue.get()
             priority, cmd = self.msgQueue.get()
+            #print "que p and c:", priority , cmd
             if cmd == "STOPSENDING":
                 print "STOPSENDING msg retreived from queue"
                 self.stop()
                 while not self.msgQueue.empty():
                     dummy = self.msgQueue.get()
                 break
-            if priority == 11:
+            if priority == 12: #Special priorty as its a broadcast update from an incoming MQTT message so add slight delay to allow sensor-updates 1st
+                time.sleep(0.1)
+            if priority == 11: #Special priorty treated as an MQTT message to be sent
                 params = cmd.split(',')
                 #print "params$$$",params
                 try:
