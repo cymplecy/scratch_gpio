@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_9May19'  # Tweak PiBug and add delay to broadcast topic message when dequeing messages to allow sensor update to get thru
+Version = 'v8_19Jul19'  # Initial Pi2Go Mk2 commit
 
 import threading
 import socket
@@ -117,7 +117,7 @@ except:
 
 try:
     import spidev
-    # print "spidev imported OK"
+    print "spidev imported OK"
 except:
     print "spidev Not imported "
     pass
@@ -410,7 +410,7 @@ class ultra(threading.Thread):
             if "pibug" in ADDON:
                 sensor_name = 'ultra'
             if "scooter" in ADDON:
-                sensor_name = 'ultra'                
+                sensor_name = 'ultra'
             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
             # print 'sending: %s' % bcast_str
             msgQueue.put(((5, bcast_str)))
@@ -720,6 +720,18 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass
             sensorValue = ("on", "off")[value == 1]
+        elif "pi2go2" in ADDON:
+            # print pin
+            try:
+                sensor_name = ["left IR", "right IR", "switch", "line left", "line right"][([15, 11, 10, 16, 13].index(pin))]
+            except:
+                print "pi2go2 input ", pin, " out of range"
+                sensor_name = "pin" + str(pin)
+                pass
+            if sensor_name in ["left IR","right IR","switch"]:
+                sensorValue = ("on", "off")[value == 1]
+            else:
+                sensorValue = ("on", "off")[value == 0]
         elif "pi2go" in ADDON:
             # print pin
             try:
@@ -835,18 +847,19 @@ class ScratchSender(threading.Thread):
     # Channel must be an integer 0-7
     def ReadChannel(self, channel,spi):
         #global spi0,spi1
-        # print spi
+        #print spi
         try:
             adc = spi.xfer2([1, (8 + channel) << 4, 0])
             data = ((adc[1] & 3) << 8) + adc[2]
             # print "channel ok", channel
             return data
         except:
+            #return -1
             pass
             
     def run(self):
         print "ScratchSender run started"
-        global firstRun, ADDON, compass, wii, socketB
+        global firstRun, ADDON, compass, wii, socketB,spi0,spi1
         print lock
         # while firstRun:
         # print "first run running"
@@ -992,6 +1005,39 @@ class ScratchSender(threading.Thread):
                     msgQueue.put((5, "sensor-update " + bcast_str))
 
                     lastTimeSinceMCPAnalogRead = time.time()
+            if "pi2go2" in ADDON:
+
+                if (time.time() - lastTimeSinceMCPAnalogRead) > 0.5:
+                    bcast_str = ""
+                    for channel in range(0, 4):
+                        adc = int((self.ReadChannel(channel,spi0)) / 10.23)
+                        adc = (adc + (2 * lastADC[channel])) / 3
+                        #print channel,":",adc,
+                        if adc != lastADC[channel]:  # (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
+                            sensor_name = ["front right light", "front left light", "rear right light", "rear left light"][([0,1,2,3].index(channel))]
+                            bcast_str += '"' + sensor_name + '" ' + str(adc) + " "
+                        lastADC[channel] = adc
+                    adc = (self.ReadChannel(4,spi0))
+                    adc = str(adc * 12.15 / 1023)[0:3]
+                    if adc != lastADC[4]:  # (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
+                        sensor_name = 'battery'
+                        bcast_str += '"' + sensor_name + '" ' + str(adc) + " "
+                    lastADC[4] = adc
+                    msgQueue.put((5, "sensor-update " + bcast_str))
+                    #print bcast_str
+                    #print
+
+                    lastTimeSinceMCPAnalogRead = time.time()
+                    if sghGC.lightInfo:
+                        sghGC.lightDirection = math.degrees(
+                            math.atan2(lastADC[0] + lastADC[2] - lastADC[1] - lastADC[3],
+                                       lastADC[0] + lastADC[1] - lastADC[2] - lastADC[3]))
+                        sghGC.lightValue = max(lastADC[0], lastADC[1], lastADC[2], lastADC[3])
+                        sensor_str = 'sensor-update "%s" %s "%s" %s' % (
+                        "lightdirection", str(int(sghGC.lightDirection)), "lightvalue", str(int(sghGC.lightValue)))
+                        # print 'sending: %s' % bcast_str
+                        msgQueue.put((0, sensor_str))
+
                     
             if  "bbbanalog" in ADDON:
                 if (time.time() - lastTimeSinceMCPAnalogRead) > 0.5:
@@ -2079,12 +2125,10 @@ class ScratchListener(threading.Thread):
         if "playhat" in localADDON:
             localADDON = localADDON + " neopixels9"
 
-        if "scooter" in localADDON:
-            localADDON = localADDON + " neopixels4"
             
-        # print
-        # print ("localADDON:" + localADDON )
-        # print            
+        print
+        print ("localADDON:" + localADDON )
+        print            
 
 #        if "sensehat" in localADDON:
 #            from sense_hat import SenseHat
@@ -3758,6 +3802,44 @@ class ScratchListener(threading.Thread):
                                 if "encoders" in ADDON:
                                     print "with encoders"
                                 anyAddOns = True
+                            elif "pi2go2" in ADDON:
+                                print "pi2go2 found in", ADDON
+                                #ADDON = "pi2go2 neopixels10"
+                                with lock:
+                                    sghGC.resetPinMode()
+                                    sghGC.pinUse[15] = sghGC.PINPUT  # ObjLeft
+                                    sghGC.pinUse[11] = sghGC.PINPUT  # ObjRight
+                                    sghGC.pinUse[16] = sghGC.PINPUT  # LFLeft
+                                    sghGC.pinUse[13] = sghGC.PINPUT  # LFRight
+                                    sghGC.pinUse[10] = sghGC.PINPUT  # switch
+                                    #sghGC.pinUse[18] = sghGC.POUTPUT
+                                    #sghGC.pinUse[22] = sghGC.POUTPUT
+                                    #sghGC.pinInvert[15] = True
+                                    #sghGC.pinInvert[16] = True
+                                    #sghGC.pinUse[15] = sghGC.POUTPUT
+                                    #sghGC.pinUse[16] = sghGC.POUTPUT
+                                    # if "encoders" in ADDON:
+                                        # logging.debug("Encoders Found:%s", ADDON)
+                                        # sghGC.pinUse[12] = sghGC.PCOUNT
+                                        # sghGC.pinUse[13] = sghGC.PCOUNT
+                                        # msgQueue.put((5, 'sensor-update "motors" "stopped"'))
+
+                                    sghGC.setPinMode()
+                                    # sghGC.startServod([18, 22])  # servos
+                                    sghGC.motorUpdate(37, 35, 0)
+                                    sghGC.motorUpdate(40, 36, 0)
+
+                                    self.startUltra(38, 38, self.OnOrOff)
+                                    # Open SPI bus
+                                    # not needed as opened at prog start
+                                    #spi = spidev.SpiDev()
+                                    #spi.open(0, 0)
+                                    #spi.max_speed_hz = 40000
+
+                                print "pi2go2 setup"
+                                if "encoders" in ADDON:
+                                    print "with encoders"
+                                anyAddOns = True                                
                             elif "pi2go" in ADDON:
                                 with lock:
                                     sghGC.resetPinMode()
@@ -3790,7 +3872,7 @@ class ScratchListener(threading.Thread):
                                     # sghGC.pinEventEnabled = 0
                                 # sghGC.startServod([12,10]) # servos testing motorpitx
 
-                                print "p2go setup"
+                                print "pi2go setup"
                                 anyAddOns = True
 
                         if "agobo" in ADDON:
@@ -4810,6 +4892,81 @@ class ScratchListener(threading.Thread):
 
 
                             ######### End of Pi2gplite Variable handling
+                    elif "pi2go2" in ADDON:
+                        # logging.debug("Processing variables for pi2go")
+
+                        # check for motor variable commands
+                        motorList = [['motorr', 40, 36, 0, False], ['motorl', 37, 35, 0, False]]
+                        # logging.debug("ADDON:%s", ADDON)
+
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+
+                        moveServos = False
+
+                        if self.vFindValue('tiltoffset'):
+                            tiltoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            moveServos = True
+
+                        if self.vFindValue('panoffset'):
+                            panoffset = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            moveServos = True
+
+                        if self.vFindValue('tilt'):
+                            # print "tilt command rcvd"
+                            if self.valueIsNumeric:
+                                tilt = int(self.valueNumeric)
+                                moveServos = True
+                                # print "tilt=", tilt
+                            elif self.value == "off":
+                                os.system("echo " + "0" + "=0 > /dev/servoblaster")
+                        else:
+                            if self.vFindValue('servo18'):
+                                # print "tilt command rcvd"
+                                if self.valueIsNumeric:
+                                    tilt = int(self.valueNumeric)
+                                    moveServos = True
+                                    # print "tilt=", tilt
+                                elif self.value == "off":
+                                    os.system("echo " + "0" + "=0 > /dev/servoblaster")
+
+                        if self.vFindValue('pan'):
+                            # print "pan command rcvd"
+                            if self.valueIsNumeric:
+                                pan = int(self.valueNumeric)
+                                moveServos = True
+                                # print "pan=", pan
+                            elif self.value == "off":
+                                os.system("echo " + "1" + "=0 > /dev/servoblaster")
+                        else:
+                            if self.vFindValue('servo22'):
+                                # print "pan command rcvd"
+                                if self.valueIsNumeric:
+                                    pan = int(self.valueNumeric)
+                                    moveServos = True
+                                    # print "pan=", pan
+                                elif self.value == "off":
+                                    os.system("echo " + "1" + "=0 > /dev/servoblaster")
+
+                        if moveServos:
+                            degrees = int(tilt + tiltoffset)
+                            degrees = min(80, max(degrees, -60))
+                            servodvalue = 50 + ((90 - degrees) * 200 / 180)
+                            # print "sending", servodvalue, "to servod"
+                            # os.system("echo " + "0" + "=" + str(servodvalue-1) + " > /dev/servoblaster")
+                            sghGC.pinServod(18, servodvalue)  # orig =18
+                            # os.system("echo " + "0" + "=" + str(servodvalue) + " > /dev/servoblaster")
+                            degrees = int(pan + panoffset)
+                            degrees = min(90, max(degrees, -90))
+                            servodvalue = 50 + ((90 - degrees) * 200 / 180)
+                            sghGC.pinServod(22, servodvalue)  # orig =22
+                            # os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
+
+
+                            ######### End of Pi2gGo2 Variable handling
                     elif "pi2go" in ADDON:
                         # do PiRoCon stuff
                         # logging.debug("Processing variables for Pi2Go")
@@ -6012,7 +6169,17 @@ class ScratchListener(threading.Thread):
                                                                 args=[motorList[1], -svalue, motorList[1][3]])
                             moveMotorBThread.start()
 
-
+                    elif "pi2go2" in ADDON:  #
+                        #print "Processing Pi2Go2 broadcasts"
+                        self.neoProcessing(ADDON + " neopixels10", UH,SH)
+                        if "startlightinfo" in dataraw:
+                            print "pi2go2 startlightinfo detected"
+                            sghGC.lightInfo = True
+                        # end of Pi2Go2 broadcasts
+                    elif "scooter" in ADDON:  #
+                           # print "Processing scooter broadcasts"
+                            self.neoProcessing(ADDON + " neopixels4", UH,SH)
+                            # end of scooter broadcasts
                     elif "pi2go" in ADDON:
                         if (pcaPWM is not None):
                             for i in range(0, 4):  # go thru PowerPWM on PCA Board
@@ -6295,17 +6462,22 @@ class ScratchListener(threading.Thread):
                     # if (False):
                         # print "WTH"
                     elif ("unicorn" in ADDON) or ("neopixels" in ADDON) or ("playhat" in ADDON) or (
-                        "sensehat" in ADDON) or ("scooter" in ADDON):  # Matrix or neopixels connected
+                        "sensehat" in ADDON):
+                        # Matrix or neopixels in ADDONs with no other broadcast previous processing
+                        # All other addons with neopixels should add own elif section prior to this check
                         
-                        # print ("")
-                        # print ("scoooter found")
-                        # print ("ADDON::" +ADDON)
-                        # print ("")
+                        #print ("")
+                        #print ("RGB LEDS found")
+                        #print ("ADDON::" +ADDON)
+                        #print ("")
                         self.neoProcessing(ADDON, UH,SH)
                         #bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
                         # print 'sending: %s' % bcast_str
                         #msgQueue.put((5, bcast_str))                        
-
+                    else:
+                        print "What ADDON:", ADDON
+                    if True:
+                        print "true"
                     elif "piandbash" in ADDON:
                         if self.bFindOnOff('all'):
                             mcp.output(8, self.OnOrOff)
@@ -8129,6 +8301,7 @@ spi1 = None
 try:
     spi0 = spidev.SpiDev()
     spi0.open(0,0)
+    spi0.max_speed_hz = 40000
     print "spi0 enabled"
 except:
     print "spi0 not enabled"
@@ -8136,6 +8309,7 @@ except:
 try:
     spi1 = spidev.SpiDev()
     spi1.open(0,1)
+    spi1.max_speed_hz = 40000
     print "spi1 enabled"
 except:
     print "spi1 not enabled"    

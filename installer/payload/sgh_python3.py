@@ -20,4 +20,15 @@
 
 Version = 'v0.1_4May19'  # Start
 import time
-import asyncio
+import asyncio, socket
+
+async def handle_client(reader, writer):
+    request = None
+    while request != 'quit':
+        request = (await reader.read(10)).decode('utf8')
+        response = str(eval(request)) + '\n'
+        writer.write(response.encode('utf8'))
+
+loop = asyncio.get_event_loop()
+loop.create_task(asyncio.start_server(handle_client, '192.168.0.189', 42001))
+loop.run_forever()
