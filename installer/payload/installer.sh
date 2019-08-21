@@ -15,6 +15,7 @@
 #Version 17Sep15 debug creating old scratchgpio icons
 #Version 14Apr18 add in dht11
 #Version 8Jul19 Properly integrate Scratch2 support
+#20Aug19 - add in S3GPIO Desktop
 
 SGHVER=$(<SGHVER.txt)
 f_exit(){
@@ -107,6 +108,10 @@ chmod 777 $RDIR/scratchgpio${SGHVER}/S3GPIOExtension/*
 cp s3gpio.sh $RDIR/scratchgpio${SGHVER}
 chmod +x $RDIR/scratchgpio${SGHVER}/s3gpio.sh
 cp S3GPIO.desktop $HDIR/Desktop
+
+cp s3gpiodtop.sh $RDIR/scratchgpio${SGHVER}
+chmod +x $RDIR/scratchgpio${SGHVER}/s3gpiodtop.sh
+cp S3GPIOdtop.desktop $HDIR/Desktop
 
 
 #chown -R $USERID:$GROUPID $RDIR/scratchgpio${SGHVER}

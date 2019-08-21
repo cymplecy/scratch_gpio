@@ -3,8 +3,8 @@
 
     "name": "S3GPIO",
     "description": "Control lights, motors, sensors and switches connected to the GPIO pins on a Raspberry Pi from Scratch 3",
-    "version": "0.1.0",
-    "version_name": "0.2.0",
+    "version": "0.2.1",
+    "version_name": "0.2.1 21Aug19",
     "author": "David Ferguson and Simon Walters",
     "homepage_url": "http://simplesi.net/",
 
@@ -16,7 +16,7 @@
         "storage",
         "webRequest",
         "webRequestBlocking",
-        "https://translate-service.scratch.mit.edu/translate?language=*&text=*"
+        "https://*/*"
     ],
 
     "browser_action": {
