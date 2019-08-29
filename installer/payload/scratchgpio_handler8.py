@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_19Jul19'  # Initial Pi2Go Mk2 commit
+Version = 'v8_29Aug19'  # Alter vfindvalue to cope with on/off/high/low/true/false and remove pibrella/piring duplicate
 
 import threading
 import socket
@@ -1673,14 +1673,21 @@ class ScratchListener(threading.Thread):
             return False
 
     def vFindValue(self, searchStr):
-        # print "searching for ", searchStr
+        #if searchStr == "addon":
+        #    print "searching for ", searchStr
         self.value = None
         self.valueNumeric = None
         self.valueIsNumeric = False
         if self.vFind(searchStr):
             # print "found"
             self.value = self.getValue(searchStr)
-            # print self.value
+            print "self.value1",self.value
+            if (self.value[0:2] == 'on' or self.value[0:2] == 'high' or self.value[0:2] == 'true'):
+                self.value = "1"
+            if (self.value[0:2] == 'off' or self.value[0:2] == 'low' or self.value[0:2] == 'false'):
+                self.value = "0"
+            #if searchStr == "addon":
+            #    print "self.value" ,self.value
             if isNumeric(self.value):
                 self.valueNumeric = float(self.value)
                 self.valueIsNumeric = True
@@ -3462,7 +3469,8 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue("addon"):
                         setupValue = self.value
                         pinsoraddon = "addon"
-
+                    print "pinsoraddon:",pinsoraddon
+                    print"++++++++++++++++++++++++++++"
                     if pinsoraddon is not None:
                         ADDON = setupValue
                         print (ADDON, " declared")
@@ -5045,53 +5053,6 @@ class ScratchListener(threading.Thread):
 
 
                                 ######### End of agobo variable handling
-                    elif "piringo" in ADDON:
-                        # do piringo stuff
-
-                        self.vAllCheck("leds")  # check All LEDS On/Off/High/Low/1/0
-
-                        self.vLEDCheck(piringoOutputs)
-
-
-                    elif "pibrella" in ADDON:  # PiBrella
-
-                        self.vAllCheck("allpins")  # check All On/Off/High/Low/1/0
-
-                        self.vListCheck([13, 11, 7, 15, 16, 18, 22],
-                                        ["led1", "led2", "led3", "led4", "led5", "led6", "led7"])
-                        self.vListCheck([13, 11, 11, 11, 7, 15, 16, 18, 22],
-                                        ["red", "amber", "yellow", "orange", "green", "outpute", "outputf", "outputg",
-                                         "outputh"])
-                        self.vListCheckMotorOnly([15, 16, 18, 22], ["e", "f", "g", "h"])
-
-                        if self.vFindValue('stepper'):
-                            if self.valueIsNumeric:
-                                self.stepperUpdate([15, 16, 18, 22], self.valueNumeric)
-                            else:
-                                self.stepperUpdate([15, 16, 18, 22], 0)
-
-                        if self.vFindValue("beep"):
-                            try:
-                                bn, bd = self.value.split(",")
-                            except:
-                                bn = "60"
-                                bd = "1"
-                            beepNote = int(float(bn))
-                            beepDuration = (float(bd))
-                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 60
-                            beepThread = threading.Thread(target=self.beep,
-                                                          args=[12, 440 * 2 ** ((beepNote - 69) / 12.0), beepDuration])
-                            beepThread.start()
-
-                            # if self.vFindValue("beepnote"):
-                            # beepNote = max(12,int(self.valueNumeric)) if self.valueIsNumeric else 60
-
-                            # if self.vFindValue("beepduration"):
-                            # beepDuration = max(0.125,int(self.valueNumeric)) if self.valueIsNumeric else 0.5
-
-
-
-
                     elif "happi" in ADDON:
                         # do happi stuff
                         logging.debug("Processing variables for HapPi")
@@ -6474,10 +6435,6 @@ class ScratchListener(threading.Thread):
                         #bcast_str = 'sensor-update "%s" %s' % ("colour", "black")
                         # print 'sending: %s' % bcast_str
                         #msgQueue.put((5, bcast_str))                        
-                    else:
-                        print "What ADDON:", ADDON
-                    if True:
-                        print "true"
                     elif "piandbash" in ADDON:
                         if self.bFindOnOff('all'):
                             mcp.output(8, self.OnOrOff)
