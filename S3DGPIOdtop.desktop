@@ -2,11 +2,11 @@
 Encoding=UTF-8
 Version=1.0
 Type=Application
-Exec=/opt/scratchgpio8/s3gpiodtop.sh
-Icon=/opt/scratchgpio8/S3GPIOExtension/16x16.png
+Exec=/opt/scratchgpio8/s3dgpiodtop.sh
+Icon=/opt/scratchgpio8/S3GPIOExtension/s3dgpio80x80.png
 Terminal=false
-Name=S3GPIO Desktop alpha1
+Name=S3DGPIO alpha2
 Comment=Programming system and content development tool
 Categories=Application;Education;Development;
 MimeType=application/x-scratch-project
-Name[en_GB]=S3GPIO Desktop alpha1
+Name[en_GB]=S3DGPIO alpha2

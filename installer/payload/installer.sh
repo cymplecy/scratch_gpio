@@ -16,6 +16,7 @@
 #Version 14Apr18 add in dht11
 #Version 8Jul19 Properly integrate Scratch2 support
 #20Aug19 - add in S3GPIO Desktop
+#30Aug19 - change to S3DGPIO Desktop
 
 SGHVER=$(<SGHVER.txt)
 f_exit(){
@@ -109,9 +110,9 @@ cp s3gpio.sh $RDIR/scratchgpio${SGHVER}
 chmod +x $RDIR/scratchgpio${SGHVER}/s3gpio.sh
 cp S3GPIO.desktop $HDIR/Desktop
 
-cp s3gpiodtop.sh $RDIR/scratchgpio${SGHVER}
-chmod +x $RDIR/scratchgpio${SGHVER}/s3gpiodtop.sh
-cp S3GPIOdtop.desktop $HDIR/Desktop
+cp s3dgpiodtop.sh $RDIR/scratchgpio${SGHVER}
+chmod +x $RDIR/scratchgpio${SGHVER}/s3dgpiodtop.sh
+cp S3DGPIOdtop.desktop $HDIR/Desktop
 
 
 #chown -R $USERID:$GROUPID $RDIR/scratchgpio${SGHVER}
