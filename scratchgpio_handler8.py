@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_29Aug19'  # Alter vfindvalue to cope with on/off/high/low/true/false and remove pibrella/piring duplicate
+Version = 'v8_30Aug19'  # Bodge for get ip for no net connection
 
 import threading
 import socket
@@ -7069,8 +7069,12 @@ class ScratchListener(threading.Thread):
                         arg = 'ip route list'
                         p = subprocess.Popen(arg, shell=True, stdout=subprocess.PIPE)
                         ipdata = p.communicate()
-                        split_data = ipdata[0].split()
-                        ipaddr = split_data[split_data.index('src') + 1]
+                        ipaddr = '0.0.0.0' # bodge introduced to deal with no net connection
+                        try:
+                            split_data = ipdata[0].split()
+                            ipaddr = split_data[split_data.index('src') + 1]
+                        except:
+                            pass
                         logging.debug("IP:%s", ipaddr)
                         sensor_name = 'ipaddress'
                         bcast_str = 'sensor-update "%s" %s' % (sensor_name, "ip" + ipaddr)
