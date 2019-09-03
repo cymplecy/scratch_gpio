@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_30Aug19'  # Bodge for get ip for no net connection
+Version = 'v8_3Aug19'  # reduced print statements and add nan and inf check and upped ultra to 0.5 sec
 
 import threading
 import socket
@@ -300,7 +300,9 @@ class Compass:
 
 def isNumeric(s):
     try:
-        float(s)
+        temp = float(s)
+        if ((s == 'nan') or (s  == 'infinity')):
+            return False
         return True
     except ValueError:
         return False
@@ -723,12 +725,12 @@ class ScratchSender(threading.Thread):
         elif "pi2go2" in ADDON:
             # print pin
             try:
-                sensor_name = ["left IR", "right IR", "switch", "line left", "line right"][([15, 11, 10, 16, 13].index(pin))]
+                sensor_name = ["irleft", "irright", "switch", "lineleft", "lineright"][([15, 11, 10, 16, 13].index(pin))]
             except:
                 print "pi2go2 input ", pin, " out of range"
                 sensor_name = "pin" + str(pin)
                 pass
-            if sensor_name in ["left IR","right IR","switch"]:
+            if sensor_name in ["irleft","irright","switch"]:
                 sensorValue = ("on", "off")[value == 1]
             else:
                 sensorValue = ("on", "off")[value == 0]
@@ -817,6 +819,7 @@ class ScratchSender(threading.Thread):
             sensorValue = ("on", "off")[value == 1]
 
         bcast_str = '"' + sensor_name + '" ' + sensorValue
+        #print "bcast_str:",bcast_str
         msgQueue.put(((5, "sensor-update " + bcast_str)))
         # print pin , sghGC.pinTrigger[pin]
         if sghGC.pinTrigger[pin] == 1:
@@ -1014,7 +1017,7 @@ class ScratchSender(threading.Thread):
                         adc = (adc + (2 * lastADC[channel])) / 3
                         #print channel,":",adc,
                         if adc != lastADC[channel]:  # (lastADC[channel] - 2) <= adc <= (lastADC[channel] +2):
-                            sensor_name = ["front right light", "front left light", "rear right light", "rear left light"][([0,1,2,3].index(channel))]
+                            sensor_name = ["frontrightlight", "frontleftlight", "rearrightlight", "rearleftlight"][([0,1,2,3].index(channel))]
                             bcast_str += '"' + sensor_name + '" ' + str(adc) + " "
                         lastADC[channel] = adc
                     adc = (self.ReadChannel(4,spi0))
@@ -1681,7 +1684,7 @@ class ScratchListener(threading.Thread):
         if self.vFind(searchStr):
             # print "found"
             self.value = self.getValue(searchStr)
-            print "self.value1",self.value
+            #print "self.value1",self.value
             if (self.value[0:2] == 'on' or self.value[0:2] == 'high' or self.value[0:2] == 'true'):
                 self.value = "1"
             if (self.value[0:2] == 'off' or self.value[0:2] == 'low' or self.value[0:2] == 'false'):
@@ -2125,7 +2128,7 @@ class ScratchListener(threading.Thread):
         # print
         # print "neostart"
         listenLoopTime = time.time()
-        print "inside neoprocsssing"
+        #print "inside neoprocsssing"
         ledcolours = ['red', 'green', 'blue', 'cyan', 'magenta', 'yellow', 'white', 'off', 'on',
                       'invert', 'random']
         #oldADDON = localADDON
@@ -2133,9 +2136,9 @@ class ScratchListener(threading.Thread):
             localADDON = localADDON + " neopixels9"
 
             
-        print
-        print ("localADDON:" + localADDON )
-        print            
+        #print
+        #print ("localADDON:" + localADDON )
+        #print            
 
 #        if "sensehat" in localADDON:
 #            from sense_hat import SenseHat
@@ -3469,8 +3472,8 @@ class ScratchListener(threading.Thread):
                     if self.vFindValue("addon"):
                         setupValue = self.value
                         pinsoraddon = "addon"
-                    print "pinsoraddon:",pinsoraddon
-                    print"++++++++++++++++++++++++++++"
+                    #print "pinsoraddon:",pinsoraddon
+                    #print"++++++++++++++++++++++++++++"
                     if pinsoraddon is not None:
                         ADDON = setupValue
                         print (ADDON, " declared")

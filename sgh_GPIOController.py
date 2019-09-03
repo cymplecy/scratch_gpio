@@ -77,7 +77,7 @@ class GPIOController :
         self.dsSensorId  = ""
         self.senderLoopDelay = 0.2
         self.mFreq = 10
-        self.ultraFreq = 1
+        self.ultraFreq = 0.5
         self.ultraSamples = 7      
         self.pFreq = 200
        

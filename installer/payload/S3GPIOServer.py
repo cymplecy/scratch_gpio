@@ -43,14 +43,14 @@ def broadcast_to_sgh(dataOut):
     n = len(dataOut)
     b = (chr((n >> 24) & 0xFF)) + (chr((n >> 16) & 0xFF)) + (chr((n >> 8) & 0xFF)) + (chr(n & 0xFF))
     sghConnection.send(b + dataOut)
-    print "Data sent to sgh", dataOut
+    #print "Data sent to sgh", dataOut
     
 def isJSON(data):
     try:
         json.loads(data)
         return True
     except ValueError as error:
-        print("invalid json: %s" % error)
+        #print("invalid json: %s" % error)
         return False
 
 
@@ -64,7 +64,7 @@ def rcv_from_sgh():
         if data != "":
             #print "Data received from sgh", data
             #print ("datalen: %s", len(data))
-            if len(data) > 0:  # Connection still valid so process the data received
+            if len(data) > 18:  # Connection still valid so process the data received
                 dataIn = data
                 datawithCAPS = data
                 # dataOut = ""
@@ -91,12 +91,13 @@ def rcv_from_sgh():
                         dataIn = dataIn[size + 4:]  # cut data down that's been processed
                         # print "previous:", dataPrevious
             #print "datalist:",dataList
+            #print "."
             for msg in dataList:
                 #print "msg:",msg
                 if msg[0:13] == 'sensor-update':
                     msgsplit = msg[14:].replace('"','').split(' ')
                     #print "split",msgsplit
-                    print "SENSORDICT:" + str(sensorDict)
+                    #print "SENSORDICT:" + str(sensorDict)
                     for loop in range(int(len(msgsplit) / 2)):
                         sensorDict[msgsplit[loop * 2]] = msgsplit[(loop * 2) + 1]
         else:
@@ -114,11 +115,11 @@ class S(BaseHTTPRequestHandler):
         self._set_headers()
         parsed_path = urlparse.urlparse(self.path)
 
-        print "GET: ", self.path
+        #print "GET: ", self.path
         if self.path == "/favicon.ico":
             return
         splitData = urllib.unquote(self.path).split('&text=',1)
-        print "split: " , splitData
+        #print "split: " , splitData
         message = ""
         if len(splitData) > 1:
             message = splitData[1]
@@ -127,32 +128,32 @@ class S(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response))
             return
 
-        print "isJSON", isJSON(message)
+        #print "isJSON", isJSON(message)
         messageKey = None
         messageValue = None
         if isJSON(message):
             jsonMessage = json.loads(message)
-            print "jdict", jsonMessage
+            #print "jdict", jsonMessage
             messageKey = jsonMessage.keys()[0].lower().replace(" ","")
             messageValue= jsonMessage[messageKey]
-            print "messageKey", messageKey
-            print "messageValue", messageValue
+            #print "messageKey", messageKey
+            #print "messageValue", messageValue
         else:
-            print "doing own parsing"
+            #print "doing own parsing"
             if len(message) > 0:
                 if (message[0] == "[") and (message[-1] == "]"):
                     message = message[1:-1]
                 elif (message[0] == "[") and (message[-1] <> "]"):
                     message = message[1:]
                 split1 = message.split(":",1)
-                print "split1: ", split1
+                #print "split1: ", split1
                 if len(split1) == 2:
                     messageKey = split1[0].lower().replace(" ","")
                     messageValue = split1[1]
-                    print "messageKey", messageKey
-                    print "messageValue", messageValue
+                    #print "messageKey", messageKey
+                    #print "messageValue", messageValue
                 elif len(split1) == 1:
-                    print("no : in message")
+                    #print("no : in message")
                     messageKey = "s3gpioread"
                     messageValue = message.lower().replace(" ","")
 
@@ -175,8 +176,9 @@ class S(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(response))
                 return
             elif messageKey == "s3gpioread":
-                print "SENSORDICT:" + str(sensorDict)
+                #print "SENSORDICT:" + str(sensorDict)
                 messageValue = messageValue.lower().replace(" ","")
+                print "messageValue:",messageValue,
                 if messageValue in sensorDict:
                     response = '{"result":"' + sensorDict[messageValue] +'"}'
                     print "Response to Scratch:" + response
