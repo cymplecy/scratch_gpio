@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_4Aug19'  # introduce discard too many messages
+Version = 'v8_5Aug19'  # change to using motora or b only
 
 import threading
 import socket
@@ -3277,6 +3277,14 @@ class ScratchListener(threading.Thread):
 
                 if 'sensor-update' in self.dataraw:
                     # print "this data ignored" , dataraw
+                    print "selfDatRaw:", self.dataraw
+                    if " motor" in self.dataraw:
+                        self.dataraw = self.dataraw.replace(" motor1 ", " motora ") # number one
+                        self.dataraw = self.dataraw.replace(" motorl ", " motora ") # letter L
+                        self.dataraw = self.dataraw.replace(" motor2 ", " motorb ")
+                        self.dataraw = self.dataraw.replace(" motorr ", " motorb ")
+                        print "2selfDatRaw:", self.dataraw
+                    
                     firstRunData = self.dataraw
                     # dataraw = ''
                     # firstRun = False
@@ -4316,7 +4324,7 @@ class ScratchListener(threading.Thread):
                             sghGC.pinServod(10, servodvalue)
 
                         # check for motor variable commands
-                        motorList = [['motor1', 19, 21, 23], ['motor2', 18, 16, 22]]
+                        motorList = [['motora', 19, 21, 23], ['motorb', 18, 16, 22]]
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -4514,7 +4522,7 @@ class ScratchListener(threading.Thread):
                     elif "robohat" in ADDON:
 
                         # check for motor variable commands
-                        motorList = [['motor1', 36, 35, 0, False], ['motor2', 33, 32, 0, False]]
+                        motorList = [['motora', 36, 35, 0, False], ['motorb', 33, 32, 0, False]]
 
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
@@ -4602,7 +4610,7 @@ class ScratchListener(threading.Thread):
 
                     elif "rtkrpimcb" in ADDON:
                         # check for motor variable commands
-                        motorList = [['motor1', 11, 12], ['motor2', 15, 16]]
+                        motorList = [['motora', 11, 12], ['motorb', 15, 16]]
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
@@ -4778,7 +4786,7 @@ class ScratchListener(threading.Thread):
                         # logging.debug("Processing variables for pi2go")
 
                         # check for motor variable commands
-                        motorList = [['motorr', 40, 36, 0, False], ['motorl', 37, 35, 0, False]]
+                        motorList = [['motorb', 40, 36, 0, False], ['motora', 37, 35, 0, False]]
                         # logging.debug("ADDON:%s", ADDON)
 
                         for listLoop in range(0, 2):
@@ -4932,7 +4940,7 @@ class ScratchListener(threading.Thread):
                         logging.debug("Processing variables for HapPi")
 
                         # check for motor variable commands
-                        self.vListHBridge2([['motor1', 11, 12], ['motor2', 15, 16]])
+                        self.vListHBridge2([['motora', 11, 12], ['motorb', 15, 16]])
 
                     elif "raspibot2" in ADDON:
                         logging.debug("Processing variables for RasPiBot2")
@@ -4941,7 +4949,7 @@ class ScratchListener(threading.Thread):
                                         ["led1", "led2", "output1", "output2"])  # Check for LED off/on type broadcasts
 
                         # check for motor variable commands
-                        motorList = [['motorl', 19, 22], ['motorr', 11, 7]]
+                        motorList = [['motora', 19, 22], ['motorb', 11, 7]]
                         logging.debug("ADDON:%s", ADDON)
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
@@ -4973,7 +4981,7 @@ class ScratchListener(threading.Thread):
                         #         logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
                         #         sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
                         #
-                        motorList = [['motorr', 19, 21, 0], ['motorl', 24, 26, 0]]
+                        motorList = [['motorb', 19, 21, 0], ['motora', 24, 26, 0]]
                         # motorList = [['motora', 21, 19, 0, False], ['motorb', 26, 24, 0, False]]
                         # logging.debug("ADDON:%s", ADDON)
 
@@ -4985,7 +4993,7 @@ class ScratchListener(threading.Thread):
 
                     elif "pibug" in ADDON:
                         logging.debug("Processing variables for PiBug") 
-                        motorList = [['motorl', 35, 37, 0], ['motorr', 36, 40, 0]]
+                        motorList = [['motora', 35, 37, 0], ['motorb', 36, 40, 0]]
 
 
                         for listLoop in range(0, 2):
@@ -4996,7 +5004,7 @@ class ScratchListener(threading.Thread):
 
                     elif "scooter" in ADDON:
                         logging.debug("Processing variables for scooter") 
-                        motorList = [['motorl', 35, 37, 0], ['motorr', 40, 36, 0]]
+                        motorList = [['motora', 35, 37, 0], ['motorb', 40, 36, 0]]
                         for listLoop in range(0, 2):
                             if self.vFindValue(motorList[listLoop][0]):
                                 svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
@@ -5025,7 +5033,7 @@ class ScratchListener(threading.Thread):
                         ######### End of BerryClip Variable handling
                     elif "explorer" in ADDON:
 
-                        motorList = [['motor1', 38, 35, 0, False], ['motor2', 40, 37, 0, False]]
+                        motorList = [['motora', 38, 35, 0, False], ['motorb', 40, 37, 0, False]]
                         # logging.debug("ADDON:%s", ADDON)
 
                         for listLoop in range(0, 2):
