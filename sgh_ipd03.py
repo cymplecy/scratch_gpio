@@ -134,5 +134,5 @@ print ipaddr
 #print int(parts[3])
 #iDisplay(int(parts[3]))
 #sDisplay(parts[3])
-scroll(ipaddr, 5)
+scroll(ipaddr, 10)
 bus.write_byte_data(addr, 0x13, 0xff) # Set all of bank 1 to High (Off) 

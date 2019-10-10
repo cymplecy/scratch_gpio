@@ -178,7 +178,7 @@ class S(BaseHTTPRequestHandler):
             elif messageKey == "s3gpioread":
                 #print "SENSORDICT:" + str(sensorDict)
                 messageValue = messageValue.lower().replace(" ","")
-                print "messageValue:",messageValue,
+                #print "messageValue:",messageValue,
                 if messageValue in sensorDict:
                     response = '{"result":"' + sensorDict[messageValue] +'"}'
                     print "Response to Scratch:" + response
@@ -194,6 +194,14 @@ class S(BaseHTTPRequestHandler):
                     print "Response to Scratch:" + response
                     self.wfile.write(response)
                     return
+            elif messageKey == "s3gpioconnect":
+                #print "SENSORDICT:" + str(sensorDict)
+                messageValue = messageValue.lower().replace(" ","")
+                #print "messageValue:",messageValue,
+                response = '{"result":"' + 'Connected OK' +'"}'
+                #print "Response to Scratch:" + response
+                self.wfile.write(response)
+                return
             #Add in extra processing code here to handle other mesageKeys
             #elif messageKey == "xxxxxxx"
             #    response = '{"result":"' + 'your return value' +'"}'

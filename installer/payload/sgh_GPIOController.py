@@ -157,6 +157,13 @@ class GPIOController :
         #self.ULTRA_IN_USE = [False] * self.PINS
         #self.ultraTotalInUse = 0
         #self.ultraSleep = 1.0
+        self.addon_from_file = None
+        try:
+            with open('/boot/addon.txt') as afile:
+                self.addon_from_file = afile.read().lower().strip().replace('\n','').replace('\r','')
+                print "AddOn from file:",self.addon_from_file
+        except:
+            pass
         self.debug = debug
         if self.debug:
             print "sghGC Debug enabled"

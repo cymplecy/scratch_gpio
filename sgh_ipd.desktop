@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Type=Application
+Name=IPDisplay
+Exec=sudo python /opt/scratchgpio8/sgh_ipd03.py
+StartupNotify=false
+Terminal=false
+Hidden=false
+

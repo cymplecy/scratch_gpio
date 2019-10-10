@@ -3277,13 +3277,13 @@ class ScratchListener(threading.Thread):
 
                 if 'sensor-update' in self.dataraw:
                     # print "this data ignored" , dataraw
-                    print "selfDatRaw:", self.dataraw
+                    #print "selfDatRaw:", self.dataraw
                     if " motor" in self.dataraw:
                         self.dataraw = self.dataraw.replace(" motor1 ", " motora ") # number one
                         self.dataraw = self.dataraw.replace(" motorl ", " motora ") # letter L
                         self.dataraw = self.dataraw.replace(" motor2 ", " motorb ")
                         self.dataraw = self.dataraw.replace(" motorr ", " motorb ")
-                        print "2selfDatRaw:", self.dataraw
+                        #print "2selfDatRaw:", self.dataraw
                     
                     firstRunData = self.dataraw
                     # dataraw = ''
@@ -3349,8 +3349,16 @@ class ScratchListener(threading.Thread):
                         setupValue = self.value
                         pinsoraddon = "pins"
                     if self.vFindValue("addon"):
-                        setupValue = self.value
-                        pinsoraddon = "addon"
+                        if (sghGC.addon_from_file is None):
+                            setupValue = self.value
+                            pinsoraddon = "addon"
+                        else:
+                            if (sghGC.addon_from_file == self.value.strip()):
+                                setupValue = self.value
+                                pinsoraddon = "addon"
+                            else:
+                                print("Declared addon:",self.value, "does not match one in /boot/addon.txt:",sghGC.addon_from_file)
+
                     #print "pinsoraddon:",pinsoraddon
                     #print"++++++++++++++++++++++++++++"
                     if pinsoraddon is not None:
@@ -5389,7 +5397,7 @@ class ScratchListener(threading.Thread):
 
                     if self.vFindValue("mqttbroker"):
                         sghGC.mqttBroker = self.value
-                        try:                        
+                        try:
                             if sghGC.mqttListener is not None:
                                 sghGC.mqttClient.loop_stop()
                                 sghGC.mqttClient.disconnect()
