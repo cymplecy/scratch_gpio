@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_5Aug19'  # change to using motora or b only
+Version = 'v8_12Oct19'  # update addon.txt
 
 import threading
 import socket
@@ -7654,11 +7654,24 @@ class ScratchListener(threading.Thread):
                             #print "val:",self.value
                             cardid,cardtext = reader.write(self.rtnCAPS(self.value,datawithCAPS))
                             print cardid,cardtext
-
+                    
+                    
+                    if self.bFindValue("setaddon"):
+                        #try:
+                            with open('/boot/addon.txt','w') as afile:
+                                afile.write(self.value)
+                                print self.value, "written to file:"
+                        #except:
+                        #    pass
                     # end of broadcast check
 
                     if self.bFind('shutdownpi'):
                         os.system('sudo shutdown -h "now"')
+
+                    if self.bFind('rebootpi'):
+                        os.system('sudo sync')
+                        time.sleep(3)
+                        os.system('sudo reboot -h "now"')
                         
                     if self.bFindValue('mappin'):
                         try:
