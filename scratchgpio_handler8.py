@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_10Nov19_1515'  # Start MARS
+Version = 'v8_10Nov19_1743'  # Start MARS
 
 import threading
 import socket

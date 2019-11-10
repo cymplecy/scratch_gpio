@@ -164,6 +164,7 @@ class GPIOController :
                 print "AddOn from file:",self.addon_from_file
         except:
             pass
+        print ("self.addon_from_file:" + str(self.addon_from_file))
         self.debug = debug
         if self.debug:
             print "sghGC Debug enabled"
