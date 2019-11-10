@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_12Oct19'  # update addon.txt
+Version = 'v8_10Nov19_1515'  # Start MARS
 
 import threading
 import socket
@@ -5416,6 +5416,14 @@ class ScratchListener(threading.Thread):
                             sghGC.mqttRetainFlag = True
                         else:
                             sghGC.mqttRetainFlag = False                        
+                            
+                    if self.bFindValue('pservo'):
+                        print("pservo found") 
+                        for i in range(16):
+                            if self.vFindValue('pservo' + str(i)):
+                                svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                print i, svalue
+                                pcaPWM.setPWM(i, 0, int(min(780, max(120, 450 - (svalue * 3.33333)))))
                        
 
                 ### Check for Broadcast type messages being received
