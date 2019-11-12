@@ -115,8 +115,18 @@ class S(BaseHTTPRequestHandler):
         self._set_headers()
         parsed_path = urlparse.urlparse(self.path)
 
-        #print "GET: ", self.path
+        print ("self.path:" +str(self.path))
+        print ("self.client_address[0]:" + str(self.client_address[0]))
         if self.path == "/favicon.ico":
+            return
+        if self.path.startswith("/redirect"):
+            subprocess.Popen(["pkill", "-f", "scratchgpio_handler"])
+            time.sleep(1)
+            #subprocess.call("python scratchgpio_handler8.py " + str(self.client_address[0]),shell=True)
+            #subprocess.Popen(['python','scratcdu -hs $HOME', shell=True)
+            subprocess.Popen(["sudo","python", "scratchgpio_handler8.py",str(self.client_address[0])])
+            response = {"ScratchGPIO redirected to IP" :str(self.client_address[0]) + " (e.g IP address of this machine"}
+            self.wfile.write(json.dumps(response))
             return
         splitData = urllib.unquote(self.path).split('&text=',1)
         #print "split: " , splitData

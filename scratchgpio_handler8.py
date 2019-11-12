@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_10Nov19_1743'  # Start MARS
+Version = 'v8_12Nov19_2013'  # ADDON = MARS
 
 import threading
 import socket
@@ -654,17 +654,6 @@ class ScratchSender(threading.Thread):
                 sensorValue = ("on", "off")[value == 1]
             else:
                 sensorValue = ("on", "off")[value == 0]
-        elif "pi2go" in ADDON:
-            # print pin
-            try:
-                sensor_name = ["irleft", "irfront", "irright", "lineleft", "lineright", "switch"][
-                    ([11, 13, 7, 12, 15, 16].index(pin))]
-            except:
-                print "pi2go input out of range"
-                sensor_name = "pin" + str(pin)
-                print sensor_name
-                pass
-            sensorValue = ("on", "off")[value == 1]
         elif "apb01" in ADDON:
             # print pin
             try:
@@ -3737,7 +3726,43 @@ class ScratchListener(threading.Thread):
                                 print "pi2go2 setup"
                                 if "encoders" in ADDON:
                                     print "with encoders"
-                                anyAddOns = True                                
+                                anyAddOns = True
+                            elif "mars" in ADDON:
+                                print "mars found in", ADDON
+                                #ADDON = "mars neopixels4"
+                                with lock:
+                                    sghGC.resetPinMode()
+                                    #sghGC.pinUse[15] = sghGC.PINPUT  # ObjLeft
+                                    #sghGC.pinUse[11] = sghGC.PINPUT  # ObjRight
+                                    #sghGC.pinUse[16] = sghGC.PINPUT  # LFLeft
+                                    #sghGC.pinUse[13] = sghGC.PINPUT  # LFRight
+                                    #sghGC.pinUse[10] = sghGC.PINPUT  # switch
+                                    #sghGC.pinUse[18] = sghGC.POUTPUT
+                                    #sghGC.pinUse[22] = sghGC.POUTPUT
+                                    #sghGC.pinInvert[15] = True
+                                    #sghGC.pinInvert[16] = True
+                                    #sghGC.pinUse[15] = sghGC.POUTPUT
+                                    #sghGC.pinUse[16] = sghGC.POUTPUT
+                                    # if "encoders" in ADDON:
+                                        # logging.debug("Encoders Found:%s", ADDON)
+                                        # sghGC.pinUse[12] = sghGC.PCOUNT
+                                        # sghGC.pinUse[13] = sghGC.PCOUNT
+                                        # msgQueue.put((5, 'sensor-update "motors" "stopped"'))
+
+                                    sghGC.setPinMode()
+                                    # sghGC.startServod([18, 22])  # servos
+                                    sghGC.motorUpdate(7, 11, 0)
+                                    sghGC.motorUpdate(15, 13, 0)
+
+                                    self.startUltra(29, 29, self.OnOrOff)
+                                    # Open SPI bus
+                                    # not needed as opened at prog start
+                                    #spi = spidev.SpiDev()
+                                    #spi.open(0, 0)
+                                    #spi.max_speed_hz = 40000
+
+                                print "mars setup"
+                                anyAddOns = True
                             elif "pi2go" in ADDON:
                                 with lock:
                                     sghGC.resetPinMode()
@@ -4865,6 +4890,34 @@ class ScratchListener(threading.Thread):
 
 
                             ######### End of Pi2gGo2 Variable handling
+                    elif "mars" in ADDON:
+                        # logging.debug("Processing variables for pi2go")
+
+                        # check for motor variable commands
+                        motorList = [['motorb', 7, 11, 0, False], ['motora', 15, 13, 0, False]]
+                        # logging.debug("ADDON:%s", ADDON)
+
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+                                
+                        if self.bFindValue('corner'):
+                            print("corner found") 
+                            cornerLookup = [11,9,15,13]
+                            for i in range(4):
+                                if self.vFindValue('corner' + str(i)):
+                                    svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                                    print i, svalue
+                                    pcaPWM.setPWM(cornerLookup[i], 0, int(min(620, max(130, 375 - (svalue * 2.72222)))))
+
+
+                        if self.vFindValue('mast'):
+                            svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
+                            print svalue
+                            pcaPWM.setPWM(0, 0, int(min(620, max(130, 375 - (svalue * 2.72222)))))
+                                    
                     elif "pi2go" in ADDON:
                         # do PiRoCon stuff
                         # logging.debug("Processing variables for Pi2Go")
@@ -5423,8 +5476,10 @@ class ScratchListener(threading.Thread):
                             if self.vFindValue('pservo' + str(i)):
                                 svalue = int(self.valueNumeric) if self.valueIsNumeric else 0
                                 print i, svalue
-                                pcaPWM.setPWM(i, 0, int(min(780, max(120, 450 - (svalue * 3.33333)))))
-                       
+                                #pcaPWM.setPWM(i, 0, int(min(780, max(120, 450 - (svalue * 3.33333)))))
+                                #pcaPWM.setPWM(i, 0, svalue)
+                                pcaPWM.setPWM(i, 0, int(min(620, max(130, 375 - (svalue * 2.72222)))))
+                                
 
                 ### Check for Broadcast type messages being received
                 # print "loggin level",debugLogging
@@ -6005,6 +6060,27 @@ class ScratchListener(threading.Thread):
                             print "pi2go2 startlightinfo detected"
                             sghGC.lightInfo = True
                         # end of Pi2Go2 broadcasts
+                    elif "mars" in ADDON:  #
+                        #print "Processing Pi2Go2 broadcasts"
+                        self.neoProcessing(ADDON + " neopixels4", UH,SH)
+                        if self.bFind('wheel'):
+                            print("broadcast wheel found") 
+                            cornerLookup = [11,9,15,13]
+                            nameLookup = ["mid","in","out"]
+                            for i in range(4):
+                                if self.bFindValue('wheel' + str(i)):
+                                    if (self.value in nameLookup):
+                                        if (self.value == nameLookup[0]):
+                                            svalue = 0
+                                        if (self.value == nameLookup[1]):
+                                            svalue = -45
+                                        if (self.value == nameLookup[2]):
+                                            svalue = 45
+                                        if (i > 1):
+                                            svalue = svalue * -1
+                                        print i, svalue
+                                        pcaPWM.setPWM(cornerLookup[i], 0, int(min(620, max(130, 375 - (svalue * 2.72222)))))                            
+                        # end of mars broadcasts
                     elif "scooter" in ADDON:  #
                            # print "Processing scooter broadcasts"
                             self.neoProcessing(ADDON + " neopixels4", UH,SH)
