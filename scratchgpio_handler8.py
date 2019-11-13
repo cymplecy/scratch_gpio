@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_12Nov19_2013'  # ADDON = MARS
+Version = 'v8_13Nov19_2204'  # add pi2go2red back in and slightly alter mars
 
 import threading
 import socket
@@ -642,6 +642,16 @@ class ScratchSender(threading.Thread):
                 sensor_name = "pin" + str(pin)
                 pass
             sensorValue = ("on", "off")[value == 1]
+        elif "pi2go2red" in ADDON:
+            #print "p2go2red section"
+            try:
+                sensor_name = ["left", "right", "lineleft", "lineright", "switch"][([7, 11, 16, 13, 10].index(pin))]
+            except:
+                print "pi2go2red input out of range"
+                sensor_name = "pin" + str(pin)
+                print sensor_name
+                pass
+            sensorValue = ("on", "off")[value == 1]
         elif "pi2go2" in ADDON:
             # print pin
             try:
@@ -654,6 +664,7 @@ class ScratchSender(threading.Thread):
                 sensorValue = ("on", "off")[value == 1]
             else:
                 sensorValue = ("on", "off")[value == 0]
+
         elif "apb01" in ADDON:
             # print pin
             try:
@@ -3689,6 +3700,28 @@ class ScratchListener(threading.Thread):
                                 if "encoders" in ADDON:
                                     print "with encoders"
                                 anyAddOns = True
+                            elif "pi2go2red" in ADDON:
+                                with lock:
+                                    sghGC.resetPinMode()
+
+                                    sghGC.pinUse[7] = sghGC.PINPUT  # FL
+                                    sghGC.pinUse[11] = sghGC.PINPUT  # FR
+                                    sghGC.pinUse[16] = sghGC.PINPUT  # LL
+                                    sghGC.pinUse[13] = sghGC.PINPUT  # LR
+                                    sghGC.pinUse[10] = sghGC.PINPUT  # switch
+
+                                    #sghGC.pinUse[29] = sghGC.PINPUT #left wheel sensor
+                                    #sghGC.pinUse[31] = sghGC.PINPUT #right wheel sensor
+
+                                    sghGC.setPinMode()
+                                    sghGC.motorUpdate(37, 35, 0)
+                                    sghGC.motorUpdate(40, 36, 0)
+
+                                    self.startUltra(38, 38, self.OnOrOff)
+
+
+                                print "pi2go2red setup"
+                                anyAddOns = True
                             elif "pi2go2" in ADDON:
                                 print "pi2go2 found in", ADDON
                                 #ADDON = "pi2go2 neopixels10"
@@ -3727,42 +3760,7 @@ class ScratchListener(threading.Thread):
                                 if "encoders" in ADDON:
                                     print "with encoders"
                                 anyAddOns = True
-                            elif "mars" in ADDON:
-                                print "mars found in", ADDON
-                                #ADDON = "mars neopixels4"
-                                with lock:
-                                    sghGC.resetPinMode()
-                                    #sghGC.pinUse[15] = sghGC.PINPUT  # ObjLeft
-                                    #sghGC.pinUse[11] = sghGC.PINPUT  # ObjRight
-                                    #sghGC.pinUse[16] = sghGC.PINPUT  # LFLeft
-                                    #sghGC.pinUse[13] = sghGC.PINPUT  # LFRight
-                                    #sghGC.pinUse[10] = sghGC.PINPUT  # switch
-                                    #sghGC.pinUse[18] = sghGC.POUTPUT
-                                    #sghGC.pinUse[22] = sghGC.POUTPUT
-                                    #sghGC.pinInvert[15] = True
-                                    #sghGC.pinInvert[16] = True
-                                    #sghGC.pinUse[15] = sghGC.POUTPUT
-                                    #sghGC.pinUse[16] = sghGC.POUTPUT
-                                    # if "encoders" in ADDON:
-                                        # logging.debug("Encoders Found:%s", ADDON)
-                                        # sghGC.pinUse[12] = sghGC.PCOUNT
-                                        # sghGC.pinUse[13] = sghGC.PCOUNT
-                                        # msgQueue.put((5, 'sensor-update "motors" "stopped"'))
 
-                                    sghGC.setPinMode()
-                                    # sghGC.startServod([18, 22])  # servos
-                                    sghGC.motorUpdate(7, 11, 0)
-                                    sghGC.motorUpdate(15, 13, 0)
-
-                                    self.startUltra(29, 29, self.OnOrOff)
-                                    # Open SPI bus
-                                    # not needed as opened at prog start
-                                    #spi = spidev.SpiDev()
-                                    #spi.open(0, 0)
-                                    #spi.max_speed_hz = 40000
-
-                                print "mars setup"
-                                anyAddOns = True
                             elif "pi2go" in ADDON:
                                 with lock:
                                     sghGC.resetPinMode()
@@ -3798,6 +3796,43 @@ class ScratchListener(threading.Thread):
                                 print "pi2go setup"
                                 anyAddOns = True
 
+                        if "mars" in ADDON:
+                            print "mars found in", ADDON
+                            #ADDON = "mars neopixels4"
+                            with lock:
+                                sghGC.resetPinMode()
+                                #sghGC.pinUse[15] = sghGC.PINPUT  # ObjLeft
+                                #sghGC.pinUse[11] = sghGC.PINPUT  # ObjRight
+                                #sghGC.pinUse[16] = sghGC.PINPUT  # LFLeft
+                                #sghGC.pinUse[13] = sghGC.PINPUT  # LFRight
+                                #sghGC.pinUse[10] = sghGC.PINPUT  # switch
+                                #sghGC.pinUse[18] = sghGC.POUTPUT
+                                #sghGC.pinUse[22] = sghGC.POUTPUT
+                                #sghGC.pinInvert[15] = True
+                                #sghGC.pinInvert[16] = True
+                                #sghGC.pinUse[15] = sghGC.POUTPUT
+                                #sghGC.pinUse[16] = sghGC.POUTPUT
+                                # if "encoders" in ADDON:
+                                    # logging.debug("Encoders Found:%s", ADDON)
+                                    # sghGC.pinUse[12] = sghGC.PCOUNT
+                                    # sghGC.pinUse[13] = sghGC.PCOUNT
+                                    # msgQueue.put((5, 'sensor-update "motors" "stopped"'))
+
+                                sghGC.setPinMode()
+                                # sghGC.startServod([18, 22])  # servos
+                                sghGC.motorUpdate(7, 11, 0)
+                                sghGC.motorUpdate(15, 13, 0)
+
+                                self.startUltra(29, 29, self.OnOrOff)
+                                # Open SPI bus
+                                # not needed as opened at prog start
+                                #spi = spidev.SpiDev()
+                                #spi.open(0, 0)
+                                #spi.max_speed_hz = 40000
+
+                            print "mars setup"
+                            anyAddOns = True
+                            
                         if "agobo" in ADDON:
                             with lock:
                                 sghGC.resetPinMode()
@@ -4815,6 +4850,19 @@ class ScratchListener(threading.Thread):
 
 
                             ######### End of Pi2gplite Variable handling
+                    elif "pi2go2red" in ADDON:
+                        # do pi2gored stuff
+                        # logging.debug("Processing variables for Pi2Gored")
+
+                        # check for motor variable commands
+                        print ("inside pi2go2red")
+                        motorList = [['motorb', 37, 35, 0, False], ['motora', 40, 36, 0, False]]
+                        
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
                     elif "pi2go2" in ADDON:
                         # logging.debug("Processing variables for pi2go")
 
@@ -6052,7 +6100,10 @@ class ScratchListener(threading.Thread):
                             moveMotorBThread = threading.Thread(target=self.moveMotor,
                                                                 args=[motorList[1], -svalue, motorList[1][3]])
                             moveMotorBThread.start()
-
+                    elif "pi2go2red" in ADDON:  #
+                        # do pi2go2red
+                        self.neoProcessing(ADDON + " neopixels16", UH,SH)
+                        moveFound = False
                     elif "pi2go2" in ADDON:  #
                         #print "Processing Pi2Go2 broadcasts"
                         self.neoProcessing(ADDON + " neopixels10", UH,SH)
