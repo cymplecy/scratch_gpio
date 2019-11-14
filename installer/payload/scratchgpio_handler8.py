@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_13Nov19_2204'  # add pi2go2red back in and slightly alter mars
+Version = 'v8_14Nov19_0713'  # add pi2go2green back in
 
 import threading
 import socket
@@ -640,6 +640,16 @@ class ScratchSender(threading.Thread):
             except:
                 print "pi2golite input ", pin, " out of range"
                 sensor_name = "pin" + str(pin)
+                pass
+            sensorValue = ("on", "off")[value == 1]
+        elif "pi2go2green" in ADDON:
+            #print "pi2go2green section"
+            try:
+                sensor_name = ["left", "right", "lineleft", "lineright", "switch"][([7, 11, 12, 13, 10].index(pin))]
+            except:
+                print "pi2go2green input out of range"
+                sensor_name = "pin" + str(pin)
+                print sensor_name
                 pass
             sensorValue = ("on", "off")[value == 1]
         elif "pi2go2red" in ADDON:
@@ -3700,6 +3710,25 @@ class ScratchListener(threading.Thread):
                                 if "encoders" in ADDON:
                                     print "with encoders"
                                 anyAddOns = True
+
+                            elif "pi2go2green" in ADDON:
+                                with lock:
+                                    sghGC.resetPinMode()
+                                    sghGC.pinUse[7] = sghGC.PINPUT  # FL
+                                    sghGC.pinUse[11] = sghGC.PINPUT  # FR
+                                    sghGC.pinUse[12] = sghGC.PINPUT  # LL
+                                    sghGC.pinUse[13] = sghGC.PINPUT  # LR
+                                    sghGC.pinUse[10] = sghGC.PINPUT  # switch
+
+                                    sghGC.setPinMode()
+                                    sghGC.motorUpdate(37, 35, 0)
+                                    sghGC.motorUpdate(40, 36, 0)
+
+                                    self.startUltra(38, 38, self.OnOrOff)
+
+                                print "pi2go2green setup"
+                                anyAddOns = True
+
                             elif "pi2go2red" in ADDON:
                                 with lock:
                                     sghGC.resetPinMode()
@@ -4847,9 +4876,8 @@ class ScratchListener(threading.Thread):
                             servodvalue = 50 + ((90 - degrees) * 200 / 180)
                             sghGC.pinServod(22, servodvalue)  # orig =22
                             # os.system("echo " + "1" + "=" + str(servodvalue) + " > /dev/servoblaster")
-
-
                             ######### End of Pi2gplite Variable handling
+
                     elif "pi2go2red" in ADDON:
                         # do pi2gored stuff
                         # logging.debug("Processing variables for Pi2Gored")
@@ -4863,6 +4891,19 @@ class ScratchListener(threading.Thread):
                                 svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
                                 logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
                                 sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+
+                    elif "pi2go2green" in ADDON:
+                        # do pi2go2green stuff
+                        # logging.debug("Processing variables for Pi2Go2green")
+                        # check for motor variable commands
+                        motorList = [['motorb', 37, 35, 0, False], ['motora', 40, 36, 0, False]]
+                        
+                        for listLoop in range(0, 2):
+                            if self.vFindValue(motorList[listLoop][0]):
+                                svalue = min(100, max(-100, int(self.valueNumeric))) if self.valueIsNumeric else 0
+                                logging.debug("motor:%s valuee:%s", motorList[listLoop][0], svalue)
+                                sghGC.motorUpdate(motorList[listLoop][1], motorList[listLoop][2], svalue)
+
                     elif "pi2go2" in ADDON:
                         # logging.debug("Processing variables for pi2go")
 
@@ -6100,10 +6141,18 @@ class ScratchListener(threading.Thread):
                             moveMotorBThread = threading.Thread(target=self.moveMotor,
                                                                 args=[motorList[1], -svalue, motorList[1][3]])
                             moveMotorBThread.start()
+
+                    elif "pi2go2green" in ADDON:  #
+                        # do pi2go2green
+                        #pi2go2green uses pin 12 for line follower
+                        #self.neoProcessing(ADDON + " neopixels16", UH,SH)
+                        moveFound = False
+
                     elif "pi2go2red" in ADDON:  #
                         # do pi2go2red
                         self.neoProcessing(ADDON + " neopixels16", UH,SH)
                         moveFound = False
+
                     elif "pi2go2" in ADDON:  #
                         #print "Processing Pi2Go2 broadcasts"
                         self.neoProcessing(ADDON + " neopixels10", UH,SH)
