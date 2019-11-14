@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_14Nov19_0713'  # add pi2go2green back in
+Version = 'v8_14Nov19_1021'  # fix mars ultra on pin 29
 
 import threading
 import socket
@@ -412,6 +412,8 @@ class ultra(threading.Thread):
             if "pibug" in ADDON:
                 sensor_name = 'ultra'
             if "scooter" in ADDON:
+                sensor_name = 'ultra'
+            if "mars" in ADDON:
                 sensor_name = 'ultra'
             bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
             # print 'sending: %s' % bcast_str
