@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_14Nov19_1021'  # fix mars ultra on pin 29
+Version = 'v8_15Nov19_1116'  # send seconds as sensor update every 3 secs as a heartbeat system
 
 import threading
 import socket
@@ -1251,6 +1251,15 @@ class ScratchSender(threading.Thread):
                         # bcast_str = 'sensor-update "greenfound" %s' % ( ColourTracker.green[2] )
                         # msgQueue.put((5,bcast_str))
                         # ColourTracker.green[2] = False
+            if (tick % 10) == 0:
+                #print "tick%10"
+                if (sghGC.addon_from_file is not None):
+                    #print "addon not none"
+                    seconds = time.localtime().tm_sec
+                    sensor_name = 'seconds'
+                    bcast_str = 'sensor-update "%s" "''%s''"' % (sensor_name, seconds)
+                    # print 'sending: %s' % bcast_str
+                    msgQueue.put((5, bcast_str))
 
             if (time.time() - self.time_last_compass) > 0.25:
                 # print "time up"
@@ -3365,11 +3374,9 @@ class ScratchListener(threading.Thread):
                             setupValue = self.value
                             pinsoraddon = "addon"
                         else:
-                            if (sghGC.addon_from_file == self.value.strip()):
-                                setupValue = self.value
-                                pinsoraddon = "addon"
-                            else:
-                                print("Declared addon:",self.value, "does not match one in /boot/addon.txt:",sghGC.addon_from_file)
+                            setupValue = sghGC.addon_from_file
+                            pinsoraddon = "addon"
+
 
                     #print "pinsoraddon:",pinsoraddon
                     #print"++++++++++++++++++++++++++++"
@@ -3793,6 +3800,7 @@ class ScratchListener(threading.Thread):
                                 anyAddOns = True
 
                             elif "pi2go" in ADDON:
+                                print "pi2go found in", ADDON
                                 with lock:
                                     sghGC.resetPinMode()
                                     # sghGC.pinUse[19] = sghGC.POUTPUT #MotorA
@@ -3825,6 +3833,7 @@ class ScratchListener(threading.Thread):
                                 # sghGC.startServod([12,10]) # servos testing motorpitx
 
                                 print "pi2go setup"
+                                
                                 anyAddOns = True
 
                         if "mars" in ADDON:
