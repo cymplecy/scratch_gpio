@@ -37,6 +37,7 @@ import threading
 import urllib
 
 sensorDict = {"s3gpioversion":Version}
+redirectIP = None
 
 def broadcast_to_sgh(dataOut):
     #dataOut = 'broadcast "'  + command + '"'
@@ -112,21 +113,36 @@ class S(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
+        global redirectIP
         self._set_headers()
         parsed_path = urlparse.urlparse(self.path)
+        hrsMin = str(time.localtime().tm_hour) + ":" + ("0"+ str(time.localtime().tm_min))[-1:-2]
 
         print ("self.path:" +str(self.path))
         print ("self.client_address[0]:" + str(self.client_address[0]))
         if self.path == "/favicon.ico":
             return
+        if (self.path.startswith("/restart")):
+            response = {hrsMin : " - restarting "}
+            self.wfile.write(json.dumps(response))
+            subprocess.Popen(["sudo", "reboot", "now"])
+            return
         if ((len(self.path) < 2) or (self.path.startswith("/redirect"))):
+            redirectIP = str(self.client_address[0])
             subprocess.Popen(["pkill", "-f", "scratchgpio_handler"])
             time.sleep(1)
-            #subprocess.Popen(['lxterminal', '-e', 'python qwerty.py'])
+            subprocess.Popen(['lxterminal', '-e', "sudo","python", "scratchgpio_handler8.py",redirectIP])
             #subprocess.call("python scratchgpio_handler8.py " + str(self.client_address[0]),shell=True)
             #subprocess.Popen(['python','scratcdu -hs $HOME', shell=True)
-            subprocess.Popen(["sudo","python", "scratchgpio_handler8.py",str(self.client_address[0])])
-            response = {str(time.localtime().tm_hour) + ":" + str(time.localtime().tm_min) + " - ScratchGPIO redirected to IP" :str(self.client_address[0]) + " (e.g IP address of this machine"}
+            #subprocess.Popen(["sudo","python", "scratchgpio_handler8.py",str(self.client_address[0])])
+            response = {hrsMin + " - ScratchGPIO redirected to IP" : redirectIP + " (e.g IP address of this machine"}
+            self.wfile.write(json.dumps(response))
+            return
+        if (self.path.startswith("/status")):
+            if redirectIP == None:
+                response = {"Status": hrsMin + "  - Not redirected"}
+            else:
+                response = {"Status" : hrsMin + " - Still connected to " + redirectIP}
             self.wfile.write(json.dumps(response))
             return
         splitData = urllib.unquote(self.path).split('&text=',1)

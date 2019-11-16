@@ -7861,6 +7861,7 @@ class ScratchListener(threading.Thread):
                     # end of broadcast check
 
                     if self.bFind('shutdownpi'):
+                        os.system('sudo sync')
                         os.system('sudo shutdown -h "now"')
 
                     if self.bFind('rebootpi'):
