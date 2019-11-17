@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_15Nov19_1116'  # send seconds as sensor update every 3 secs as a heartbeat system
+Version = 'v8_17Nov19_1216'  # re-add pi2go sensors
 
 import threading
 import socket
@@ -676,7 +676,16 @@ class ScratchSender(threading.Thread):
                 sensorValue = ("on", "off")[value == 1]
             else:
                 sensorValue = ("on", "off")[value == 0]
-
+        elif "pi2go" in ADDON:
+            #print pin
+            try:
+                sensor_name = ["irleft", "irfront", "irright", "lineleft", "lineright", "switch"][([11, 13, 7, 12, 15, 16].index(pin))]
+            except:
+                print "pi2go input out of range"
+                sensor_name = "pin" + str(pin)
+                print sensor_name
+                pass
+            sensorValue = ("on", "off")[value == 1]
         elif "apb01" in ADDON:
             # print pin
             try:

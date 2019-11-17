@@ -20,7 +20,7 @@
 
 
 # Tidied up a lot
-Version = "1.1_15Nov19" #add time info into redirect message
+Version = "1.1_17Nov19_1210" #correct time info and add shutdown
 
 #import BaseHTTPServer, SimpleHTTPServer
 import ssl
@@ -116,7 +116,7 @@ class S(BaseHTTPRequestHandler):
         global redirectIP
         self._set_headers()
         parsed_path = urlparse.urlparse(self.path)
-        hrsMin = str(time.localtime().tm_hour) + ":" + ("0"+ str(time.localtime().tm_min))[-1:-2]
+        hrsMin = str(time.localtime().tm_hour) + ":" + ("0"+ str(time.localtime().tm_min))[-2:]
 
         print ("self.path:" +str(self.path))
         print ("self.client_address[0]:" + str(self.client_address[0]))
@@ -126,6 +126,11 @@ class S(BaseHTTPRequestHandler):
             response = {hrsMin : " - restarting "}
             self.wfile.write(json.dumps(response))
             subprocess.Popen(["sudo", "reboot", "now"])
+            return
+        if (self.path.startswith("/shutdown")):
+            response = {hrsMin : " - shutting down "}
+            self.wfile.write(json.dumps(response))
+            subprocess.Popen(["sudo", "shutdown", "now"])
             return
         if ((len(self.path) < 2) or (self.path.startswith("/redirect"))):
             redirectIP = str(self.client_address[0])
