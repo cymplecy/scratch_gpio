@@ -20,7 +20,7 @@
 
 
 # Tidied up a lot
-Version = "1.1_18Nov19_1544" #start add updating
+Version = "1.1_18Nov19_1549" #start add updating
 
 #import BaseHTTPServer, SimpleHTTPServer
 import ssl
@@ -138,6 +138,7 @@ class S(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(response))
             subprocess.call(['lxterminal', '-e', "wget",  "https://git.io/vMS6T", "-O", "isgh8.sh"])
             subprocess.call(['lxterminal', '-e', "bash",  "isgh8.sh"])
+            subprocess.call(["sudo", "reboot", "now"])
             return
         if ((len(self.path) < 2) or (self.path.startswith("/redirect"))):
             redirectIP = str(self.client_address[0])
