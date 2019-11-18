@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_17Nov19_1216'  # re-add pi2go sensors
+Version = 'v8_18Nov19_2219'  # adjust agobo ultra
 
 import threading
 import socket
@@ -408,6 +408,8 @@ class ultra(threading.Thread):
             if "pi2go" in ADDON:
                 sensor_name = 'ultra'
             if "piconzero" in ADDON:
+                sensor_name = 'ultra'
+            if "agobo" in ADDON:
                 sensor_name = 'ultra'
             if "pibug" in ADDON:
                 sensor_name = 'ultra'
