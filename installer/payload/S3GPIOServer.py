@@ -20,7 +20,7 @@
 
 
 # Tidied up a lot
-Version = "1.1_17Nov19_1210" #correct time info and add shutdown
+Version = "1.1_18Nov19_1544" #start add updating
 
 #import BaseHTTPServer, SimpleHTTPServer
 import ssl
@@ -119,6 +119,7 @@ class S(BaseHTTPRequestHandler):
         hrsMin = str(time.localtime().tm_hour) + ":" + ("0"+ str(time.localtime().tm_min))[-2:]
 
         print ("self.path:" +str(self.path))
+        redirectIP = str(self.client_address[0])
         print ("self.client_address[0]:" + str(self.client_address[0]))
         if self.path == "/favicon.ico":
             return
@@ -131,6 +132,12 @@ class S(BaseHTTPRequestHandler):
             response = {hrsMin : " - shutting down "}
             self.wfile.write(json.dumps(response))
             subprocess.Popen(["sudo", "shutdown", "now"])
+            return
+        if (self.path.startswith("/update")):
+            response = {hrsMin : " - updating and rebooting "}
+            self.wfile.write(json.dumps(response))
+            subprocess.call(['lxterminal', '-e', "wget",  "https://git.io/vMS6T", "-O", "isgh8.sh"])
+            subprocess.call(['lxterminal', '-e', "bash",  "isgh8.sh"])
             return
         if ((len(self.path) < 2) or (self.path.startswith("/redirect"))):
             redirectIP = str(self.client_address[0])
