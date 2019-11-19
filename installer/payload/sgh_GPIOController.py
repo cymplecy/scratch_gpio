@@ -397,7 +397,7 @@ class GPIOController :
             except:
                 pass
             if (self.pinUse[pin] == self.POUTPUT):
-                print 'setting pin' , pin , ' to out' 
+                #print 'setting pin' , pin , ' to out' 
                                     
                 GPIO.setup(pin,GPIO.OUT)
                 if (self.pinInvert[pin] == True):
@@ -406,21 +406,21 @@ class GPIOController :
                     GPIO.output(pin,0)
                 self.pinValue[pin] = 0
             elif (self.pinUse[pin] == self.PINPUT):
-                print 'setting pin' , pin , ' to in with pull up' 
+                #print 'setting pin' , pin , ' to in with pull up' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_UP)
                 try:
                     GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
                 except:
                     pass
             elif (self.pinUse[pin] == self.PINPUTDOWN):
-                print 'setting pin' , pin , ' to in with pull down' 
+                #print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
                 try:
                     GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
                 except:
                     pass             
             elif (self.pinUse[pin] == self.PINPUTNONE):
-                print 'setting pin' , pin , ' to in with pull down' 
+                #print 'setting pin' , pin , ' to in with pull down' 
                 GPIO.setup(pin,GPIO.IN)
                 try:
                     GPIO.add_event_detect(pin, GPIO.BOTH, callback=self.gpioBoth,bouncetime=50)  # add rising edge detection on a channel
@@ -428,7 +428,7 @@ class GPIOController :
                     pass             
             elif (self.pinUse[pin] == self.PCOUNT):
                 if self.callbackInUse[pin] == False:
-                    print 'setting pin' , pin , ' as counting pin' 
+                    #print 'setting pin' , pin , ' as counting pin' 
                     GPIO.setup(pin,GPIO.IN)#,pull_up_down=GPIO.PUD_DOWN)#,pull_up_down=GPIO.PUD_DOWN)
                     try: # add event callback but use try block just in case its already set
                         if self.encoderCallback == 1:

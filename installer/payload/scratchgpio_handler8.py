@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_18Nov19_2219'  # adjust agobo ultra
+Version = 'v8_19Nov19_1336'  # add agobo2 ir sensors and neopixels but just use agobo as name for both
 
 import threading
 import socket
@@ -700,7 +700,7 @@ class ScratchSender(threading.Thread):
         elif "agobo" in ADDON:
             # print pin
             try:
-                sensor_name = ["lineleft", "lineright", "mode"][([7, 11, 16].index(pin))]
+                sensor_name = ["lineleft", "lineright", "mode", "irleft", "irright"][([7, 11, 16, 29, 31].index(pin))]
             except:
                 # print "agobo input out of range"
                 sensor_name = "pin" + str(pin)
