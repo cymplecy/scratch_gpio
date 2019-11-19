@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_19Nov19_1336'  # add agobo2 ir sensors and neopixels but just use agobo as name for both
+Version = 'v8_19Nov19_1500'  # add agobo2 ir sensors and neopixels but just use agobo as name for both2
 
 import threading
 import socket
@@ -3890,6 +3890,8 @@ class ScratchListener(threading.Thread):
                                 sghGC.pinUse[7] = sghGC.PINPUT  # LFLeft
                                 sghGC.pinUse[11] = sghGC.PINPUT  # LFRight
                                 sghGC.pinUse[16] = sghGC.PINPUT  # Switch
+                                sghGC.pinUse[29] = sghGC.PINPUT  # irleft
+                                sghGC.pinUse[31] = sghGC.PINPUT  # irright
                                 sghGC.pinUse[15] = sghGC.POUTPUT
                                 sghGC.pinUse[13] = sghGC.POUTPUT
 

@@ -20,7 +20,7 @@
 
 
 # Tidied up a lot
-Version = "1.1_18Nov19_1557" #add updating 3
+Version = "1.1_19Nov19_142" #modify updating to use update.sh
 
 #import BaseHTTPServer, SimpleHTTPServer
 import ssl
