@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_19Nov19_1500'  # add agobo2 ir sensors and neopixels but just use agobo as name for both2
+Version = 'v8_19Nov19_1522'  # add agobo2 ir sensors and neopixels but just use agobo as name for both3
 
 import threading
 import socket
@@ -6552,6 +6552,7 @@ class ScratchListener(threading.Thread):
                             pnblcd.lcd_string(self.value)
 
                     elif "agobo" in ADDON:
+                        self.neoProcessing(ADDON + " neopixels2", UH,SH)
                         if self.bFindOnOff('all'):
                             sghGC.pinUpdate(15, self.OnOrOff)
                             sghGC.pinUpdate(13, self.OnOrOff)
