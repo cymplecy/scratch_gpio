@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_19Nov19_1522'  # add agobo2 ir sensors and neopixels but just use agobo as name for both3
+Version = 'v8_20Nov19_2053'  # use auto syntax for addon
 
 import threading
 import socket
@@ -3385,9 +3385,12 @@ class ScratchListener(threading.Thread):
                             setupValue = self.value
                             pinsoraddon = "addon"
                         else:
-                            setupValue = sghGC.addon_from_file
-                            pinsoraddon = "addon"
-
+                            if self.value == "auto":
+                                setupValue = sghGC.addon_from_file
+                                pinsoraddon = "addon"
+                            else:
+                                setupValue = self.value
+                                pinsoraddon = "addon"
 
                     #print "pinsoraddon:",pinsoraddon
                     #print"++++++++++++++++++++++++++++"
