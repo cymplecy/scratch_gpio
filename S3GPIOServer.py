@@ -20,7 +20,7 @@
 
 
 # Tidied up a lot
-Version = "1.1_19Nov19_142" #modify updating to use update.sh
+Version = "1.1_28Nov19_1202" # fix bug with redirectIP
 
 #import BaseHTTPServer, SimpleHTTPServer
 import ssl
@@ -119,7 +119,7 @@ class S(BaseHTTPRequestHandler):
         hrsMin = str(time.localtime().tm_hour) + ":" + ("0"+ str(time.localtime().tm_min))[-2:]
 
         print ("self.path:" +str(self.path))
-        redirectIP = str(self.client_address[0])
+        #redirectIP = str(self.client_address[0])
         print ("self.client_address[0]:" + str(self.client_address[0]))
         if self.path == "/favicon.ico":
             return
