@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_20Nov19_2053'  # use auto syntax for addon
+Version = 'v8_16Dec19_1457'  # fixed DHT11
 
 import threading
 import socket
@@ -48,6 +48,8 @@ from sgh_GetJSONFromURL import GetJSONFromURL
 import kinematics
 from dot import BlueDot
 from signal import pause
+import pigpio
+import dht11
 
 
 
@@ -3063,7 +3065,7 @@ class ScratchListener(threading.Thread):
         print "ScratchListner run started"
         global firstRun, cycle_trace, step_delay, stepType, INVERT, \
             Ultra, ultraTotalInUse, piglow, PiGlow_Brightness, compass, ADDON, \
-            meVertical, meHorizontal, meDistance, host, killList, socketB, UH, sgh_pigpio
+            meVertical, meHorizontal, meDistance, host, killList, socketB, UH
 
         # firstRun = True #Used for testing in overcoming Scratch "bug/feature"
         firstRunData = ''
@@ -7715,18 +7717,28 @@ class ScratchListener(threading.Thread):
                             pass
                             
                     if self.bFindValue("getdht11"):
-                        if sgh_pigpio is None:
-                            sgh_pigpio = pigpio.pi()
-                        pin = int(self.valueNumeric) if self.valueIsNumeric else 11
-                        gpiopin = sghGC.gpioLookup[pin]
-                        sensor = dht11.DHT11(sgh_pigpio, gpiopin)
-                        dummy = sensor.read()
-                        bcast_str = 'sensor-update "%s" %s' % ("temperature", sensor.temperature)
-                        # print 'sending: %s' % bcast_str
-                        msgQueue.put(((5, bcast_str)))
-                        bcast_str = 'sensor-update "%s" %s' % ("humidity", sensor.humidity)
-                        # print 'sending: %s' % bcast_str
-                        msgQueue.put(((5, bcast_str)))
+                        try:
+                            sghGC.pigpio = pigpio.pi()
+                            pin = int(self.valueNumeric) if self.valueIsNumeric else 11
+                            gpiopin = sghGC.gpioLookup[pin]
+                            sensor = dht11.DHT11(sghGC.pigpio, gpiopin)
+                            dummy = sensor.read()
+                            bcast_str = 'sensor-update "%s" %s' % ("temperature", sensor.temperature)
+                            # print 'sending: %s' % bcast_str
+                            msgQueue.put(((5, bcast_str)))
+                            bcast_str = 'sensor-update "%s" %s' % ("humidity", sensor.humidity)
+                            # print 'sending: %s' % bcast_str
+                            msgQueue.put(((5, bcast_str)))
+                        except:
+                            bcast_str = 'sensor-update "%s" %s' % ("temperature", "error")
+                            # print 'sending: %s' % bcast_str
+                            msgQueue.put(((5, bcast_str)))
+                            bcast_str = 'sensor-update "%s" %s' % ("humidity", "error")
+                            # print 'sending: %s' % bcast_str
+                            msgQueue.put(((5, bcast_str)))
+                            pass
+
+                        
                             
                     if self.bFindValue("steparmcalib"):
                         bcast_str = 'sensor-update "%s" %s' % ("steppercalibrated", "false")
