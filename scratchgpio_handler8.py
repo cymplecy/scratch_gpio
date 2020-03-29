@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_16Dec19_1457'  # fixed DHT11
+Version = 'v8_29Mar20_0815'  # updated github from cygrovepi as not quite in sync
 
 import threading
 import socket
@@ -6617,18 +6617,19 @@ class ScratchListener(threading.Thread):
                             if self.bFindOnOff("g" + ("00" + str(sghGC.gpioLookup[pin]))[-2:]):
                                 sghGC.pinUpdate(pin, self.OnOrOff)
                                 
-                    if self.bFind("setanalog"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("setanalog" + str(pin)):
-                                pz.setInputConfig(pin,1)
-                    if self.bFind("settemp"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("settemp" + str(pin)):
-                                pz.setInputConfig(pin,2)      
-                    if self.bFind("setdigital"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("setdigital" + str(pin)):
-                                pz.setInputConfig(pin,0)
+                        # following 3 if were idented less before 8Jan20 - corrected but watch out in case I got it wrong!
+                        if self.bFind("setanalog"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("setanalog" + str(pin)):
+                                    pz.setInputConfig(pin,1)
+                        if self.bFind("settemp"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("settemp" + str(pin)):
+                                    pz.setInputConfig(pin,2)      
+                        if self.bFind("setdigital"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("setdigital" + str(pin)):
+                                    pz.setInputConfig(pin,0)
                     
                        
                     elif "gopigo3" in ADDON:   
@@ -6698,8 +6699,10 @@ class ScratchListener(threading.Thread):
                                 self.startUltra(pin, ultraEcho, self.OnOrOff)
 
 
-                                # end of normal pin checking
-
+                        # end of normal pin checking
+                    #-------------------------------------------------------------------------------------------------------------------------------------------------
+                    # All following are checked no matter if ADDON specified
+                    #-------------------------------------------------------------------------------------------------------------------------------------------------
                     stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
                     for listLoop in range(0, 4):
                         # print ("loop" , listLoop)
@@ -7718,7 +7721,8 @@ class ScratchListener(threading.Thread):
                             
                     if self.bFindValue("getdht11"):
                         try:
-                            sghGC.pigpio = pigpio.pi()
+                            if sghGC.pigpio is None:
+                                sghGC.pigpio = pigpio.pi()
                             pin = int(self.valueNumeric) if self.valueIsNumeric else 11
                             gpiopin = sghGC.gpioLookup[pin]
                             sensor = dht11.DHT11(sghGC.pigpio, gpiopin)
@@ -7905,6 +7909,10 @@ class ScratchListener(threading.Thread):
                         except:
                             print "mappin failed"
                             pass
+                            
+                    if ((mcp is not None) and ("piandbash" not in ADDON)):
+                        if self.bFindValue('mcp'):
+                            print ("mcp found")
 
                     #self.carryOn = False
                     #self.carryOnInUse = True
