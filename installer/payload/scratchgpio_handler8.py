@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_16Dec19_1457'  # fixed DHT11
+Version = 'v8_26Apr20_08:12'  # Orbit and neopixel work - has extra debugging print to try and determine failure
 
 import threading
 import socket
@@ -366,7 +366,7 @@ def on_message(client, userdata, msg):
     msgQueue.put((12, 'broadcast "' + str(msg.topic) + '"'))
     
 def motorUpdate(pin1,pin2,value):
-    print "here"
+    #print "here"
     #Add in delay when switch from forward to back to minimise current spike
     oldValue = sghGC.pinValue[pin1] + sghGC.pinValue[pin2]
     if (value > 0) and (oldValue < 0):
@@ -1443,6 +1443,7 @@ class ScratchListener(threading.Thread):
                          'indigo': (0, 0, 128), 'cream': (255, 255, 127), 'violet': (128, 0, 255),
                          'lightgreen': (127, 255, 0), 'amber': (255, 127, 0), 'lightblue': (0, 128, 255)}
         self.invtcolours = {v: k for k, v in self.tcolours.items()}
+        self.neoShowState = True
 
     def meArmGotoPoint(self, meHorizontal, meDistance, meVertical):
         self.arm.gotoPoint(int(max(-50, min(50, meHorizontal))), int(max(70, min(150, meDistance))),
@@ -1956,6 +1957,7 @@ class ScratchListener(threading.Thread):
 
 
     def setNeoPixel(self, x, R, G, B):
+        #print "setNeoPixel",x,R,G,B
         if "piconzero" in ADDON:
             pz.setOutputConfig(5, 3)
             pz.setPixel(x, R, G, B, False)
@@ -1994,12 +1996,13 @@ class ScratchListener(threading.Thread):
             return [R, G, B]
 
     def neoShow(self):
-        # print "show called"
-        if "piconzero" in ADDON:
-            # pz.setOutputConfig(5,3)
-            pz.updatePixels()
-        elif "sensehat" not in ADDON:
-            UH.show()
+        if self.neoShowState:
+            # print "show called"
+            if "piconzero" in ADDON:
+                # pz.setOutputConfig(5,3)
+                pz.updatePixels()
+            elif "sensehat" not in ADDON:
+                UH.show()
 
     def matrixWrite(self, text,capstxt, R, G, B):
         if "sensehat" in ADDON:
@@ -2030,8 +2033,8 @@ class ScratchListener(threading.Thread):
             return [R, G, B]
 
     def neoBright(self, level):
-        print "level set to ", level
-        print "AD:", ADDON
+        #print "level set to ", level
+        #print "AD:", ADDON
         if "sensehat" in ADDON:
             if level < 1:
                 SH.low_light = True
@@ -2351,7 +2354,7 @@ class ScratchListener(threading.Thread):
                         regresult = ['1']
                 except:
                     regresult = ['1']
-                print ("regresult:" + str(regresult[0]))                    
+                #print ("regresult:" + str(regresult[0]))                    
                 if self.bFindValue("pixel", "invert"):
                     try:
                         gnp = self.getNeoPixel(int(self.valueNumeric - 1))
@@ -2470,11 +2473,19 @@ class ScratchListener(threading.Thread):
             elif self.bFind("sweep"):
                 print "sweep"
                 for index in range(0, self.matrixUse):
-                    self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB("random")
-                    self.setNeoPixel(index, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    #self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB("random")
+                    self.setNeoPixel(index, random.randint(0,255) , random.randint(0,255), random.randint(0,255) )
                     self.neoShow()
                     time.sleep(0.05)  # delay during sweep
-
+                    
+            elif self.bFind("quicksweep"):
+                print "quicksweep"
+                for index in range(0, self.matrixUse):
+                    #self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB("random")
+                    self.setNeoPixel(index, random.randint(1,255) , random.randint(1,255), random.randint(1,255) )
+                    self.neoShow()
+                    #time.sleep(0.05)  # delay during sweep
+                    
             elif self.bFindValue("fade"):
                 values = self.value.split(",")
                 # print "v,bright",values[0],sghGC.ledDim
@@ -3119,8 +3130,9 @@ class ScratchListener(threading.Thread):
         listenLoopTime = time.time()
         sghGC.totalLoopTime = 0
         datawithCAPS = ''
-        BUFFER_SIZE = 5120 # This size will accomdate normal Scratch Control 'droid app sensor updates
+        BUFFER_SIZE = 62000 # This size will accomdate normal Scratch Control 'droid app sensor updates
         # This is the main loop that listens for messages from Scratch and sends appropriate commands off to various routines
+        ignore = False
         while not self.stopped():
 
 
@@ -3140,13 +3152,13 @@ class ScratchListener(threading.Thread):
                 logging.debug("RAW: %s", data)
                 
                 # Empty Buffer if too many messages or taking too long to process
-                if ((len(data) > 512) or (sghGC.totalLoopTime > 2)):
-                    dummyData = self.scratch_socket.recv(8192)
-                    data = ''
-                    dataPrevious = ''
-                    sghGC.totalLoopTime = 0
-                    print "Too many messages"
-                    raise ValueError('Too many messages.')
+                # if ((len(data) > 512) or (sghGC.totalLoopTime > 2)):
+                    # dummyData = self.scratch_socket.recv(8192)
+                    # data = ''
+                    # dataPrevious = ''
+                    # sghGC.totalLoopTime = 0
+                    # print "Too many messages"
+                    # raise ValueError('Too many messages.')
                     
                 if "send-vars" in data:
                     # Reset if New project detected from Scratch
@@ -3156,6 +3168,23 @@ class ScratchListener(threading.Thread):
                         print "cycle_trace has changed to", cycle_trace
                         break
 
+                if "continue" in data:
+                    print("DATA..................................")
+                    print(data)
+                    ignore = False
+                    print ("...continuing")
+                    
+                if ignore == True:
+                    continue
+
+                if "ignore" in data:
+                    ignore = True
+                    print ("ignoring from now on...")
+                    
+
+                    
+
+                    
                 if len(data) > 0:  # Connection still valid so process the data received
 
                     dataIn = data
@@ -3296,6 +3325,7 @@ class ScratchListener(threading.Thread):
                 except:
                     print "error in shlex.split"
                     dataraw = ''
+                    dataPrevious = ''
                     break
                 self.dataraw = dataraw
                 if self.dataraw == '':
@@ -6617,18 +6647,19 @@ class ScratchListener(threading.Thread):
                             if self.bFindOnOff("g" + ("00" + str(sghGC.gpioLookup[pin]))[-2:]):
                                 sghGC.pinUpdate(pin, self.OnOrOff)
                                 
-                    if self.bFind("setanalog"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("setanalog" + str(pin)):
-                                pz.setInputConfig(pin,1)
-                    if self.bFind("settemp"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("settemp" + str(pin)):
-                                pz.setInputConfig(pin,2)      
-                    if self.bFind("setdigital"):                                
-                        for pin in [0,1,2,3]:
-                            if self.bFindValue("setdigital" + str(pin)):
-                                pz.setInputConfig(pin,0)
+                        # following 3 if were idented less before 8Jan20 - corrected but watch out in case I got it wrong!
+                        if self.bFind("setanalog"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("setanalog" + str(pin)):
+                                    pz.setInputConfig(pin,1)
+                        if self.bFind("settemp"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("settemp" + str(pin)):
+                                    pz.setInputConfig(pin,2)      
+                        if self.bFind("setdigital"):                                
+                            for pin in [0,1,2,3]:
+                                if self.bFindValue("setdigital" + str(pin)):
+                                    pz.setInputConfig(pin,0)
                     
                        
                     elif "gopigo3" in ADDON:   
@@ -6644,7 +6675,179 @@ class ScratchListener(threading.Thread):
                             if svalue == 255:
                                 gpg.set_led(gpg.LED_BLINKER_RIGHT,255)
                             else:
-                                gpg.set_led(gpg.LED_BLINKER_RIGHT,0)                                
+                                gpg.set_led(gpg.LED_BLINKER_RIGHT,0)
+                                
+                    elif "orbit" in ADDON:  #
+                        #print "Processing orbit broadcasts"
+                        self.neoProcessing(ADDON + "neopixels256", UH,SH)
+                        
+                        def orbitSpinRight():
+                            for slice in range(16,0,-1):
+                                for led in range(0,16):
+                                    r,g,b = self.getNeoPixel(((slice - 1) * 16) + led)
+                                    self.setNeoPixel(((slice) * 16) + led,r,g,b)
+                            self.neoShow()
+                            
+                        def orbitSpinLeft():
+                            for slice in range(0,15):
+                                for led in range(0,16):
+                                    r,g,b = self.getNeoPixel(((slice + 1) * 16) + led)
+                                    self.setNeoPixel(((slice) * 16) + led,r,g,b)
+                            for led in range(0,16):
+                                r,g,b = self.getNeoPixel(((0) * 16) + led)
+                                self.setNeoPixel(((15) * 16) + led,r,g,b)                                    
+                            self.neoShow()
+                            
+                        def orbitClearSlice(slice):
+                            for led in range(0,16):
+                                self.setNeoPixel(((slice) * 16) + led,0,0,0)
+                            self.neoShow()
+                        
+                        
+                        if self.bFindValue("getslicepixel"):
+                            leds = self.value.split(',')
+                            #print leds
+                            if len(leds) == 2:
+                                leds[0] = int(rtnNumeric(leds[0],0))
+                                leds[1] = int(rtnNumeric(leds[1],0))
+                                r,g,b = self.getNeoPixel((leds[0] * 16) + leds[1])
+                                print (r,g,b)
+                                bcolour = "r"+str(r).zfill(3) + "g" + str(g).zfill(3) + "b" + str(b).zfill(3)
+                                sensor_name = 'rgbcolour'
+                                bcast_str = 'sensor-update "%s" %s' % (sensor_name, bcolour)
+                                bcast_str += ' "%s" %s' % ('red', r)
+                                bcast_str += ' "%s" %s' % ('green', g)
+                                bcast_str += ' "%s" %s' % ('blue', b)
+                                # print 'sending: %s' % bcast_str
+                                msgQueue.put((5, bcast_str))
+
+                        elif self.bFindValue("slice"):
+                            leds = self.value.split(',')
+                            #print leds
+                            if len(leds) == 3:
+                                leds[0] = int(rtnNumeric(leds[0],0))
+                                r,g,b = self.findRGB(leds[2])
+                                if len(leds[1]) < 3:
+                                    leds[1] = int(rtnNumeric(leds[1],0))
+                                    self.setNeoPixel((leds[0] * 16) + leds[1],r,g,b)
+                                else:
+                                    for loop in range(len(leds[1])):
+                                        if leds[1][loop] == "1":
+                                            self.setNeoPixel((leds[0] * 16) + loop,r,g,b)
+                                        elif leds[1][loop] == "r":
+                                            self.setNeoPixel((leds[0] * 16) + loop,255,0,0)
+                                        elif leds[1][loop] == "g":
+                                            self.setNeoPixel((leds[0] * 16) + loop,0,255,0)
+                                        elif leds[1][loop] == "b":
+                                            self.setNeoPixel((leds[0] * 16) + loop,0,0,255)
+                                        elif leds[1][loop] == "c":
+                                            self.setNeoPixel((leds[0] * 16) + loop,0,255,255)
+                                        elif leds[1][loop] == "m":
+                                            self.setNeoPixel((leds[0] * 16) + loop,255,0,255)
+                                        elif leds[1][loop] == "y":
+                                            self.setNeoPixel((leds[0] * 16) + loop,255,255,0)
+                                        else:
+                                            self.setNeoPixel((leds[0] * 16) + loop,0,0,0)
+                            elif len(leds) == 2:
+                                leds[0] = int(rtnNumeric(leds[0],0))
+                                for loop in range(len(leds[1])):
+                                    if leds[1][loop] == "1":
+                                        self.setNeoPixel((leds[0] * 16) + loop,255,255,255)
+                                    elif leds[1][loop] == "r":
+                                        self.setNeoPixel((leds[0] * 16) + loop,255,0,0)
+                                    elif leds[1][loop] == "g":
+                                        self.setNeoPixel((leds[0] * 16) + loop,0,255,0)
+                                    elif leds[1][loop] == "b":
+                                        self.setNeoPixel((leds[0] * 16) + loop,0,0,255)
+                                    elif leds[1][loop] == "c":
+                                        self.setNeoPixel((leds[0] * 16) + loop,0,255,255)
+                                    elif leds[1][loop] == "m":
+                                        self.setNeoPixel((leds[0] * 16) + loop,255,0,255)
+                                    elif leds[1][loop] == "y":
+                                        self.setNeoPixel((leds[0] * 16) + loop,255,255,0)
+                                    else:
+                                        self.setNeoPixel((leds[0] * 16) + loop,0,0,0)
+
+                            if self.neoShowState:
+                                self.neoShow()
+                                
+                        if self.bFind("show"):
+                            if self.bFindOnOff("show"):
+                                self.neoShowState = self.OnOrOff
+                            else:
+                                #print "show asked for"
+                                self.neoShow()
+                                
+                        if self.bFindValue("spinright"):
+                            orbitSpinRight()
+                            
+                        if self.bFindValue("spinleft"):
+                            orbitSpinLeft()
+                            
+                        if self.bFindValue("letter"):
+                            top = 11
+                            matrix = [None] * 7
+                            if self.value == "r":
+                                matrix[0] = "11110"
+                                matrix[1] = "10001"
+                                matrix[2] = "10001"
+                                matrix[3] = "10001"
+                                matrix[4] = "11110"
+                                matrix[5] = "10001"
+                                matrix[6] = "10001"
+                            if self.value == "r":
+                                matrix[0] = "11000"
+                                matrix[1] = "10100"
+                                matrix[2] = "10100"
+                                matrix[3] = "11000"
+                                matrix[4] = "1000"
+                                matrix[5] = "10100"
+                                matrix[6] = "10100"
+                            if self.value == "e":
+                                matrix[0] = "11100"
+                                matrix[1] = "10000"
+                                matrix[2] = "10000"
+                                matrix[3] = "11000"
+                                matrix[4] = "10000"
+                                matrix[5] = "10000"
+                                matrix[6] = "11100"
+                            if self.value == "d":
+                                matrix[0] = "11000"
+                                matrix[1] = "10000"
+                                matrix[2] = "10100"
+                                matrix[3] = "10100"
+                                matrix[4] = "10100"
+                                matrix[5] = "10000"
+                                matrix[6] = "11000"
+                            if self.value == "m":
+                                matrix[0] = "10001"
+                                matrix[1] = "11011"
+                                matrix[2] = "10101"
+                                matrix[3] = "10001"
+                                matrix[4] = "10001"
+                                matrix[5] = "10001"
+                                matrix[6] = "10001"
+                            if self.value == "n":
+                                matrix[0] = "10010"
+                                matrix[1] = "10010"
+                                matrix[2] = "11010"
+                                matrix[3] = "10010"
+                                matrix[4] = "10010"
+                                matrix[5] = "10110"
+                                matrix[6] = "10010"
+                            orbitSpin()
+                            r,g,b = 255,0,0
+                            for x in range(0,5):
+                                for y in range(0,7):
+                                    if (matrix[y][x] == "1"):
+                                        self.setNeoPixel(top-y,r,g,b)
+                                    else:
+                                        self.setNeoPixel(top-y,0,0,0)
+                                self.neoShow()
+                                orbitSpin()
+                            orbitClearSlice(0)
+
+
 
                     else:  # Plain GPIO Broadcast processing
 
@@ -6698,8 +6901,10 @@ class ScratchListener(threading.Thread):
                                 self.startUltra(pin, ultraEcho, self.OnOrOff)
 
 
-                                # end of normal pin checking
-
+                        # end of normal pin checking
+                    #-------------------------------------------------------------------------------------------------------------------------------------------------
+                    # All following are checked no matter if ADDON specified
+                    #-------------------------------------------------------------------------------------------------------------------------------------------------
                     stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
                     for listLoop in range(0, 4):
                         # print ("loop" , listLoop)
@@ -7718,7 +7923,8 @@ class ScratchListener(threading.Thread):
                             
                     if self.bFindValue("getdht11"):
                         try:
-                            sghGC.pigpio = pigpio.pi()
+                            if sghGC.pigpio is None:
+                                sghGC.pigpio = pigpio.pi()
                             pin = int(self.valueNumeric) if self.valueIsNumeric else 11
                             gpiopin = sghGC.gpioLookup[pin]
                             sensor = dht11.DHT11(sghGC.pigpio, gpiopin)
@@ -7905,6 +8111,10 @@ class ScratchListener(threading.Thread):
                         except:
                             print "mappin failed"
                             pass
+                            
+                    if ((mcp is not None) and ("piandbash" not in ADDON)):
+                        if self.bFindValue('mcp'):
+                            print ("mcp found")
 
                     #self.carryOn = False
                     #self.carryOnInUse = True
