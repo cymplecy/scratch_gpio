@@ -26,3 +26,6 @@ The code and installer in this folder are the same version as the ones linked to
 ## Issues & Fixes
 
 Please file any issues and feel free to submit pull requests
+
+Note:@bennuttall and @mattvenn have collaborator access rights in case of contact issues with myself
+

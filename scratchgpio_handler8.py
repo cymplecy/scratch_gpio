@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_26Apr20_08:12'  # Orbit and neopixel work - has extra debugging print to try and determine failure
+Version = 'v8_23Jul20_16:12'  # fix doc/code imbalance in piConZero output broadcast
 
 import threading
 import socket
@@ -6632,7 +6632,7 @@ class ScratchListener(threading.Thread):
                                 pz.setOutput(loop, svalue)
 
                         for loop in range(0, 6):
-                            if self.bFindOnOff("output" + str(loop) + ","):
+                            if self.bFindOnOff("output" + str(loop)):
                                 svalue = self.OnOrOff
                                 #print "pin", loop, svalue
                                 pz.setOutputConfig(loop, 0)
