@@ -1,0 +1,22 @@
+<NotepadPlus>
+    <Session activeView="0">
+        <mainView activeIndex="0">
+            <File firstVisibleLine="8308" xOffset="0" scrollWidth="368113" startPos="437853" endPos="437853" selMode="0" offset="0" wrapCount="1" lang="Python" encoding="-1" userReadOnly="no" filename="\\192.168.0.68\pi\sghdev\scratch_gpio\scratchgpio_handler8.py" backupFilePath="" originalFileLastModifTimestamp="-1001135956" originalFileLastModifTimestampHigh="30830188" mapFirstVisibleDisplayLine="-1" mapFirstVisibleDocLine="-1" mapLastVisibleDocLine="-1" mapNbLine="-1" mapHigherPos="-1" mapWidth="-1" mapHeight="-1" mapKByteInDoc="7471215" mapWrapIndentMode="-1" mapIsWrap="no">
+                <Mark line="2828" />
+                <Mark line="3069" />
+                <Mark line="3108" />
+                <Mark line="3142" />
+                <Mark line="8330" />
+            </File>
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="368113" startPos="164" endPos="164" selMode="0" offset="0" wrapCount="1" lang="Normal Text" encoding="-1" userReadOnly="no" filename="\\192.168.0.68\pi\sghdev\scratch_gpio\SnapStuff\join menu2.txt" backupFilePath="" originalFileLastModifTimestamp="-309538275" originalFileLastModifTimestampHigh="30829739" mapFirstVisibleDisplayLine="-1" mapFirstVisibleDocLine="-1" mapLastVisibleDocLine="-1" mapNbLine="-1" mapHigherPos="-1" mapWidth="-1" mapHeight="-1" mapKByteInDoc="1143209984" mapWrapIndentMode="-1" mapIsWrap="no">
+                <Mark line="0" />
+            </File>
+            <File firstVisibleLine="36" xOffset="0" scrollWidth="368113" startPos="507" endPos="310" selMode="0" offset="0" wrapCount="1" lang="Normal Text" encoding="-1" userReadOnly="no" filename="\\192.168.0.68\pi\sghdev\scratch_gpio\SnapStuff\join menu1.txt" backupFilePath="" originalFileLastModifTimestamp="889198916" originalFileLastModifTimestampHigh="30829740" mapFirstVisibleDisplayLine="-1" mapFirstVisibleDocLine="-1" mapLastVisibleDocLine="-1" mapNbLine="-1" mapHigherPos="-1" mapWidth="-1" mapHeight="-1" mapKByteInDoc="0" mapWrapIndentMode="-1" mapIsWrap="no" />
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="368113" startPos="335" endPos="0" selMode="0" offset="0" wrapCount="1" lang="Normal Text" encoding="-1" userReadOnly="no" filename="\\192.168.0.68\pi\sghdev\scratch_gpio\SnapStuff\unitary menu.txt" backupFilePath="" originalFileLastModifTimestamp="-1198142322" originalFileLastModifTimestampHigh="30829747" mapFirstVisibleDisplayLine="-1" mapFirstVisibleDocLine="-1" mapLastVisibleDocLine="-1" mapNbLine="-1" mapHigherPos="-1" mapWidth="-1" mapHeight="-1" mapKByteInDoc="1143209984" mapWrapIndentMode="-1" mapIsWrap="no">
+                <Mark line="5" />
+            </File>
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="368113" startPos="0" endPos="0" selMode="0" offset="0" wrapCount="1" lang="Python" encoding="-1" userReadOnly="no" filename="\\192.168.0.68\pi\sghdev\scratch_gpio\S3GPIOHttpsServer.py" backupFilePath="" originalFileLastModifTimestamp="131735524" originalFileLastModifTimestampHigh="30828025" mapFirstVisibleDisplayLine="-1" mapFirstVisibleDocLine="-1" mapLastVisibleDocLine="-1" mapNbLine="-1" mapHigherPos="-1" mapWidth="-1" mapHeight="-1" mapKByteInDoc="1442846208" mapWrapIndentMode="-1" mapIsWrap="no" />
+        </mainView>
+        <subView activeIndex="0" />
+    </Session>
+</NotepadPlus>

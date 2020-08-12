@@ -183,7 +183,7 @@ class S(BaseHTTPRequestHandler):
                     self.wfile.write(response)
                     return
                 elif messageValue == "all":
-                    response = '{"result":"' + str(sensorDict) +'"}'
+                    response = '{"result":' + str(sensorDict) +'}'
                     print "Response to Scratch:" + response
                     self.wfile.write(response)
                     return

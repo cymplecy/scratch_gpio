@@ -1,0 +1,99 @@
+select pin={
+pin 3
+pin 5
+pin 7
+pin 8
+pin 10
+pin 11
+pin 12
+pin 13
+pin 15
+pin 16
+pin 18
+pin 19
+pin 21
+pin 22
+pin 23
+pin 24
+pin 26
+pin 27
+pin 28
+pin 29
+pin 31
+pin 32
+pin 33
+pin 35
+pin 36
+pin 37
+pin 38
+pin 40
+}
+select LED colours={
+red
+yellow
+green
+blue
+orange
+amber
+white
+}
+select motor ={
+motorA
+motorB
+~
+motorL
+motorR
+~
+motor1
+motor2
+~
+motor3
+motor5
+motor7
+motor8
+motor10
+motor11
+motor12
+motor13
+motor15
+motor16
+motor18
+motor20
+motor21
+motor22
+}
+select LED number={
+LED 3
+LED 5
+LED 7
+LED 8
+LED 10
+LED 11
+LED 12
+LED 13
+LED 15
+LED 16
+LED 18
+LED 20
+LED 21
+LED 22
+LED 24
+LED 26
+LED 27
+LED 28
+LED 31
+LED 32
+LED 33
+LED 35
+LED 36
+LED 27
+LED 38
+LED 40
+}
+~
+all
+buzz
+colour
+pixels
+neopixels
+scroll
