@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.1.1_12Aug20_1434'  # Not sure if anything has changed
+Version = 'v8.1.2_25Sep21_1327'  # re-fix mqtt on connect parameter iusue AGAIN
 
 import threading
 import socket
@@ -345,7 +345,7 @@ def parse_data(dataraw, search_string):
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
 
 
-def on_connect(client, userdata, rc):
+def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.

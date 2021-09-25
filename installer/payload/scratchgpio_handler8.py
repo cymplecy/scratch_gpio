@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8_23Jul20_16:12'  # fix doc/code imbalance in piConZero output broadcast
+Version = 'v8.1.2_25Sep21_1327'  # re-fix mqtt on connect parameter iusue AGAIN
 
 import threading
 import socket
@@ -345,7 +345,7 @@ def parse_data(dataraw, search_string):
     return dataraw[(outputall_pos + 1 + search_string.length):].split()
 
 
-def on_connect(client, userdata, rc):
+def on_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
     # Subscribing in on_connect() means that if we lose the connection and
     # reconnect then subscriptions will be renewed.
@@ -2045,7 +2045,9 @@ class ScratchListener(threading.Thread):
             pz.updatePixels()                
         else:
             UH.brightness(level)
+            
 
+            
     def neoProcessing(self, localADDON, UH=None,SH=None):
         global datawithCAPS
         # print
@@ -2121,17 +2123,18 @@ class ScratchListener(threading.Thread):
 
         if self.bFindValue("colour"):
             #print "colour" ,self.value
-            if self.value[0] == "#":
-                try:
+            try:
+                if self.value[0] == "#":
                     self.value = (self.value + "00000000")[0:7]
                     self.matrixRed = int(self.value[1:3], 16)
                     self.matrixGreen = int(self.value[3:5], 16)
                     self.matrixBlue = int(self.value[5:], 16)
                     # print "matrxired", self.matrixRed
-                except:
-                    pass
-            else:
-                self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(self.value)
+                else:
+                    self.matrixRed, self.matrixGreen, self.matrixBlue = self.findRGB(self.value)
+            except:
+                print "colour cmd error"
+                pass
                 # if scolour == 'random': self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
                 #    ledcolours[random.randint(0, 6)], (128, 128, 128))
             # self.tcolours["on"] = self.matrixRed, self.matrixGreen, self.matrixBlue
@@ -2152,7 +2155,7 @@ class ScratchListener(threading.Thread):
                 for index in range(0, self.matrixUse):
                     self.setNeoPixel(index, 0, 0, 0)
                 self.neoShow()
-
+                
             elif self.bFindValue("pixels"):
                 pixelProcessed = False
                 for ledcolour in self.tcolours:
@@ -2368,6 +2371,30 @@ class ScratchListener(threading.Thread):
                         pixelProcessed = True
                     except:
                         pass
+                
+                elif self.bFindValue("pixellist"):
+                    plValue = self.value
+                    pixelList = None
+                    if ((plValue[0] == "[") or (plValue[0] == "{") or (plValue[0] == "(")):
+                        print "[ list detected"
+                        if ((plValue[-1] == "]") or (plValue[-1] == "}") or (plValue[-1] == ")")):
+                            pixelList = plValue[1:-1].split(",")
+                        else:
+                            pixelList = plValue[1:].split(",")
+                    else:
+                        print "just a string"
+                        pixelList = list(plValue)
+                    #print "plist"
+                    #print pixelList
+                    pixNum = 0
+                    for pixel in pixelList:
+                        #print pixel
+                        if (pixel == "1"):
+                            self.setNeoPixel(int(pixNum), self.matrixRed, self.matrixGreen, self.matrixBlue)
+                        else:
+                            self.setNeoPixel(int(pixNum), 0,0,0)
+                        pixNum += 1
+                    self.neoShow()
                         
                 elif self.bFindValue('pixel' + regresult[0]):
                     pixNum = int(regresult[0]) - 1
@@ -2577,7 +2604,7 @@ class ScratchListener(threading.Thread):
 
                 # print "checking"
             if self.bFind("pixel"):
-                # print "pixel"
+                # print "pixel in unicornhat"
                 pixelProcessed = False
                 # Check for pixel x,y,colour
                 # print self.tcolours
@@ -2794,7 +2821,7 @@ class ScratchListener(threading.Thread):
             if self.bFind("invert"):
                 for ym in range(0, self.matrixRangemax):
                     for xm in range(0, self.matrixRangemax):
-                        oldr, oldg, oldb = matrixGetPixel(xm, ym)
+                        oldr, oldg, oldb = self.matrixGetPixel(xm, ym)
                         # print "oldpixel" , oldpixel
                         self.matrixSetPixel(xm, ym, 255 - oldr, 255 - oldg, 255 - oldb)
                 self.neoShow()
@@ -2802,7 +2829,7 @@ class ScratchListener(threading.Thread):
             if self.bFind("moveleft"):
                 for y in range(0, self.matrixRangemax):
                     for x in range(0, self.matrixRangemax - 1):
-                        oldr, oldg, oldb = matrixGetPixel(x + 1, y)
+                        oldr, oldg, oldb = self.matrixGetPixel(x + 1, y)
                         # print "oldpixel" , oldpixel
                         self.matrixSetPixel(x, y, oldr, oldg, oldb)
                     self.matrixSetPixel(7, y, 0, 0, 0)
@@ -2905,6 +2932,28 @@ class ScratchListener(threading.Thread):
                             self.matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen,
                                            self.matrixBlue)
                     self.neoShow()
+                    
+            # if self.bFindValue("matrix"):
+                # plValue = self.value
+                # pixelList = None
+                # print "count"
+                # print plValue.count(",")
+                # if (plValue.count(",") > 0):
+                    # print("list received")
+                    # pixelList = plValue.split(",")
+                # else:
+                    # print "just a string"
+                    # pixelList = list(plValue)
+                # print "plist"
+                # print pixelList
+                # pixNum = 0
+                # for pixel in pixelList:
+                    # if (pixel == "1"):
+                        # self.matrixSetPixel(pixNum % 8, (pixNum // 8), self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    # else:
+                        # self.matrixSetPixel(pixNum % 8, (pixNum // 8), 0,0,0)
+                    # pixNum += 1
+                # self.neoShow()
 
             if self.bFindValue('loadimage'):
                 try:
@@ -3018,7 +3067,164 @@ class ScratchListener(threading.Thread):
             except:
                 pass
 
-        elif self.bFindValue('matrixpattern'):
+        if self.bFindValue("scrollleftmatrix"):
+            print "inside scrollleft matrixpattern"
+            for loop in range(0,8):
+                #remember that unicorn 0,0 is top left but 0,0, is bottom left from Scratch/Snap POV
+                #but makes no diff in scrolling left or right but does when up /down
+
+                for y in range(0, (self.matrixRangemax)):
+                    for x in range(0, (self.matrixRangemax - 1)):
+                        oldr, oldg, oldb = self.matrixGetPixel(x + 1,  y)
+                        # print "oldpixel" , oldpixel
+                        #print x,y,oldr, oldg, oldb
+                        #time.sleep(1)
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                        #self.neoShow()
+                    self.matrixSetPixel(7, y, 0, 0, 0)
+
+                lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', 'z']
+                bit_pattern = (
+                                  self.value + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[
+                              0:64]
+                #print 'bit_pattern %s' % bit_pattern
+                for loop2 in range(0,8):
+                    j = (loop2 * 8) + loop
+                    ym = j // 8
+                    #print j,ym
+                    xm = j - (8 * ym)
+                    bp = bit_pattern[j]
+                    xx = 7
+                    yy = 7 -ym
+                    if (bp == '1'):
+                        self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    elif (bp == 't'):
+                        self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    elif (bp in lettercolours):
+                        r,g,b = self.tcolours.get(ledcolours[lettercolours.index(bp)],
+                            (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                        self.matrixSetPixel(xx, yy, r,g,b)
+                    else:
+                        self.matrixSetPixel(xx, yy, 0,0,0)
+                self.neoShow()
+                time.sleep(sghGC.scrolldelay)
+
+        elif self.bFindValue("scrollrightmatrix"):
+            print "inside scrollright matrixpattern"
+            for loop in range(0,8):
+                for y in range(0, (self.matrixRangemax)):
+                    for x in range((self.matrixRangemax - 1),0,-1):
+                        # print "y,x",y,x
+                        oldr, oldg, oldb = self.matrixGetPixel(x - 1, y)
+                        # print "oldpixel" , oldpixel
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(0, y, 0, 0, 0)
+
+                lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', 'z']
+                bit_pattern = (
+                                  self.value + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[
+                              0:64]
+                # print 'bit_pattern %s' % bit_pattern
+                for loop2 in range(0,8):
+                    j = (loop2 * 8) + 7 - loop 
+                    ym = j // 8
+                    #print j,ym
+                    xm = j - (8 * ym)
+                    bp = bit_pattern[j]
+                    xx = 0
+                    yy = 7 -ym
+                    if (bp == '1'):
+                        self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    elif (bp == 't'):
+                        self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    elif (bp in lettercolours):
+                        r,g,b = self.tcolours.get(ledcolours[lettercolours.index(bp)],
+                            (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                        self.matrixSetPixel(xx, yy, r,g,b)
+                    else:
+                        self.matrixSetPixel(xx, yy, 0,0,0)
+                self.neoShow()
+                time.sleep(sghGC.scrolldelay)
+
+        elif self.bFindValue("scrolldownmatrix"):
+            print "inside scroll  matrixpattern"
+            for loop in range(0,8):
+                #remember that unicorn 0,0 is top left but 0,0, is bottom left from Scratch/Snap POV
+                #but makes no diff in scrolling left or right but does when up /down
+                for x in range(0, self.matrixRangemax):
+                    for y in range(self.matrixRangemax - 1, 0, -1):
+                        # print "y,x",y,x
+                        oldr, oldg, oldb = self.matrixGetPixel(x, y - 1)
+                        # print "oldpixel" , oldpixel
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(x, 0, 0, 0, 0)
+
+                lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', 'z']
+                bit_pattern = (
+                                  self.value + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[
+                              0:64]
+                # print 'bit_pattern %s' % bit_pattern
+                for loop2 in range(0,8):
+                    j = (loop2 ) + (loop * 8)
+                    ym = j // 8
+                    #print j,ym
+                    xm = j - (8 * ym)
+                    bp = bit_pattern[j]
+                    xx = xm
+                    yy = 0
+                    if (bp == '1'):
+                        self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    elif (bp == 't'):
+                        self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    elif (bp in lettercolours):
+                        r,g,b = self.tcolours.get(ledcolours[lettercolours.index(bp)],
+                            (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                        self.matrixSetPixel(xx, yy, r,g,b)
+                    else:
+                        self.matrixSetPixel(xx, yy, 0,0,0)
+                self.neoShow()
+                time.sleep(sghGC.scrolldelay)
+
+        elif self.bFindValue("scrollupmatrix"):
+            print "inside scroll  up matrixpattern"
+            for loop in range(0,8):
+                #remember that unicorn 0,0 is top left but 0,0, is bottom left from Scratch/Snap POV
+                #but makes no diff in scrolling left or right but does when up /down
+                for x in range(0, self.matrixRangemax):
+                    for y in range(0, self.matrixRangemax - 1):
+                        oldr, oldg, oldb = self.matrixGetPixel(x, y + 1)
+                        # print "oldpixel" , oldpixel
+                        self.matrixSetPixel(x, y, oldr, oldg, oldb)
+                    self.matrixSetPixel(x, 7, 0, 0, 0)
+
+                lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', 'z']
+                bit_pattern = (
+                                  self.value + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[
+                              0:64]
+                # print 'bit_pattern %s' % bit_pattern
+                for loop2 in range(0,8):
+                    j = (loop2 ) + ((7 - loop) * 8)
+                    ym = j // 8
+                    # print j,ym
+                    xm = j - (8 * ym)
+                    bp = bit_pattern[j]
+                    xx = xm
+                    yy = 7
+                    if (bp == '1'):
+                        self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    elif (bp == 't'):
+                        self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    elif (bp in lettercolours):
+                        r,g,b = self.tcolours.get(ledcolours[lettercolours.index(bp)],
+                            (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                        self.matrixSetPixel(xx, yy, r,g,b)
+                    else:
+                        self.matrixSetPixel(xx, yy, 0,0,0)
+                self.neoShow()
+                time.sleep(sghGC.scrolldelay)
+                
+        elif self.bFindValue('matrix'):
+            lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', 'z']
             bit_pattern = (
                               self.value + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[
                           0:64]
@@ -3027,15 +3233,47 @@ class ScratchListener(threading.Thread):
                 ym = j // 8
                 xm = j - (8 * ym)
                 bp = bit_pattern[j]
-                if bp in lettercolours:
-                    self.matrixRed, self.matrixGreen, self.matrixBlue = self.tcolours.get(
-                        ledcolours[lettercolours.index(bp)],
+                xx = xm
+                yy = 7 - ym
+                if (bp == '1'):
+                    self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                elif (bp == 't'):
+                    self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                elif (bp in lettercolours):
+                    r,g,b = self.tcolours.get(ledcolours[lettercolours.index(bp)],
                         (self.matrixRed, self.matrixGreen, self.matrixBlue))
-                    self.matrixSetPixel(xm, 7 - ym, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                    self.matrixSetPixel(xx, yy, r,g,b)
+                else:
+                    self.matrixSetPixel(xx, yy, 0,0,0)
             self.neoShow()
-
-
-        elif self.bFindValue("level"):
+            
+        # DEPRECEATED AS OF 08Aug20
+        elif self.bFindValue('matrixpattern'):
+            lettercolours = ['r', 'g', 'b', 'c', 'm', 'y', 'w', 'z']
+            bit_pattern = (
+                              self.value + 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')[
+                          0:64]
+            # print 'bit_pattern %s' % bit_pattern
+            for j in range(0, 64):
+                ym = j // 8
+                xm = j - (8 * ym)
+                bp = bit_pattern[j]
+                xx = xm
+                yy = 7 - ym
+                if (bp == '1'):
+                    self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                elif (bp == 't'):
+                    self.matrixSetPixel(xx, yy, self.matrixRed, self.matrixGreen, self.matrixBlue)
+                elif (bp in lettercolours):
+                    r,g,b = self.tcolours.get(ledcolours[lettercolours.index(bp)],
+                        (self.matrixRed, self.matrixGreen, self.matrixBlue))
+                    self.matrixSetPixel(xx, yy, r,g,b)
+                else:
+                    self.matrixSetPixel(xx, yy, 0,0,0)
+            self.neoShow()
+ 
+            
+        if self.bFindValue("level"):
             if self.valueIsNumeric:
                 for index in range(0, self.matrixUse):
                     oldr, oldg, oldb = tuple(
@@ -3407,6 +3645,9 @@ class ScratchListener(threading.Thread):
                         sghGC.pFreq = int(self.valueNumeric) if self.valueIsNumeric else 200
                         sghGC.changePWMFreq()
                         print "pFreq", sghGC.pFreq
+                        
+                    if self.vFindValue("scrolldelay"):
+                        sghGC.scrolldelay = self.valueNumeric if self.valueIsNumeric else 0.1
 
                     pinsoraddon = None
                     if self.vFindValue("setpins"):
@@ -4296,7 +4537,9 @@ class ScratchListener(threading.Thread):
                             self.neoShow()
                         except:
                             pass
-                            # print sghGC.ledDim                
+                            
+
+
                 
                     if "pitt" in ADDON:
                         if self.vFindValue("output"):
@@ -5645,8 +5888,10 @@ class ScratchListener(threading.Thread):
                         msgQueue.put((5, self.value))
                         # print "queue len", len(msgQueue)
 
-                    # if self.bFindValue("hardrestart"):
-                    #    os.execv(__file__, sys.argv)
+                    if self.bFindValue("hardrestart"):
+                        #os.execv(__file__, sys.argv)
+                        os.execl(sys.executable, 'python', __file__, *sys.argv[1:])
+                        print "this should not be printed"
 
 
                     if self.bFindValue("setpins"):
@@ -6771,12 +7016,12 @@ class ScratchListener(threading.Thread):
                             if self.neoShowState:
                                 self.neoShow()
                                 
-                        if self.bFind("show"):
-                            if self.bFindOnOff("show"):
-                                self.neoShowState = self.OnOrOff
-                            else:
-                                #print "show asked for"
-                                self.neoShow()
+                        # if self.bFind("show"):
+                            # if self.bFindOnOff("show"):
+                                # self.neoShowState = self.OnOrOff
+                            # else:
+                                # #print "show asked for"
+                                # self.neoShow()
                                 
                         if self.bFindValue("spinright"):
                             orbitSpinRight()
@@ -8116,6 +8361,17 @@ class ScratchListener(threading.Thread):
                         if self.bFindValue('mcp'):
                             print ("mcp found")
 
+                    if self.bFind("show"):
+                        if self.bFindOnOff("show"):
+                            self.neoShowState = self.OnOrOff
+                        #print "show asked for"
+                        self.neoShow()
+                     
+                    if self.bFindValue("flag"):
+                        sghGC.flag = self.value
+                        sensor_name = 'flag'
+                        bcast_str = 'sensor-update "%s" %s' % (sensor_name, sghGC.flag)
+                        msgQueue.put((5, bcast_str))
                     #self.carryOn = False
                     #self.carryOnInUse = True
                     #print "wait"

@@ -279,6 +279,7 @@ class S(BaseHTTPRequestHandler):
 def run(server_class=HTTPServer, handler_class=S, port=80):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
+    #un-comment next line if https required
     #httpd.socket = ssl.wrap_socket (httpd.socket, certfile='./ca.pem', server_side=True)
     print 'Starting webserver...'
     httpd.serve_forever()

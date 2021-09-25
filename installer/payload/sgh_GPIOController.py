@@ -134,6 +134,8 @@ class GPIOController :
         self.stepperBPos = 0
         self.stepperDPos = 0
         self.totalLoopTime = 0
+        self.scrolldelay = 0.1
+        self.flag = "off"
         
         self.pigpio = None
 
