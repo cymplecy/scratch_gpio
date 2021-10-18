@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.1.4_15Oct21_1454'  # change ultra reporting to return echo pin number not trigger one
+Version = 'v8.1.4_15Oct21_1454'  # Add broadcast turn for steppers
 
 import threading
 import socket
@@ -5556,7 +5556,7 @@ class ScratchListener(threading.Thread):
                         # logging.debug("Steppers in use")
                         if steppersInUse:
                             logging.debug("Steppers in use")
-                            stepperList = [['motora', [11, 12, 13, 15]], ['motorb', [16, 18, 22, 7]]]
+                            stepperList = [['motora', sghGC.stepperPins[0]], ['motorb', sghGC.stepperPins[1]]]
                             for listLoop in range(0, 2):
                                 if self.vFindValue(stepperList[listLoop][0]):
                                     logging.debug("Stepper found %s", stepperList[listLoop][0])
@@ -5564,7 +5564,9 @@ class ScratchListener(threading.Thread):
                                         self.stepperUpdate(stepperList[listLoop][1], self.valueNumeric)
                                     else:
                                         self.stepperUpdate(stepperList[listLoop][1], 0)
-
+                            # variable turn contains list of current positions (just 1st pin used)
+                            # if position not previously called then turn is created
+                            #  I have no idea why I just didn't create a variable in sghGC and use that!!!!!
                             stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]]]
                             for listLoop in range(0, 2):
                                 # print ("look for steppers")
@@ -7119,10 +7121,18 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(pin, 0, type="pwmmotor")
 
-                            if self.bFind('sonar' + str(pin)):
+                            if self.bFindValue('sonar' + str(pin) + " "): # modifeid 16Oct21 to handle sonar on two pins as well as one
                                 distance = sghGC.pinSonar(pin,pin)
                                 # print'Distance:',distance,'cm'
                                 sensor_name = 'sonar' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                                # print 'sending: %s' % bcast_str
+                                msgQueue.put((5, bcast_str))
+                            elif self.bFindValue('sonar' + str(pin) + ","):
+                                pinEcho = int(self.value)
+                                distance = sghGC.pinSonar(pin,pinEcho)
+                                # print'Distance:',distance,'cm'
+                                sensor_name = 'sonar' + str(pinEcho)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 # print 'sending: %s' % bcast_str
                                 msgQueue.put((5, bcast_str))
@@ -7150,7 +7160,7 @@ class ScratchListener(threading.Thread):
                     #-------------------------------------------------------------------------------------------------------------------------------------------------
                     # All following are checked no matter if ADDON specified
                     #-------------------------------------------------------------------------------------------------------------------------------------------------
-                    if stepperInUse:
+                    if steppersInUse:
                         stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
                         for listLoop in range(0, 4):
                             # print ("loop" , listLoop)
@@ -7190,10 +7200,14 @@ class ScratchListener(threading.Thread):
                                 # print 'sending: %s' % bcast_str
                                 msgQueue.put((5, bcast_str))                                
                         if self.bFind('turn'):
-                            if bFindValue('turna'):
-                                self.stepperUpdate(stepperList[0][1], 100, self.valueNumeric)
-                            if bFindValue('turnb'):
-                                self.stepperUpdate(stepperList[1][1], 100, self.valueNumeric)
+                            #print("turn found")
+                            if self.bFindValue('turna'):
+                                # print("turna found")
+                                # print(self.valueNumeric)
+                                # print(self.value)
+                                self.stepperUpdate(stepperList[0][1], math.copysign(100,self.valueNumeric) , abs(self.valueNumeric))
+                            if self.bFindValue('turnb'):
+                                self.stepperUpdate(stepperList[1][1], math.copysign(100,self.valueNumeric), abs(self.valueNumeric))
 
 
                     if self.bFindValue('pinpattern'):
