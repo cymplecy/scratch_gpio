@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.1.2_25Sep21_1327'  # re-fix mqtt on connect parameter iusue AGAIN
+Version = 'v8.1.4_15Oct21_1454'  # Add broadcast turn for steppers
 
 import threading
 import socket
@@ -406,7 +406,7 @@ class ultra(threading.Thread):
         while not self.stopped():
             startTime = time.time()
             distance = sghGC.pinSonar2(self.pinTrig,self.pinEcho)  # do a ping
-            sensor_name = 'ultra' + str(self.pinTrig)
+            sensor_name = 'ultra' + str(self.pinEcho)
             if "pi2go" in ADDON:
                 sensor_name = 'ultra'
             if "piconzero" in ADDON:
@@ -423,11 +423,11 @@ class ultra(threading.Thread):
             # print 'sending: %s' % bcast_str
             msgQueue.put(((5, bcast_str)))
             # send echo as well as trig pin update
-            if (self.pinTrig != self.pinEcho):
-                #print("two pin ultra")
-                sensor_name = 'ultra' + str(self.pinEcho)
-                bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
-                msgQueue.put(((5, bcast_str)))
+            # if (self.pinTrig != self.pinEcho):
+                # #print("two pin ultra")
+                # sensor_name = 'ultra' + str(self.pinEcho)
+                # bcast_str = 'sensor-update "%s" %s' % (sensor_name, str(distance))
+                # msgQueue.put(((5, bcast_str)))
             timeTaken = time.time() - startTime
             #print "time taken:",timeTaken
             if timeTaken < sghGC.ultraFreq:
@@ -5556,7 +5556,7 @@ class ScratchListener(threading.Thread):
                         # logging.debug("Steppers in use")
                         if steppersInUse:
                             logging.debug("Steppers in use")
-                            stepperList = [['motora', [11, 12, 13, 15]], ['motorb', [16, 18, 22, 7]]]
+                            stepperList = [['motora', sghGC.stepperPins[0]], ['motorb', sghGC.stepperPins[1]]]
                             for listLoop in range(0, 2):
                                 if self.vFindValue(stepperList[listLoop][0]):
                                     logging.debug("Stepper found %s", stepperList[listLoop][0])
@@ -5564,7 +5564,9 @@ class ScratchListener(threading.Thread):
                                         self.stepperUpdate(stepperList[listLoop][1], self.valueNumeric)
                                     else:
                                         self.stepperUpdate(stepperList[listLoop][1], 0)
-
+                            # variable turn contains list of current positions (just 1st pin used)
+                            # if position not previously called then turn is created
+                            #  I have no idea why I just didn't create a variable in sghGC and use that!!!!!
                             stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]]]
                             for listLoop in range(0, 2):
                                 # print ("look for steppers")
@@ -6249,7 +6251,7 @@ class ScratchListener(threading.Thread):
                                                           args=[12, 440 * 2 ** ((beepNote - 69) / 12.0), beepDuration])
                             beepThread.start()
 
-                        if self.bFind('sonare,a'):
+                        if self.bFind('sonare,a'): # might be a syntax error inide the bfind 15Oct21 - left for now
                             distance = sghGC.pinSonar2(15, 21)
                             # print'Distance:',distance,'cm'
                             sensor_name = 'sonara'
@@ -7119,10 +7121,18 @@ class ScratchListener(threading.Thread):
                                 else:
                                     sghGC.pinUpdate(pin, 0, type="pwmmotor")
 
-                            if self.bFind('sonar' + str(pin)):
+                            if self.bFindValue('sonar' + str(pin) + " "): # modifeid 16Oct21 to handle sonar on two pins as well as one
                                 distance = sghGC.pinSonar(pin,pin)
                                 # print'Distance:',distance,'cm'
                                 sensor_name = 'sonar' + str(pin)
+                                bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                                # print 'sending: %s' % bcast_str
+                                msgQueue.put((5, bcast_str))
+                            elif self.bFindValue('sonar' + str(pin) + ","):
+                                pinEcho = int(self.value)
+                                distance = sghGC.pinSonar(pin,pinEcho)
+                                # print'Distance:',distance,'cm'
+                                sensor_name = 'sonar' + str(pinEcho)
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 # print 'sending: %s' % bcast_str
                                 msgQueue.put((5, bcast_str))
@@ -7150,44 +7160,54 @@ class ScratchListener(threading.Thread):
                     #-------------------------------------------------------------------------------------------------------------------------------------------------
                     # All following are checked no matter if ADDON specified
                     #-------------------------------------------------------------------------------------------------------------------------------------------------
-                    stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
-                    for listLoop in range(0, 4):
-                        # print ("loop" , listLoop)
-                        if self.bFindValue(stepperList[listLoop][0]):
-                            if self.valueIsNumeric:
-                                mainPin = stepperList[listLoop][1][0]
-                                print "main stepper pin", mainPin
-                                print "stepper ref" , sghGC.pinRef[mainPin]
-                                sensor_name = 'stepper' + stepperList[listLoop][0][-1:]
-                                bcast_str = 'sensor-update "%s" %s' % (sensor_name, "moving")
-                                # print 'sending: %s' % bcast_str
-                                msgQueue.put((5, bcast_str))
-                                if self.valueNumeric > 0:
-                                    if sghGC.pinRef[mainPin] != None:
-                                        print "waiting"
-                                        time.sleep(0.2)
-                                        while sghGC.pinRef[mainPin].stepInMotion[mainPin] != 0:
-                                            print "sleeping" ,sghGC.pinRef[mainPin].stepInMotion[mainPin]                                        
-                                            time.sleep(0.1)
-                                        print "awake"
+                    if steppersInUse:
+                        stepperList = [['positiona', [11, 12, 13, 15]], ['positionb', [16, 18, 22, 7]], ['positionc', [33, 32, 31, 29]], ['positiond', [ 38, 37, 36, 35]]]
+                        for listLoop in range(0, 4):
+                            # print ("loop" , listLoop)
+                            if self.bFindValue(stepperList[listLoop][0]):
+                                if self.valueIsNumeric:
+                                    mainPin = stepperList[listLoop][1][0]
+                                    print "main stepper pin", mainPin
+                                    print "stepper ref" , sghGC.pinRef[mainPin]
+                                    sensor_name = 'stepper' + stepperList[listLoop][0][-1:]
+                                    bcast_str = 'sensor-update "%s" %s' % (sensor_name, "moving")
+                                    # print 'sending: %s' % bcast_str
+                                    msgQueue.put((5, bcast_str))
+                                    if self.valueNumeric > 0:
+                                        if sghGC.pinRef[mainPin] != None:
+                                            print "waiting"
+                                            time.sleep(0.2)
+                                            while sghGC.pinRef[mainPin].stepInMotion[mainPin] != 0:
+                                                print "sleeping" ,sghGC.pinRef[mainPin].stepInMotion[mainPin]                                        
+                                                time.sleep(0.1)
+                                            print "awake"
 
-                                    self.stepperUpdate(stepperList[listLoop][1], 100, self.valueNumeric)
-                                elif self.valueNumeric < 0:
-                                    if sghGC.pinRef[mainPin] != None:
-                                        print "waiting"
-                                        time.sleep(0.2)
-                                        while sghGC.pinRef[mainPin].stepInMotion[mainPin] != 0:
-                                            print "sleeping" ,sghGC.pinRef[mainPin].stepInMotion[mainPin]                                        
-                                            time.sleep(0.1)
-                                        print "awake"
-                                    self.stepperUpdate(stepperList[listLoop][1], -100, abs(self.valueNumeric))
-                            else:
-                                self.stepperUpdate(stepperList[listLoop][1], 0)
-                            
-                            sensor_name = 'stepper' + stepperList[listLoop][0][-1:]
-                            bcast_str = 'sensor-update "%s" %s' % (sensor_name, "stopped")
-                            # print 'sending: %s' % bcast_str
-                            msgQueue.put((5, bcast_str))                                
+                                        self.stepperUpdate(stepperList[listLoop][1], 100, self.valueNumeric)
+                                    elif self.valueNumeric < 0:
+                                        if sghGC.pinRef[mainPin] != None:
+                                            print "waiting"
+                                            time.sleep(0.2)
+                                            while sghGC.pinRef[mainPin].stepInMotion[mainPin] != 0:
+                                                print "sleeping" ,sghGC.pinRef[mainPin].stepInMotion[mainPin]                                        
+                                                time.sleep(0.1)
+                                            print "awake"
+                                        self.stepperUpdate(stepperList[listLoop][1], -100, abs(self.valueNumeric))
+                                else:
+                                    self.stepperUpdate(stepperList[listLoop][1], 0)
+                                
+                                sensor_name = 'stepper' + stepperList[listLoop][0][-1:]
+                                bcast_str = 'sensor-update "%s" %s' % (sensor_name, "stopped")
+                                # print 'sending: %s' % bcast_str
+                                msgQueue.put((5, bcast_str))                                
+                        if self.bFind('turn'):
+                            #print("turn found")
+                            if self.bFindValue('turna'):
+                                # print("turna found")
+                                # print(self.valueNumeric)
+                                # print(self.value)
+                                self.stepperUpdate(stepperList[0][1], math.copysign(100,self.valueNumeric) , abs(self.valueNumeric))
+                            if self.bFindValue('turnb'):
+                                self.stepperUpdate(stepperList[1][1], math.copysign(100,self.valueNumeric), abs(self.valueNumeric))
 
 
                     if self.bFindValue('pinpattern'):

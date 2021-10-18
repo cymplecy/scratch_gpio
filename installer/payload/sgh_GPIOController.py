@@ -136,6 +136,7 @@ class GPIOController :
         self.totalLoopTime = 0
         self.scrolldelay = 0.1
         self.flag = "off"
+        self.stepperPins = [[11, 12, 13, 15], [16, 18, 22, 7], [33, 32, 31, 29], [ 38, 37, 36, 35]]
         
         self.pigpio = None
 
@@ -602,11 +603,12 @@ class GPIOController :
                 pass
         return
 
-    def pinSonar(self, pin):
+    def pinSonar(self, trig,echo):
+        #modified 16Oct21 to handle being called with two pin umbers (which will be equal anyway)
         #print pin
         #print self.pinUse[pin]         
-        self.pinUse[pin] = self.PSONAR
-        GPIO.setup(pin,GPIO.OUT)
+        self.pinUse[trig] = self.PSONAR
+        GPIO.setup(trig,GPIO.OUT)
         ti = time.time()
         # setup a list to hold 3 values and then do 3 distance calcs and store them
         #print 'sonar started' 
@@ -617,18 +619,18 @@ class GPIOController :
         try:
             for k in range(self.ultraSamples):
                 #print "sonar pulse" , k
-                GPIO.output(pin, 0)
+                GPIO.output(trig, 0)
                 time.sleep(0.06)#set pin low for 60ms as per spec sheet to allow for old pulses not finished
-                GPIO.output(pin, 1)    # Send Pulse high
+                GPIO.output(trig, 1)    # Send Pulse high
                 time.sleep(0.00002)     #  wait
-                GPIO.output(pin, 0)  #  bring it back low - pulse over.
+                GPIO.output(trig, 0)  #  bring it back low - pulse over.
                 t0=time.time() # remember current time
-                GPIO.setup(pin,GPIO.IN)
+                GPIO.setup(echo,GPIO.IN)
                 #PIN_USE[i] = PINPUT don't bother telling system
 
                 t1=t0
                 # This while loop waits for input pin (7) to be low but with a timeout
-                while ((GPIO.input(pin)==0) and ((t1-t0) < 0.02)):
+                while ((GPIO.input(echo)==0) and ((t1-t0) < 0.02)):
                     #time.sleep(0.00001)
                     t1=time.time()
                 t1=time.time()
@@ -637,7 +639,7 @@ class GPIOController :
                 #  This while loops waits for input pin to go high to indicate pulse detection
                 #  with  timeout
                 #tcount = 0
-                while ((GPIO.input(pin)==1) and ((t2-t1) < 0.02)):
+                while ((GPIO.input(echo)==1) and ((t2-t1) < 0.02)):
                     #time.sleep(0.000005)
                     t2=time.time()
                     #tcount += 1
@@ -650,7 +652,7 @@ class GPIOController :
                 #distance = t3 * 17150  # calc distance in cm t3 * 343 / 2 * 100
                 distlist[k]=int(t3 * 17150)
                 #print distance
-                GPIO.setup(pin,GPIO.OUT)
+                GPIO.setup(trig,GPIO.OUT)
             #tf = time.time() - ts
             #print ("Proctime:",tf)
             #print ("Dist:",sorted(distlist))
