@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.1.4_15Oct21_1454'  # Add broadcast turn for steppers
+Version = 'v8.1.5_22Nov21'  # Add VL53LOX support
 
 import threading
 import socket
@@ -50,6 +50,7 @@ from dot import BlueDot
 from signal import pause
 import pigpio
 import dht11
+
 
 
 
@@ -204,8 +205,24 @@ try:
 except:
     print "Warning: sense hat not imported"
     pass  
+
+TOF = None
+#try:
+import VL53L0X
+TOF = VL53L0X.VL53L0X(i2c_bus=1,i2c_address=0x29)
+# I2C Address can change before tof.open()
+# tof.change_address(0x32)
+TOF.open()
+# Start ranging
+TOF.start_ranging(VL53L0X.Vl53l0xAccuracyMode.BETTER)
+timing = TOF.get_timing()
+if timing < 20000:
+    timing = 20000
+print("Timing %d ms" % (timing/1000))
+#except:
+#    print "Warning: VL53L0X time of flight sensor not imported"
+#    pass
     
-  
 
 sghCT = None  # reserve for captouch
 
@@ -2400,7 +2417,7 @@ class ScratchListener(threading.Thread):
                     pixNum = int(regresult[0]) - 1
                     #print "pixNuM:", pixNum
                     pixCol = self.value
-                    #print "pixCoL:", pixCol
+                    #print "pixCol:", pixCol
                     if 0 <= pixNum <= self.matrixUse:
 
                         if pixCol == "on":
@@ -2433,20 +2450,21 @@ class ScratchListener(threading.Thread):
                             self.neoShow()
                             pixelProcessed = True
 
-                        elif pixCol[0] == "#":
-                            try:
-                                c = (pixCol[1:] + "000000")[0:6]
-                                print "full", c
-                                r = int(c[0:2], 16)
-                                g = int(c[2:4], 16)
-                                print "b",c[4:]
-                                b = int(c[4:], 16)
-                                self.setNeoPixel(pixNum, r, g, b)
-                                self.matrixRed, self.matrixGreen, self.matrixBlue = r, g, b
-                                self.neoShow()
-                                pixelProcessed = True
-                            except:
-                                pass
+                        elif (isinstance(pixCol,str) and (len(pixCol) > 0)):
+                            if pixCol[0] == "#":
+                                try:
+                                    c = (pixCol[1:] + "000000")[0:6]
+                                    print "full", c
+                                    r = int(c[0:2], 16)
+                                    g = int(c[2:4], 16)
+                                    print "b",c[4:]
+                                    b = int(c[4:], 16)
+                                    self.setNeoPixel(pixNum, r, g, b)
+                                    self.matrixRed, self.matrixGreen, self.matrixBlue = r, g, b
+                                    self.neoShow()
+                                    pixelProcessed = True
+                                except:
+                                    pass
 
 
             elif self.bFind("getpixel"):
@@ -5877,7 +5895,7 @@ class ScratchListener(threading.Thread):
                 ### Check for Broadcast type messages being received
                 # print "loggin level",debugLogging
 
-
+                # MAIN BROADCAST PROCESSING
                 elif 'broadcast' in self.dataraw:
                     if (debugLogging == False):
                         logging.getLogger().setLevel(logging.INFO)
@@ -7136,6 +7154,8 @@ class ScratchListener(threading.Thread):
                                 bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
                                 # print 'sending: %s' % bcast_str
                                 msgQueue.put((5, bcast_str))
+                                
+                                                            
 
                             if self.bFind('rctime' + str(pin)):
                                 RCtime = sghGC.pinRCTime(pin)
@@ -8343,6 +8363,7 @@ class ScratchListener(threading.Thread):
                             self.stepperUpdate(stepperList[0][1], -100, abs(stepADelta))                            
                         sghGC.stepperAPos = self.stepperArm.ElbowPos   
                         print "currPos" , self.stepperArm.getPos()                        
+
                     if self.bFindValue("writecard"):  
                         if reader is not None:
                             #print
@@ -8350,7 +8371,15 @@ class ScratchListener(threading.Thread):
                             cardid,cardtext = reader.write(self.rtnCAPS(self.value,datawithCAPS))
                             print cardid,cardtext
                     
-                    
+                    if self.bFindValue('getrange'): 
+                        if (TOF is not None):
+                            distance = int(TOF.get_distance() / 10)
+                            print'Distance:',distance,'cm'
+                            sensor_name = 'range'
+                            bcast_str = 'sensor-update "%s" %d' % (sensor_name, distance)
+                            # print 'sending: %s' % bcast_str
+                            msgQueue.put((5, bcast_str))
+                                    
                     if self.bFindValue("setaddon"):
                         #try:
                             with open('/boot/addon.txt','w') as afile:
