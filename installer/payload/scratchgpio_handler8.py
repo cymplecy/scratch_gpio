@@ -18,7 +18,7 @@
 
 # This code hosted on Github thanks to Ben Nuttall who taught me how to be a git(ter)
 
-Version = 'v8.1.5_22Nov21'  # Add VL53LOX support
+Version = 'v8.1.6_3May23'  # Bugfix VL53LOX import
 
 import threading
 import socket
@@ -207,21 +207,21 @@ except:
     pass  
 
 TOF = None
-#try:
-import VL53L0X
-TOF = VL53L0X.VL53L0X(i2c_bus=1,i2c_address=0x29)
-# I2C Address can change before tof.open()
-# tof.change_address(0x32)
-TOF.open()
-# Start ranging
-TOF.start_ranging(VL53L0X.Vl53l0xAccuracyMode.BETTER)
-timing = TOF.get_timing()
-if timing < 20000:
-    timing = 20000
-print("Timing %d ms" % (timing/1000))
-#except:
-#    print "Warning: VL53L0X time of flight sensor not imported"
-#    pass
+try:
+    import VL53L0X
+    TOF = VL53L0X.VL53L0X(i2c_bus=1,i2c_address=0x29)
+    # I2C Address can change before tof.open()
+    # tof.change_address(0x32)
+    TOF.open()
+    # Start ranging
+    TOF.start_ranging(VL53L0X.Vl53l0xAccuracyMode.BETTER)
+    timing = TOF.get_timing()
+    if timing < 20000:
+        timing = 20000
+    print("Timing %d ms" % (timing/1000))
+except:
+    print "Warning: VL53L0X time of flight sensor not imported"
+    pass
     
 
 sghCT = None  # reserve for captouch
